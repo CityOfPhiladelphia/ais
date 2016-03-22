@@ -42,44 +42,44 @@ class StreetAlias(db.Model):
 # PARCELS #
 ###########
 
-# class PwdParcel(db.Model):
-#     """A land parcel per PWD."""
-#     id = db.Column(db.Integer)
-#     parcel_id = db.Column(db.Integer, primary_key=True)
-#     street_address = db.Column(db.Text)
-#     address_low = db.Column(db.Integer)
-#     address_low_suffix = db.Column(db.Text)
-#     address_low_frac = db.Column(db.Text)
-#     address_high = db.Column(db.Integer)
-#     street_predir = db.Column(db.Text)
-#     street_name = db.Column(db.Text)
-#     street_suffix = db.Column(db.Text)
-#     street_postdir = db.Column(db.Text)
-#     unit_type = db.Column(db.Text)
-#     unit_num = db.Column(db.Text)
-#     street_full = db.Column(db.Text)
-#     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
+class PwdParcel(db.Model):
+    """A land parcel per PWD."""
+    id = db.Column(db.Integer, primary_key=True)
+    parcel_id = db.Column(db.Integer)
+    street_address = db.Column(db.Text)
+    address_low = db.Column(db.Integer)
+    address_low_suffix = db.Column(db.Text)
+    address_low_frac = db.Column(db.Text)
+    address_high = db.Column(db.Integer)
+    street_predir = db.Column(db.Text)
+    street_name = db.Column(db.Text)
+    street_suffix = db.Column(db.Text)
+    street_postdir = db.Column(db.Text)
+    unit_type = db.Column(db.Text)
+    unit_num = db.Column(db.Text)
+    street_full = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
 
 
 #############
 # ADDRESSES #
 #############
 
-# class Address(db.Model):
-#     """A street address with parsed components."""
-#     id = db.Column(db.Integer)
-#     street_address = db.Column(db.Text, primary_key=True)
-#     address_low = db.Column(db.Integer)
-#     address_low_suffix = db.Column(db.Text)
-#     address_low_frac = db.Column(db.Text)
-#     address_high = db.Column(db.Integer)
-#     street_predir = db.Column(db.Text)
-#     street_name = db.Column(db.Text)
-#     street_suffix = db.Column(db.Text)
-#     street_postdir = db.Column(db.Text)
-#     unit_type = db.Column(db.Text)
-#     unit_num = db.Column(db.Text)
-#     street_full = db.Column(db.Text)
+class Address(db.Model):
+    """A street address with parsed components."""
+    id = db.Column(db.Integer)
+    street_address = db.Column(db.Text, primary_key=True)
+    address_low = db.Column(db.Integer)
+    address_low_suffix = db.Column(db.Text)
+    address_low_frac = db.Column(db.Text)
+    address_high = db.Column(db.Integer)
+    street_predir = db.Column(db.Text)
+    street_name = db.Column(db.Text)
+    street_suffix = db.Column(db.Text)
+    street_postdir = db.Column(db.Text)
+    unit_type = db.Column(db.Text)
+    unit_num = db.Column(db.Text)
+    street_full = db.Column(db.Text)
 
 
 

@@ -3,9 +3,11 @@ import os
 import csv
 from datetime import datetime
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
+# from db.connect import connect_to_db
+from ais import app
+from datum import Database
+# from models.address import Address
+# from config import CONFIG
 # DEV
 from pprint import pprint
 import traceback
@@ -14,32 +16,27 @@ start = datetime.now()
 print('Starting...')
 
 
-'''
-CONFIG
-'''
+"""SET UP"""
 
-source_parcel_table = 'pwd_parcels'
-field_map = {
-	# AIS 				# Source
-	'parcel_id': 		'PARCELID',
-	'source_address': 	'ADDRESS',
-	'source_brt_id': 	'BRT_ID',
-}
-source_geom_field = 'SHAPE'
-source_srid = 2272
-opa_view = 'VW_OPA_OWNERS'
+config = app.config
 
+db = Database(config['DATABASES']['engine'])
 
-'''
-SET UP
-'''
-
-source_db = connect_to_db(CONFIG['db']['ais_source'])
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
+source_def = config['BASE_DATA_SOURCES']['pwd_parcels']
+source_db_name = source_def['db']
+source_db_url = config['DATABASES'][source_db_name]
+source_db = Database(source_db_url)
 
 # Read in OPA account nums and addresses
-opa_rows = source_db.read(opa_view, ['ACCOUNT_NUM', 'STREET_ADDRESS'])
-opa_map = {x['ACCOUNT_NUM']: x['STREET_ADDRESS'] for x in opa_rows}
+opa_source_def = config['BASE_DATA_SOURCES']['opa_owners']
+opa_source_db_name = opa_source_def['db']
+opa_source_db_url = config['DATABASES'][opa_source_db_name]
+opa_source_db = Database(opa_source_db_url)
+opa_source_table = opa_source_def['table']
+opa_field_map = opa_source_def['field_map']
+opa_rows = source_db[opa_source_table].read()
+opa_map = {x[opa_field_map['account_num']]: x[opa_field_map['street_address']] \
+	for x in opa_rows}
 
 # Make a list of non-unique addresses in PWD parcels. If a parcel has one of 
 # these addresses, use OPA address instead. Case: 421 S 10TH ST appears three
@@ -51,8 +48,8 @@ ambig_stmt = '''
 	group by address
 	having address is not null and count(*) > 1
 '''.format(source_parcel_table)
-source_db.c.execute(ambig_stmt)
-ambig_rows = source_db.c.fetchall()
+source_db._c.execute(ambig_stmt)
+ambig_rows = source_db._c.fetchall()
 ambig_addresses = set([x[0] for x in ambig_rows])
 
 '''
@@ -73,10 +70,10 @@ log_writer.writerow(LOG_COLS)
 parser = Parser()
 
 print('Dropping indexes...')
-ais_db.drop_index('pwd_parcel', 'street_address')
+db.drop_index('pwd_parcel', 'street_address')
 
 print('Deleting existing parcels...')
-ais_db.truncate('pwd_parcel')
+db.truncate('pwd_parcel')
 
 # Get field names
 source_parcel_id_field = field_map['parcel_id']
@@ -136,15 +133,15 @@ for i, source_parcel in enumerate(source_parcels):
 		print(traceback.format_exc())
 
 print('Writing parcels...')
-ais_db.bulk_insert('pwd_parcel', parcel_rows, geom_field='geometry', \
+db.bulk_insert('pwd_parcel', parcel_rows, geom_field='geometry', \
 	from_srid=source_srid, chunk_size=50000)
-# ais_db.save()
+# db.save()
 
 print('Creating indexes...')
-ais_db.create_index('pwd_parcel', 'street_address')
+db.create_index('pwd_parcel', 'street_address')
 
 source_db.close()
-ais_db.close()
+db.close()
 log.close()
 print('Finished in {} seconds'.format(datetime.now() - start))
 print('Wrote {} parcels'.format(len(parcels)))
