@@ -3,14 +3,13 @@ import os
 import csv
 from datetime import datetime
 from phladdress.parser import Parser
-# from db.connect import connect_to_db
+import datum
 from ais import app
-from datum import Database
-# from models.address import Address
-# from config import CONFIG
+from ais.models import Address
 # DEV
 from pprint import pprint
 import traceback
+
 
 start = datetime.now()
 print('Starting...')
@@ -19,19 +18,25 @@ print('Starting...')
 """SET UP"""
 
 config = app.config
+db = datum.connect(config['DATABASES']['engine'])
+parcel_table = db['pwd_parcel']
+parcel_geom_field = parcel_table.geom_field
 
-db = Database(config['DATABASES']['engine'])
 
 source_def = config['BASE_DATA_SOURCES']['pwd_parcels']
 source_db_name = source_def['db']
 source_db_url = config['DATABASES'][source_db_name]
-source_db = Database(source_db_url)
+source_db = datum.connect(source_db_url)
+source_field_map = source_def['field_map']
+source_table_name = source_def['table']
+source_table = source_db[source_table_name]
+source_geom_field = source_table.geom_field
 
 # Read in OPA account nums and addresses
 opa_source_def = config['BASE_DATA_SOURCES']['opa_owners']
 opa_source_db_name = opa_source_def['db']
 opa_source_db_url = config['DATABASES'][opa_source_db_name]
-opa_source_db = Database(opa_source_db_url)
+opa_source_db = datum.connect(opa_source_db_url)
 opa_source_table = opa_source_def['table']
 opa_field_map = opa_source_def['field_map']
 opa_rows = source_db[opa_source_table].read()
@@ -47,46 +52,43 @@ ambig_stmt = '''
 	from {}
 	group by address
 	having address is not null and count(*) > 1
-'''.format(source_parcel_table)
+'''.format(source_table_name)
 source_db._c.execute(ambig_stmt)
 ambig_rows = source_db._c.fetchall()
 ambig_addresses = set([x[0] for x in ambig_rows])
 
-'''
-MAIN
-'''
 
-# Set up logging
-LOG_COLS = [
-	'parcel_id',
-	'source_address',
-	'error',
-]
-parent_dir = os.path.abspath(os.path.join(__file__, os.pardir))
-log = open(parent_dir + '/log/load_pwd_parcels.log', 'w', newline='')
-log_writer = csv.writer(log)
-log_writer.writerow(LOG_COLS)
+"""MAIN"""
+
+# # Set up logging
+# LOG_COLS = [
+# 	'parcel_id',
+# 	'source_address',
+# 	'error',
+# ]
+# parent_dir = os.path.abspath(os.path.join(__file__, os.pardir))
+# log = open(parent_dir + '/log/load_pwd_parcels.log', 'w', newline='')
+# log_writer = csv.writer(log)
+# log_writer.writerow(LOG_COLS)
 
 parser = Parser()
 
 print('Dropping indexes...')
-db.drop_index('pwd_parcel', 'street_address')
+parcel_table.drop_index('street_address')
 
 print('Deleting existing parcels...')
-db.truncate('pwd_parcel')
+parcel_table.delete()
 
 # Get field names
-source_parcel_id_field = field_map['parcel_id']
-source_address_field = field_map['source_address']
-source_brt_id_field = field_map['source_brt_id']
-wkt_field = '{}_WKT'.format(source_geom_field)
+source_parcel_id_field = source_field_map['parcel_id']
+source_address_field = source_field_map['source_address']
+source_brt_id_field = source_field_map['source_brt_id']
 
 # Read parcels
 print('Reading parcels from source...')
-source_fields = list(field_map.values())
-source_parcels = source_db.read(source_parcel_table, source_fields, \
-	geom_field=source_geom_field)
-parcel_rows = []
+source_fields = list(source_field_map.values())
+source_parcels = source_table.read(fields=source_fields, limit=10)
+parcels = []
 
 # Loop over source parcels
 for i, source_parcel in enumerate(source_parcels):
@@ -96,7 +98,7 @@ for i, source_parcel in enumerate(source_parcels):
 
 		# Get attrs
 		parcel_id = source_parcel[source_parcel_id_field]
-		geometry = source_parcel[wkt_field]
+		geometry = source_parcel[source_geom_field]
 		source_brt_id = source_parcel[source_brt_id_field]
 		source_address = source_parcel[source_address_field]
 		
@@ -113,12 +115,12 @@ for i, source_parcel in enumerate(source_parcels):
 		except:
 			raise ValueError('Could not parse')
 
-		parcel = address.as_dict()
+		parcel = dict(address)
 		parcel.update({
-			'geometry':		geometry,
-			'parcel_id':	parcel_id,
+			parcel_geom_field:	geometry,
+			'parcel_id':		parcel_id,
 		})
-		parcel_rows.append(parcel)
+		parcels.append(parcel)
 
 		# FEEDBACK
 		# if source_address != parcel.street_address:
@@ -126,22 +128,21 @@ for i, source_parcel in enumerate(source_parcels):
 
 	except ValueError as e:
 		print('Parcel {}: {}'.format(parcel_id, e))
-		log_writer.writerow([parcel_id, source_address, e])
+		# log_writer.writerow([parcel_id, source_address, e])
 
 	except Exception as e:
 		print('{}: Unhandled error'.format(source_parcel))
 		print(traceback.format_exc())
 
 print('Writing parcels...')
-db.bulk_insert('pwd_parcel', parcel_rows, geom_field='geometry', \
-	from_srid=source_srid, chunk_size=50000)
+parcel_table.write(parcels, chunk_size=50000)
 # db.save()
 
 print('Creating indexes...')
-db.create_index('pwd_parcel', 'street_address')
+parcel_table.create_index('street_address')
 
 source_db.close()
 db.close()
-log.close()
+# log.close()
 print('Finished in {} seconds'.format(datetime.now() - start))
 print('Wrote {} parcels'.format(len(parcels)))
