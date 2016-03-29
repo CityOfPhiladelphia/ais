@@ -1,0 +1,25 @@
+-e git+https://github.com/CityOfPhiladelphia/ais.git@e73aaac8d634fe6a5c4a0d8cf66cdecab42d2821#egg=ais
+alembic==0.8.4
+cx-Oracle==5.2.1
+dataset==0.6.2
+-e git+https://github.com/CityOfPhiladelphia/datum.git@0ec35162341a743efef06eb5f3e2902db0e941f5#egg=datum
+Flask==0.10.1
+Flask-Migrate==1.8.0
+Flask-Script==2.0.5
+Flask-SQLAlchemy==2.1
+GeoAlchemy2==0.2.6
+itsdangerous==0.24
+Jinja2==2.8
+Mako==1.0.3
+MarkupSafe==0.23
+normality==0.2.4
+-e git+https://rbrtmrtn@bitbucket.org/rbrtmrtn/phladdress.git@1b7d39f8fe1745d9498f84087c63eb368852a556#egg=phladdress
+psycopg2==2.6.1
+pyproj==1.9.5.1
+python-editor==0.5
+PyYAML==3.11
+Shapely==1.5.13
+six==1.10.0
+SQLAlchemy==1.0.12
+Werkzeug==0.11.4
+zope.interface==4.1.3
