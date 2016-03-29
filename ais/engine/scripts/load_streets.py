@@ -12,21 +12,22 @@ from ais.models import StreetSegment
 config = app.config
 
 db = Database(config['DATABASES']['engine'])
+engine_srid = config['ENGINE_SRID']
 
+# Get table params
 source_def = config['BASE_DATA_SOURCES']['streets']
 source_db_name = source_def['db']
 source_db_url = config['DATABASES'][source_db_name]
-source_db = Database(source_db_url)
-
 field_map = source_def['field_map']
 source_table_name = source_def['table']
-source_geom_field = source_def['geom_field']
 street_full_fields = ['street_' + x for x in ['predir', 'name', 'suffix', 'postdir']]
 source_street_full_fields = [field_map[x] for x in street_full_fields]
-street_table_name = StreetSegment.__table__.name
-engine_srid = config['ENGINE_SRID']
 
+# Get table references
+source_db = Database(source_db_url)
 source_table = source_db[source_table_name]
+source_geom_field = source_table.geom_field
+street_table_name = StreetSegment.__table__.name
 street_table = db[street_table_name]
 
 

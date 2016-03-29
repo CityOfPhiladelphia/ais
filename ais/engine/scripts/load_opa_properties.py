@@ -2,36 +2,27 @@ import sys
 import re
 from datetime import datetime
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
+import datum
+from ais import app
+from ais.models import Address
 # DEV
 import traceback
 from pprint import pprint
 
-'''
-CONFIG
-'''
-
-source_table = '"BRT_ADMIN"."PROPERTIES"'
-prop_table = 'opa_property'
-field_map = {
-	'account_num': 'PARCELNO',
-	'tencode': 'PROPERTYID',
-	'source_address': 'LOCATION',
-	'address_suffix': 'SUFFIX',
-	'unit': 'UNIT',
-}
-
-'''
-SET UP
-'''
 
 print('Starting...')
 start = datetime.now()
 
-source_db = connect_to_db(CONFIG['db']['brt_viewer'])
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
+
+"""SET UP"""
+
+config = app.config
+source_def = config['BASE_DATA_SOURCES']['properties']
+source_db = datum.connect(config['DATABASES'][source_def['db']])
+source_table = source_db[source_def['table']]
+field_map = source_def['field_map']
+db = datum.connect(config['DATABASES']['engine'])
+prop_table = db['opa_property']
 
 '''
 MAIN
@@ -48,10 +39,10 @@ source_address_suffix_field = field_map['address_suffix']
 source_unit_field = field_map['unit']
 
 print('Dropping index...')
-ais_db.drop_index(prop_table, 'street_address')
+prop_table.drop_index('street_address')
 
 print('Deleting existing properties...')
-ais_db.truncate(prop_table)
+prop_table.delete()
 
 print('Reading owners from source...')
 owner_stmt = '''
@@ -65,8 +56,9 @@ owner_stmt = '''
 		group by propertyid) o on o.propertyid = po.propertyid
 	group by p.parcelno, o.owners
 '''
-owner_rows = source_db.c.execute(owner_stmt).fetchall()
-# owner_map = 
+owner_rows = source_db.execute(owner_stmt)
+
+sys.exit()
 owner_map = {x[0]: x[1] for x in owner_rows}
 
 print('Reading properties from source...')
@@ -146,15 +138,15 @@ for i, source_prop in enumerate(source_props):
 		# sys.exit()
 
 print('Writing properties...')
-ais_db.bulk_insert(prop_table, props, chunk_size=50000)
+db.bulk_insert(prop_table, props, chunk_size=50000)
 
 print('Creating index...')
-ais_db.create_index(prop_table, 'street_address')
+db.create_index(prop_table, 'street_address')
 
 '''
 FINISH
 '''
 
 source_db.close()
-ais_db.close()
+db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))

@@ -1,41 +1,35 @@
 import sys
 import traceback
 from phladdress.data import DIRS_STD, SUFFIXES_STD
-from db.connect import connect_to_db
-from config import CONFIG
+# from db.connect import connect_to_db
+import datum
+from ais import app
 # DEV
 from pprint import pprint
 
-'''
-CONFIG
-'''
 
-# This is a map of all non-geometry fields. Geometry is handled separately.
-field_map = {
-	# Destination				# Source
-	'seg_id':					'SEG_ID',
-	'street_predir':			'PRE_DIR',
-	'street_name':				'NAME',
-	'street_suffix':			'TYPE',
-	'street_postdir':			'SUF_DIR',
-}
-alias_table = 'street_alias'
-source_db = connect_to_db(CONFIG['db']['ais_source'])
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
+"""SET UP"""
 
-'''
-MAIN
-'''
+config = app.config
+source_def = config['BASE_DATA_SOURCES']['street_aliases']
+source_db = datum.connect(config['DATABASES'][source_def['db']])
+source_table = source_db[source_def['table']]
+field_map = source_def['field_map']
+db = datum.connect(config['DATABASES']['engine'])
+alias_table = db['street_alias']
 
-# Delete existing
+
+"""MAIN"""
+
+print('Dropping indexes...')
+alias_table.drop_index('seg_id')
+
 print('Delete existing aliases...')
-ais_db.truncate('street_alias')
+alias_table.delete()
 
-# Read aliases
 print('Reading aliases from source...')
-source_fields = list(field_map.values())
-source_rows = source_db.read('ALIAS_LIST', source_fields)
-insert_rows = []
+source_rows = source_table.read()
+aliases = []
 
 # Loop over aliases
 for i, alias_row in enumerate(source_rows):
@@ -64,7 +58,7 @@ for i, alias_row in enumerate(source_rows):
 		postdir = DIRS_STD[postdir] if postdir else None
 
 		# Get values
-		insert_rows.append({
+		aliases.append({
 			'seg_id': alias_row[field_map['seg_id']],
 			'street_predir': predir or '',
 			'street_name': name,
@@ -81,12 +75,12 @@ for i, alias_row in enumerate(source_rows):
 		print(traceback.format_exc())
 		sys.exit()
 
-ais_db.bulk_insert(alias_table, insert_rows)
-ais_db.save()
+print('Writing aliases...')
+alias_table.write(aliases)
 
-'''
-FINISH
-'''
+print('Creating indexes...')
+alias_table.create_index('seg_id')
 
+db.save()
 source_db.close()
-ais_db.close()
+db.close()

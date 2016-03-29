@@ -2,7 +2,6 @@ import sys
 import os
 import csv
 from datetime import datetime
-from phladdress.parser import Parser
 import datum
 from ais import app
 from ais.models import Address
@@ -23,7 +22,7 @@ parcel_table = db['pwd_parcel']
 parcel_geom_field = parcel_table.geom_field
 
 
-source_def = config['BASE_DATA_SOURCES']['pwd_parcels']
+source_def = config['BASE_DATA_SOURCES']['parcels']['pwd']
 source_db_name = source_def['db']
 source_db_url = config['DATABASES'][source_db_name]
 source_db = datum.connect(source_db_url)
@@ -71,8 +70,6 @@ ambig_addresses = set([x[0] for x in ambig_rows])
 # log_writer = csv.writer(log)
 # log_writer.writerow(LOG_COLS)
 
-parser = Parser()
-
 print('Dropping indexes...')
 parcel_table.drop_index('street_address')
 
@@ -87,7 +84,7 @@ source_brt_id_field = source_field_map['source_brt_id']
 # Read parcels
 print('Reading parcels from source...')
 source_fields = list(source_field_map.values())
-source_parcels = source_table.read(fields=source_fields, limit=10)
+source_parcels = source_table.read(fields=source_fields)
 parcels = []
 
 # Loop over source parcels
