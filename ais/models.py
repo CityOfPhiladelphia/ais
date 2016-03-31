@@ -1,3 +1,4 @@
+import copy
 from geoalchemy2.types import Geometry
 from phladdress.parser import Parser
 from ais import app, app_db as db
@@ -174,8 +175,6 @@ class Address(db.Model):
                     'street_full':          c['street']['full'],
                     'street_address':       c['street_address'],
                 }
-        else:
-            print(args)
         super(Address, self).__init__(**kwargs)
 
     def __str__(self):
@@ -195,12 +194,67 @@ class Address(db.Model):
             return parity_for_num(low)
 
     @property
+    def address_full(self):
+        """Returns full primary address (e.g. 1003R-07 1/2)"""
+        address_full = str(self.address_low)
+        if self.address_low_suffix:
+            address_full += self.address_low_suffix
+        if self.address_low_frac:
+            address_full += ' ' + self.address_low_frac
+        if self.address_high:
+            address_full += '-' + str(self.address_high)[-2:]
+        return address_full
+
+    @property
+    def address_full_num(self):
+        '''
+        Returns all numeric components of address. Example:
+        1234A-36 1/2 => 1234-36
+        '''
+        num = str(self.address_low)
+        if self.address_high:
+            address_high = str(self.address_high)
+            if len(address_high) < 2:
+                # address_high = '0' + address_high
+                num += '-' + str(address_high)
+            else:
+                num += '-' + str(address_high)[-2:]
+        return num
+
+    @property
     def base_address(self):
         return ' '.join([self.address_full, self.street_full])
 
     @property
     def base_address_no_suffix(self):
         return '{} {}'.format(self.address_full_num, self.street_full)
+
+    @property
+    def is_base(self):
+        if self.unit_type or self.address_low_suffix:
+            return False
+        return True
+
+    @property
+    def child_addresses(self):
+        """Returns a list of individual street addresses for a range"""
+        child_addresses = []
+        for child_num in self.child_nums:
+            child_obj = copy.copy(self)
+            child_obj.address_high = None
+            child_obj.address_low = child_num
+            child_addresses.append(child_obj)
+        return child_addresses
+
+    @property
+    def child_nums(self):
+        """Returns a list of individual address nums for a range"""
+        if self.address_high is None or self.unit_type is not None:
+            return []
+        child_num_list = []
+        for x in range(self.address_low, self.address_high + 1, 2):
+            child_num_list.append(x)
+        return child_num_list
 
     @property
     def generic_unit(self):

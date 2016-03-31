@@ -19,6 +19,7 @@ start = datetime.now()
 config = app.config
 source_def = config['BASE_DATA_SOURCES']['properties']
 source_db = datum.connect(config['DATABASES'][source_def['db']])
+ais_source_db = datum.connect(config['DATABASES']['gisdbp'])
 source_table = source_db[source_def['table']]
 field_map = source_def['field_map']
 db = datum.connect(config['DATABASES']['engine'])
@@ -45,24 +46,18 @@ print('Deleting existing properties...')
 prop_table.delete()
 
 print('Reading owners from source...')
-owner_stmt = '''
-	select p.parcelno, o.owners
-	from BRT_ADMIN.properties p
-	left join BRT_ADMIN.PROPERTIES_OWNERS po on p.propertyid = po.PROPERTYID
-	left join (
-		select propertyid, listagg(trim(name), '|')
-		within group(order by propertyid) as owners
-		from brt_admin.owners
-		group by propertyid) o on o.propertyid = po.propertyid
-	group by p.parcelno, o.owners
-'''
-owner_rows = source_db.execute(owner_stmt)
-
-sys.exit()
+owner_stmt = """
+	select
+		account_num,
+		listagg(trim(name), '|') within group(order by account_num) as owners
+	from gis_ais_sources.vw_opa_owners
+	group by account_num
+"""
+owner_rows = ais_source_db.execute(owner_stmt)
 owner_map = {x[0]: x[1] for x in owner_rows}
 
 print('Reading properties from source...')
-source_props = source_db.read(source_table, source_fields)
+source_props = source_table.read(fields=source_fields)
 props = []
 
 for i, source_prop in enumerate(source_props):
@@ -116,7 +111,7 @@ for i, source_prop in enumerate(source_props):
 			'owners': owners,
 			'address_low': comps['address']['low_num'],
 			'address_low_suffix': comps['address']['low_suffix'] or '',
-			'address_low_fractional': comps['address']['low_fractional'] or '',
+			'address_low_frac': comps['address']['low_fractional'] or '',
 			'address_high': comps['address']['high_num_full'],
 			'street_predir': comps['street']['predir'] or '',
 			'street_name': comps['street']['name'],
@@ -138,15 +133,16 @@ for i, source_prop in enumerate(source_props):
 		# sys.exit()
 
 print('Writing properties...')
-db.bulk_insert(prop_table, props, chunk_size=50000)
+prop_table.write(props)
 
 print('Creating index...')
-db.create_index(prop_table, 'street_address')
+prop_table.create_index('street_address')
 
 '''
 FINISH
 '''
 
 source_db.close()
+ais_source_db.close()
 db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))

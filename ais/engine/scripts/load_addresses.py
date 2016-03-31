@@ -4,29 +4,30 @@ import csv
 from copy import deepcopy
 from datetime import datetime
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
-from util.util import parity_for_num, parity_for_range
+import datum
+from ais import app
+from ais.models import Address
+from ais.util import parity_for_num, parity_for_range
 # DEV
 import traceback
 from pprint import pprint
 
+
 print('Starting...')
 start = datetime.now()
 
-'''
-CONFIG
-'''
+config = app.config
 
-sources = CONFIG['addresses']['sources']
-address_table = 'address'
-address_tag_table = 'address_tag'
-source_address_table = 'source_address'
-address_link_table = 'address_link'
-street_segment_table = 'street_segment'
-address_street_table = 'address_street'
-true_range_view = 'true_range'
+sources = config['ADDRESS_SOURCES']
+db = datum.connect(config['DATABASES']['engine'])
+address_table = db['address']
+address_tag_table = db['address_tag']
+source_address_table = db['source_address']
+address_link_table = db['address_link']
+street_segment_table = db['street_segment']
+address_street_table = db['address_street']
+true_range_view_name = 'true_range'
+# TODO: something more elegant here.
 true_range_select_stmt = '''
 	select
 	     coalesce(r.seg_id, l.seg_id) as seg_id,
@@ -52,37 +53,24 @@ true_range_select_stmt = '''
 	on r.seg_id = l.seg_id
 	order by r.seg_id
 '''
-parcel_layers = CONFIG['parcels']
-address_parcel_table = 'address_parcel'
-address_property_table = 'address_property'
-address_error_table = CONFIG['addresses']['errors']['table']
+parcel_layers = config['BASE_DATA_SOURCES']['parcels']
+address_parcel_table = db['address_parcel']
+address_property_table = db['address_property']
+address_error_table = db[config['ERROR_TABLES']['addresses']['error_table']]
 WRITE_OUT = True
 
-DEV = False  # This will target a single address
+DEV = True  # This will target a single address
 DEV_ADDRESS = '950-52 MARLBOROUGH ST'
 DEV_STREET_NAME = 'MARLBOROUGH'
 
-
-'''
-SET UP
-'''
-
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
-
-################################################################################
-# LOGGING / QC
-################################################################################
-
+# Logging stuff.
 address_errors = []
-
 # Use these maps to write out one error per source address/source name pair.
 source_map = {}  # source_address => [source_names]
 source_address_map = {}  # street_address => [source_addresses]
 
 
-'''
-MAIN
-'''
+"""MAIN"""
 
 addresses = []
 street_addresses_seen = set()
@@ -94,41 +82,42 @@ links = []  # dicts of address, relationship, address triples
 if WRITE_OUT:
 	print('Dropping indexes...')
 	for table in (address_table, address_tag_table, source_address_table):
-		ais_db.drop_index(table, 'street_address')
-	ais_db.drop_index(address_link_table, 'address_1')
-	ais_db.drop_index(address_link_table, 'address_2')
+		table.drop_index('street_address')
+	address_link_table.drop_index('address_1')
+	address_link_table.drop_index('address_2')
 
 	print('Deleting existing addresses...')
-	ais_db.truncate(address_table)
+	address_table.delete()
 	print('Deleting existing address tags...')
-	ais_db.truncate(address_tag_table)
+	address_tag_table.delete()
 	print('Deleting existing source addresses...')
-	ais_db.truncate(source_address_table)
+	source_address_table.delete()
 	print('Deleting existing address links...')
-	ais_db.truncate(address_link_table)
+	address_link_table.delete()
 	print('Deleting address errors...')
-	ais_db.truncate(address_error_table)
+	address_error_table.delete()
 
 # Loop over address sources
 for source in sources:
 	# Get params
 	source_name = source['name']
-	source_table = source['table']
 	source_address_field = source['address_field']
 	source_fields = [source_address_field]
 	if 'tag_fields' in source:
 		source_fields += [x['source_field'] for x in source['tag_fields']]
 	source_db_name = source['db']
-	source_db = connect_to_db(CONFIG['db'][source_db_name])
-	
+	source_db = datum.connect(config['DATABASES'][source_db_name])
+	print(source_db)
+	source_table = source_db[source['table']]
+	print(source_table.__dict__)
 	print('Reading from {}...'.format(source_name))
 
 	# DEV
 	if DEV:
 		where = "{} = '{}'".format(source_address_field, DEV_ADDRESS)
-		source_rows = source_db.read(source_table, source_fields, where=where)
+		source_rows = source_table.read(fields=source_fields, where=where)
 	else:
-		source_rows = source_db.read(source_table, source_fields)
+		source_rows = source_table.read(fields=source_fields)
 
 	# Loop over addresses
 	for i, source_row in enumerate(source_rows):
@@ -257,21 +246,20 @@ for source in sources:
 
 	if WRITE_OUT:
 		print('Writing address tags...')
-		ais_db.bulk_insert(address_tag_table, address_tags, chunk_size=150000)
+		address_tag_table.write(address_tags, chunk_size=150000)
 		address_tags = []
 		address_tag_strings = set()
 
 		print('Writing source addresses...')
-		ais_db.bulk_insert(source_address_table, source_addresses, \
-			chunk_size=150000)
+		source_address_table.write(source_addresses, chunk_size=150000)
 		source_addresses = []
 
 	source_db.close()
 
 if WRITE_OUT:
 	print('Writing addresses...')
-	insert_rows = [x.as_dict() for x in addresses]
-	ais_db.bulk_insert(address_table, insert_rows, chunk_size=150000)
+	insert_rows = [dict(x) for x in addresses]
+	address_table.write(insert_rows, chunk_size=150000)
 	del insert_rows
 
 
@@ -382,7 +370,7 @@ for i, address in enumerate(addresses):
 
 print('Writing address links...')
 if WRITE_OUT:
-	ais_db.bulk_insert(address_link_table, links, chunk_size=150000)
+	address_link_table.write(links, chunk_size=150000)
 	print('Created {} address links'.format(len(links)))
 del links
 
@@ -425,7 +413,7 @@ def had_street_error(street_address, reason, notes=None):
 # START WORK
 if WRITE_OUT:
 	print('Deleting existing address-streets...')
-	ais_db.truncate(address_street_table)
+	address_street_table.delete()
 
 print('Reading street segments...')
 seg_fields = [
@@ -437,7 +425,7 @@ seg_fields = [
 	'right_to'
 ]
 seg_map = {}
-seg_rows = ais_db.read(street_segment_table, seg_fields)
+seg_rows = street_segment_table.read(fields=seg_fields)
 for seg_row in seg_rows:
 	street_full = seg_row['street_full']
 	street_full_segs = seg_map.setdefault(street_full, [])
@@ -609,8 +597,7 @@ for address in addresses:
 
 if WRITE_OUT:
 	print('Writing address-streets...')
-	ais_db.bulk_insert(address_street_table, address_streets, chunk_size=150000)
-
+	address_street_table.write(address_streets, chunk_size=150000)
 del address_streets
 
 # Handle errors
@@ -657,20 +644,21 @@ address_parcels = []
 
 if WRITE_OUT:
 	print('Dropping index on address-parcels...')
-	ais_db.drop_index(address_parcel_table, 'street_address')
+	address_parcel_table.drop_index('street_address')
 	print('Deleting existing address-parcels...')
-	ais_db.truncate(address_parcel_table)
+	address_parcel_table.delete()
 
-for parcel_layer, parcel_layer_def in parcel_layers.items():
-	source_table = parcel_layer_def['table']
+for parcel_layer in parcel_layers:
+	source_table_name = parcel_layer + '_parcel'
+	source_table = db[source_table_name]
 	print('Reading from {}...'.format(parcel_layer))
 
 	if DEV:
 		where = "street_name = '{}'".format(DEV_STREET_NAME)
-		parcel_rows = ais_db.read(source_table, ['street_address', \
-			'id'], where=where)
+		parcel_rows = source_table.read(fields=['street_address', 'id'], \
+			where=where)
 	else:
-		parcel_rows = ais_db.read(source_table, ['street_address', 'id'])
+		parcel_rows = source_table.read(fields=['street_address', 'id'])
 
 	print('Building indexes...')
 	# Index: street_address => [row_ids]
@@ -838,9 +826,9 @@ for ap in address_parcels:
 
 if WRITE_OUT:
 	print('Writing address-parcels...')
-	ais_db.bulk_insert(address_parcel_table, address_parcels, chunk_size=150000)
+	address_parcel_table.write(address_parcels, chunk_size=150000)
 	print('Indexing address-parcels...')
-	ais_db.create_index(address_parcel_table, 'street_address')
+	address_parcel_table.create_index('street_address')
 
 for variant_type, count in match_counts.items():
 	print('{} matched on {}'.format(count, variant_type))
@@ -856,14 +844,14 @@ print('\n** ADDRESS-PROPERTIES **')
 
 if WRITE_OUT:
 	print('Dropping index on address-properties...')
-	ais_db.drop_index(address_property_table, 'street_address')
+	address_property_table.drop_index('street_address')
 	print('Deleting existing address-properties...')
-	ais_db.truncate(address_property_table)
+	address_property_table.delete()
 
 # Read properties in
 print('Reading properties from AIS...')
 # TODO: clean this up, move config to config
-prop_rows = ais_db.read('opa_property', ['street_address', 'account_num', 'address_low', 'address_high', 'unit_num'])
+prop_rows = db['opa_property'].read(fields=['street_address', 'account_num', 'address_low', 'address_high', 'unit_num'])
 prop_map = {x['street_address']: x for x in prop_rows}
 
 print('Indexing range properties...')
@@ -941,9 +929,9 @@ for i, address in enumerate(addresses):
 		address_props.append(address_prop)
 
 if WRITE_OUT:
-	ais_db.bulk_insert(address_property_table, address_props)
+	address_property_table.write(address_props)
 	print('Indexing address-properties...')
-	ais_db.create_index(address_property_table, 'street_address')
+	address_property_table.create_index('street_address')
 
 
 ################################################################################
@@ -954,8 +942,8 @@ print('\n** TRUE RANGE **')
 
 if WRITE_OUT:
 	print('Creating true range view...')
-	ais_db.drop_view(true_range_view)
-	ais_db.create_view(true_range_view, true_range_select_stmt)
+	db.drop_view(true_range_view_name)
+	db.create_view(true_range_view_name, true_range_select_stmt)
 
 
 ################################################################################
@@ -966,7 +954,7 @@ print('\n** ERRORS **')
 
 if WRITE_OUT:
 	print('Writing errors...')
-	ais_db.bulk_insert(address_error_table, address_errors, chunk_size=150000)
+	address_error_table.write(address_errors, chunk_size=150000)
 
 # print('{} errors'.format(error_count))
 # print('{} warnings'.format(warning_count))
@@ -985,11 +973,11 @@ if WRITE_OUT:
 		source_address_table,
 	)
 	for table in (address_table, address_tag_table, source_address_table):
-		ais_db.create_index(table, 'street_address')
-	ais_db.create_index(address_link_table, 'address_1')
-	ais_db.create_index(address_link_table, 'address_2')
-	ais_db.create_index(address_street_table, 'street_address')
+		table.create_index('street_address')
+	address_link_table.create_index('address_1')
+	address_link_table.create_index('address_2')
+	address_street_table.create_index('street_address')
 
-ais_db.close()
+db.close()
 
 print('Finished in {} seconds'.format(datetime.now() - start))
