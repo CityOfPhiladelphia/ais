@@ -1,0 +1,28 @@
+import json
+
+
+class AddressJsonSerializer:
+    def get_data(self, address):
+        data = {
+            'street_address': address.street_address,
+            'address_low': address.address_low,
+            'address_low_suffix': address.address_low_suffix,
+            'address_low_frac': address.address_low_frac,
+            'address_high': address.address_high,
+            'street_predir': address.street_predir,
+            'street_name': address.street_name,
+            'street_suffix': address.street_suffix,
+            'street_postdir': address.street_postdir,
+            'unit_type': address.unit_type,
+            'unit_num': address.unit_num,
+            'street_full': address.street_full,
+        }
+        return data
+
+    def serialize(self, address):
+        data = self.get_data(address)
+        return json.dumps(data)
+
+    def serialize_many(self, addresses):
+        data = [self.get_data(address) for address in addresses]
+        return json.dumps(data)
