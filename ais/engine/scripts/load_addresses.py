@@ -115,6 +115,7 @@ for source in sources:
         if 'street_address' in address_fields:
             source_type = 'single_field'
         else: raise ValueError('Unknown address field mapping')
+        preprocessor = source.get('preprocessor')
     else:
         source_type = 'comps'
         # Check for necessary components
@@ -181,10 +182,18 @@ for source in sources:
         # Get source address and add source to map. We do this outside the
         # try statement so that source_address is always properly set for
         # logging errors.
-        if source_type == 'single_field':
-            source_address = source_row['street_address']
-        else:
+        # if source_type == 'single_field':
+        #     source_address = source_row['street_address']
+        # else:
+        #     source_address = preprocessor(source_row)
+
+        # If there's a preprocessor, apply. This could be single field or comps.
+        if preprocessor:
             source_address = preprocessor(source_row)
+        # Must be a single field
+        else:
+            source_address = source_row['street_address']
+        
         if source_address is None:
             # TODO: it might be helpful to log this, but right now we aren't
             # logging object IDs so there would be no way to identify the 
