@@ -13,21 +13,18 @@ from pprint import pprint
 print('Starting...')
 start = datetime.now()
 
-
 """SET UP"""
 
 config = app.config
 source_def = config['BASE_DATA_SOURCES']['properties']
 source_db = datum.connect(config['DATABASES'][source_def['db']])
-ais_source_db = datum.connect(config['DATABASES']['gisdbp'])
+ais_source_db = datum.connect(config['DATABASES']['gis'])
 source_table = source_db[source_def['table']]
 field_map = source_def['field_map']
 db = datum.connect(config['DATABASES']['engine'])
 prop_table = db['opa_property']
 
-'''
-MAIN
-'''
+"""MAIN"""
 
 parser = Parser()
 
