@@ -2,7 +2,7 @@ import json
 
 
 class AddressJsonSerializer:
-    def get_data(self, address):
+    def model_to_data(self, address):
         data = {
             'street_address': address.street_address,
             'address_low': address.address_low,
@@ -20,9 +20,9 @@ class AddressJsonSerializer:
         return data
 
     def serialize(self, address):
-        data = self.get_data(address)
+        data = self.model_to_data(address)
         return json.dumps(data)
 
     def serialize_many(self, addresses):
-        data = [self.get_data(address) for address in addresses]
+        data = [self.model_to_data(address) for address in addresses]
         return json.dumps(data)
