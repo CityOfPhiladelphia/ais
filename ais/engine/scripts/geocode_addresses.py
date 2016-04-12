@@ -6,31 +6,35 @@ from datetime import datetime
 from shapely.wkt import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
+import datum
+from ais import app
+from ais.models import Address
 # DEV
 import traceback
 from pprint import pprint
+
 
 start = datetime.now()
 print('Starting...')
 
 '''
-CONFIG
+SET UP
 '''
 
+parser = Parser()
+config = app.config
+db = datum.connect(config['DATABASES']['engine'])
+
 # parcel_table = 'pwd_parcel'
-parcel_layers = CONFIG['parcels']
-parcel_geom_field = 'geometry'
-address_table = 'address'
+parcel_layers = config['BASE_DATA_SOURCES']['parcels']
+address_table = db['address']
 address_fields = [
 	'id',
 	'street_address',
 	'address_low',
 	'address_high',
 ]
-seg_table = 'street_segment'
+seg_table = db['street_segment']
 seg_fields = [
 	'seg_id',
 	'left_from',
@@ -38,17 +42,18 @@ seg_fields = [
 	'right_from',
 	'right_to',
 ]
-geocode_table = 'geocode'
-centerline_offset = 8	# offset in feet
-centerline_end_buffer = 17  # offset in feet
-parcel_curb_table = 'parcel_curb'
-curb_table = 'curb'
-addr_street_table = 'address_street'
-addr_parcel_table = 'address_parcel'
-true_range_view = 'true_range'
+geocode_table = db['geocode']
+parcel_curb_table = db['parcel_curb']
+curb_table = db['curb']
+addr_street_table = db['address_street']
+addr_parcel_table = db['address_parcel']
+true_range_view = db['true_range']
+centerline_offset = config['GEOCODE']['centerline_offset']
+centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
 WRITE_OUT = True
 
 # DEV - use this to work on only one street name at a time
+# TODO move this to config somewhere
 FILTER_STREET_NAME = ''
 WHERE_STREET_NAME = None
 WHERE_STREET_ADDRESS_IN = None
@@ -56,13 +61,9 @@ WHERE_SEG_ID_IN = None
 if FILTER_STREET_NAME not in [None, '']:
 	WHERE_STREET_NAME = "street_name = '{}'".format(FILTER_STREET_NAME)
 	WHERE_STREET_ADDRESS_IN = "street_address in (select street_address from \
-		{} where {})".format(address_table, WHERE_STREET_NAME)
+		{} where {})".format(address_table.name, WHERE_STREET_NAME)
 	WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})"\
-		.format(seg_table, WHERE_STREET_NAME)
-
-'''
-SET UP
-'''
+		.format(seg_table.name, WHERE_STREET_NAME)
 
 def interpolate_buffered(line, distance_ratio, _buffer):
 	'''
@@ -75,7 +76,7 @@ def interpolate_buffered(line, distance_ratio, _buffer):
 	return line.interpolate(absolute_distance)
 
 def offset(line, point, distance, seg_side):
-	line = line[0]  # Get first part of multipart
+	# line = line[0]  # Get first part of multipart
 
 	# Check for vertical line
 	if line.coords[0][0] == line.coords[1][0]:
@@ -131,27 +132,25 @@ def offset(line, point, distance, seg_side):
 	y = xsect_y + delta_y
 	return Point([x, y])
 
-parser = Parser()
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
-
 if WRITE_OUT:
 	print('Dropping indexes...')
-	ais_db.drop_index(geocode_table, 'street_address')
+	geocode_table.drop_index('street_address')
 
 	print('Deleting existing XYs...')
-	ais_db.truncate(geocode_table)
+	geocode_table.delete()
 
 	print('Deleting spatial address-parcels...')
 	spatial_stmt = '''
 		DELETE FROM address_parcel
 			WHERE match_type = 'spatial' 
 	'''
-	ais_db.c.execute(spatial_stmt)
+	db.execute(spatial_stmt)
 
 print('Reading streets from AIS...')
-seg_rows = ais_db.read(seg_table, seg_fields, geom_field='geometry', \
+seg_rows = seg_table.read(fields=seg_fields, geom_field='geom', \
 	where=WHERE_STREET_NAME)
 seg_map = {}
+seg_geom_field = seg_table.geom_field
 for seg_row in seg_rows:
 	seg_id = seg_row['seg_id']
 	seg = {
@@ -163,7 +162,7 @@ for seg_row in seg_rows:
 			'low': seg_row['right_from'],
 			'high': seg_row['right_to'],
 		},		
-		'shape': loads(seg_row['geometry_wkt'])
+		'shape': loads(seg_row[seg_geom_field])
 	}
 	seg_map[seg_id] = seg
 
@@ -172,7 +171,7 @@ parcel_xy_map = {}  # source name => parcel row id => centroid xy (Shapely)
 
 for parcel_layer_name, parcel_layer_def in parcel_layers.items():
 	# source_name = parcel_source['name']
-	source_table = parcel_layer_def['table']
+	source_table = parcel_layer_name + '_parcel'
 	print('  - {}'.format(parcel_layer_name))
 
 	# DEV
@@ -183,19 +182,18 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
 	parcel_stmt = '''
 		select
 			id,
-			st_astext(st_centroid(geometry)) as centroid
+			st_astext(st_centroid(geom)) as centroid
 		from {source_table}
-		where {where} st_intersects(st_centroid(geometry), geometry)
+		where {where} st_intersects(st_centroid(geom), geom)
 		union
 		select
 			id,
-			st_astext(st_pointonsurface(geometry)) as centroid
+			st_astext(st_pointonsurface(geom)) as centroid
 		from {source_table}
-		where {where} not st_intersects(st_centroid(geometry), geometry)
+		where {where} not st_intersects(st_centroid(geom), geom)
 	'''.format(where=parcel_where, source_table=source_table)
 	
-	ais_db.c.execute(parcel_stmt)
-	parcel_rows = ais_db.c.fetchall()
+	parcel_rows = db.execute(parcel_stmt)
 	parcel_layer_xy_map = {}
 	for parcel_row in parcel_rows:
 		parcel_id = parcel_row['id']
@@ -210,8 +208,7 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
 	parcel_xy_map[parcel_layer_name] = parcel_layer_xy_map
 
 print('Reading true range...')
-true_range_rows = ais_db.read(true_range_view, ['*'], \
-	where=WHERE_SEG_ID_IN)
+true_range_rows = true_range_view.read(where=WHERE_SEG_ID_IN)
 for true_range_row in true_range_rows:
 	seg_id = true_range_row['seg_id']
 	seg_map[seg_id]['L']['true_low'] = true_range_row['true_left_from']
@@ -222,16 +219,16 @@ for true_range_row in true_range_rows:
 # TODO: redo curb stuff so it works with multiple parcel sources
 # print('Reading curbs...')
 # curb_map = {}
-# curb_rows = ais_db.read(curb_table, ['*'], geom_field='geometry', to_srid=2272)
+# curb_rows = db.read(curb_table, ['*'], geom_field='geometry', to_srid=2272)
 # curb_map = {x['curb_id']: loads(x['geometry_wkt']) for x in curb_rows}
 
 # print('Reading parcel-curbs...')
 # parcel_curb_map = {}  # parcel_id => curb_id
-# parcel_curb_rows = ais_db.read(parcel_curb_table, ['*'])
+# parcel_curb_rows = db.read(parcel_curb_table, ['*'])
 # parcel_curb_map = {x['parcel_id']: x['curb_id'] for x in parcel_curb_rows}
 
 print('Reading addresses from AIS...')
-address_rows = ais_db.read(address_table, address_fields, \
+address_rows = address_table.read(fields=address_fields, \
 	where=WHERE_STREET_NAME)
 	# where='street_address = \'2653-55 N ORIANNA ST\'')
 addresses = []
@@ -263,12 +260,12 @@ for address_row in address_rows:
 	# 		}
 
 print('Reading address-streets...')
-addr_street_rows = ais_db.read(addr_street_table, ['*'], where=WHERE_STREET_ADDRESS_IN)
+addr_street_rows = addr_street_table.read(where=WHERE_STREET_ADDRESS_IN)
 # Create map: street_address => address-street row
 addr_street_map = {x['street_address']: x for x in addr_street_rows}
 
 print('Reading address-parcels...')
-addr_parcel_rows = ais_db.read(addr_parcel_table, ['*'], where=WHERE_STREET_ADDRESS_IN)
+addr_parcel_rows = addr_parcel_table.read(where=WHERE_STREET_ADDRESS_IN)
 
 # Create map: street address => parcel source => [parcel object ids]
 addr_parcel_map = {}
@@ -302,8 +299,7 @@ for i, address_row in enumerate(address_rows):
 			print(i)
 
 		if i % 150000 == 0:
-			ais_db.bulk_insert('geocode', geocode_rows, \
-				geom_field='geometry', from_srid=2272, multi_geom=False)
+			geocode_table.write(geocode_rows)
 			geocode_count += len(geocode_rows)
 			geocode_rows = []
 
@@ -377,7 +373,7 @@ for i, address_row in enumerate(address_rows):
 				'street_address': street_address,
 				'geocode_type': 'centerline',
 				# 'estimated': '1' if seg_estimated else '0',
-				'geometry': dumps(seg_xy)
+				'geom': dumps(seg_xy)
 			})
 
 			'''
@@ -409,7 +405,7 @@ for i, address_row in enumerate(address_rows):
 				'street_address': street_address,
 				'geocode_type': 'true_range',
 				# 'estimated': '1' if true_estimated else '0',
-				'geometry': dumps(true_seg_xy)
+				'geom': dumps(true_seg_xy)
 			})
 
 		'''
@@ -417,7 +413,7 @@ for i, address_row in enumerate(address_rows):
 		'''
 
 		for parcel_layer_name, parcel_layer in parcel_layers.items():
-			source_table = parcel_layer['table']
+			source_table = parcel_layer_name + '_parcel'
 			
 			try:
 				parcel_ids = addr_parcel_map[street_address][parcel_layer_name]
@@ -450,7 +446,7 @@ for i, address_row in enumerate(address_rows):
 						'street_address':	street_address,
 						'geocode_type': 	source_table,
 						# 'estimated': 		'0',
-						'geometry':			dumps(parcel_xy)
+						'geom':			dumps(parcel_xy)
 					})
 
 				# Multiple parcel matches
@@ -475,15 +471,15 @@ for i, address_row in enumerate(address_rows):
 						SELECT
 							id,
 							CASE
-								WHEN ST_Intersects(geometry, ST_Centroid(geometry))
-								THEN ST_AsText(ST_Centroid(geometry))
-								ELSE ST_AsText(ST_PointOnSurface(geometry))
+								WHEN ST_Intersects(geom, ST_Centroid(geom))
+								THEN ST_AsText(ST_Centroid(geom))
+								ELSE ST_AsText(ST_PointOnSurface(geom))
 							END as wkt
 						FROM {source_table}
-						WHERE ST_Intersects(geometry, ST_GeomFromText('{test_xy_wkt}', 2272))
+						WHERE ST_Intersects(geom, ST_GeomFromText('{test_xy_wkt}', 2272))
 					'''.format(source_table=source_table, test_xy_wkt=test_xy_wkt)
-					ais_db.c.execute(parcel_match_stmt)
-					parcel_match = ais_db.c.fetchone()
+					db.execute(parcel_match_stmt)
+					parcel_match = db._c.fetchone()
 
 					if parcel_match:
 						parcel_id = parcel_match['id']
@@ -496,7 +492,7 @@ for i, address_row in enumerate(address_rows):
 							'geocode_type': source_table + '_spatial',
 							# 'estimated': '1',
 							# 'geometry': dumps(pwd_parcel_xy)
-							'geometry': parcel_match_wkt,
+							'geom': parcel_match_wkt,
 						})
 						
 						# Make estimated address-parcel
@@ -553,19 +549,18 @@ for i, address_row in enumerate(address_rows):
 
 if WRITE_OUT:
 	print('Writing XYs...')
-	ais_db.bulk_insert('geocode', geocode_rows, geom_field='geometry', \
-		from_srid=2272, multi_geom=False, chunk_size=150000)
+	geocode_table.write(geocode_rows, chunk_size=150000)
 
 	print('Writing address-parcels...')
-	# ais_db.drop_index('address_parcel', 'street_address')
-	ais_db.bulk_insert('address_parcel', address_parcels, chunk_size=150000)
-	# ais_db.create_index('address_parcel', 'street_address')
+	# db.drop_index('address_parcel', 'street_address')
+	addr_parcel_table.write(address_parcels, chunk_size=150000)
+	# db.create_index('address_parcel', 'street_address')
 
 	print('Creating index...')
-	ais_db.create_index(geocode_table, 'street_address')
+	geocode_table.create_index('street_address')
 
 	print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
 
-ais_db.close()
+db.close()
 
 print('Finished in {}'.format(datetime.now() - start))
