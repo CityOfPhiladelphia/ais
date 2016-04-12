@@ -94,7 +94,6 @@ street_full_map.update({
 
 print('Reading parcels from source...')
 # Get field names
-# wkt_field = '{}_wkt'.format(source_geom_field)
 source_where = source_def['where']
 
 # DEV
@@ -102,7 +101,7 @@ source_where = source_def['where']
 # source_where += " AND mapreg = '001S050134'"
 # source_where += " AND objectid = 540985"
 
-# source_fields = list(field_map.values())
+source_fields = list(field_map.values())
 source_parcels = source_table.read(where=source_where)
 source_parcel_map = {x['objectid']: x for x in source_parcels}
 
@@ -470,6 +469,7 @@ if WRITE_OUT:
 
     print('Writing parcel errors...')
     errors = []
+    source_non_geom_fields = [x for x in source_fields if x != source_geom_field]
 
     for level in ['error', 'warning']:
         issue_map = error_map if level == 'error' else warning_map
@@ -482,7 +482,7 @@ if WRITE_OUT:
                 
                 # Make error row
                 error = {x: source_parcel[x] if source_parcel[x] is not None \
-                    else '' for x in source_fields}
+                    else '' for x in source_non_geom_fields}
 
                 # Make this work for integer fields
                 if error['house'] == '':
@@ -532,7 +532,7 @@ if WRITE_OUT:
                 'reasons':      reasons_joined,
                 'reason_count': len(reasons),
                 'notes':        notes_joined,
-                'shape':        source_parcel[wkt_field],
+                # 'shape':        source_parcel[wkt_field],
             })
             error_polygons.append(error_polygon)
 
