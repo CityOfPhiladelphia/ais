@@ -1,27 +1,30 @@
 import sys
 from datetime import datetime
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from config import CONFIG
+import datum
+from ais import app
 # DEV
 import traceback
 from pprint import pprint
 
-'''
-CONFIG
-'''
 
-poly_table = 'service_area_polygon'
-line_single_table = 'service_area_line_single'
-line_dual_table = 'service_area_line_dual'
-layer_table = 'service_area_layer'
-layers = CONFIG['service_areas']['layers']
-geom_field = CONFIG['service_areas']['geom_field']
-default_object_id_field = 'objectid'
-sde_srid = 2272
+start = datetime.now()
+print('Starting...')
+
+"""SET UP"""
+
+config = app.config
+db = datum.connect(config['DATABASES']['engine'])
+poly_table = db['service_area_polygon']
+line_single_table = db['service_area_line_single']
+line_dual_table = db['service_area_line_dual']
+layer_table = db['service_area_layer']
+layers = config['SERVICE_AREAS']['layers']
+geom_field = 'shape'
+# sde_srid = 2272
 WRITE_OUT = True
 
-'''
+"""
 TRANSFORMS
 
 Define functions here that can be referenced in config.py for mutating
@@ -30,7 +33,7 @@ and be used by any script that iterates over rows dictionaries.
 
 Args: row, value_field
 Return: row
-'''
+"""
 
 def convert_to_integer(row, value_field):
 	value = row[value_field]
@@ -44,51 +47,37 @@ def remove_whitespace(row, value_field):
 	row[value_field] = no_whitespace
 	return row
 
-'''
-SET UP
-'''
-
-start = datetime.now()
-print('Starting...')
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
-
-'''
-SERVICE AREA LAYERS
-'''
 print('\n** SERVICE AREA LAYERS **')
 
 if WRITE_OUT:
 	print('Deleting existing service area layers...')
-	ais_db.truncate(layer_table)
+	layer_table.delete()
 
 	print('Writing service area layers...')
 	keys = ['layer_id', 'name', 'description']
 	layer_rows = [{key: layer[key] for key in keys} for layer in layers]
-	ais_db.bulk_insert('service_area_layer', layer_rows)
+	db['service_area_layer'].write(layer_rows)
 
-'''
-SERVICE AREAS
-'''
 print('\n** SERVICE AREAS **')
 
 if WRITE_OUT:
 	print('Dropping indexes...')
-	ais_db.drop_index(line_single_table, 'seg_id')
-	ais_db.drop_index(line_dual_table, 'seg_id')
+	line_single_table.drop_index('seg_id')
+	line_dual_table.drop_index('seg_id')
 
 	print('Deleting existing service area polys...')
-	ais_db.truncate(poly_table)
+	poly_table.delete()
 	print('Deleting existing service area single-value lines...')
-	ais_db.truncate(line_single_table)
+	line_single_table.delete()
 	print('Deleting existing service area dual-value lines...')
-	ais_db.truncate(line_dual_table)
+	line_dual_table.delete()
 
 polys = []
 line_singles = []
 line_duals = []
 
 print('Reading service areas...')
-wkt_field = geom_field + '_wkt'
+# wkt_field = geom_field + '_wkt'
 
 for layer in layers:
 	layer_id = layer['layer_id']
@@ -100,10 +89,20 @@ for layer in layers:
 		raise Exception('Too many line sources for {}'.format(layer_id))
 
 	for source_type, source in sources.items():
-		# Get attrs
+		# Connect to DB
 		source_db_name = source['db']
-		source_table = source['table']
-		object_id_field = source.get('object_id_field', default_object_id_field)
+		try:
+			source_db = datum.connect(config['DATABASES'][source_db_name])
+		except KeyError:
+			print('Database {} not found'.format(layer_id))
+			continue
+
+		source_table_name = source['table']
+		source_table = source_db[source_table_name]
+		# import pdb; pdb.set_trace()
+		source_geom_field = source_table.geom_field
+		# If no object ID field is specified, default to `objectid`.
+		object_id_field = source.get('object_id_field', 'objectid')
 		
 		# If there are transforms, reference their functions
 		transforms = source.get('transforms', [])
@@ -112,18 +111,11 @@ for layer in layers:
 			f = getattr(sys.modules[__name__], transform)
 			transform_map[transform] = f
 		
-		# Connect to DB
-		try:
-			source_db = connect_to_db(CONFIG['db'][source_db_name])
-		except KeyError:
-			print('Database {} not found'.format(layer_id))
-			continue
-
 		# POLYGON
 		if source_type == 'polygon':
 			value_field = source['value_field']
 			source_fields = [value_field, object_id_field]
-			source_rows = source_db.read(source_table, source_fields, \
+			source_rows = source_table.read(fields=source_fields, \
 				geom_field=geom_field)
 
 			for i, source_row in enumerate(source_rows):
@@ -139,15 +131,12 @@ for layer in layers:
 					value = value.strip()
 
 				object_id = source_row[object_id_field]
-				if not object_id:
-					pprint(source_row)
-					sys.exit()
 
 				poly = {
 					'layer_id': 			layer_id,
 					'source_object_id': 	source_row[object_id_field],
 					'value': 				value or '',
-					'geometry': 			source_row[wkt_field],
+					'geom': 				source_row[source_geom_field],
 				}
 				polys.append(poly)
 
@@ -156,7 +145,7 @@ for layer in layers:
 			value_field = source['value_field']
 			seg_id_field = source['seg_id_field']
 			source_fields = [value_field, object_id_field, seg_id_field]
-			source_rows = source_db.read(source_table, source_fields)
+			source_rows = source_table.read(fields=source_fields)
 
 			for i, source_row in enumerate(source_rows):
 				# Transform if necessary
@@ -189,7 +178,7 @@ for layer in layers:
 				object_id_field,
 				seg_id_field
 			]
-			source_rows = source_db.read(source_table, source_fields)
+			source_rows = source_table.read(fields=source_fields)
 
 			for i, source_row in enumerate(source_rows):
 				# Transform if necessary
@@ -210,19 +199,18 @@ for layer in layers:
 
 if WRITE_OUT:
 	print('Writing service area polygons...')
-	ais_db.bulk_insert(poly_table, polys, geom_field='geometry', \
-		from_srid=sde_srid)
+	poly_table.write(polys)
 
 	print('Writing service area single-value lines...')
-	ais_db.bulk_insert(line_single_table, line_singles)
+	line_single_table.write(line_singles)
 
 	print('Writing service area line dual-value lines...')
-	ais_db.bulk_insert(line_dual_table, line_duals)
+	line_dual_table.write(line_duals)
 
 	print('Creating indexes...')
-	ais_db.create_index(line_single_table, 'seg_id')
-	ais_db.create_index(line_dual_table, 'seg_id')
+	line_single_table.create_index('seg_id')
+	line_dual_table.create_index('seg_id')
 
 source_db.close()
-ais_db.close()
+db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))
