@@ -4,12 +4,13 @@ from shapely.wkt import loads
 from datetime import datetime
 from phladdress.parser import Parser
 from copy import deepcopy
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
+import datum
+from ais import app
+from ais.models import Address
 # DEV
 import traceback
 from pprint import pprint
+
 
 print('Starting...')
 start = datetime.now()
@@ -17,40 +18,22 @@ start = datetime.now()
 # TODO: This should probably make a DB query for each address, rather than chunking
 # into street names. Getting hard to manage.
 
-'''
-CONFIG
-'''
+"""SET UP"""
 
-tag_fields = CONFIG['address_summary']['tag_fields']
-geocode_table = 'geocode'
-geocode_fields = [
-	'street_address',
-	'geocode_type',
-]
-address_table = 'address'
-geocode_types = [
-	'pwd_parcel',
-	'dor_parcel',
-	# 'pwd_parcel_spatial',
-	# 'dor_parcel_spatial',
-	'true_range',
-	# 'centerline',
-	# 'curb',
-]
-tag_table = 'address_tag'
-link_table = 'address_link'
-address_summary_table = 'address_summary'
-address_street_table = 'address_street'
-address_parcel_table = 'address_parcel'
-address_link_table = 'address_link'
-MAX_VALUES = 5
+config = app.config
+db = datum.connect(config['DATABASES']['engine'])
+tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
+geocode_table = db['geocode']
+address_table = db['address']
+max_values = config['ADDRESS_SUMMARY']['max_values']
+geocode_types = config['ADDRESS_SUMMARY']['geocode_types']
+
+tag_table = db['address_tag']
+link_table = db['address_link']
+address_summary_table = db['address_summary']
+
+# DEV
 WRITE_OUT = True
-
-'''
-SET UP
-'''
-
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
 
 def wkt_to_xy(wkt):
 	xy = wkt.replace('POINT(', '')
@@ -60,7 +43,7 @@ def wkt_to_xy(wkt):
 
 print('Reading address links...')
 link_map = {}
-link_rows = ais_db.read(link_table, ['*'])
+link_rows = link_table.read()
 for link_row in link_rows:
 	address_1 = link_row['address_1']
 	address_2 = link_row['address_2']
@@ -80,22 +63,23 @@ print('Reading street names...')
 street_name_stmt = '''
 	select distinct street_name from address order by street_name
 '''
-ais_db.c.execute(street_name_stmt)
-street_names = [x['street_name'] for x in ais_db.c.fetchall()]
+street_names = [x['street_name'] for x in db.execute(street_name_stmt)]
 
 if WRITE_OUT:
 	print('Dropping indexes...')
-	ais_db.drop_index(address_summary_table, 'street_address')
+	address_summary_table.drop_index('street_address')
 
 	print('Deleting existing summary rows...')
-	ais_db.truncate(address_summary_table)
+	address_summary_table.delete()
 
 	print('Creating temporary street name index...')
-	ais_db.create_index(address_table, 'street_name')
+	address_table.create_index('street_name')
 
 print('Reading XYs...')
-geocode_rows = ais_db.read(geocode_table, geocode_fields, \
-	geom_field='geometry')
+geocode_rows = geocode_table.read(\
+	fields=['street_address', 'geocode_type'],\
+	geom_field='geom'\
+)
 geocode_map = {}  # street_address => [geocode rows]
 for geocode_row in geocode_rows:
 	street_address = geocode_row['street_address']
@@ -104,7 +88,7 @@ for geocode_row in geocode_rows:
 	geocode_map[street_address].append(geocode_row)
 
 print('Indexing addresses...')
-address_rows_all = ais_db.read(address_table, ['*'])
+address_rows_all = address_table.read()
 street_map = {}  # street_name => [address rows]
 for address_row in address_rows_all:
 	street_name = address_row['street_name']
@@ -117,11 +101,10 @@ address_map = {x['street_address']: x for x in address_rows_all}
 print('Reading unit children...')
 unit_child_stmt = '''
 	select address_1, address_2
-	from {}
+	from address_link
 	where relationship = 'has generic unit'
-'''.format(address_link_table)
-ais_db.c.execute(unit_child_stmt)
-unit_child_rows = ais_db.c.fetchall()
+'''
+unit_child_rows = db.execute(unit_child_stmt)
 unit_child_map = {}  # unit parent => [unit children]
 unit_children_set = set()  # use this to lookup children quickly
 
@@ -168,8 +151,7 @@ for i, street_name in enumerate(street_names):
 			select street_address from address where street_name = '{}'
 		)
 	'''.format(street_name)
-	ais_db.c.execute(tag_stmt)
-	tag_rows = ais_db.c.fetchall()
+	tag_rows = db.execute(tag_stmt)
 
 	# Make tag map
 	for tag_row in tag_rows:
@@ -228,7 +210,7 @@ for i, street_name in enumerate(street_names):
 			# 			generic_unit_tags[parent_unit_address][field_name].append('')
 			# else:
 			if len(values) > 0:
-				value = '|'.join(values[:MAX_VALUES])
+				value = '|'.join(values[:max_values])
 			else:
 				if field_type == 'number':
 					value = None
@@ -241,36 +223,35 @@ for i, street_name in enumerate(street_names):
 		# Geocode
 		try:
 			geocode_rows = geocode_map[street_address]
-			xy_map = {x['geocode_type']: x['geometry_wkt'] for x in geocode_rows}
-			geocode_vals = None
-
-			for geocode_type in geocode_types:
-				if geocode_type in xy_map:
-					xy_wkt = xy_map[geocode_type]
-					x, y = wkt_to_xy(xy_wkt)
-
-					# Rename geocode type for estimated PWD
-					# parcel_estimated = False
-					# if geocode_type == 'pwd_parcel':
-					# 	for geocode_row in geocode_rows:
-					# 		if geocode_row['geocode_type'] == 'pwd_parcel':
-					# 			parcel_estimated = geocode_row['estimated']
-					# 			break
-					# if parcel_estimated:
-					# 	geocode_type = 'pwd_parcel_spatial'
-
-					geocode_vals = {
-						'geocode_type': geocode_type,
-						'geocode_x': x,
-						'geocode_y': y,
-					}
-					break
-
 		except KeyError:
 			geocode_errors += 1
-
 		except Exception as e:
 			raise e
+
+		xy_map = {x['geocode_type']: x['geom'] for x in geocode_rows}
+		geocode_vals = None
+
+		for geocode_type in geocode_types:
+			if geocode_type in xy_map:
+				xy_wkt = xy_map[geocode_type]
+				x, y = wkt_to_xy(xy_wkt)
+
+				# Rename geocode type for estimated PWD
+				# parcel_estimated = False
+				# if geocode_type == 'pwd_parcel':
+				# 	for geocode_row in geocode_rows:
+				# 		if geocode_row['geocode_type'] == 'pwd_parcel':
+				# 			parcel_estimated = geocode_row['estimated']
+				# 			break
+				# if parcel_estimated:
+				# 	geocode_type = 'pwd_parcel_spatial'
+
+				geocode_vals = {
+					'geocode_type': geocode_type,
+					'geocode_x': x,
+					'geocode_y': y,
+				}
+				break
 
 		# Only write out addresses with an XY
 		if geocode_vals:
@@ -283,29 +264,28 @@ WRITE OUT
 
 if WRITE_OUT:
 	print('Writing summary rows...')
-	ais_db.bulk_insert(address_summary_table, summary_rows, chunk_size=100000)
-	# ais_db.c.execute("COPY address_summary TO 'D:\\temp\\address_summary_split.csv' DELIMITER ',' CSV HEADER;")
+	address_summary_table.write(summary_rows, chunk_size=100000)
 	del summary_rows
 
 	print('Creating indexes...')
-	ais_db.create_index(address_summary_table, 'street_address')
+	address_summary_table.create_index('street_address')
 
 	print('Deleting temporary street name index...')
-	ais_db.drop_index(address_summary_table, 'street_name')
+	address_summary_table.drop_index('street_name')
 
 	print('Populating seg IDs...')
 	seg_stmt = '''
-		update {} asm
+		update address_summary asm
 		set seg_id = ast.seg_id, seg_side = ast.seg_side
 		from address_street ast
 		where ast.street_address = asm.street_address
-	'''.format(address_summary_table)
-	ais_db.c.execute(seg_stmt)
-	ais_db.save()
+	'''
+	db.execute(seg_stmt)
+	db.save()
 
 	print('Populating PWD parcel IDs...')
 	parcel_stmt = '''
-		update {} asm
+		update address_summary asm
 		set pwd_parcel_id = p.parcel_id
 		from
 			address_parcel ap,
@@ -315,13 +295,13 @@ if WRITE_OUT:
 			ap.match_type != 'spatial' and
 			ap.street_address = asm.street_address and
 			p.id = ap.parcel_row_id
-	'''.format(address_summary_table)
-	ais_db.c.execute(parcel_stmt)
-	ais_db.save()
+	'''
+	db.execute(parcel_stmt)
+	db.save()
 
 	print('Populating DOR parcel IDs...')
 	parcel_stmt = '''
-		update {} asm
+		update address_summary asm
 		set dor_parcel_id = d.parcel_id
 		from
 			address_parcel ap,
@@ -331,22 +311,22 @@ if WRITE_OUT:
 			ap.match_type != 'spatial' and
 			ap.street_address = asm.street_address and
 			d.id = ap.parcel_row_id
-	'''.format(address_summary_table)
-	ais_db.c.execute(parcel_stmt)
-	ais_db.save()
+	'''
+	db.execute(parcel_stmt)
+	db.save()
 
 	print('Populating OPA accounts...')
 	prop_stmt = '''
-		update {} asm
+		update address_summary asm
 		set opa_account_num = op.account_num,
 			opa_owners = op.owners,
 			opa_address = op.street_address
 		from address_property ap, opa_property op
 		where asm.street_address = ap.street_address and
 			ap.opa_account_num = op.account_num
-	'''.format(address_summary_table)
-	ais_db.c.execute(prop_stmt)
-	ais_db.save()
+	'''
+	db.execute(prop_stmt)
+	db.save()
 
 	print('Populating ZIP codes...')
 	zip_stmt = '''
@@ -359,9 +339,9 @@ if WRITE_OUT:
 		where asm.street_address = az.street_address and
 			az.usps_id = zr.usps_id
 	'''.format(address_summary_table)
-	ais_db.c.execute(zip_stmt)
-	ais_db.save()
+	db.execute(zip_stmt)
+	db.save()
 
-ais_db.close()
+db.close()
 print('{} geocode errors'.format(geocode_errors))
 print('Finished in {} seconds'.format(datetime.now() - start))
