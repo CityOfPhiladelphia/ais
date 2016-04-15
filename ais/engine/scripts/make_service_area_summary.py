@@ -48,7 +48,7 @@ WRITE_OUT = True
 
 # Keep poly rows in memory so we make less trips to the database for overlapping
 # points.
-xy_map = {}  # x => y => [sa_poly_rows]
+# xy_map = {}  # x => y => [sa_poly_rows]
 
 """MAIN"""
 
@@ -88,13 +88,22 @@ if WRITE_OUT:
 # 	line_dual_map[layer_id][seg_id]['right'] = right_value
 
 print('Reading address summary...')
-address_summary_rows = address_summary_table.read(fields=address_summary_fields)
+address_summary_rows = address_summary_table.read(\
+	fields=address_summary_fields, \
+	sort=['geocode_x', 'geocode_y']\
+)
 
 sa_summary_rows = []
 
-for i, address_summary_row in enumerate(address_summary_rows[:1]):
+# Sort address summary rows by X, Y and use these to compare the last row
+# to the current one. This minimizes trips to the database for poly values.
+last_x = None
+last_y = None
+last_sa_rows = None
+
+for i, address_summary_row in enumerate(address_summary_rows):
 	try:
-		if i % 25000 == 0:
+		if i % 10000 == 0:
 			print(i)
 
 			# Write in chunks
@@ -110,10 +119,12 @@ for i, address_summary_row in enumerate(address_summary_rows[:1]):
 		y = address_summary_row['geocode_y']
 
 		sa_rows = None
-		if x in xy_map:
-			y_map = xy_map[x]
-			if y in y_map:
-				sa_rows = y_map[y]
+		# if x in xy_map:
+		# 	y_map = xy_map[x]
+		# 	if y in y_map:
+		# 		sa_rows = y_map[y]
+		if last_x and (last_x == x and last_y == y):
+			sa_rows = last_sa_rows
 
 		if sa_rows is None:
 			# Get intersecting service areas
@@ -121,8 +132,8 @@ for i, address_summary_row in enumerate(address_summary_rows[:1]):
 			sa_rows = poly_table.read(fields=['layer_id', 'value'], where=where)
 
 			# Add to map
-			x_map = xy_map[x] = {}
-			x_map[y] = sa_rows
+			# x_map = xy_map[x] = {}
+			# x_map[y] = sa_rows
 		
 		# Create and insert summary row
 		sa_summary_row = deepcopy(sa_summary_row_template)
@@ -143,6 +154,10 @@ for i, address_summary_row in enumerate(address_summary_rows[:1]):
 		# 		if 
 
 		sa_summary_rows.append(sa_summary_row)
+
+		last_x = x
+		last_y = y
+		last_sa_rows = sa_rows
 
 	except:
 		print(traceback.format_exc())
