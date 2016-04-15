@@ -20,10 +20,13 @@ class AddressJsonSerializer:
         ])
         return data
 
+    def render(self, data):
+        return json.dumps(data)
+
     def serialize(self, address):
         data = self.model_to_data(address)
-        return json.dumps(data)
+        return self.render(data)
 
     def serialize_many(self, addresses):
         data = [self.model_to_data(address) for address in addresses]
-        return json.dumps(data)
+        return self.render(data)

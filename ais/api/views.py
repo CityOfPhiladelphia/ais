@@ -14,7 +14,7 @@ from .errors import json_error
 from .serializers import AddressJsonSerializer
 
 
-@app.route('/address/<query>')
+@app.route('/addresses/<query>')
 def addresses_view(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -36,18 +36,34 @@ def addresses_view(query):
     * Curb
     """
     parsed = PassyunkParser().parse(query)
-    std_address = parsed['components']['street_address']
 
-    address = Address.query.filter_by(street_address=std_address).first()
-    if address is None:
-        error = json_error(404, 'Could not find address matching query.',
+    # Match a set of addresses
+    std_address = parsed['components']['street_address']
+    filters = {
+        key: value
+        for key, value in (
+            ('street_name', parsed['components']['street']['name']),
+            ('address_low', parsed['components']['address']['low'] or parsed['components']['address']['full']),
+            ('address_high', parsed['components']['address']['high']),
+            ('street_predir', parsed['components']['street']['predir']),
+            ('street_postdir', parsed['components']['street']['postdir']),
+            ('street_suffix', parsed['components']['street']['suffix']),
+            ('unit_num', parsed['components']['unit']['unit_num']),
+            ('unit_type', parsed['components']['unit']['unit_type']),
+        )
+        if value is not None
+    }
+    addresses = Address.query.filter_by(**filters)
+
+    if addresses.count() == 0:
+        error = json_error(404, 'Could not find addresses matching query.',
                            {'query': query, 'standardized': std_address})
         return Response(response=error, status=404,
                         mimetype="application/json")
 
     else:
         serializer = AddressJsonSerializer()
-        result = serializer.serialize(address)
+        result = serializer.serialize_many(addresses)
         return Response(response=result, status=200,
                         mimetype="application/json")
 
