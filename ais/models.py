@@ -48,7 +48,7 @@ class StreetAlias(db.Model):
     street_postdir = db.Column(db.Text)
     street_full = db.Column(db.Text)
     seg_id = db.Column(db.Integer)
-    
+
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
 
@@ -525,7 +525,7 @@ class AddressSummary(db.Model):
     pwd_account_nums = db.Column(db.Text)
     li_address_key = db.Column(db.Text)
     voters = db.Column(db.Text)
-    
+
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
