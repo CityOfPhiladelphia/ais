@@ -25,6 +25,15 @@ def addresses_view(query):
     * DOR "ID"
     * L&I Key
     * Zoning something or other
+
+    TODO: Filter for the actual pieces, not the whole address string :(. E.g.,
+          "615 48TH ST" should resolve to "615 S 48TH ST".
+
+    For geogode types:
+    * PWD
+    * DOR
+    * True Range
+    * Curb
     """
     parsed = PassyunkParser().parse(query)
     std_address = parsed['components']['street_address']

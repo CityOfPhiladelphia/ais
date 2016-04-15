@@ -330,6 +330,15 @@ class SourceAddress(db.Model):
     street_address = db.Column(db.Text)
 
 class AddressLink(db.Model):
+    """
+    relationship choices:
+    * in range -- address falls in an official address range
+    * has base --
+    * has generic unit --
+    * matches unit --
+
+    74-78 LAUREL ST UNIT 6
+    """
     id = db.Column(db.Integer, primary_key=True)
     address_1 = db.Column(db.Text)
     relationship = db.Column(db.Text)
@@ -446,7 +455,7 @@ class ServiceAreaLineDual(db.Model):
 
 class ServiceAreaDiff(db.Model):
     '''
-    Layer of all Address Summary points where a difference was observed between 
+    Layer of all Address Summary points where a difference was observed between
     AIS and ULRS. One point per difference.
     '''
     id = db.Column(db.Integer, primary_key=True)
@@ -577,7 +586,7 @@ class AddressError(db.Model):
 
 class MultipleSegLine(db.Model):
     '''
-    Lines connecting range addresses and segs wherever a range matches to 
+    Lines connecting range addresses and segs wherever a range matches to
     more than one street seg.
     '''
     id = db.Column(db.Integer, primary_key=True)
