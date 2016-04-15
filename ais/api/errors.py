@@ -3,7 +3,8 @@ from collections import OrderedDict
 
 
 STATUS_CODES = {
-    404: 'Not Found'
+    400: 'Bad Request',
+    404: 'Not Found',
 }
 
 def json_error(status, message, details={}):

@@ -7,11 +7,16 @@ Does three primary things:
 
 from ais import app
 from ais.models import Address
-from flask import Response
+from flask import Response, request
 from passyunk.parser import PassyunkParser
 
 from .errors import json_error
+from .paginator import Paginator
 from .serializers import AddressJsonSerializer
+
+
+def json_response(*args, **kwargs):
+    return Response(*args, mimetype='application/json', **kwargs)
 
 
 @app.route('/addresses/<query>')
@@ -38,7 +43,6 @@ def addresses_view(query):
     parsed = PassyunkParser().parse(query)
 
     # Match a set of addresses
-    std_address = parsed['components']['street_address']
     filters = {
         key: value
         for key, value in (
@@ -55,17 +59,37 @@ def addresses_view(query):
     }
     addresses = Address.query.filter_by(**filters)
 
-    if addresses.count() == 0:
+    # Ensure that we have results
+    normalized_address = parsed['components']['street_address']
+    addresses_count = addresses.count()
+    if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'standardized': std_address})
-        return Response(response=error, status=404,
-                        mimetype="application/json")
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
 
-    else:
-        serializer = AddressJsonSerializer()
-        result = serializer.serialize_many(addresses)
-        return Response(response=result, status=200,
-                        mimetype="application/json")
+    # Figure out which page the user is requesting
+    try:
+        page_str = request.args.get('page', '1')
+        page = int(page_str)
+    except ValueError:
+        error = json_error(400, 'Invalid page value.', {'page': page_str})
+        return json_response(response=error, status=400)
+
+    # Page has to be less than the available number of pages
+    paginator = Paginator(addresses)
+    page_count = paginator.page_count
+    if page < 1 or page > page_count:
+        error = json_error(400, 'Page out of range.',
+                           {'page': page, 'page_count': page_count})
+        return json_response(response=error, status=400)
+
+    # Render the response
+    addresses_page = paginator.get_page(page)
+    serializer = AddressJsonSerializer(
+        metadata={'query': query, 'normalized': normalized_address},
+        pagination=paginator.get_page_info(page))
+    result = serializer.serialize_many(addresses_page)
+    return json_response(response=result, status=200)
 
     # TODO: If it's not a perfect match, do we want to do something like a
     # soundex or some other fuzzy match?
