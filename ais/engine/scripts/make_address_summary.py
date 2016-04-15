@@ -2,7 +2,6 @@ import sys
 from datetime import datetime
 from shapely.wkt import loads
 from datetime import datetime
-from phladdress.parser import Parser
 from copy import deepcopy
 import datum
 from ais import app
