@@ -4,65 +4,59 @@ import csv
 from copy import deepcopy
 from datetime import datetime
 from phladdress.parser import Parser
-from db.connect import connect_to_db
-from models.address import Address
-from config import CONFIG
+import datum
+from ais import app
+from ais.models import Address
 # DEV
 import traceback
 from pprint import pprint
 
 start = datetime.now()
 
-'''
-CONFIG
-'''
+"""SET UP"""
 
-source_db = connect_to_db(CONFIG['db']['ais_sources'])
-# source_table = 'usps_zip4s'
-source_table = 'vw_usps_zip4s_ais'
-ais_db = connect_to_db(CONFIG['db']['ais_work'])
+config = app.config
+db = datum.connect(config['DATABASES']['engine'])
+source_db = datum.connect(config['DATABASES']['gis'])
+# source_table = source_db['usps_zip4s']
+source_table = source_db['vw_usps_zip4s_ais']
 field_map = {
-	'usps_id':			'UPDATEKEY',
-	'address_low':		'ADDRLOW',
-	'address_high':		'ADDRHIGH',
-	'address_oeb':		'ADDROEB',
-	'street_predir':	'STREETPRE',
-	'street_name':		'STREETNAME',
-	'street_suffix':	'STREETSUFF',
-	'street_postdir':	'STREETPOST',
-	'unit_type':		'ADDRSECONDARYABBR',
-	'unit_low':			'ADDRSECONDARYLOW',
-	'unit_high':		'ADDRSECONDARYHIGH',
-	'unit_oeb':			'ADDRSECONDARYOEB',
-	'zip_code':			'ZIPCODE',
-	'zip_4_low':		'ZIP4LOW',
-	'zip_4_high':		'ZIP4HIGH',
+	'usps_id':			'updatekey',
+	'address_low':		'addrlow',
+	'address_high':		'addrhigh',
+	'address_oeb':		'addroeb',
+	'street_predir':	'streetpre',
+	'street_name':		'streetname',
+	'street_suffix':	'streetsuff',
+	'street_postdir':	'streetpost',
+	'unit_type':		'addrsecondaryabbr',
+	'unit_low':			'addrsecondarylow',
+	'unit_high':		'addrsecondaryhigh',
+	'unit_oeb':			'addrsecondaryoeb',
+	'zip_code':			'zipcode',
+	'zip_4_low':		'zip4low',
+	'zip_4_high':		'zip4high',
 }
 numeric_fields = ['address_low', 'address_high']
-zip_range_table = 'zip_range'
+zip_range_table = db['zip_range']
+address_zip_table = db['address_zip']
 WRITE_OUT = True
-
-'''
-SET UP
-'''
 
 source_fields = [field_map[x] for x in field_map]
 char_fields = [x for x in field_map if not x in numeric_fields]
 
-'''
-MAIN
-'''
+"""MAIN"""
 
 if WRITE_OUT:
 	print('Dropping indexes...')
-	ais_db.drop_index(zip_range_table, 'street_address')
+	zip_range_table.drop_index('street_address')
 
 	print('Deleting existing zip ranges...')
-	ais_db.truncate(zip_range_table)
+	zip_range_table.delete()
 
 print('Reading zip ranges from source...')
 # TODO: currently filtering out alphanumeric addrlows
-source_rows = source_db.read(source_table, source_fields)
+source_rows = source_table.read(fields=source_fields)
 
 zip_ranges = []
 
@@ -94,28 +88,28 @@ for i, source_row in enumerate(source_rows):
 
 if WRITE_OUT:
 	print('Writing zip ranges to AIS...')
-	ais_db.bulk_insert(zip_range_table, zip_ranges)
+	zip_range_table.write(zip_ranges)
 
 	print('Creating indexes...')
-	ais_db.create_index(zip_range_table, 'usps_id')
+	zip_range_table.create_index('usps_id')
+
 
 ################################################################################
 # RELATE SANDBOX
 ################################################################################
 
+print('\n** RELATE TO ADDRESSES**')
 print('Reading addresses...')
-addresses = ais_db.read('address', ['street_address'])
+addresses = db['address'].read(fields=['street_address'])
 # addresses = ais_db.read('address', ['street_address'], where="street_address = '1019 SPRUCE ST # 1F'")
 addresses = [Address(x['street_address']) for x in addresses]
 
-# Copy from here on
-
 if WRITE_OUT:
 	print('Dropping indexes...')
-	ais_db.drop_index('address_zip', 'street_address')
-	ais_db.drop_index('address_zip', 'usps_id')
+	address_zip_table.drop_index('street_address')
+	address_zip_table.drop_index('usps_id')
 	print('Dropping address-zips...')
-	ais_db.truncate('address_zip')
+	address_zip_table.delete()
 
 # index zip ranges by street_full
 street_full_fields = [
@@ -302,14 +296,14 @@ print('exact: ' + str(exact_count))
 
 if WRITE_OUT:
 	print('Writing address-zips...')
-	ais_db.bulk_insert('address_zip', address_zips, chunk_size=150000)
+	address_zip_table.write(address_zips, chunk_size=150000)
 	print('Creating index...')
-	ais_db.create_index('address_zip', 'street_address')
-	ais_db.create_index('address_zip', 'usps_id')
+	address_zip_table.create_index('street_address')
+	address_zip_table.create_index('usps_id')
 
 ################################################################################
 
 source_db.close()
-ais_db.close()
+db.close()
 
 print('Finished in {}'.format(datetime.now() - start))
