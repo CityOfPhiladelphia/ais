@@ -39,6 +39,14 @@ def addresses_view(query):
     * DOR
     * True Range
     * Curb
+
+    TODO: Give each address a score every time someone accesses it. This can be
+          used for semi-intelligent ordering. For example, if I query for "440
+          Broad St", I'll most often mean the school district building. However,
+          with default ordering, a building on S Broad with a whole bunch of
+          units comes up first. That's annoying. But if 440 N Broad was accessed
+          a bunch of times, it should have a higher popularity score than any
+          one of those units, and that should help it to the top of the list.
     """
     parsed = PassyunkParser().parse(query)
 
