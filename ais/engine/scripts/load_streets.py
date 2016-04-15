@@ -1,7 +1,7 @@
 import sys
 import traceback
 from pprint import pprint
-from phladdress.parser import Parser
+# from phladdress.parser import Parser
 from ais import app
 from datum import Database
 from ais.models import StreetSegment
@@ -11,6 +11,7 @@ from ais.models import StreetSegment
 
 config = app.config
 
+Parser = config['PARSER']
 db = Database(config['DATABASES']['engine'])
 engine_srid = config['ENGINE_SRID']
 
@@ -60,9 +61,11 @@ for i, source_row in enumerate(source_rows):
 		try:
 			parsed = parser.parse(source_street_full)
 			if parsed['type'] != 'street':
+				print(parsed['type'])
+				sys.exit()
 				raise ValueError('Invalid street')
 			comps = parsed['components']
-		except:
+		except Exception as e:
 			raise ValueError('Could not parse')
 
 		# Check for unaddressable streets

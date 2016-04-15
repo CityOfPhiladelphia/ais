@@ -1,7 +1,6 @@
 import sys
 import re
 from datetime import datetime
-from phladdress.parser import Parser
 import datum
 from ais import app
 from ais.models import Address
@@ -24,9 +23,10 @@ field_map = source_def['field_map']
 db = datum.connect(config['DATABASES']['engine'])
 prop_table = db['opa_property']
 
-"""MAIN"""
-
+Parser = config['PARSER']
 parser = Parser()
+
+"""MAIN"""
 
 # Get field names
 source_fields = list(field_map.values())

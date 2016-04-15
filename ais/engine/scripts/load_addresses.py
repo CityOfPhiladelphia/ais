@@ -3,7 +3,6 @@ import os
 import csv
 from copy import deepcopy
 from datetime import datetime
-from phladdress.parser import Parser
 import datum
 from ais import app
 from ais.models import Address
@@ -17,6 +16,7 @@ print('Starting...')
 start = datetime.now()
 
 config = app.config
+Parser = config['PARSER']
 
 sources = config['ADDRESS_SOURCES']
 db = datum.connect(config['DATABASES']['engine'])

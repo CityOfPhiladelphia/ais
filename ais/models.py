@@ -1,9 +1,9 @@
 import copy
 from geoalchemy2.types import Geometry
-from phladdress.parser import Parser
 from ais import app, app_db as db
 from ais.util import *
 
+Parser = app.config['PARSER']
 parser = Parser()
 config = app.config
 ENGINE_SRID = config['ENGINE_SRID']

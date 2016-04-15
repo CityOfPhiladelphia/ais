@@ -1,5 +1,4 @@
 import sys
-from phladdress.parser import Parser
 import datum
 from ais import app
 # DEV

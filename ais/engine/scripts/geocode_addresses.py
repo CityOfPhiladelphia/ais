@@ -5,7 +5,6 @@ from math import sin, cos, atan2, radians, pi, degrees
 from datetime import datetime
 from shapely.wkt import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
-from phladdress.parser import Parser
 import datum
 from ais import app
 from ais.models import Address
@@ -21,8 +20,9 @@ print('Starting...')
 SET UP
 '''
 
-parser = Parser()
 config = app.config
+Parser = config['PARSER']
+parser = Parser()
 db = datum.connect(config['DATABASES']['engine'])
 
 # parcel_table = 'pwd_parcel'
