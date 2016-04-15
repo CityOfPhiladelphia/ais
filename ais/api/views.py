@@ -31,14 +31,11 @@ def addresses_view(query):
     * L&I Key
     * Zoning something or other
 
-    TODO: Filter for the actual pieces, not the whole address string :(. E.g.,
-          "615 48TH ST" should resolve to "615 S 48TH ST".
-
-    For geogode types:
-    * PWD
-    * DOR
-    * True Range
-    * Curb
+    TODO: Geocode addresses by matching against types in the following order:
+          * PWD
+          * DOR
+          * True Range
+          * Curb
 
     TODO: Give each address a score every time someone accesses it. This can be
           used for semi-intelligent ordering. For example, if I query for "440
@@ -47,6 +44,12 @@ def addresses_view(query):
           units comes up first. That's annoying. But if 440 N Broad was accessed
           a bunch of times, it should have a higher popularity score than any
           one of those units, and that should help it to the top of the list.
+
+    TODO: Addresses should also have a match score that raises those addresses
+          that match proportionally more filter criteria. For example, "1234
+          Market St" matches the building as well as a number of units. The
+          building should come first, since it's a more complete match for our
+          query (less unmatched extant data than the other addresses).
     """
     parsed = PassyunkParser().parse(query)
 
@@ -66,10 +69,11 @@ def addresses_view(query):
         if value is not None
     }
     addresses = Address.query.filter_by(**filters)
+    paginator = Paginator(addresses)
 
     # Ensure that we have results
     normalized_address = parsed['components']['street_address']
-    addresses_count = addresses.count()
+    addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
@@ -84,7 +88,6 @@ def addresses_view(query):
         return json_response(response=error, status=400)
 
     # Page has to be less than the available number of pages
-    paginator = Paginator(addresses)
     page_count = paginator.page_count
     if page < 1 or page > page_count:
         error = json_error(400, 'Page out of range.',
