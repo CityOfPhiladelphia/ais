@@ -6,7 +6,7 @@ Does three primary things:
 """
 
 from ais import app
-from ais.models import Address
+from ais.models import Address, AddressProperty
 from flask import Response, request
 from passyunk.parser import PassyunkParser
 
@@ -30,6 +30,10 @@ def addresses_view(query):
     * DOR "ID"
     * L&I Key
     * Zoning something or other
+
+    TODO: Check with Rob to about whether we should depend on the address
+          summary table, and if not whether we're safe to simply join on
+          stree_address, and which tables we need to be concerned with.
 
     TODO: Geocode addresses by matching against types in the following order:
           * PWD
@@ -104,3 +108,23 @@ def addresses_view(query):
 
     # TODO: If it's not a perfect match, do we want to do something like a
     # soundex or some other fuzzy match?
+
+
+@app.route('/account/<number>')
+def account_number_view(number):
+    property_ = AddressProperty.query\
+        .filter_by(opa_account_num=number)\
+        .join(Address, AddressProperty.street_address==Address.street_address)\
+        .add_entity(Address)\
+        .one_or_none()
+
+    # Make sure we found a property
+    if property_ is None:
+        error = json_error(404, 'Could not find property with account number.',
+                           {'number': number})
+        return json_response(response=error, status=404)
+
+    # Render the response
+    serializer = AddressJsonSerializer()
+    result = serializer.serialize(property_.Address)
+    return json_response(response=result, status=200)
