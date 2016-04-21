@@ -47,3 +47,31 @@ def parity_for_range(low, high):
 #         return shp_dumps(shp_t)
 
 
+class FilteredDict (dict):
+    """
+    A `dict` that excludes values that don't match some condition function. If
+    the condition function is `None`, the identity is assumed. That is, all
+    values that are false are excluded.
+    """
+    def __init__(self, cond, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cond = cond or (lambda value: value)
+        for key, val in list(self.items()):
+            if not cond(val):
+                del self[key]
+
+    def __setitem__(self, key, value):
+        if self.cond(value):
+            super().__setitem__(key, value)
+        elif key in self:
+            del self[key]
+
+
+class NotNoneDict (FilteredDict):
+    """
+    A `dict` that excludes values that are `None`.
+    """
+    def __init__(self, *args, **kwargs):
+        not_none = (lambda value: value is not None)
+        super().__init__(not_none, *args, **kwargs)

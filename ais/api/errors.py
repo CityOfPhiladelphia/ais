@@ -9,6 +9,7 @@ STATUS_CODES = {
 
 def json_error(status, message, details={}):
     error_data = OrderedDict([
+        ('status', status),
         ('error', STATUS_CODES[status]),
         ('message', message),
         ('details', details),

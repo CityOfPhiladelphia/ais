@@ -13,10 +13,30 @@ from passyunk.parser import PassyunkParser
 from .errors import json_error
 from .paginator import Paginator
 from .serializers import AddressJsonSerializer
+from ..util import NotNoneDict
 
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
+
+
+def validate_page(request, paginator):
+    # Figure out which page the user is requesting
+    try:
+        page_str = request.args.get('page', '1')
+        page = int(page_str)
+    except ValueError:
+        error = json_error(400, 'Invalid page value.', {'page': page_str})
+        return None, error
+
+    # Page has to be less than the available number of pages
+    page_count = paginator.page_count
+    if page < 1 or page > page_count:
+        error = json_error(400, 'Page out of range.',
+                           {'page': page, 'page_count': page_count})
+        return None, error
+
+    return page, None
 
 
 @app.route('/addresses/<query>')
@@ -58,20 +78,16 @@ def addresses_view(query):
     parsed = PassyunkParser().parse(query)
 
     # Match a set of addresses
-    filters = {
-        key: value
-        for key, value in (
-            ('street_name', parsed['components']['street']['name']),
-            ('address_low', parsed['components']['address']['low'] or parsed['components']['address']['full']),
-            ('address_high', parsed['components']['address']['high']),
-            ('street_predir', parsed['components']['street']['predir']),
-            ('street_postdir', parsed['components']['street']['postdir']),
-            ('street_suffix', parsed['components']['street']['suffix']),
-            ('unit_num', parsed['components']['unit']['unit_num']),
-            ('unit_type', parsed['components']['unit']['unit_type']),
-        )
-        if value is not None
-    }
+    filters = NotNoneDict(
+        street_name=parsed['components']['street']['name'],
+        address_low=parsed['components']['address']['low'] or parsed['components']['address']['full'],
+        address_high=parsed['components']['address']['high'],
+        street_predir=parsed['components']['street']['predir'],
+        street_postdir=parsed['components']['street']['postdir'],
+        street_suffix=parsed['components']['street']['suffix'],
+        unit_num=parsed['components']['unit']['unit_num'],
+        unit_type=parsed['components']['unit']['unit_type'],
+    )
     addresses = Address.query.filter_by(**filters)
     paginator = Paginator(addresses)
 
@@ -83,20 +99,10 @@ def addresses_view(query):
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
 
-    # Figure out which page the user is requesting
-    try:
-        page_str = request.args.get('page', '1')
-        page = int(page_str)
-    except ValueError:
-        error = json_error(400, 'Invalid page value.', {'page': page_str})
-        return json_response(response=error, status=400)
-
-    # Page has to be less than the available number of pages
-    page_count = paginator.page_count
-    if page < 1 or page > page_count:
-        error = json_error(400, 'Page out of range.',
-                           {'page': page, 'page_count': page_count})
-        return json_response(response=error, status=400)
+    # Validate the pagination
+    page, error = validate_page(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
 
     # Render the response
     addresses_page = paginator.get_page(page)
