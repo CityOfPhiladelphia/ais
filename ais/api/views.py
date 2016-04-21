@@ -147,3 +147,56 @@ def account_number_view(number):
     serializer = AddressJsonSerializer()
     result = serializer.serialize(address)
     return json_response(response=result, status=200)
+
+
+@app.route('/block/<query>')
+def block_view(query):
+    """
+    - Some addresses aren't OPA addresses
+    -
+    """
+    parsed = PassyunkParser().parse(query)
+    normalized_address = parsed['components']['street_address']
+
+    # Ensure that we can get a valid address number
+    try:
+        address_num = int(parsed['components']['address']['low'] or
+                          parsed['components']['address']['full'])
+    except ValueError:
+        error = json_error(400, 'No valid block number provided.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=400)
+
+    # Match a set of addresses
+    block_num = ((address_num // 100) * 100)
+    filters = NotNoneDict(
+        street_name=parsed['components']['street']['name'],
+        street_predir=parsed['components']['street']['predir'],
+        street_postdir=parsed['components']['street']['postdir'],
+        street_suffix=parsed['components']['street']['suffix'],
+    )
+    addresses = Address.query\
+        .filter_by(**filters)\
+        .filter(Address.address_low >= block_num)\
+        .filter(Address.address_low < block_num + 100)
+    paginator = Paginator(addresses)
+
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find any address on a block matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page, error = validate_page(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Render the response
+    block_page = paginator.get_page(page)
+    serializer = AddressJsonSerializer(
+        metadata={'query': query, 'normalized': normalized_address},
+        pagination=paginator.get_page_info(page))
+    result = serializer.serialize_many(block_page)
+    return json_response(response=result, status=200)
