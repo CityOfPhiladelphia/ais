@@ -112,19 +112,32 @@ def addresses_view(query):
 
 @app.route('/account/<number>')
 def account_number_view(number):
-    property_ = AddressProperty.query\
-        .filter_by(opa_account_num=number)\
-        .join(Address, AddressProperty.street_address==Address.street_address)\
-        .add_entity(Address)\
+    """
+    Looks up information about the property with the given OPA account number.
+    Should only ever return one or zero corresponding addresses.
+
+    TODO: Should this return all addresses at the property that matches the
+          number? For example, number 883309000 for 1234 Market, which has
+          multiple units. Is there a good way to know which one is the "real"
+          one? Would the is_base logic do it?
+    """
+    address = Address.query\
+        .join(AddressProperty, AddressProperty.street_address==Address.street_address)\
+        .filter(AddressProperty.opa_account_num==number)
+
+    # Only use base addresses
+    address = address\
+        .filter(Address.address_low_suffix=='')\
+        .filter(Address.unit_type==None)\
         .one_or_none()
 
     # Make sure we found a property
-    if property_ is None:
+    if address is None:
         error = json_error(404, 'Could not find property with account number.',
                            {'number': number})
         return json_response(response=error, status=404)
 
     # Render the response
     serializer = AddressJsonSerializer()
-    result = serializer.serialize(property_.Address)
+    result = serializer.serialize(address)
     return json_response(response=result, status=200)
