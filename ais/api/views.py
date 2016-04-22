@@ -74,6 +74,9 @@ def addresses_view(query):
           Market St" matches the building as well as a number of units. The
           building should come first, since it's a more complete match for our
           query (less unmatched extant data than the other addresses).
+
+          Maybe instead of a match score, we could order by unit_num (assuming
+          NULL unit numbers would be returned first, or that we can make it so)
     """
     parsed = PassyunkParser().parse(query)
 
@@ -88,7 +91,9 @@ def addresses_view(query):
         unit_num=parsed['components']['unit']['unit_num'],
         unit_type=parsed['components']['unit']['unit_type'],
     )
-    addresses = Address.query.filter_by(**filters)
+    addresses = Address.query\
+        .filter_by(**filters)\
+        .order_by(Address.unit_num.nullsfirst())
     paginator = Paginator(addresses)
 
     # Ensure that we have results
@@ -178,7 +183,10 @@ def block_view(query):
     addresses = Address.query\
         .filter_by(**filters)\
         .filter(Address.address_low >= block_num)\
-        .filter(Address.address_low < block_num + 100)
+        .filter(Address.address_low < block_num + 100)\
+        .order_by(Address.address_low,
+                  Address.address_high.nullsfirst(),
+                  Address.unit_num.nullsfirst())
     paginator = Paginator(addresses)
 
     # Ensure that we have results
