@@ -33,9 +33,8 @@ field_map = source_def['field_map']
 
 street_table = db['street_segment']
 parcel_table = db['dor_parcel']
-parcel_error_table = config['ERROR_TABLES']['dor_parcels']['error_table']
-parcel_error_polygon_table = \
-    config['ERROR_TABLES']['dor_parcels']['polygon_table']
+parcel_error_table = db['dor_parcel_error']
+parcel_error_polygon_table = db['dor_parcel_error_polygon']
 WRITE_OUT = True
 
 # Regex
@@ -52,9 +51,9 @@ if WRITE_OUT:
     print('Deleting existing parcels...')
     parcel_table.delete()
     print('Deleting existing parcel errors...')
-    parcel_table.delete()
+    parcel_error_table.delete()
     print('Deleting existing parcel error polygons...')
-    parcel_table.delete()
+    parcel_error_polygon_table.delete()
 
 print('Reading streets...')
 street_stmt = '''
@@ -497,7 +496,7 @@ if WRITE_OUT:
                 })
                 errors.append(error)
 
-    db[parcel_error_table].write(errors, chunk_size=150000)
+    parcel_error_table.write(errors, chunk_size=150000)
     del errors
 
     print('Writing parcel error polygons...')
@@ -536,7 +535,7 @@ if WRITE_OUT:
             })
             error_polygons.append(error_polygon)
 
-    db[parcel_error_polygon_table].write(error_polygons, chunk_size=50000)
+    parcel_error_polygon_table.write(error_polygons, chunk_size=50000)
     del error_polygons
 
     print('Creating indexes...')
