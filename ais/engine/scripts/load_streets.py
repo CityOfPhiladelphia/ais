@@ -60,9 +60,8 @@ for i, source_row in enumerate(source_rows):
 		seg_id = source_row[field_map['seg_id']]
 		try:
 			parsed = parser.parse(source_street_full)
-			# Passyunk returns `address` for all input; turning off for now.
-			# if parsed['type'] != 'street':
-			# 	raise ValueError('Invalid street')
+			if parsed['type'] != 'street':
+				raise ValueError('Invalid street')
 
 			# comps = parsed['components']    			<== phladdress
 			comps = parsed['components']['street']    # <== passyunk
