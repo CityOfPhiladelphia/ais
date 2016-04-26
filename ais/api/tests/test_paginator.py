@@ -27,29 +27,29 @@ def test_first_page_validation(page_request, full_paginator):
     `validate_page_param` returns an error of `None` when there is
     content and page is `'1'`.
     """
-    page_request.args['page'] = '1'
+    page_request.args = {'page': '1'}
     page, error = validate_page_param(page_request, full_paginator)
     assert error is None
     assert page == 1
 
 def test_last_page_validation(page_request, full_paginator):
-    page_request.args['page'] = '3'
+    page_request.args = {'page': '3'}
     page, error = validate_page_param(page_request, full_paginator)
     assert error is None
     assert page == 3
 
 def test_negative_page_validation(page_request, full_paginator):
-    page_request.args['page'] = '-1'
+    page_request.args = {'page': '-1'}
     page, error = validate_page_param(page_request, full_paginator)
     assert error
 
 def test_out_of_bound_page_validation(page_request, full_paginator):
-    page_request.args['page'] = '4'
+    page_request.args = {'page': '4'}
     page, error = validate_page_param(page_request, full_paginator)
     assert error
 
 def test_non_numeric_page_validation(page_request, full_paginator):
-    page_request.args['page'] = 'blah'
+    page_request.args = {'page': 'blah'}
     page, error = validate_page_param(page_request, full_paginator)
     assert error
 
