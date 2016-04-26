@@ -99,7 +99,6 @@ def addresses_view(query):
         street_postdir=parsed['components']['street']['postdir'],
         street_suffix=parsed['components']['street']['suffix'],
         unit_num=parsed['components']['unit']['unit_num'],
-        unit_type=parsed['components']['unit']['unit_type'],
     )
     addresses = Address.query\
         .filter_by(**filters)\
