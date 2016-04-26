@@ -103,13 +103,7 @@ def addresses_view(query):
     )
     addresses = Address.query\
         .filter_by(**filters)\
-        .order_by(Address.street_name,
-                  Address.street_suffix,
-                  Address.street_predir,
-                  Address.street_postdir,
-                  Address.address_low,
-                  Address.address_high,
-                  Address.unit_num.nullsfirst())
+        .order_by_address()
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
@@ -151,13 +145,7 @@ def account_number_view(number):
     address = Address.query\
         .join(AddressProperty, AddressProperty.street_address==Address.street_address)\
         .filter(AddressProperty.opa_account_num==number)\
-        .order_by(Address.street_name,
-                  Address.street_suffix,
-                  Address.street_predir,
-                  Address.street_postdir,
-                  Address.address_low,
-                  Address.address_high,
-                  Address.unit_num.nullsfirst())\
+        .order_by_address()\
         .first()
 
     # Make sure we found a property
@@ -203,13 +191,7 @@ def block_view(query):
         .filter_by(**filters)\
         .filter(Address.address_low >= block_num)\
         .filter(Address.address_low < block_num + 100)\
-        .order_by(Address.street_name,
-                  Address.street_suffix,
-                  Address.street_predir,
-                  Address.street_postdir,
-                  Address.address_low,
-                  Address.address_high,
-                  Address.unit_num.nullsfirst())
+        .order_by_address()
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results

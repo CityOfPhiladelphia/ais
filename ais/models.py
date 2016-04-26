@@ -1,5 +1,6 @@
 import copy
 import re
+from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from ais import app, app_db as db
 from ais.util import *
@@ -137,8 +138,22 @@ ADDRESS_FIELDS = [
     'street_address',
 ]
 
+class AddressQuery(BaseQuery):
+    """A query class that knows how to sort addresses"""
+    def order_by_address(self):
+        return self.order_by(Address.street_name,
+                             Address.street_suffix,
+                             Address.street_predir,
+                             Address.street_postdir,
+                             Address.address_low,
+                             Address.address_high,
+                             Address.unit_num.nullsfirst())
+
+
 class Address(db.Model):
     """A street address with parsed components."""
+    query_class = AddressQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
@@ -162,13 +177,13 @@ class Address(db.Model):
                 if p['type'] != 'address':
                     raise ValueError('Not an address')
                 c = p['components']
-                
+
                 # TEMP: Passyunk doesn't raise an error if the street name
                 # is missing for an address, so check here and do it manually.
                 if c['street']['name'] is None:
                     raise ValueError('No street name')
 
-                # TEMP: Passyunk doesn't raise an error if the address high is 
+                # TEMP: Passyunk doesn't raise an error if the address high is
                 # lower than the address low.
                 high_num_full = c['address']['high_num_full']
                 if high_num_full and high_num_full < c['address']['low_num']:
