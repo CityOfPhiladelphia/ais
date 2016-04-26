@@ -103,8 +103,14 @@ def addresses_view(query):
     )
     addresses = Address.query\
         .filter_by(**filters)\
-        .order_by(Address.unit_num.nullsfirst())
-    paginator = Paginator(addresses)
+        .order_by(Address.street_name,
+                  Address.street_suffix,
+                  Address.street_predir,
+                  Address.street_postdir,
+                  Address.address_low,
+                  Address.address_high,
+                  Address.unit_num.nullsfirst())
+    paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
     normalized_address = parsed['components']['street_address']
@@ -144,13 +150,15 @@ def account_number_view(number):
     """
     address = Address.query\
         .join(AddressProperty, AddressProperty.street_address==Address.street_address)\
-        .filter(AddressProperty.opa_account_num==number)
-
-    # Only use base addresses
-    address = address\
-        .filter(Address.address_low_suffix=='')\
-        .filter(Address.unit_type==None)\
-        .one_or_none()
+        .filter(AddressProperty.opa_account_num==number)\
+        .order_by(Address.street_name,
+                  Address.street_suffix,
+                  Address.street_predir,
+                  Address.street_postdir,
+                  Address.address_low,
+                  Address.address_high,
+                  Address.unit_num.nullsfirst())\
+        .first()
 
     # Make sure we found a property
     if address is None:
@@ -195,8 +203,12 @@ def block_view(query):
         .filter_by(**filters)\
         .filter(Address.address_low >= block_num)\
         .filter(Address.address_low < block_num + 100)\
-        .order_by(Address.address_low,
-                  Address.address_high.nullsfirst(),
+        .order_by(Address.street_name,
+                  Address.street_suffix,
+                  Address.street_predir,
+                  Address.street_postdir,
+                  Address.address_low,
+                  Address.address_high,
                   Address.unit_num.nullsfirst())
     paginator = QueryPaginator(addresses)
 
