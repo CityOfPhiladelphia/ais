@@ -377,8 +377,8 @@ class AddressProperty(db.Model):
     properties.
     '''
     id = db.Column(db.Integer, primary_key=True)
-    street_address = db.Column(db.Text)
-    opa_account_num = db.Column(db.Text)
+    street_address = db.Column(db.Text) #, db.ForeignKey('address.street_address'))
+    opa_account_num = db.Column(db.Text) #, db.ForeignKey('opa_property.account_num'))
     match_type = db.Column(db.Text)
 
 class AddressZip(db.Model):

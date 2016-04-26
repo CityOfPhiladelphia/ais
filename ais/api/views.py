@@ -11,7 +11,7 @@ from flask import Response, request
 from passyunk.parser import PassyunkParser
 
 from .errors import json_error
-from .paginator import Paginator
+from .paginator import QueryPaginator
 from .serializers import AddressJsonSerializer
 from ..util import NotNoneDict
 
@@ -20,23 +20,16 @@ def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
 
 
-def validate_page(request, paginator):
-    # Figure out which page the user is requesting
+def validate_page_param(request, paginator):
+    page_str = request.args.get('page', '1')
+
     try:
-        page_str = request.args.get('page', '1')
-        page = int(page_str)
-    except ValueError:
-        error = json_error(400, 'Invalid page value.', {'page': page_str})
+        page_num = paginator.validate_page_num(page_str)
+    except QueryPaginator.ValidationError as e:
+        error = json_error(400, e.message, e.data)
         return None, error
 
-    # Page has to be less than the available number of pages
-    page_count = paginator.page_count
-    if page < 1 or page > page_count:
-        error = json_error(400, 'Page out of range.',
-                           {'page': page, 'page_count': page_count})
-        return None, error
-
-    return page, None
+    return page_num, None
 
 
 @app.route('/addresses/<query>')
@@ -105,15 +98,15 @@ def addresses_view(query):
         return json_response(response=error, status=404)
 
     # Validate the pagination
-    page, error = validate_page(request, paginator)
+    page_num, error = validate_page_param(request, paginator)
     if error:
         return json_response(response=error, status=error['status'])
 
     # Render the response
-    addresses_page = paginator.get_page(page)
+    addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_address},
-        pagination=paginator.get_page_info(page))
+        pagination=paginator.get_page_info(page_num))
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
 
@@ -187,7 +180,7 @@ def block_view(query):
         .order_by(Address.address_low,
                   Address.address_high.nullsfirst(),
                   Address.unit_num.nullsfirst())
-    paginator = Paginator(addresses)
+    paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
@@ -197,14 +190,14 @@ def block_view(query):
         return json_response(response=error, status=404)
 
     # Validate the pagination
-    page, error = validate_page(request, paginator)
+    page_num, error = validate_page_param(request, paginator)
     if error:
         return json_response(response=error, status=error['status'])
 
     # Render the response
-    block_page = paginator.get_page(page)
+    block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_address},
-        pagination=paginator.get_page_info(page))
+        pagination=paginator.get_page_info(page_num))
     result = serializer.serialize_many(block_page)
     return json_response(response=result, status=200)
