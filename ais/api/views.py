@@ -72,21 +72,9 @@ def addresses_view(query):
           a bunch of times, it should have a higher popularity score than any
           one of those units, and that should help it to the top of the list.
 
-    TODO: Addresses should also have a match score that raises those addresses
-          that match proportionally more filter criteria. For example, "1234
-          Market St" matches the building as well as a number of units. The
-          building should come first, since it's a more complete match for our
-          query (less unmatched extant data than the other addresses).
+    TODO: Allow paginator to use skip/limit semantics instead of or in addition
+          to page. Maybe allow one of page or skip but not both.
 
-          Maybe instead of a match score, we could order by unit_num (assuming
-          NULL unit numbers would be returned first, or that we can make it so)
-
-          street name
-          suffix
-          pre dir
-          post dir
-          address num
-          unit number low
     """
     parsed = PassyunkParser().parse(query)
 
@@ -162,9 +150,9 @@ def account_number_view(number):
 @app.route('/block/<query>')
 def block_view(query):
     """
-    Consider matching the segment ID and finding the low and high.
-
-    Down the line, consider `segment` and `block_face` routes.
+    TODO: Consider matching the segment ID and finding the low and high. This
+          would be instead of hardcoding a low of 0 and high of 100. Maybe this
+          would go at a new route, like `segment` or `block-face`.
     """
     parsed = PassyunkParser().parse(query)
     normalized_address = parsed['components']['street_address']
