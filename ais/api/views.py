@@ -44,9 +44,19 @@ def addresses_view(query):
     * L&I Key
     * Zoning something or other
 
-    TODO: Check with Rob to about whether we should depend on the address
+    TODO: There are some addresses that are synonyms for each other. These need
+          to be disambiguated. There is some table that has a some property that
+          tells me an address is the canonical one. Which is that table? Is it
+          AddressLink? Do I only want addresses that have none of a particular
+          type of relationship?
+
+          Check with Rob to about whether we should depend on the address
           summary table, and if not whether we're safe to simply join on
           stree_address, and which tables we need to be concerned with.
+
+          Check on the unit type. Should be null, as the query will ignore them.
+
+          Consider ignoring the unit type. There are 10-15 exceptions in the city where the same unit num exists for different unit types.
 
     TODO: Geocode addresses by matching against types in the following order:
           * PWD
@@ -70,6 +80,13 @@ def addresses_view(query):
 
           Maybe instead of a match score, we could order by unit_num (assuming
           NULL unit numbers would be returned first, or that we can make it so)
+
+          street name
+          suffix
+          pre dir
+          post dir
+          address num
+          unit number low
     """
     parsed = PassyunkParser().parse(query)
 
@@ -150,8 +167,9 @@ def account_number_view(number):
 @app.route('/block/<query>')
 def block_view(query):
     """
-    - Some addresses aren't OPA addresses
-    -
+    Consider matching the segment ID and finding the low and high.
+
+    Down the line, consider `segment` and `block_face` routes.
     """
     parsed = PassyunkParser().parse(query)
     normalized_address = parsed['components']['street_address']
