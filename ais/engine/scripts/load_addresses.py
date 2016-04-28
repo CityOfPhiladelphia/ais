@@ -56,18 +56,18 @@ true_range_select_stmt = '''
 parcel_layers = config['BASE_DATA_SOURCES']['parcels']
 address_parcel_table = db['address_parcel']
 address_property_table = db['address_property']
-address_error_table = db[config['ERROR_TABLES']['addresses']['error_table']]
+address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '950-52 MARLBOROUGH ST'
+DEV_ADDRESS = '119-23 1/2 CATHARINE ST # A'
 DEV_ADDRESS_COMPS = {
-    'address_low':      '00826',
+    'address_low':      '119',
     # 'address_high':     952,
-    'street_name':      "'03RD'",
+    'street_name':      "'CATHARINE'",
     'street_suffix':    "'ST'",
 }
-DEV_STREET_NAME = 'MARLBOROUGH'
+DEV_STREET_NAME = 'CATHARINE'
 
 # Logging stuff.
 address_errors = []
@@ -671,7 +671,12 @@ for street_address, warnings in street_warning_map.items():
         notes = warning_dict['notes']
 
         # Get source addresses
-        _source_addresses = source_address_map[street_address]
+        # TEMP: put this in a try statement until some base address parsing
+        # issues in Passyunk are resolved
+        try:
+            _source_addresses = source_address_map[street_address]
+        except KeyError:
+            continue
 
         for source_address in _source_addresses:
             # Get sources

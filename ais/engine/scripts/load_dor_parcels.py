@@ -299,8 +299,7 @@ for i, source_parcel in enumerate(source_parcels):
         unit_full = None
         if unit_num:
             unit_full = '# {}'.format(unit_num)
-
-        # Try to parse
+        
         address = None
         
         if address_full and street_full:
@@ -320,8 +319,9 @@ for i, source_parcel in enumerate(source_parcels):
                 # QC: check for duplicate address
                 address_counts.setdefault(street_address, 0)
                 address_counts[street_address] += 1
-
+            
             except Exception as e:
+                print(source_address)
                 had_error('Could not parse')
 
         # QC: parcel ID (aka mapreg)

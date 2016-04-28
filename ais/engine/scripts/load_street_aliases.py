@@ -1,7 +1,6 @@
 import sys
 import traceback
 from phladdress.data import DIRS_STD, SUFFIXES_STD
-# from db.connect import connect_to_db
 import datum
 from ais import app
 # DEV

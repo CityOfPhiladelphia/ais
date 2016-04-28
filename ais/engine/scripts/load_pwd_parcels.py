@@ -110,7 +110,8 @@ for i, source_parcel in enumerate(source_parcels):
 		try:
 			address = Address(source_address)
 		except:
-			raise ValueError('Could not parse')
+			# raise ValueError('Could not parse')
+			raise ValueError('Could not parse: {}'.format(source_address))
 
 		parcel = dict(address)
 		parcel.update({

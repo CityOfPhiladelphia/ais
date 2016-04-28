@@ -1,6 +1,5 @@
 import sys
 from datetime import datetime
-from phladdress.parser import Parser
 import datum
 from ais import app
 # DEV

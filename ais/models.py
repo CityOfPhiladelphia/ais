@@ -161,20 +161,33 @@ class Address(db.Model):
                 if p['type'] != 'address':
                     raise ValueError('Not an address')
                 c = p['components']
+                
+                # TEMP: Passyunk doesn't raise an error if the street name
+                # is missing for an address, so check here and do it manually.
+                if c['street']['name'] is None:
+                    raise ValueError('No street name')
+
+                # TEMP: Passyunk doesn't raise an error if the address high is 
+                # lower than the address low.
+                high_num_full = c['address']['high_num_full']
+                if high_num_full and high_num_full < c['address']['low_num']:
+                    raise ValueError('Invalid range address')
+
                 kwargs = {
                     'address_low':          c['address']['low_num'],
-                    'address_low_suffix':   c['address']['low_suffix'],
-                    'address_low_frac':     c['address']['low_fractional'],
+                    'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
+                    'address_low_frac':     c['address']['fractional'],            # passyunk change
                     'address_high':         c['address']['high_num_full'],
                     'street_predir':        c['street']['predir'],
                     'street_name':          c['street']['name'],
                     'street_suffix':        c['street']['suffix'],
                     'street_postdir':       c['street']['postdir'],
-                    'unit_type':            c['unit']['type'],
-                    'unit_num':             c['unit']['num'],
+                    'unit_type':            c['unit']['unit_type'],                # passyunk change
+                    'unit_num':             c['unit']['unit_num'],                 # passyunk change
                     'street_full':          c['street']['full'],
                     'street_address':       c['street_address'],
                 }
+
         super(Address, self).__init__(**kwargs)
 
     def __str__(self):
@@ -199,10 +212,10 @@ class Address(db.Model):
         address_full = str(self.address_low)
         if self.address_low_suffix:
             address_full += self.address_low_suffix
-        if self.address_low_frac:
-            address_full += ' ' + self.address_low_frac
         if self.address_high:
             address_full += '-' + str(self.address_high)[-2:]
+        if self.address_low_frac:
+            address_full += ' ' + self.address_low_frac
         return address_full
 
     @property
