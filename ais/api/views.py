@@ -75,6 +75,8 @@ def addresses_view(query):
     TODO: Allow paginator to use skip/limit semantics instead of or in addition
           to page. Maybe allow one of page or skip but not both.
 
+    TODO: Need a way to only return addresses that have OPA numbers. Filters?
+
     """
     parsed = PassyunkParser().parse(query)
 
