@@ -83,6 +83,9 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_type', address.unit_type),
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
+
+                ('zip_code', address.zip_info[0].zip_range.zip_code),
+                ('zip_4', address.zip_info[0].zip_range.zip_4),
             ])),
             ('geometry', OrderedDict([
                 ('type', 'Point'),

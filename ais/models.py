@@ -173,6 +173,11 @@ class Address(db.Model):
         primaryjoin='foreign(Geocode.street_address) == Address.street_address',
         lazy='joined')
 
+    zip_info = db.relationship(
+        'AddressZip',
+        primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
+        lazy='joined')
+
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             arg = args[0]
