@@ -168,6 +168,11 @@ class Address(db.Model):
     unit_num = db.Column(db.Text)
     street_full = db.Column(db.Text)
 
+    geocodes = db.relationship(
+        'Geocode',
+        primaryjoin='foreign(Geocode.street_address) == Address.street_address',
+        lazy='joined')
+
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             arg = args[0]
@@ -405,12 +410,30 @@ class AddressZip(db.Model):
     usps_id = db.Column(db.Text)
     match_type = db.Column(db.Text)
 
+    zip_range = db.relationship(
+        'ZipRange',
+        primaryjoin='foreign(ZipRange.usps_id) == AddressZip.usps_id',
+        lazy='joined',
+        uselist=False)
+
+
 
 #############
 # GEOCODING #
 #############
 
 class Geocode(db.Model):
+    """
+    Values for `geocode_type` are:
+    * pwd_parcel
+    * dor_parcel
+    * true_range
+    * centerline
+
+    Generally, values should be respected in that order. Centerline
+    can usually be disregarded.
+
+    """
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     geocode_type = db.Column(db.Text)     # parcel, curb, street

@@ -19,9 +19,10 @@ class BaseSerializer:
 
 
 class GeoJSONSerializer (BaseSerializer):
-    def __init__(self, metadata=None, pagination=None):
+    def __init__(self, metadata=None, pagination=None, srid=4326):
         self.metadata = metadata
         self.pagination = pagination
+        self.srid = srid
         super().__init__()
 
     def render(self, data):
@@ -48,6 +49,25 @@ class GeoJSONSerializer (BaseSerializer):
 
 class AddressJsonSerializer (GeoJSONSerializer):
     def model_to_data(self, address):
+        from geoalchemy2.shape import to_shape
+        geom = address.geocodes[0].geom
+        shape = to_shape(geom)
+
+        from functools import partial
+        import pyproj
+        from shapely.ops import transform
+        from ais.models import ENGINE_SRID
+
+        project = partial(
+            pyproj.transform,
+            # source coordinate system; preserve_units so that pyproj does not
+            # assume meters
+            pyproj.Proj(init='epsg:{}'.format(ENGINE_SRID), preserve_units=True),
+            # destination coordinate system
+            pyproj.Proj(init='epsg:{}'.format(self.srid), preserve_units=True))
+
+        shape = transform(project, shape)
+
         data = OrderedDict([
             ('type', 'Feature'),
             ('properties', OrderedDict([
@@ -63,6 +83,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_type', address.unit_type),
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
+            ])),
+            ('geometry', OrderedDict([
+                ('type', 'Point'),
+                ('coordinates', [shape.x, shape.y])
             ])),
         ])
         return data
