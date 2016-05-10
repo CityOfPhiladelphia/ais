@@ -75,3 +75,22 @@ class NotNoneDict (FilteredDict):
     def __init__(self, *args, **kwargs):
         not_none = (lambda value: value is not None)
         super().__init__(not_none, *args, **kwargs)
+
+
+def geom_to_shape(geom, from_srid, to_srid):
+    from geoalchemy2.shape import to_shape
+    shape = to_shape(geom)
+
+    from functools import partial
+    import pyproj
+    from shapely.ops import transform
+
+    project = partial(
+        pyproj.transform,
+        # source coordinate system; preserve_units so that pyproj does not
+        # assume meters
+        pyproj.Proj(init='epsg:{}'.format(from_srid), preserve_units=True),
+        # destination coordinate system
+        pyproj.Proj(init='epsg:{}'.format(to_srid), preserve_units=True))
+
+    return transform(project, shape)

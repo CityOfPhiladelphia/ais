@@ -227,6 +227,28 @@ class Address(db.Model):
             yield (key, getattr(self, key))
 
     @property
+    def geocode(self):
+        """Returns the "best" geocoded value"""
+        priority = {
+            'pwd_parcel': 4,
+            'dor_parcel': 3,
+            'true_range': 2,
+            'centerline': 1,
+        }
+
+        best = 0
+        geocode = None
+
+        for g in self.geocodes:
+            score = priority[g.geocode_type]
+            if score > best:
+                best = score
+                geocode = g
+
+        return geocode
+
+
+    @property
     def parity(self):
         low = self.address_low
         high = self.address_high

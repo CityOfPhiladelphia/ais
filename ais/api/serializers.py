@@ -1,5 +1,6 @@
 import json
 from collections import OrderedDict
+from ais import util, models
 
 
 class BaseSerializer:
@@ -48,25 +49,26 @@ class GeoJSONSerializer (BaseSerializer):
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
+    def geom_to_shape(self, geom):
+        return util.geom_to_shape(
+            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
     def model_to_data(self, address):
-        from geoalchemy2.shape import to_shape
-        geom = address.geocodes[0].geom
-        shape = to_shape(geom)
+        # Project the address's point into the desired SRS, if it exists
+        geocode = address.geocode
+        if (geocode):
+            shape = self.geom_to_shape(geocode.geom)
+        else:
+            from collections import namedtuple
+            FakePoint = namedtuple('Point', 'x y')
+            shape = FakePoint(None, None)
 
-        from functools import partial
-        import pyproj
-        from shapely.ops import transform
-        from ais.models import ENGINE_SRID
-
-        project = partial(
-            pyproj.transform,
-            # source coordinate system; preserve_units so that pyproj does not
-            # assume meters
-            pyproj.Proj(init='epsg:{}'.format(ENGINE_SRID), preserve_units=True),
-            # destination coordinate system
-            pyproj.Proj(init='epsg:{}'.format(self.srid), preserve_units=True))
-
-        shape = transform(project, shape)
+        # Use zipcode information, if available
+        try:
+            address_zip_code = address.zip_info[0].zip_range.zip_code
+            address_zip_4 = address.zip_info[0].zip_range.zip_4
+        except IndexError:
+            address_zip_code = address_zip_4 = None
 
         data = OrderedDict([
             ('type', 'Feature'),
@@ -84,8 +86,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
 
-                ('zip_code', address.zip_info[0].zip_range.zip_code),
-                ('zip_4', address.zip_info[0].zip_range.zip_4),
+                ('zip_code', address_zip_code),
+                ('zip_4', address_zip_4),
             ])),
             ('geometry', OrderedDict([
                 ('type', 'Point'),
