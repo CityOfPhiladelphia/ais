@@ -49,26 +49,47 @@ class GeoJSONSerializer (BaseSerializer):
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
+    def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
+        self.geom_type = geom_type
+        self.geom_source = geom_source
+        super().__init__(**kwargs)
+
     def geom_to_shape(self, geom):
         return util.geom_to_shape(
             geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
 
-    def model_to_data(self, address):
-        # Project the address's point into the desired SRS, if it exists
-        geocode = address.geocode
-        if (geocode):
-            shape = self.geom_to_shape(geocode.geom)
-        else:
-            from collections import namedtuple
-            FakePoint = namedtuple('Point', 'x y')
-            shape = FakePoint(None, None)
+    def geom_to_geodict(self, geom):
+        from shapely.geometry import mapping
+        shape = self.geom_to_shape(geom)
+        data = mapping(shape)
+        return OrderedDict([
+            ('type', data['type']),
+            ('coordinates', data['coordinates'])
+        ])
 
-        # Use zipcode information, if available
-        try:
-            address_zip_code = address.zip_info[0].zip_range.zip_code
-            address_zip_4 = address.zip_info[0].zip_range.zip_4
-        except IndexError:
-            address_zip_code = address_zip_4 = None
+    def geodict_from_rel(self, relval):
+        if relval:
+            return self.geom_to_geodict(relval.geom)
+        else:
+            return None
+
+    def model_to_data(self, address):
+        # Choose the appropriate geometry for the address. Project the geometry
+        # into the desired SRS, if the geometry exists.
+        if self.geom_type == 'centroid':
+            rel = (address.get_geocode(self.geom_source)
+                   if self.geom_source else address.geocode)
+
+            geom_type = self.geom_type
+            geom_source = rel.geocode_type if rel else self.geom_source
+            geom_data = self.geodict_from_rel(rel)
+
+        elif self.geom_type == 'parcel':
+            rel = getattr(address, self.geom_source)
+
+            geom_type = self.geom_type
+            geom_source = self.geom_source
+            geom_data = self.geodict_from_rel(rel)
 
         data = OrderedDict([
             ('type', 'Feature'),
@@ -86,13 +107,20 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
 
-                ('zip_code', address_zip_code),
-                ('zip_4', address_zip_4),
+                ('zip_code', address.zip_info.zip_range.zip_code if address.zip_info else None),
+                ('zip_4', address.zip_info.zip_range.zip_4 if address.zip_info else None),
+
+                ('pwd_parcel_id', address.pwd_parcel.parcel_id if address.pwd_parcel else None),
+                ('dor_parcel_id', address.dor_parcel.parcel_id if address.dor_parcel else None),
+
+                ('opa_account_num', address.opa_property.account_num if address.opa_property else None),
+                ('opa_owners', address.opa_property.owners if address.opa_property else None),
+                ('opa_address', address.opa_property.source_address if address.opa_property else None),
+
+                ('geom_type', geom_type),
+                ('geom_source', geom_source),
             ])),
-            ('geometry', OrderedDict([
-                ('type', 'Point'),
-                ('coordinates', [shape.x, shape.y])
-            ])),
+            ('geometry', geom_data),
         ])
         return data
 

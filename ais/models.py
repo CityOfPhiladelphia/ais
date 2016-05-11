@@ -176,7 +176,24 @@ class Address(db.Model):
     zip_info = db.relationship(
         'AddressZip',
         primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
-        lazy='joined')
+        lazy='joined',
+        uselist=False)
+
+    pwd_parcel = db.relationship(
+        'PwdParcel',
+        primaryjoin='foreign(PwdParcel.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+    dor_parcel = db.relationship(
+        'DorParcel',
+        primaryjoin='foreign(DorParcel.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+    opa_property = db.relationship(
+        'OpaProperty',
+        primaryjoin='foreign(OpaProperty.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
@@ -246,6 +263,12 @@ class Address(db.Model):
                 geocode = g
 
         return geocode
+
+    def get_geocode(self, geocode_type):
+        for g in self.geocodes:
+            if g.geocode_type == geocode_type:
+                return g
+        return None
 
 
     @property
