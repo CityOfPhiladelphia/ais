@@ -16,7 +16,7 @@ psycopg2==2.6.1
 pyproj==1.9.5
 python-editor==0.5
 PyYAML==3.11
-Shapely==1.5.13
+Shapely>=1.5.13
 six==1.10.0
 SQLAlchemy==1.0.12
 Werkzeug==0.11.4
