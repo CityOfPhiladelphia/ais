@@ -13,7 +13,6 @@ Jinja2==2.8
 Mako==1.0.3
 MarkupSafe==0.23
 normality==0.2.4
--e git+https://rbrtmrtn@bitbucket.org/rbrtmrtn/phladdress.git@1c39e383db3dd034de48ec3b181abc5112e0ed1a#egg=phladdress
 psycopg2==2.6.1
 pyproj==1.9.5.1
 python-editor==0.5
