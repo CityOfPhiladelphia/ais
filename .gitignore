@@ -54,7 +54,8 @@ coverage.xml
 local_settings.py
 
 # Flask instance folder
-instance/
+instance/*
+!instance/config.py
 
 # Sphinx documentation
 docs/_build/
@@ -71,5 +72,8 @@ target/
 # dotenv
 .env
 
-instance/
 sandbox.py
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
