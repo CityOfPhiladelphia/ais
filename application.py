@@ -6,4 +6,7 @@ import ais.api.views
 from werkzeug.contrib.profiler import ProfilerMiddleware
 app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[10])
 
-app.run(debug=app.config['DEBUG'])
+if __name__ == '__main__':
+    app.run(debug=app.config['DEBUG'])
+else:
+    application = app
