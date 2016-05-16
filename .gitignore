@@ -77,3 +77,5 @@ sandbox.py
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+.travis/deploy_rsa
