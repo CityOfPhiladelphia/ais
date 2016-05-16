@@ -12,38 +12,51 @@ VENDOR_PATH=/srv/$PROJECT_NAME/vendor
 
 
 
-# Install git, if it's not already.
-if [ "`git ; echo $?`" = "127" ] ; then
-    sudo apt-get install git -y
-fi
-
-# Clone or pull the latest code
-if test -d ais ; then
-    cd ais
-    git pull
-else
-    git clone https://github.com/CityOfPhiladelphia/ais.git
-    cd ais
-fi
-
-
-
 # Install all the project dependencies.
 echo 'Installing project dependencies'
-sudo apt-get install python-dev build-essential libaio1 -y
-sudo apt-get install python-pip -y
+sudo apt-get update
+sudo apt-get install python3-dev build-essential libaio1 libpq-dev libgeos-dev -y
+sudo apt-get install python-pip python3-pip unzip nginx -y
 sudo pip install awscli
 
-# cat >> ~/.bashrc <EOF
-# export ORACLE_HOME=~/.oracle/instantclient_12_1
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME
-# EOF
+# Download, install, and configure Oracle Instant Client. Note that the EC2
+# instance must have been created with a role that can read objects from S3.
+#
+# https://oracle-base.com/articles/misc/oracle-instant-client-installation
+sudo mkdir -p $VENDOR_PATH/oracle
+sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
+aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+unzip $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
+unzip $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
+ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
+cat >> ~/.bashrc <<EOF
+export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
+export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
+EOF
+export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:$LD_LIBRARY_PATH
+export PATH=$PATH:$VENDOR_PATH/oracle/instantclient_12_1
 
-# cd ~/.oracle/instantclient_12_1
-# ln -s libclntsh.so.12.1 libclntsh.so
+# Download and install the private key for installing passyunk
+if ! test -f /etc/ssh/github ; then
+    aws s3 cp s3://ais-deploy/github ~/.ssh
+    sudo bash <<EOF
+        mv ~/.ssh/github /etc/ssh/
+        chmod 600 /etc/ssh/github
+EOF
+fi
 
-sudo pip install --requirement requirements.txt
+# Load the GitHub private key and install passyunk
+sudo bash <<EOF
+    eval `ssh-agent -s`
+    ssh-add /etc/ssh/github
+    ssh-keyscan -H github.com | sudo tee /etc/ssh/ssh_known_hosts
 
+    pip3 install -e git+ssh://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
+EOF
+
+# Install python requirements on python3 with library paths
+sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH pip3 install --requirement requirements.txt
 
 
 # # Configure the AWS CLI
@@ -57,22 +70,6 @@ sudo pip install --requirement requirements.txt
 # region = us-east-1
 # EOF
 
-# Download, install, and configure Oracle Instant Client. Note that the EC2
-# instance must have been created with a role that can read objects from S3.
-#
-# https://oracle-base.com/articles/misc/oracle-instant-client-installation
-sudo mkdir -p $VENDOR_PATH/oracle
-sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
-aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-tar -xzf $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip
-tar -xzf $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip
-cat >> ~/.bashrc <<EOF
-export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
-export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
-EOF
-export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:${LD_LIBRARY_PATH}
-export PATH=${PATH}:$VENDOR_PATH/oracle/instantclient_12_1
 
 
 
