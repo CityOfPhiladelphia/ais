@@ -110,7 +110,7 @@ sudo honcho export upstart /etc/init \
 # Set up nginx
 # https://docs.getsentry.com/on-premise/server/installation/#proxying-with-nginx
 echo 'Generating an nginx configuration'
-echo "$(generate_nginx_conf_nossl)" | sudo tee /etc/nginx/sites-available/$PROJECT_NAME
+echo "$(generate_nginx_config_nossl)" | sudo tee /etc/nginx/sites-available/$PROJECT_NAME
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo ln -fs /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/$PROJECT_NAME
 
