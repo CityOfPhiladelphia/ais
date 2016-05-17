@@ -23,19 +23,26 @@ sudo pip install awscli
 # instance must have been created with a role that can read objects from S3.
 #
 # https://oracle-base.com/articles/misc/oracle-instant-client-installation
-sudo mkdir -p $VENDOR_PATH/oracle
-sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
-aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-unzip $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
-unzip $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
-ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
-cat >> ~/.bashrc <<EOF
-export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
-export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
-EOF
-export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:$LD_LIBRARY_PATH
-export PATH=$PATH:$VENDOR_PATH/oracle/instantclient_12_1
+if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
+    sudo mkdir -p $VENDOR_PATH/oracle
+    sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
+    aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+    aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+    unzip $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
+    unzip $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
+fi
+
+if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
+    ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
+fi
+
+if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
+    cat >> ~/.bashrc <<____EOF
+    export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
+    export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
+____EOF
+    source ~/.bashrc
+fi
 
 # Download and install the private key for installing passyunk
 if ! test -f /etc/ssh/github ; then
