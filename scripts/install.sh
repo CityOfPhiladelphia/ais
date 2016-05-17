@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 SCRIPT_DIR=$(dirname $0)
 BASE_DIR=$(dirname $SCRIPT_DIR)
 VENDOR_PATH=/srv/$PROJECT_NAME/vendor
@@ -15,8 +15,8 @@ VENDOR_PATH=/srv/$PROJECT_NAME/vendor
 # Install all the project dependencies.
 echo 'Installing project dependencies'
 sudo apt-get update
-sudo apt-get install python3-dev build-essential libaio1 libpq-dev libgeos-dev -y
-sudo apt-get install python-pip python3-pip unzip nginx -y
+sudo apt-get install python-pip build-essential libaio1 libpq-dev libgeos-dev -y
+sudo apt-get install python3-dev python3-pip unzip nginx -y
 sudo pip install awscli
 
 # Download, install, and configure Oracle Instant Client. Note that the EC2
@@ -24,6 +24,7 @@ sudo pip install awscli
 #
 # https://oracle-base.com/articles/misc/oracle-instant-client-installation
 if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
+    echo 'Downloading and installing Oracle Instant Client'
     sudo mkdir -p $VENDOR_PATH/oracle
     sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
     aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
@@ -37,6 +38,7 @@ if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
 fi
 
 if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
+    echo 'Installing Oracle Instant Client to load on bash start'
     cat >> ~/.bashrc <<____EOF
     export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
     export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
@@ -45,6 +47,7 @@ ____EOF
 fi
 
 # Download and install the private key for installing passyunk
+echo 'Downloading and installing private key for GitHub'
 if ! test -f /etc/ssh/github ; then
     aws s3 cp s3://ais-deploy/github ~/.ssh
     sudo bash <<EOF
@@ -54,6 +57,7 @@ EOF
 fi
 
 # Load the GitHub private key and install passyunk
+echo 'Installing Passyunk from a private repository'
 sudo bash <<EOF
     eval `ssh-agent -s`
     ssh-add /etc/ssh/github
@@ -63,6 +67,7 @@ sudo bash <<EOF
 EOF
 
 # Install python requirements on python3 with library paths
+echo 'Installing other application Python requirements; Oracle tools are in $LD_LIBRARY_PATH'
 sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH pip3 install --requirement requirements.txt
 
 
@@ -85,6 +90,7 @@ sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH pip3 install --requirement requirements.tx
 
 
 # Set up the web server
+echo 'Setting up the web server configuration'
 sudo honcho export upstart /etc/init \
     --app $PROJECT_NAME \
     --user nobody \
@@ -92,10 +98,12 @@ sudo honcho export upstart /etc/init \
 
 # Set up nginx
 # https://docs.getsentry.com/on-premise/server/installation/#proxying-with-nginx
+echo 'Generating an nginx configuration'
 echo "$(generate_nginx_conf_nossl)" | sudo tee /etc/nginx/sites-available/$PROJECT_NAME
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo ln -fs /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/$PROJECT_NAME
 
 # Re/start the web server
+echo 'Restarting the web server'
 sudo service $PROJECT_NAME restart
 sudo service nginx reload
