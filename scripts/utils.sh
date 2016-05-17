@@ -4,7 +4,7 @@
 function generate_nginx_config() {
 cat <<EOF
 server {
-    listen  [::]:80;
+    listen  80;
     return  301 https://\$host\$request_uri;
 }
 
@@ -37,7 +37,7 @@ EOF
 function generate_nginx_config_nossl() {
 cat <<EOF
 server {
-    listen  [::]:80;
+    listen  80;
 
     location / {
         proxy_pass_header Server;
