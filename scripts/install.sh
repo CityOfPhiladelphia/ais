@@ -15,7 +15,8 @@ VENDOR_PATH=/srv/$PROJECT_NAME/vendor
 # Install all the project dependencies.
 echo 'Installing project dependencies'
 sudo apt-get update
-sudo apt-get install python-pip build-essential libaio1 libpq-dev libgeos-dev -y
+sudo apt-get install python-pip build-essential libaio1 alien -y
+sudo apt-get install libpq-dev libgeos-dev -y
 sudo apt-get install python3-dev python3-pip unzip nginx -y
 sudo pip install awscli
 
@@ -23,29 +24,38 @@ sudo pip install awscli
 # instance must have been created with a role that can read objects from S3.
 #
 # https://oracle-base.com/articles/misc/oracle-instant-client-installation
-if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
+if test ! -d $VENDOR_PATH/oracle ; then
     echo 'Downloading and installing Oracle Instant Client'
     sudo mkdir -p $VENDOR_PATH/oracle
     sudo chown `whoami`:`whoami` $VENDOR_PATH/oracle
-    aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-    aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-    unzip $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
-    unzip $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip -d $VENDOR_PATH/oracle
+    if test ! -f $VENDOR_PATH/oracle/oracle-instantclient12.1-basiclite-12.1.0.2.0-1.x86_64.rpm ; then
+        aws s3 cp s3://ais-deploy/oracle-instantclient12.1-basiclite-12.1.0.2.0-1.x86_64.rpm $VENDOR_PATH/oracle
+    fi
+    if test ! -f $VENDOR_PATH/oracle/oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm ; then
+        aws s3 cp s3://ais-deploy/oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm $VENDOR_PATH/oracle
+    fi
+    if [ "$(dpkg -l | grep "ii  oracle")" = "" ]
+        sudo alien --install $VENDOR_PATH/oracle/oracle-instantclient12.1*rpm
+    fi
 fi
 
 if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
     ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
 fi
 
-if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
-    echo 'Installing Oracle Instant Client to load on bash start'
-    cat >> ~/.bashrc <<____EOF
-    export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
-    export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
-    export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1
-____EOF
-    source ~/.bashrc
+if test ! -f ; then
+    ln -s instantclient_12_1 $VENDOR_PATH/oracle/lib
 fi
+
+# if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
+#     echo 'Installing Oracle Instant Client to load on bash start'
+#     cat >> ~/.bashrc <<____EOF
+#     export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
+#     export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
+#     export ORACLE_HOME=$VENDOR_PATH/oracle
+# ____EOF
+#     source ~/.bashrc
+# fi
 
 # Download and install the private key for installing passyunk
 echo 'Downloading and installing private key for GitHub'
@@ -68,8 +78,8 @@ sudo bash <<EOF
 EOF
 
 # Install python requirements on python3 with library paths
-echo 'Installing other application Python requirements; Oracle tools are in $LD_LIBRARY_PATH'
-sudo ORACLE_HOME="$ORACLE_HOME" pip3 install --requirement requirements.txt
+echo 'Installing other application Python requirements'
+sudo pip3 install --requirement requirements.txt
 
 
 # # Configure the AWS CLI
