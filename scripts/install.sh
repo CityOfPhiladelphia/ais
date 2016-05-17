@@ -39,13 +39,13 @@ if test ! -d $VENDOR_PATH/oracle ; then
     fi
 fi
 
-if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
-    ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
-fi
+# if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
+#     ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
+# fi
 
-if test ! -f ; then
-    ln -s instantclient_12_1 $VENDOR_PATH/oracle/lib
-fi
+# if test ! -f ; then
+#     ln -s instantclient_12_1 $VENDOR_PATH/oracle/lib
+# fi
 
 # if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
 #     echo 'Installing Oracle Instant Client to load on bash start'
