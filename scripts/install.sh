@@ -42,6 +42,7 @@ if [ "$(grep "oracle/instantclient_12_1" ~/.bashrc)" = "" ] ; then
     cat >> ~/.bashrc <<____EOF
     export LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1:\$LD_LIBRARY_PATH
     export PATH=\$PATH:$VENDOR_PATH/oracle/instantclient_12_1
+    export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1
 ____EOF
     source ~/.bashrc
 fi
@@ -68,7 +69,7 @@ EOF
 
 # Install python requirements on python3 with library paths
 echo 'Installing other application Python requirements; Oracle tools are in $LD_LIBRARY_PATH'
-sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH pip3 install --requirement requirements.txt
+sudo ORACLE_HOME="$ORACLE_HOME" pip3 install --requirement requirements.txt
 
 
 # # Configure the AWS CLI
