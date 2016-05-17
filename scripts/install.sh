@@ -34,7 +34,7 @@ if test ! -d $VENDOR_PATH/oracle ; then
     if test ! -f $VENDOR_PATH/oracle/oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm ; then
         aws s3 cp s3://ais-deploy/oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm $VENDOR_PATH/oracle
     fi
-    if [ "$(dpkg -l | grep "ii  oracle")" = "" ]
+    if [ "$(dpkg -l | grep "ii  oracle")" = "" ] ; then
         sudo alien --install $VENDOR_PATH/oracle/oracle-instantclient12.1*rpm
     fi
 fi
