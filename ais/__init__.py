@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
@@ -6,6 +7,7 @@ from flask_migrate import Migrate, MigrateCommand
 
 # Create app instance
 app = Flask(__name__, instance_relative_config=True)
+CORS(app)
 
 # Load default config
 app.config.from_object('config')
