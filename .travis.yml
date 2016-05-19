@@ -1,0 +1,11 @@
+sudo: false
+
+install: .travis/install.sh
+
+script: py.test ais
+
+deploy:
+  provider: script
+  script: .travis/deploy.sh
+  on:
+    branch: staging
