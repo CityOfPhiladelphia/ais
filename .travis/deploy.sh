@@ -2,25 +2,14 @@
 
 set -e
 
+SCRIPTS_DIR=$(dirname $0)/../scripts
 KEYFILE=deploy.pem
 INSTANCE_USER=ubuntu
 ENCRYPTION_KEY='encrypted_${ENCRYPTION_ID}_key'
 ENCRYPTION_IV='encrypted_${ENCRYPTION_ID}_iv'
 
 # Install the AWS CLI if it's not already
-if test ! -f ~/.aws/config ; then
-    pip install awscli
-
-    echo 'Configuring AWS CLI'
-    mkdir -p ~/.aws
-    cat > ~/.aws/config <<EOF
-[default]
-aws_access_key_id = $AWS_ID
-aws_secret_access_key = $AWS_SECRET
-output = text
-region = us-east-1
-EOF
-fi
+$SCRIPTS_DIR/init_awscli.sh
 
 echo 'Retrieving machine IP from AWS'
 PROJECT_NAME=$(python -c "print('$TRAVIS_REPO_SLUG'.split('/')[1])")
