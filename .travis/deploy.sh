@@ -9,7 +9,7 @@ ENCRYPTION_IV='encrypted_${ENCRYPTION_ID}_iv'
 
 # Install the AWS CLI if it's not already
 if test ! -f ~/.aws/config ; then
-    sudo pip install awscli
+    pip install awscli
 
     echo 'Configuring AWS CLI'
     mkdir -p ~/.aws

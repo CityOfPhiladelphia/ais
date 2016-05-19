@@ -1,4 +1,7 @@
-sudo: required
+sudo: false
+
+language: python
+python: "3.4"
 
 install: .travis/install.sh
 
