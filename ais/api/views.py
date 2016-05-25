@@ -44,26 +44,6 @@ def addresses_view(query):
     * L&I Key
     * Zoning something or other
 
-    TODO: There are some addresses that are synonyms for each other. These need
-          to be disambiguated. There is some table that has a some property that
-          tells me an address is the canonical one. Which is that table? Is it
-          AddressLink? Do I only want addresses that have none of a particular
-          type of relationship?
-
-          Check with Rob to about whether we should depend on the address
-          summary table, and if not whether we're safe to simply join on
-          stree_address, and which tables we need to be concerned with.
-
-          Check on the unit type. Should be null, as the query will ignore them.
-
-          Consider ignoring the unit type. There are 10-15 exceptions in the city where the same unit num exists for different unit types.
-
-    TODO: Geocode addresses by matching against types in the following order:
-          * PWD
-          * DOR
-          * True Range
-          * Curb
-
     TODO: Give each address a score every time someone accesses it. This can be
           used for semi-intelligent ordering. For example, if I query for "440
           Broad St", I'll most often mean the school district building. However,
@@ -125,11 +105,6 @@ def account_number_view(number):
     """
     Looks up information about the property with the given OPA account number.
     Should only ever return one or zero corresponding addresses.
-
-    TODO: Should this return all addresses at the property that matches the
-          number? For example, number 883309000 for 1234 Market, which has
-          multiple units. Is there a good way to know which one is the "real"
-          one? Would the is_base logic do it?
     """
     address = Address.query\
         .join(AddressProperty, AddressProperty.street_address==Address.street_address)\
@@ -152,6 +127,9 @@ def account_number_view(number):
 @app.route('/block/<query>')
 def block_view(query):
     """
+    Looks up information about the 100-range that the given address falls
+    within.
+
     TODO: Consider matching the segment ID and finding the low and high. This
           would be instead of hardcoding a low of 0 and high of 100. Maybe this
           would go at a new route, like `segment` or `block-face`.
