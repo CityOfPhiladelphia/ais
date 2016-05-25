@@ -180,3 +180,34 @@ def block_view(query):
         pagination=paginator.get_page_info(page_num))
     result = serializer.serialize_many(block_page)
     return json_response(response=result, status=200)
+
+
+@app.route('/owner/<query>')
+def owner(query):
+    owner_parts = query.upper().split()
+
+    # Match a set of addresses
+    addresses = AddressSummary.query\
+        .filter_by_owner(*owner_parts)\
+        .order_by_address()
+    paginator = QueryPaginator(addresses)
+
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find any addresses with owner matching query.',
+                           {'query': query})
+        return json_response(response-error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Render the response
+    page = paginator.get_page(page_num)
+    serializer = AddressJsonSerializer(
+        metadata={'query': query, 'parsed': owner_parts},
+        pagination=paginator.get_page_info(page_num))
+    result = serializer.serialize_many(page)
+    return json_response(response=result, status=200)

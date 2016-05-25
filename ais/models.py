@@ -149,6 +149,14 @@ class AddressQuery(BaseQuery):
                              Address.address_high,
                              Address.unit_num.nullsfirst())
 
+    def filter_by_owner(self, *owner_parts):
+        query = self.join(AddressProperty, AddressProperty.street_address==Address.street_address)\
+            .join(OpaProperty, OpaProperty.account_num==AddressProperty.opa_account_num)
+        
+        for part in owner_parts:
+            query = query.filter(OpaProperty.owners.like('%{}%'.format(part)))
+        return query
+
 
 class Address(db.Model):
     """A street address with parsed components."""
@@ -246,6 +254,9 @@ class Address(db.Model):
     @property
     def geocode(self):
         """Returns the "best" geocoded value"""
+        if not self.geocodes:
+            return None
+
         priority = {
             'pwd_parcel': 4,
             'dor_parcel': 3,
@@ -611,6 +622,12 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.address_high,
                              AddressSummary.unit_num.nullsfirst())
 
+    def filter_by_owner(self, *owner_parts):
+        query = self
+        for part in owner_parts:
+            query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        return query
+
 class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
 
@@ -678,6 +695,9 @@ class AddressSummary(db.Model):
     @property
     def geocode(self):
         """Returns the "best" geocoded value"""
+        if not self.geocodes:
+            return None
+    
         priority = {
             'pwd_parcel': 4,
             'dor_parcel': 3,
