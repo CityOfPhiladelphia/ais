@@ -107,15 +107,15 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
 
-                ('zip_code', address.zip_info.zip_range.zip_code if address.zip_info else None),
-                ('zip_4', address.zip_info.zip_range.zip_4 if address.zip_info else None),
+                ('zip_code', address.zip_code or None),
+                ('zip_4', address.zip_4 or None),
 
-                ('pwd_parcel_id', address.pwd_parcel.parcel_id if address.pwd_parcel else None),
-                ('dor_parcel_id', address.dor_parcel.parcel_id if address.dor_parcel else None),
+                ('pwd_parcel_id', address.pwd_parcel_id or None),
+                ('dor_parcel_id', address.dor_parcel_id or None),
 
-                ('opa_account_num', address.opa_property.account_num if address.opa_property else None),
-                ('opa_owners', address.opa_property.owners if address.opa_property else None),
-                ('opa_address', address.opa_property.source_address if address.opa_property else None),
+                ('opa_account_num', address.opa_account_num or None),
+                ('opa_owners', address.opa_owners or None),
+                ('opa_address', address.opa_address or None),
 
                 ('geom_type', geom_type),
                 ('geom_source', geom_source),

@@ -6,7 +6,7 @@ Does three primary things:
 """
 
 from ais import app
-from ais.models import Address, AddressProperty
+from ais.models import Address, AddressProperty, AddressSummary
 from flask import Response, request
 from passyunk.parser import PassyunkParser
 
@@ -70,7 +70,7 @@ def addresses_view(query):
         street_suffix=parsed['components']['street']['suffix'],
         unit_num=parsed['components']['unit']['unit_num'],
     )
-    addresses = Address.query\
+    addresses = AddressSummary.query\
         .filter_by(**filters)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
@@ -106,8 +106,8 @@ def account_number_view(number):
     Looks up information about the property with the given OPA account number.
     Should only ever return one or zero corresponding addresses.
     """
-    address = Address.query\
-        .join(AddressProperty, AddressProperty.street_address==Address.street_address)\
+    address = AddressSummary.query\
+        .join(AddressProperty, AddressProperty.street_address==AddressSummary.street_address)\
         .filter(AddressProperty.opa_account_num==number)\
         .order_by_address()\
         .first()
@@ -154,10 +154,10 @@ def block_view(query):
         street_postdir=parsed['components']['street']['postdir'],
         street_suffix=parsed['components']['street']['suffix'],
     )
-    addresses = Address.query\
+    addresses = AddressSummary.query\
         .filter_by(**filters)\
-        .filter(Address.address_low >= block_num)\
-        .filter(Address.address_low < block_num + 100)\
+        .filter(AddressSummary.address_low >= block_num)\
+        .filter(AddressSummary.address_low < block_num + 100)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
 

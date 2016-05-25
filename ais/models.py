@@ -252,17 +252,7 @@ class Address(db.Model):
             'true_range': 2,
             'centerline': 1,
         }
-
-        best = 0
-        geocode = None
-
-        for g in self.geocodes:
-            score = priority[g.geocode_type]
-            if score > best:
-                best = score
-                geocode = g
-
-        return geocode
+        return max(self.geocodes, key=lambda g: priority[g.geocode_type])
 
     def get_geocode(self, geocode_type):
         for g in self.geocodes:
@@ -270,6 +260,33 @@ class Address(db.Model):
                 return g
         return None
 
+    @property
+    def zip_code(self):
+        return self.zip_info.zip_range.zip_code if self.zip_info else None
+
+    @property
+    def zip_4(self):
+        return self.zip_info.zip_range.zip_4 if self.zip_info else None
+
+    @property
+    def pwd_parcel_id(self):
+        return self.pwd_parcel.parcel_id if self.pwd_parcel else None
+
+    @property
+    def dor_parcel_id(self):
+        return self.dor_parcel.parcel_id if self.dor_parcel else None
+
+    @property
+    def opa_account_num(self):
+        return self.opa_property.account_num if self.opa_property else None
+
+    @property
+    def opa_owners(self):
+        return self.opa_property.owners if self.opa_property else None
+
+    @property
+    def opa_address(self):
+        return self.opa_property.source_address if self.opa_property else None
 
     @property
     def parity(self):
@@ -583,7 +600,20 @@ class ZipRange(db.Model):
 # PRODUCTS #
 ############
 
+class AddressSummaryQuery(BaseQuery):
+    """A query class that knows how to sort addresses"""
+    def order_by_address(self):
+        return self.order_by(AddressSummary.street_name,
+                             AddressSummary.street_suffix,
+                             AddressSummary.street_predir,
+                             AddressSummary.street_postdir,
+                             AddressSummary.address_low,
+                             AddressSummary.address_high,
+                             AddressSummary.unit_num.nullsfirst())
+
 class AddressSummary(db.Model):
+    query_class = AddressSummaryQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
@@ -617,6 +647,50 @@ class AddressSummary(db.Model):
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
+
+    geocodes = db.relationship(
+        'Geocode',
+        primaryjoin='foreign(Geocode.street_address) == AddressSummary.street_address',
+        lazy='joined')
+
+    zip_info = db.relationship(
+        'AddressZip',
+        primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+
+    pwd_parcel = db.relationship(
+        'PwdParcel',
+        primaryjoin='foreign(PwdParcel.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+    dor_parcel = db.relationship(
+        'DorParcel',
+        primaryjoin='foreign(DorParcel.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+    opa_property = db.relationship(
+        'OpaProperty',
+        primaryjoin='foreign(OpaProperty.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+
+    @property
+    def geocode(self):
+        """Returns the "best" geocoded value"""
+        priority = {
+            'pwd_parcel': 4,
+            'dor_parcel': 3,
+            'true_range': 2,
+            'centerline': 1,
+        }
+        return max(self.geocodes, key=lambda g: priority[g.geocode_type])
+
+    def get_geocode(self, geocode_type):
+        for g in self.geocodes:
+            if g.geocode_type == geocode_type:
+                return g
+        return None
 
 ######################
 # ERRORS / REPORTING #
