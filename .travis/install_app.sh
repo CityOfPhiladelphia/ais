@@ -39,29 +39,12 @@ if test ! -d $VENDOR_PATH/oracle ; then
     fi
 fi
 
-# Download and install the private key for installing passyunk
-echo 'Downloading and installing private key for GitHub'
-if ! test -f /etc/ssh/github ; then
-    aws s3 cp s3://ais-deploy/github ~/.ssh
-    sudo bash <<EOF
-        mv ~/.ssh/github /etc/ssh/
-        chmod 600 /etc/ssh/github
-EOF
-fi
-
-# Load the GitHub private key and install passyunk
-echo 'Installing Passyunk from a private repository'
-sudo bash <<EOF
-    eval `ssh-agent -s`
-    ssh-add /etc/ssh/github
-    ssh-keyscan -H github.com | sudo tee /etc/ssh/ssh_known_hosts
-
-    pip3 install -e git+ssh://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
-EOF
-
 # Install python requirements on python3 with library paths
 echo 'Installing other application Python requirements'
 sudo pip3 install --requirement requirements.txt
+
+# Download the zip4 file for passyunk and place it wherever passyunk was installed
+$SCRIPT_DIR/update_zip4.sh
 
 
 # Run any management commands for migration, static files, etc.
