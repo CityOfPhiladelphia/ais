@@ -416,6 +416,15 @@ class Address(db.Model):
         return None
 
 class AddressTag(db.Model):
+    """
+    Current tags in the database are:
+    * li_address_key
+    * info_resident (private)
+    * info_company (private)
+    * voter_name (private?)
+    * pwd_account_num
+
+    """
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     key = db.Column(db.Text)
