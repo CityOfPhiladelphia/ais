@@ -66,8 +66,6 @@ fi
 # download the latest version of the code. Set up the environment file and run
 # the install script on the server to complete the setup process.
 ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
-    cd $PROJECT_NAME
-
     echo 'Ensuring that git is installed'
     if [ '$(dpkg -l | grep 'ii  git' | cut -c -7)' = '' ] ; then
         sudo apt-get update
@@ -98,5 +96,7 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
     sudo pip install honcho jinja2
     honcho run .travis/install_app.sh
     honcho run .travis/install_server.sh
+    echo 'Deploy has completed; app should be available at:'
+    echo 'http://$INSTANCE_IP/'
 
 "
