@@ -66,17 +66,31 @@ fi
 # download the latest version of the code. Set up the environment file and run
 # the install script on the server to complete the setup process.
 ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
-
     cd $PROJECT_NAME
 
     echo 'Ensuring that git is installed'
-    .travis/init_gitrepo.sh $PROJECT_NAME $TRAVIS_BRANCH
+    if [ '$(dpkg -l | grep 'ii  git' | cut -c -7)' = '' ] ; then
+        sudo apt-get update
+        sudo apt-get install git -y
+    fi
+
+    # Clone or pull the latest code
+    if test -d $PROJECT_NAME ; then
+        cd $PROJECT_NAME
+        git fetch
+        git checkout $TRAVIS_BRANCH
+        git pull
+    else
+        git clone https://github.com/${TRAVIS_REPO_SLUG}.git
+        cd $PROJECT_NAME
+        git checkout $TRAVIS_BRANCH
+    fi
 
     echo 'Setting up environment variables'
     .travis/init_envfile.sh $PROJECT_NAME $TRAVIS_BRANCH $TRAVIS_REPO_SLUG
 
     echo 'Starting the install script'
-    if [ "$(sudo dpkg -l | grep "ii  python-pip")" = "" ] ; then
+    if [ '$(dpkg -l | grep 'ii  python-pip' | cut -c -14)' = '' ] ; then
         sudo apt-get update
         sudo apt-get install python-pip -y
     fi
