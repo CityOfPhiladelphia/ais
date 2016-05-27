@@ -119,6 +119,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
                 ('geom_type', geom_type),
                 ('geom_source', geom_source),
+
+                # TODO: Add the following fields:
+                # * pwd_account_nums -- where does it come from?
+                # * seg_id/side -- from AddressStreet?
+                # * li_address_key -- where does it come from?
             ])),
             ('geometry', geom_data),
         ])
