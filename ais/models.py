@@ -1,4 +1,5 @@
 import copy
+import re
 from geoalchemy2.types import Geometry
 from ais import app, app_db as db
 from ais.util import *
@@ -193,6 +194,9 @@ class Address(db.Model):
     def __str__(self):
         return 'Address: {}'.format(self.street_address)
 
+    def __repr__(self):
+        return self.__str__()
+
     def __iter__(self):
         for key in ADDRESS_FIELDS:
             yield (key, getattr(self, key))
@@ -249,20 +253,39 @@ class Address(db.Model):
         return True
 
     @property
+    def is_basic_range(self):
+        """
+        Determines if an address is a basic range, i.e. it has an address
+        high but no other secondary components like suffix, fractional, or unit.
+        """
+        is_range = self.address_high is not None
+        non_basic_comps = [
+            self.address_low_suffix,
+            self.address_low_frac,
+            self.unit_type,
+        ]
+        is_basic = all(comp is None for comp in non_basic_comps)
+        return is_range and is_basic
+
+    @property
     def child_addresses(self):
         """Returns a list of individual street addresses for a range"""
+        address_low_re = re.compile('^{}'.format(self.address_low))
+        address_high_re = re.compile('-\d+')
         child_addresses = []
         for child_num in self.child_nums:
-            child_obj = copy.copy(self)
-            child_obj.address_high = None
-            child_obj.address_low = child_num
-            child_addresses.append(child_obj)
+            child_num = str(child_num)
+            child_street_address = address_low_re.sub(child_num, \
+                                                      self.street_address)
+            child_street_address = address_high_re.sub('', child_street_address)
+            child_address = Address(child_street_address)
+            child_addresses.append(child_address)
         return child_addresses
 
     @property
     def child_nums(self):
         """Returns a list of individual address nums for a range"""
-        if self.address_high is None or self.unit_type is not None:
+        if not self.is_basic_range:
             return []
         child_num_list = []
         for x in range(self.address_low, self.address_high + 1, 2):
