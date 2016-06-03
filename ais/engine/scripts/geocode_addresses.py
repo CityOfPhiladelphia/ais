@@ -233,15 +233,12 @@ address_rows = address_table.read(fields=address_fields, \
 	# where='street_address = \'2653-55 N ORIANNA ST\'')
 addresses = []
 seg_side_map = {}
-for address_row in address_rows:
-	street_address = address_row['street_address']
-	try:
-		address = Address(street_address)
-	except:
-		print(traceback.format_exc())
-		print('Could not parse: {}'.format(street_address))
-		sys.exit()
-	addresses.append(address)
+# for address_row in address_rows:
+# 	street_address = address_row['street_address']
+# 	address = Address(street_address)
+# 	addresses.append(address)
+
+addresses = Address.query.all()
 
 	# TODO: index by seg ID, side (seg_side_map above)
 	# For interpolating between parcel centroids
@@ -417,8 +414,9 @@ for i, address_row in enumerate(address_rows):
 			
 			try:
 				parcel_ids = addr_parcel_map[street_address][parcel_layer_name]
-
 			except KeyError as e:
+				# TODO: check if there's an address link that points to an
+				# address in address_parcel
 				parcel_ids = None
 
 			# Get PWD XY
