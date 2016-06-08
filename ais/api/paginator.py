@@ -8,14 +8,19 @@ PAGE_SIZE = 100
 
 
 class Paginator:
-    def __init__(self, collection, max_page_size=PAGE_SIZE):
-        self.collection = collection
+    def __init__(self, *collections, max_page_size=PAGE_SIZE):
+        self.collections = collections
         self.max_page_size = max_page_size
 
     @property
     @lru_cache()
+    def collection_sizes(self):
+        return tuple(len(c) for c in self.collections)
+
+    @property
+    @lru_cache()
     def collection_size(self):
-        return len(self.collection)
+        return sum(self.collection_sizes)
 
     @property
     @lru_cache()
@@ -25,7 +30,23 @@ class Paginator:
     def get_page(self, page):
         start = (page - 1) * self.max_page_size
         end = start + self.max_page_size
-        return self.collection[start:end]
+
+        for collection, size in zip(self.collections, self.collection_sizes):
+            print((start, end))
+            if start < size:
+                partial_page = tuple(collection[start:end])
+                partial_size = len(partial_page)
+                yield from partial_page
+
+                start = 0
+                end -= partial_size
+
+            else:
+                start -= size
+                end -= size
+
+            if end <= 0:
+                break
 
     def get_page_size(self, page=None):
         if page and page < self.page_count:
@@ -67,10 +88,25 @@ class Paginator:
 class QueryPaginator (Paginator):
     @property
     @lru_cache()
-    def collection_size(self):
-        return self.collection.count()
+    def collection_sizes(self):
+        return tuple(c.count() for c in self.collections)
 
     def get_page(self, page):
-        return self.collection\
-            .offset((page - 1) * self.max_page_size)\
-            .limit(self.max_page_size)
+        offset = (page - 1) * self.max_page_size
+        limit = self.max_page_size
+
+        # import pdb; pdb.set_trace()
+        for collection, size in zip(self.collections, self.collection_sizes):
+            if offset < size:
+                partial_page = tuple(collection.offset(offset).limit(limit))
+                partial_size = len(partial_page)
+                yield from partial_page
+
+                offset = 0
+                limit -= partial_size
+
+            else:
+                offset -= size
+
+            if limit <= 0:
+                break

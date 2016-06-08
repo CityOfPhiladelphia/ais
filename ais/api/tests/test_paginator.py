@@ -12,7 +12,7 @@ from ..paginator import Paginator
 
 @pytest.fixture
 def full_paginator():
-    return Paginator([1, 2, 3, 4, 5, 6, 7, 8], max_page_size=3)
+    return Paginator([1, 2], [], [3, 4, 5, 6, 7, 8], max_page_size=3)
 
 @pytest.fixture
 def page_request():
@@ -61,3 +61,9 @@ def test_first_page_size(page_request, full_paginator):
 
 def test_last_page_size(page_request, full_paginator):
     assert full_paginator.get_page_size(3) == 2
+
+def test_page_ends_in_split(page_request, full_paginator):
+    assert list(full_paginator.get_page(1)) == [1, 2, 3]
+
+def test_page_starts_in_split(page_request, full_paginator):
+    assert list(full_paginator.get_page(2)) == [4, 5, 6]
