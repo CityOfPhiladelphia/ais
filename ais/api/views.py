@@ -6,7 +6,7 @@ Does three primary things:
 """
 
 from ais import app
-from ais.models import Address, AddressProperty, AddressSummary
+from ais.models import Address, AddressProperty, AddressSummary, AddressLink
 from flask import Response, request
 from passyunk.parser import PassyunkParser
 
@@ -60,19 +60,50 @@ def addresses_view(query):
     """
     parsed = PassyunkParser().parse(query)
 
-    # Match a set of addresses
-    filters = NotNoneDict(
+    # Match a set of addresses. Filters will either be loose, where an omission
+    # is ignored, or scrict, where an omission is treated as an explicit NULL.
+    # For example, if the street_predir is omitted, then we should still match
+    # all addresses that match the rest of the information; this is a loose
+    # filter. However, if we do not provide an address_high, we should assume
+    # that we're not looking for a ranged address; this is a strict filter.
+    loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
         address_low=parsed['components']['address']['low'] or parsed['components']['address']['full'],
-        address_high=parsed['components']['address']['high'],
         street_predir=parsed['components']['street']['predir'],
         street_postdir=parsed['components']['street']['postdir'],
         street_suffix=parsed['components']['street']['suffix'],
         unit_num=parsed['components']['unit']['unit_num'],
     )
-    addresses = AddressSummary.query\
-        .filter_by(**filters)\
-        .order_by_address()
+    strict_filters = dict(
+        address_high=parsed['components']['address']['high_num_full'],
+    )
+
+    addresses = AddressSummary.query.filter_by(**loose_filters, **strict_filters)
+
+    if 'opa_only' in request.args:
+        addresses = addresses.filter(AddressSummary.opa_account_num != '')
+
+    # Special additional query to surface children of ranged addresses
+    if parsed['components']['address']['high_num_full']:
+        ranged_addresses = addresses\
+            .filter(AddressSummary.address_high is not None)\
+            .with_entities(AddressSummary.street_address)\
+            .subquery()
+
+        addresses_in_ranges = AddressLink.query\
+            .filter(AddressLink.relationship == 'in range')\
+            .filter(AddressLink.address_2.in_(ranged_addresses))\
+            .with_entities(AddressLink.address_1)\
+            .subquery()
+
+        child_addresses = AddressSummary.query\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(AddressLink.relationship == 'has base')\
+            .filter(AddressLink.address_2.in_(addresses_in_ranges))
+
+        addresses = addresses.union(child_addresses)
+
+    addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
