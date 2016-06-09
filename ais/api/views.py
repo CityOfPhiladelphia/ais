@@ -78,32 +78,12 @@ def addresses_view(query):
         address_high=parsed['components']['address']['high_num_full'],
     )
 
-    addresses = AddressSummary.query.filter_by(**loose_filters, **strict_filters)
-
-    if 'opa_only' in request.args:
-        addresses = addresses.filter(AddressSummary.opa_account_num != '')
-
-    # Special additional query to surface children of ranged addresses
-    if parsed['components']['address']['high_num_full']:
-        ranged_addresses = addresses\
-            .filter(AddressSummary.address_high is not None)\
-            .with_entities(AddressSummary.street_address)\
-            .subquery()
-
-        addresses_in_ranges = AddressLink.query\
-            .filter(AddressLink.relationship == 'in range')\
-            .filter(AddressLink.address_2.in_(ranged_addresses))\
-            .with_entities(AddressLink.address_1)\
-            .subquery()
-
-        child_addresses = AddressSummary.query\
-            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
-            .filter(AddressLink.relationship == 'has base')\
-            .filter(AddressLink.address_2.in_(addresses_in_ranges))
-
-        addresses = addresses.union(child_addresses)
-
-    addresses = addresses.order_by_address()
+    addresses = AddressSummary.query\
+        .filter_by(**loose_filters, **strict_filters)\
+        .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
+        .exclude_non_opa('opa_only' in request.args)\
+        .include_child_units(parsed['components']['address']['high_num_full'])\
+        .order_by_address()
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
@@ -140,6 +120,7 @@ def account_number_view(number):
     address = AddressSummary.query\
         .join(AddressProperty, AddressProperty.street_address==AddressSummary.street_address)\
         .filter(AddressProperty.opa_account_num==number)\
+        .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()\
         .first()
 
@@ -189,6 +170,7 @@ def block_view(query):
         .filter_by(**filters)\
         .filter(AddressSummary.address_low >= block_num)\
         .filter(AddressSummary.address_low < block_num + 100)\
+        .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
 
@@ -220,6 +202,7 @@ def owner(query):
     # Match a set of addresses
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts)\
+        .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
 

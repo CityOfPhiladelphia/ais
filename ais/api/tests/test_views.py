@@ -21,11 +21,14 @@ def assert_num_results(data, expected_num_results, op=eq):
         op.__name__, expected_num_results, actual_num_results,
         data)
 
+def assert_attr(feature, property_name, expected_value):
+    actual_address = feature['properties'][property_name]
+    assert actual_address == expected_value, (
+        'Expected {} of {}; received {}.').format(
+        property_name, expected_value, actual_address)
+
 def assert_opa_address(feature, expected_address):
-    actual_address = feature['properties']['opa_address']
-    assert actual_address == expected_address, (
-        'Expected OPA address of {}; received {}.').format(
-        expected_address, actual_address)
+    assert_attr(feature, 'opa_address', expected_address)
 
 def test_single_address_has_single_result(client):
     response = client.get('/addresses/1922 SARTAIN ST')
@@ -86,7 +89,7 @@ def test_ranged_address_has_units_with_base_first(client):
     assert_num_results(data, 1, op=gt)
 
     feature = data['features'][0]
-    assert feature['properties']['street_address'] == '1801-23 N 10TH ST'
+    assert_attr(feature, 'street_address', '1801-23 N 10TH ST')
 
 
 def test_base_address_has_units_with_base_first(client):
@@ -97,11 +100,61 @@ def test_base_address_has_units_with_base_first(client):
     assert_num_results(data, 1, op=gt)
 
     feature = data['features'][0]
-    assert feature['properties']['street_address'] == '1801 N 10TH ST'
+    assert_attr(feature, 'street_address', '1801 N 10TH ST')
     assert_opa_address(feature, '1801-23 N 10TH ST')
 
 def test_unit_address_in_db(client):
-    assert False
+    response = client.get('/addresses/826-28 N 3rd St # 1')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
 def test_unit_address_not_in_db(client):
-    assert False
+    response = client.get('/addresses/826-28 N 3rd St # 11')
+    assert_status(response, 404)
+
+def test_synounymous_unit_types_found(client):
+    # APT
+    response = client.get('/addresses/826-28 N 3rd St Apartment 1')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, '826-28 N 3RD ST # 1')
+
+    # UNIT
+    response = client.get('/addresses/826-28 N 3rd St Unit 1')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, '826-28 N 3RD ST # 1')
+
+    # STE
+    response = client.get('/addresses/826-28 N 3rd St Suite 1')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, '826-28 N 3RD ST # 1')
+
+def test_nonsynonymous_unit_types_not_used(client):
+    response = client.get('/addresses/826-28 N 3rd St Floor 1')
+    assert_status(response, 404)
+
+def test_filter_for_only_opa_addresses(client):
+    response = client.get('/addresses/1801 N 10th St?opa_only')
+    assert_status(response, 200)
+    
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)

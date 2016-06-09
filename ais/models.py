@@ -637,6 +637,48 @@ class AddressSummaryQuery(BaseQuery):
             query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
         return query
 
+    def filter_by_unit_type(self, unit_type):
+        if not unit_type:
+            return self
+
+        synonymous_unit_types = ('APT', 'UNIT', '#', 'STE')
+        if unit_type in synonymous_unit_types:
+            return self.filter(
+                AddressSummary.unit_type.in_(synonymous_unit_types))
+        else:
+            return self.filter_by(unit_type=unit_type)
+
+    def include_child_units(self, is_range):
+        """
+        Surface units of children of a ranged address
+        """
+        if not is_range:
+            return self
+
+        ranged_addresses = self\
+            .filter(AddressSummary.address_high is not None)\
+            .with_entities(AddressSummary.street_address)\
+            .subquery()
+
+        addresses_in_ranges = AddressLink.query\
+            .filter(AddressLink.relationship == 'in range')\
+            .filter(AddressLink.address_2.in_(ranged_addresses))\
+            .with_entities(AddressLink.address_1)\
+            .subquery()
+
+        child_units = AddressSummary.query\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(AddressLink.relationship == 'has base')\
+            .filter(AddressLink.address_2.in_(addresses_in_ranges))
+
+        return self.union(child_units)
+
+    def exclude_non_opa(self, should_exclude=True):
+        if should_exclude:
+            return self.filter(AddressSummary.opa_account_num != '')
+        else:
+            return self
+
 class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
 
