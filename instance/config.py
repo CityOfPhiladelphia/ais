@@ -10,7 +10,7 @@ SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
 
 # Suppress some weird warning.
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SQLALCHEMY_ECHO = True
+SQLALCHEMY_ECHO = (os.environ.get('SQLALCHEMY_ECHO', 'False').title() == 'True')
 
 from passyunk.parser import PassyunkParser
 PARSER = PassyunkParser
