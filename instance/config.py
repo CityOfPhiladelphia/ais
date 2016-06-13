@@ -23,7 +23,7 @@ DATABASES = {
     'brtprod':  os.environ.get('BRTPROD_DATABASE'),
 }
 
-DEBUG = (os.environ.get('PROFILE', 'False').title() == 'True')
+DEBUG = (os.environ.get('DEBUG', 'False').title() == 'True')
 PROFILE = (os.environ.get('PROFILE', 'False').title() == 'True')
 
 BASE_DATA_SOURCES = {

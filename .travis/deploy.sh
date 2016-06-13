@@ -84,6 +84,8 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
         git checkout $TRAVIS_BRANCH
     fi
 
+    .travis/init_system.sh
+
     echo 'Setting up environment variables'
     .travis/init_envfile.sh $PROJECT_NAME $TRAVIS_BRANCH $TRAVIS_REPO_SLUG
 

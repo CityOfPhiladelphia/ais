@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if test ! -f ~/.aws/config ; then
-    sudo pip install awscli
+    pip install awscli
 
     echo 'Configuring AWS CLI'
     mkdir -p ~/.aws

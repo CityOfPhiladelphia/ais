@@ -3,6 +3,17 @@ sudo: required
 language: python
 python: "3.4"
 
+addons:
+  apt:
+    packages:
+    - python-virtualenv
+    - build-essential
+    - libaio1
+    - libpq-dev
+    - libgeos-dev
+    - unzip
+    - nginx
+
 install: .travis/install.sh --install-ssh
 
 script: py.test ais
