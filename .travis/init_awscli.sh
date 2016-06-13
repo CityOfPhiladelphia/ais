@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 if test ! -f ~/.aws/config ; then
+    source env/bin/activate
     pip install awscli
+    deactivate
 
     echo 'Configuring AWS CLI'
     mkdir -p ~/.aws
