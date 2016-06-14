@@ -3,7 +3,7 @@
 set -e
 SCRIPT_DIR=$(dirname $0)
 BASE_DIR=$(dirname $SCRIPT_DIR)
-VENDOR_PATH=$BASE_DIR/vendor
+VENDOR_PATH=`pwd`/$BASE_DIR/vendor
 
 
 
