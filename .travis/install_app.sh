@@ -14,19 +14,26 @@ VENDOR_PATH=$BASE_DIR/vendor
 # instance must have been created with a role that can read objects from S3.
 #
 # https://oracle-base.com/articles/misc/oracle-instant-client-installation
-if test ! -d $VENDOR_PATH/oracle ; then
-    echo 'Downloading and installing Oracle Instant Client'
-    mkdir -p $VENDOR_PATH/oracle
-    if test ! -f $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip ; then
-        aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-    fi
-    if test ! -f $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip ; then
-        aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
-    fi
-    if [ "$(dpkg -l | grep "ii  oracle")" = "" ] ; then
-        unzip $VENDOR_PATH/oralce/instantclient*.zip
-        sudo alien --install $VENDOR_PATH/oracle/oracle-instantclient12.1*rpm
-    fi
+echo 'Downloading and installing Oracle Instant Client'
+mkdir -p $VENDOR_PATH/oracle
+if test ! -f $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip ; then
+    aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+fi
+if test ! -f $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip ; then
+    aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
+fi
+if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
+    cd $VENDOR_PATH/oracle
+    unzip "instantclient*.zip"
+    cd ../..
+fi
+if [[ "$LD_LIBRARY_PATH" != *"$VENDOR_PATH/oracle"* ]] ; then
+    echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1" >> ~/.bashrc
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1
+fi
+if [[ "$ORACLE_HOME" != *"$VENDOR_PATH/oracle"* ]] ; then
+    echo "export ORACLE_HOME=$VENDOR_PATH/oracle" >> ~/.bashrc
+    export ORACLE_HOME=$VENDOR_PATH/oracle
 fi
 
 

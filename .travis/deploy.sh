@@ -84,21 +84,26 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
         git checkout $TRAVIS_BRANCH
     fi
 
+    echo 'Installing system packages'
     .travis/init_system.sh
 
+    echo 'Creating the virtual environment'
+    .travis/init_environment.sh
+
+    echo 'Activating the virtual environment'
+    source env/bin/activate
+    pip install honcho jinja2
+
+    echo 'Setting up AWS access'
+    .travis/init_awscli.sh '$AWS_ID' '$AWS_SECRET'
+
     echo 'Setting up environment variables'
-    .travis/init_envfile.sh $PROJECT_NAME $TRAVIS_BRANCH $TRAVIS_REPO_SLUG
+    .travis/init_envfile.sh '$PROJECT_NAME' '$TRAVIS_BRANCH'
 
     echo 'Starting the install script'
-    if [ '$(dpkg -l | grep 'ii  python-pip' | cut -c -14)' = '' ] ; then
-        sudo apt-get update
-        sudo apt-get install python-pip -y
-    fi
-
-    sudo pip install honcho jinja2
     honcho run .travis/install_app.sh
     honcho run .travis/install_server.sh
     echo 'Deploy has completed; app should be available at:'
     echo 'http://$INSTANCE_IP/'
-
+    deactivate
 "

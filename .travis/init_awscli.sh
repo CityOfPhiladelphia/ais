@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+AWS_ID=$1
+AWS_SECRET=$2
+
 if test ! -f ~/.aws/config ; then
     source env/bin/activate
     pip install awscli
