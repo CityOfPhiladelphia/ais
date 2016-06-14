@@ -32,8 +32,8 @@ if [[ "$LD_LIBRARY_PATH" != *"$VENDOR_PATH/oracle"* ]] ; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1
 fi
 if [[ "$ORACLE_HOME" != *"$VENDOR_PATH/oracle"* ]] ; then
-    echo "export ORACLE_HOME=$VENDOR_PATH/oracle" >> ~/.bashrc
-    export ORACLE_HOME=$VENDOR_PATH/oracle
+    echo "export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1" >> ~/.bashrc
+    export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1
 fi
 
 
