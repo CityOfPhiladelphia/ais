@@ -52,7 +52,7 @@ deactivate
 # Install python requirements on python3 with library paths
 echo 'Installing other application Python requirements'
 source env/bin/activate
-pip install --requirement requirements.txt
+pip install --requirement requirements.app.txt
 deactivate
 
 # Download the zip4 file for passyunk and place it wherever passyunk was installed

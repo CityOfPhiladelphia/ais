@@ -10,6 +10,12 @@ BASE_DIR=$(dirname $SCRIPT_DIR)
 . $SCRIPT_DIR/utils.sh
 
 
+# Install the deployment requirements
+echo 'Installing deployment Python requirements'
+source env/bin/activate
+pip install --requirement requirements.server.txt
+deactivate
+
 
 # Set up the web server
 echo 'Setting up the web server configuration'
