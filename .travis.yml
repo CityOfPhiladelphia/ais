@@ -14,12 +14,12 @@ addons:
     - nginx
 
 install:
-  - .travis/install_tests.sh --install-ssh
+  - .travis/install_tests.sh
 
 script: py.test ais
 
 deploy:
   provider: script
-  script: .travis/deploy.sh
+  script: .travis/deploy.sh --install-ssh
   on:
     branch: staging
