@@ -6,7 +6,7 @@ set -e
 .travis/init_environment.sh
 
 # Set up AWS access
-.travis/init_awscli.sh
+.travis/init_awscli.sh '$AWS_ID' '$AWS_SECRET'
 
 # Transfer the .env file to the server
 .travis/init_envfile.sh $PROJECT_NAME $TRAVIS_BRANCH

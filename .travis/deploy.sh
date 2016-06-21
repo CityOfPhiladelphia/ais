@@ -27,7 +27,7 @@ done
 
 
 # Install the AWS CLI if it's not already
-$SCRIPTS_DIR/init_awscli.sh
+$SCRIPTS_DIR/init_awscli.sh '$AWS_ID' '$AWS_SECRET'
 
 echo 'Retrieving machine IP from AWS'
 PROJECT_NAME=$(python -c "print('$TRAVIS_REPO_SLUG'.split('/')[1])")
