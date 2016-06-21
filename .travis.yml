@@ -16,7 +16,7 @@ addons:
 install:
   - .travis/install_tests.sh
 
-script: .travis/test
+script: .travis/test.sh
 
 deploy:
   provider: script

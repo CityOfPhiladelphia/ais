@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 PROJECT_NAME=$1
 TRAVIS_BRANCH=$2
