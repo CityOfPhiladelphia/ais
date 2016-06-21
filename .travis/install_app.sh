@@ -27,12 +27,12 @@ if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
     unzip "instantclient*.zip"
     cd ../..
 fi
-if [[ "$LD_LIBRARY_PATH" != *"$VENDOR_PATH/oracle"* ]] ; then
-    echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1" >> ~/.bashrc
+if ! grep "^LD_LIBRARY_PATH" $BASE_DIR/.env ; then
+    echo "LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1" >> $BASE_DIR/.env
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1
 fi
-if [[ "$ORACLE_HOME" != *"$VENDOR_PATH/oracle"* ]] ; then
-    echo "export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1" >> ~/.bashrc
+if ! grep "^ORACLE_HOME" $BASE_DIR/.env ; then
+    echo "ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1" >> $BASE_DIR/.env
     export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1
 fi
 
@@ -48,4 +48,3 @@ $SCRIPT_DIR/update_zip4.sh
 
 
 # Run any management commands for migration, static files, etc.
-

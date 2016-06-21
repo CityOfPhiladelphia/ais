@@ -48,9 +48,6 @@ if [ -z "$INSTANCE_IP" ]; then echo "No machine found for branch \"$TRAVIS_BRANC
 # These steps will only run if you specify the -s|--install-ssh flag
 
 if [ $INSTALL_SSH == 1 ] ; then
-  echo 'Installing machine''s IP into known hosts'
-  ssh-keyscan -H $INSTANCE_IP | sudo tee --append /etc/ssh/ssh_known_hosts > /dev/null
-
   # Copy the SSH Key. Use a branch-specific key if available. Otherwise, use a
   # project-general one.
   #
@@ -60,17 +57,21 @@ if [ $INSTALL_SSH == 1 ] ; then
   #       encrypting files with Travis.
 
   echo 'Decrypting and installing the SSH private key'
-  BRANCH_SPECIFIC_KEY=`aws s3 cp s3://phila-deploy/${PROJECT_NAME}/ | grep 'deploy.pem.enc.${TRAVIS_BRANCH}$'`
-  if [ "$BRANCH_SPECIFIC_KEY" == "" ] ; then
-    aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc deploy.pem.enc
-  else
+  if aws s3 ls s3://phila-deploy/${PROJECT_NAME}/ | grep 'deploy.pem.enc.${TRAVIS_BRANCH}$' ; then
     aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc.${TRAVIS_BRANCH} deploy.pem.enc
+  else
+    aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc deploy.pem.enc
   fi
   openssl aes-256-cbc -K \$${ENCRYPTION_KEY} -iv \$${ENCRYPTION_IV} -in deploy.pem.enc -out $KEYFILE -d
   chmod 600 $KEYFILE
   eval $(ssh-agent -s)
   ssh-add $KEYFILE
-  ssh-keyscan $INSTANCE_IP >> ~/.ssh/known_hosts 2> /dev/null
+
+  echo 'Installing machine''s IP into known hosts'
+  INSTANCE_FINGERPRINT=`ssh-keyscan -H $INSTANCE_IP`
+  if [ "$(grep '$INSTANCE_FINGERPRINT' ~/.ssh/known_hosts)" == "" ] ; then
+    echo "$INSTANCE_FINGERPRINT" >> ~/.ssh/known_hosts 2> /dev/null
+  fi
 fi
 
 # *************************************
