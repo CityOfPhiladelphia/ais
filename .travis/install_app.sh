@@ -15,6 +15,7 @@ VENDOR_PATH=`pwd`/$BASE_DIR/vendor
 #
 # https://oracle-base.com/articles/misc/oracle-instant-client-installation
 echo 'Downloading and installing Oracle Instant Client'
+source env/bin/activate
 mkdir -p $VENDOR_PATH/oracle
 if test ! -f $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip ; then
     aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
@@ -35,7 +36,7 @@ if ! grep "^ORACLE_HOME" $BASE_DIR/.env ; then
     echo "ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1" >> $BASE_DIR/.env
     export ORACLE_HOME=$VENDOR_PATH/oracle/instantclient_12_1
 fi
-
+deactivate
 
 # Install python requirements on python3 with library paths
 echo 'Installing other application Python requirements'
