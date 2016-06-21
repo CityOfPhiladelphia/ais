@@ -24,7 +24,7 @@ sudo honcho export upstart /etc/init \
     --user nobody \
     --procfile $BASE_DIR/Procfile
 
-sudo sed -e "s/exec gunicorn/exec $BASE_DIR\/env\/bin\/gunicorn/" -i /etc/init/ais-web-1.conf
+sudo sed -e "s/exec gunicorn/source env\/bin\/activate ; exec gunicorn/" -i /etc/init/ais-web-1.conf
 
 # Set up nginx
 # https://docs.getsentry.com/on-premise/server/installation/#proxying-with-nginx
