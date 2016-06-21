@@ -3,5 +3,5 @@
 set -e
 
 source env/bin/activate
-pip install pytest
-py.test ais
+pip install pytest honcho
+honcho run py.test ais
