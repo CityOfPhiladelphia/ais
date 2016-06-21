@@ -51,13 +51,26 @@ if [ $INSTALL_SSH == 1 ] ; then
   echo 'Installing machine''s IP into known hosts'
   ssh-keyscan -H $INSTANCE_IP | sudo tee --append /etc/ssh/ssh_known_hosts > /dev/null
 
-  # Copy the SSH Key
+  # Copy the SSH Key. Use a branch-specific key if available. Otherwise, use a
+  # project-general one.
+  #
+  # NOTE: The following assumes that you have uploaded the encrypted SSH key
+  #       for the project to the S3 deployment bucket. If you have not, see
+  #       https://docs.travis-ci.com/user/encrypting-files/ for instructions on
+  #       encrypting files with Travis.
+
   echo 'Decrypting and installing the SSH private key'
-  aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc.$TRAVIS_BRANCH deploy.pem.enc
+  BRANCH_SPECIFIC_KEY=`aws s3 cp s3://phila-deploy/${PROJECT_NAME}/ | grep 'deploy.pem.enc.${TRAVIS_BRANCH}$'`
+  if [ "$BRANCH_SPECIFIC_KEY" == "" ] ; then
+    aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc deploy.pem.enc
+  else
+    aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc.${TRAVIS_BRANCH} deploy.pem.enc
+  fi
   openssl aes-256-cbc -K \$${ENCRYPTION_KEY} -iv \$${ENCRYPTION_IV} -in deploy.pem.enc -out $KEYFILE -d
   chmod 600 $KEYFILE
   eval $(ssh-agent -s)
   ssh-add $KEYFILE
+  ssh-keyscan $INSTANCE_IP >> ~/.ssh/known_hosts 2> /dev/null
 fi
 
 # *************************************
@@ -67,7 +80,7 @@ fi
 # the install script on the server to complete the setup process.
 ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
     echo 'Ensuring that git is installed'
-    if [ '$(dpkg -l | grep 'ii  git' | cut -c -7)' = '' ] ; then
+    if ! hash git &>/dev/null ; then
         sudo apt-get update
         sudo apt-get install git -y
     fi
