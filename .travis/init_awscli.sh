@@ -2,9 +2,6 @@
 
 set -e
 
-AWS_ID=$1
-AWS_SECRET=$2
-
 source env/bin/activate
 if ! aws help &>/dev/null ; then
     pip install awscli
