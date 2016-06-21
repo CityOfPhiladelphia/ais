@@ -27,7 +27,7 @@ done
 
 
 # Install the AWS CLI if it's not already
-$SCRIPTS_DIR/init_awscli.sh
+$SCRIPTS_DIR/init_awscli.sh $AWS_ID $AWS_SECRET
 
 echo 'Retrieving machine IP from AWS'
 PROJECT_NAME=$(python -c "print('$TRAVIS_REPO_SLUG'.split('/')[1])")
@@ -109,7 +109,7 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
     pip install honcho jinja2
 
     echo 'Setting up AWS access'
-    .travis/init_awscli.sh
+    .travis/init_awscli.sh '$AWS_ID' '$AWS_SECRET'
 
     echo 'Setting up environment variables'
     .travis/init_envfile.sh '$PROJECT_NAME' '$TRAVIS_BRANCH'
