@@ -111,31 +111,6 @@ def addresses_view(query):
     # soundex or some other fuzzy match?
 
 
-@app.route('/account/<number>')
-def account_number_view(number):
-    """
-    Looks up information about the property with the given OPA account number.
-    Should only ever return one or zero corresponding addresses.
-    """
-    address = AddressSummary.query\
-        .join(AddressProperty, AddressProperty.street_address==AddressSummary.street_address)\
-        .filter(AddressProperty.opa_account_num==number)\
-        .exclude_non_opa('opa_only' in request.args)\
-        .order_by_address()\
-        .first()
-
-    # Make sure we found a property
-    if address is None:
-        error = json_error(404, 'Could not find property with account number.',
-                           {'number': number})
-        return json_response(response=error, status=404)
-
-    # Render the response
-    serializer = AddressJsonSerializer()
-    result = serializer.serialize(address)
-    return json_response(response=result, status=200)
-
-
 @app.route('/block/<query>')
 def block_view(query):
     """
@@ -224,4 +199,29 @@ def owner(query):
         metadata={'query': query, 'parsed': owner_parts},
         pagination=paginator.get_page_info(page_num))
     result = serializer.serialize_many(page)
+    return json_response(response=result, status=200)
+
+
+@app.route('/account/<number>')
+def account_number_view(number):
+    """
+    Looks up information about the property with the given OPA account number.
+    Should only ever return one or zero corresponding addresses.
+    """
+    address = AddressSummary.query\
+        .join(AddressProperty, AddressProperty.street_address==AddressSummary.street_address)\
+        .filter(AddressProperty.opa_account_num==number)\
+        .exclude_non_opa('opa_only' in request.args)\
+        .order_by_address()\
+        .first()
+
+    # Make sure we found a property
+    if address is None:
+        error = json_error(404, 'Could not find property with account number.',
+                           {'number': number})
+        return json_response(response=error, status=404)
+
+    # Render the response
+    serializer = AddressJsonSerializer()
+    result = serializer.serialize(address)
     return json_response(response=result, status=200)
