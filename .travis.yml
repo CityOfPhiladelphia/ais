@@ -16,7 +16,7 @@ addons:
 install:
   - .travis/install_tests.sh
 
-script: py.test ais
+script: .travis/test
 
 deploy:
   provider: script
