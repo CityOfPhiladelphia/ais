@@ -7,7 +7,7 @@ if ! python3.5 -V &>/dev/null ; then
   echo 'Install Python 3.5'
   sudo add-apt-repository ppa:fkrull/deadsnakes
   sudo apt-get update
-  sudo apt-get install python3.5 python3.5-dev
+  sudo apt-get install -y python3.5 python3.5-dev
 fi
 
 echo 'Create a virutal environment'
