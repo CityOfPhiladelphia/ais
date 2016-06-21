@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -ex
+
 AWS_ID=$1
 AWS_SECRET=$2
 

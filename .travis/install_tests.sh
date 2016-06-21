@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # Set up the virtual environment
 .travis/init_environment.sh
