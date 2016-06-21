@@ -17,17 +17,28 @@ VENDOR_PATH=`pwd`/$BASE_DIR/vendor
 echo 'Downloading and installing Oracle Instant Client'
 source env/bin/activate
 mkdir -p $VENDOR_PATH/oracle
+
+# Download the insall zips
 if test ! -f $VENDOR_PATH/oracle/instantclient-basiclite-linux.x64-12.1.0.2.0.zip ; then
     aws s3 cp s3://ais-deploy/instantclient-basiclite-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
 fi
 if test ! -f $VENDOR_PATH/oracle/instantclient-sdk-linux.x64-12.1.0.2.0.zip ; then
     aws s3 cp s3://ais-deploy/instantclient-sdk-linux.x64-12.1.0.2.0.zip $VENDOR_PATH/oracle
 fi
+
+# Unzip into the vendor path
 if test ! -d $VENDOR_PATH/oracle/instantclient_12_1 ; then
     cd $VENDOR_PATH/oracle
     unzip "instantclient*.zip"
     cd ../..
 fi
+
+# Create a soft link to the linkable library if it does not exist
+if test ! -f $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so ; then
+    ln -s libclntsh.so.12.1 $VENDOR_PATH/oracle/instantclient_12_1/libclntsh.so
+fi
+
+# Add the vendored library path to the environment file
 if ! grep "^LD_LIBRARY_PATH" $BASE_DIR/.env ; then
     echo "LD_LIBRARY_PATH=$VENDOR_PATH/oracle/instantclient_12_1" >> $BASE_DIR/.env
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VENDOR_PATH/oracle/instantclient_12_1
