@@ -109,7 +109,7 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
     pip install honcho jinja2
 
     echo 'Setting up AWS access'
-    .travis/init_awscli.sh '$AWS_ID' '$AWS_SECRET'
+    .travis/init_awscli.sh $AWS_ID $AWS_SECRET
 
     echo 'Setting up environment variables'
     .travis/init_envfile.sh '$PROJECT_NAME' '$TRAVIS_BRANCH'
