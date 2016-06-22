@@ -66,6 +66,9 @@ if [ $INSTALL_SSH == 1 ] ; then
   else
     aws s3 cp s3://phila-deploy/${PROJECT_NAME}/deploy.pem.enc deploy.pem.enc
   fi
+
+  mkdir -p `dirname ${KEYFILE}`
+
   openssl aes-256-cbc -K \$${ENCRYPTION_KEY} -iv \$${ENCRYPTION_IV} -in deploy.pem.enc -out $KEYFILE -d
   chmod 600 $KEYFILE
   eval $(ssh-agent -s)
