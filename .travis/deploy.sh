@@ -26,6 +26,9 @@ for i in "$@" ; do
 done
 
 
+# Initialize a virtual environment
+$SCRIPTS_DIR/init_environment.sh
+
 # Install the AWS CLI if it's not already
 $SCRIPTS_DIR/init_awscli.sh $AWS_ID $AWS_SECRET
 
