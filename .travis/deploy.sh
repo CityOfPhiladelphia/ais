@@ -5,8 +5,8 @@ set -ex
 SCRIPTS_DIR=$(dirname $0)
 KEYFILE=${DEPLOY_KEYFILE:-"~/.ssh/deploy.pem"}
 INSTANCE_USER=ubuntu
-ENCRYPTION_KEY='encrypted_${ENCRYPTION_ID}_key'
-ENCRYPTION_IV='encrypted_${ENCRYPTION_ID}_iv'
+ENCRYPTION_KEY=encrypted_${ENCRYPTION_ID}_key
+ENCRYPTION_IV=encrypted_${ENCRYPTION_ID}_iv
 INSTALL_SSH=0
 
 for i in "$@" ; do
