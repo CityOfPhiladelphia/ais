@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 SCRIPTS_DIR=$(dirname $0)
 KEYFILE=${DEPLOY_KEYFILE:-~/.ssh/deploy.pem}

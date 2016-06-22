@@ -17,9 +17,11 @@ install:
   - .travis/install_tests.sh
 
 script: .travis/test.sh
+after_script: .travis/clean_up.sh
 
 deploy:
   provider: script
   script: .travis/deploy.sh --install-ssh
   on:
     branch: staging
+after_deploy: .travis/clean_up.sh
