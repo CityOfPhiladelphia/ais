@@ -32,6 +32,7 @@ $SCRIPTS_DIR/init_environment.sh
 # Install the AWS CLI if it's not already
 $SCRIPTS_DIR/init_awscli.sh $AWS_ID $AWS_SECRET
 
+source env/bin/activate
 echo 'Retrieving machine IP from AWS'
 PROJECT_NAME=$(python -c "print('$TRAVIS_REPO_SLUG'.split('/')[1])")
 INSTANCE_IP=`aws ec2 describe-instances --filters \
@@ -76,6 +77,7 @@ if [ $INSTALL_SSH == 1 ] ; then
     echo "$INSTANCE_FINGERPRINT" >> ~/.ssh/known_hosts 2> /dev/null
   fi
 fi
+deactivate
 
 # *************************************
 
