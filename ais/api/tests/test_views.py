@@ -84,7 +84,7 @@ def test_range_parity_is_respected(client):
 def test_ranged_address_has_units_with_base_first(client):
     response = client.get('/addresses/1801-23 N 10th St')
     assert_status(response, 200)
-    
+
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1, op=gt)
 
@@ -102,6 +102,19 @@ def test_base_address_has_units_with_base_first(client):
     feature = data['features'][0]
     assert_attr(feature, 'street_address', '1801 N 10TH ST')
     assert_opa_address(feature, '1801-23 N 10TH ST')
+
+def test_child_address_has_all_units_in_ranged_address(client):
+    response = client.get('/addresses/1801 N 10th St')
+    assert_status(response, 200)
+    child_data = json.loads(response.get_data().decode())
+
+    response = client.get('/addresses/1801-23 N 10th St')
+    assert_status(response, 200)
+    ranged_data = json.loads(response.get_data().decode())
+
+    assert child_data['total_size'] == ranged_data['total_size'], \
+        ('Child address has {} results, whereas the ranged address has {} '
+         'results.').format(child_data['total_size'], ranged_data['total_size'])
 
 def test_unit_address_in_db(client):
     response = client.get('/addresses/826-28 N 3rd St # 1')
@@ -155,6 +168,6 @@ def test_nonsynonymous_unit_types_not_used(client):
 def test_filter_for_only_opa_addresses(client):
     response = client.get('/addresses/1801 N 10th St?opa_only')
     assert_status(response, 200)
-    
+
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)

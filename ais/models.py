@@ -152,7 +152,7 @@ class AddressQuery(BaseQuery):
     def filter_by_owner(self, *owner_parts):
         query = self.join(AddressProperty, AddressProperty.street_address==Address.street_address)\
             .join(OpaProperty, OpaProperty.account_num==AddressProperty.opa_account_num)
-        
+
         for part in owner_parts:
             query = query.filter(OpaProperty.owners.like('%{}%'.format(part)))
         return query
@@ -652,24 +652,63 @@ class AddressSummaryQuery(BaseQuery):
         """
         Surface units of children of a ranged address
         """
-        if not is_range:
-            return self
+        # from sqlalchemy.sql import func
+        from sqlalchemy import or_
+        from sqlalchemy.sql.expression import case
 
-        ranged_addresses = self\
-            .filter(AddressSummary.address_high is not None)\
-            .with_entities(AddressSummary.street_address)\
-            .subquery()
+        # if not is_range:
+        #     return self
+
+        # Get a list of the ranged addresses that correspond to the current
+        # addresses. If an address is already a ranged address, or if it does
+        # not belong to a range, just return that address.
+        input_addresses = self.with_entities(AddressSummary.street_address)
+
+        address_range_field = case(
+            [(AddressLink.address_2 == None, AddressSummary.street_address)],
+            else_=AddressLink.address_2)
+
+        ranged_addresses = AddressSummary.query\
+            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(AddressSummary.street_address.in_(input_addresses.subquery()))\
+            .filter(or_(
+                AddressLink.relationship == 'in range',
+                AddressLink.relationship == None))\
+            .with_entities(address_range_field.label('ranged_address'))
+
+        # parent_addresses = self\
+        #     .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+        #     .filter(AddressLink.relationship == 'in range')\
+        #     .with_entities(AddressSummary.street_address, func.isnull(AddressLink.address_2, AddressSummary.street_address))\
+        #     .subquery()
+        #
+        # ranged_addresses = self\
+        #     .filter(AddressSummary.address_high is not None)\
+        #     .with_entities(AddressSummary.street_address)\
+        #     .subquery()
+        #
+        # addresses_in_ranges = parent_addresses\
+        #     .filter(AddressLink.address_2.in_(ranged_addresses))\
+        #     .with_entities(AddressLink.address_1)\
+        #     .subquery()
+
+        # addresses_in_ranges = ranged_addresses\
+        #     .outerjoin(AddressLink, AddressLink.address_2 == ranged_addresses.c.ranged_address)\
+        #     .filter(AddressLink.relationship == 'in range')\
+
 
         addresses_in_ranges = AddressLink.query\
             .filter(AddressLink.relationship == 'in range')\
-            .filter(AddressLink.address_2.in_(ranged_addresses))\
+            .filter(AddressLink.address_2.in_(ranged_addresses.subquery()))\
             .with_entities(AddressLink.address_1)\
-            .subquery()
+            .union(ranged_addresses)
 
         child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
-            .filter(AddressLink.address_2.in_(addresses_in_ranges))
+            .filter(AddressLink.address_2.in_(addresses_in_ranges.subquery()))
+
+        # import pdb; pdb.set_trace()
 
         return self.union(child_units)
 
@@ -748,7 +787,7 @@ class AddressSummary(db.Model):
         """Returns the "best" geocoded value"""
         if not self.geocodes:
             return None
-    
+
         priority = {
             'pwd_parcel': 4,
             'dor_parcel': 3,

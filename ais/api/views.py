@@ -72,17 +72,17 @@ def addresses_view(query):
         street_predir=parsed['components']['street']['predir'],
         street_postdir=parsed['components']['street']['postdir'],
         street_suffix=parsed['components']['street']['suffix'],
-        unit_num=parsed['components']['unit']['unit_num'],
     )
     strict_filters = dict(
         address_high=parsed['components']['address']['high_num_full'],
+        unit_num=parsed['components']['unit']['unit_num'],
     )
 
     addresses = AddressSummary.query\
         .filter_by(**loose_filters, **strict_filters)\
         .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
-        .exclude_non_opa('opa_only' in request.args)\
         .include_child_units(parsed['components']['address']['high_num_full'])\
+        .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
 
