@@ -81,6 +81,16 @@ def test_range_parity_is_respected(client):
     response = client.get('/addresses/524 N Broad St')
     assert_status(response, 404)
 
+def test_base_address_has_units_with_base_first(client):
+    response = client.get('/addresses/600 S 48th St')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1, op=gt)
+
+    feature = data['features'][0]
+    assert_attr(feature, 'street_address', '600 S 48TH ST')
+
 def test_ranged_address_has_units_with_base_first(client):
     response = client.get('/addresses/1801-23 N 10th St')
     assert_status(response, 200)
@@ -91,8 +101,7 @@ def test_ranged_address_has_units_with_base_first(client):
     feature = data['features'][0]
     assert_attr(feature, 'street_address', '1801-23 N 10TH ST')
 
-
-def test_base_address_has_units_with_base_first(client):
+def test_child_address_has_units_with_base_first(client):
     response = client.get('/addresses/1801 N 10th St')
     assert_status(response, 200)
 

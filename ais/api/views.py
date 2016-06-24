@@ -81,7 +81,9 @@ def addresses_view(query):
     addresses = AddressSummary.query\
         .filter_by(**loose_filters, **strict_filters)\
         .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
-        .include_child_units(parsed['components']['address']['high_num_full'])\
+        .include_child_units(
+            is_range=parsed['components']['address']['high_num_full'] not in (None, ''),
+            is_unit=parsed['components']['unit']['unit_num'] not in (None, ''))\
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
