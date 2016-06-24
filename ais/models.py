@@ -556,6 +556,13 @@ class ServiceAreaPolygon(db.Model):
     value = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
+    layer = db.relationship(
+        'ServiceAreaLayer',
+        primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPolygon.layer_id',
+        lazy='joined',
+        uselist=False,
+    )
+
 class ServiceAreaLineSingle(db.Model):
     '''
     A service area boundary line with a single value for right and left sides.
