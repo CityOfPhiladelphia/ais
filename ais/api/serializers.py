@@ -49,6 +49,8 @@ class GeoJSONSerializer (BaseSerializer):
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
+    excluded_tags = ('info_resident', 'info_company', 'voter_name')
+
     def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
         self.geom_type = geom_type
         self.geom_source = geom_source
@@ -92,6 +94,14 @@ class AddressJsonSerializer (GeoJSONSerializer):
             geom_source = self.geom_source
             geom_data = self.geodict_from_rel(geocode_rel)
 
+        # Build the set of associated tags
+        tag_data = OrderedDict()
+        for tag in address.tags:
+            if tag.key in self.excluded_tags:
+                continue
+            tag_data[tag.key] = tag.value
+
+        # Build the set of associated service areas
         sa_data = OrderedDict()
         if geocode_rel:
             for sa in geocode_rel.service_areas:
@@ -134,6 +144,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             ('geometry', geom_data),
         ])
 
+        data['properties'].update(tag_data)
         data['properties'].update(sa_data)
 
         return data

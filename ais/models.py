@@ -759,6 +759,11 @@ class AddressSummary(db.Model):
         primaryjoin='foreign(Geocode.street_address) == AddressSummary.street_address',
         lazy='joined')
 
+    tags = db.relationship(
+        'AddressTag',
+        primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
+        lazy='joined')
+
     zip_info = db.relationship(
         'AddressZip',
         primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
