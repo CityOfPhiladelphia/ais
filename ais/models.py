@@ -650,76 +650,57 @@ class AddressSummaryQuery(BaseQuery):
 
     def include_child_units(self, is_range=False, is_unit=False):
         """
-        Surface units of children of a ranged address
+        Find units of a set of addresses. If an address is a part of a ranged
+        address, find all units in that parent range.
         """
-        # from sqlalchemy.sql import func
-        from sqlalchemy.sql import false
-        from sqlalchemy.sql.expression import case
-
-        # If we already know it's a unit, there's no need to do waste time
-        # with these additional queries.
+        # If it's a unit, don't waste time with additional queries.
         if is_unit:
             return self
 
-        input_addresses = self\
-            .with_entities(AddressSummary.street_address)
-
+        # If the query is for ranged addresses only, then use the entire set of
+        # addresses as parent addresses; use an empty set as addresses with no
+        # parent (non-child addresses).
         if is_range:
-            parent_addresses = self\
-                .with_entities(AddressSummary.street_address.label('parent_address'))
+            range_parent_addresses = self\
+                .with_entities(AddressSummary.street_address)
 
             non_child_addresses = self\
                 .with_entities(AddressSummary.street_address)\
-                .filter(false())
+                .filter(False)
 
+        # If the query is not for ranged addresses, handle the case where more
+        # than one address may have been matched (e.g., the N and S variants
+        # along a street), but some are children of ranged addresses and some
+        # are not.
         else:
-            parent_addresses = self\
+            range_parent_addresses = self\
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(AddressLink.relationship == 'in range')\
-                .with_entities(AddressLink.address_2.label('parent_address'))
+                .with_entities(AddressLink.address_2)
 
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(AddressLink.relationship == None)\
                 .with_entities(AddressSummary.street_address)
 
-        # parent_addresses = self\
-        #     .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
-        #     .filter(AddressLink.relationship == 'in range')\
-        #     .with_entities(AddressSummary.street_address, func.isnull(AddressLink.address_2, AddressSummary.street_address))\
-        #     .subquery()
-        #
-        # ranged_addresses = self\
-        #     .filter(AddressSummary.address_high is not None)\
-        #     .with_entities(AddressSummary.street_address)\
-        #     .subquery()
-        #
-        # addresses_in_ranges = parent_addresses\
-        #     .filter(AddressLink.address_2.in_(ranged_addresses))\
-        #     .with_entities(AddressLink.address_1)\
-        #     .subquery()
-
-        # addresses_in_ranges = ranged_addresses\
-        #     .outerjoin(AddressLink, AddressLink.address_2 == ranged_addresses.c.ranged_address)\
-        #     .filter(AddressLink.relationship == 'in range')\
-
-
-        addresses_in_ranges = AddressLink.query\
+        # For the parent addresses, find all the child addresses within the
+        # ranges.
+        range_child_addresses = AddressLink.query\
             .filter(AddressLink.relationship == 'in range')\
-            .filter(AddressLink.address_2.in_(parent_addresses.subquery()))\
+            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))\
             .with_entities(AddressLink.address_1)
 
+        # For both the range-child and non-child address sets, get all the units
+        # and union them on to the original set of addresses.
         range_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
-            .filter( AddressLink.address_2.in_(addresses_in_ranges.subquery()))
+            .filter( AddressLink.address_2.in_(range_child_addresses.subquery()))
 
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter( AddressLink.address_2.in_(non_child_addresses.subquery()))
-
-        # import pdb; pdb.set_trace()
 
         return self.union(range_child_units).union(non_child_units)
 
