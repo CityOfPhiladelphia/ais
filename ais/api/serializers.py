@@ -103,10 +103,12 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         # Build the set of associated service areas
         sa_data = OrderedDict()
-        if geocode_rel:
-            for sa in geocode_rel.service_areas:
-                sa_data[sa.layer_id] = sa.value
+        for col in address.service_areas.__table__.columns:
+            if col.name in ('id', 'street_address'):
+                continue
+            sa_data[col.name] = getattr(address.service_areas, col.name)
 
+        # Build the address feature, then attach tags and service areas
         data = OrderedDict([
             ('type', 'Feature'),
             ('properties', OrderedDict([
@@ -135,11 +137,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
                 ('geom_type', geom_type),
                 ('geom_source', geom_source),
-
-                # TODO: Add the following fields:
-                # * pwd_account_nums -- where does it come from?
-                # * seg_id/side -- from AddressStreet?
-                # * li_address_key -- where does it come from?
             ])),
             ('geometry', geom_data),
         ])
@@ -148,33 +145,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
         data['properties'].update(sa_data)
 
         return data
-
-    def attach_service_areas(self, geocodes_by_id):
-        for geocode in geocodes_by_id.values():
-            geocode.service_areas = []
-
-        from ais.models import ServiceAreaPolygon, Geocode
-        service_areas = ServiceAreaPolygon.query\
-            .join(Geocode, ServiceAreaPolygon.geom.ST_Contains(Geocode.geom))\
-            .filter(Geocode.id.in_(geocodes_by_id.keys()))\
-            .add_entity(Geocode)
-
-        for service_area, geocode in service_areas:
-            geocodes_by_id[geocode.id].service_areas.append(service_area)
-
-    def serialize(self, instance):
-        geocodes_by_id = {geocode.id: geocode
-                          for geocode in instance.geocodes}
-        self.attach_service_areas(geocodes_by_id)
-        return super().serialize(instance)
-
-    def serialize_many(self, instances):
-        instances = tuple(instances)
-        geocodes_by_id = {geocode.id: geocode
-                          for instance in instances
-                          for geocode in instance.geocodes}
-        self.attach_service_areas(geocodes_by_id)
-        return super().serialize_many(instances)
 
 
 class AddressSummaryJsonSerializer (GeoJSONSerializer):

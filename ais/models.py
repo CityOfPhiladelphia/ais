@@ -717,6 +717,12 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
+class ServiceAreaSummary(db.Model):
+    __table__ = db.Table('service_area_summary',
+                         db.MetaData(bind=db.engine),
+                         autoload=True)
+
+
 class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
 
@@ -763,6 +769,12 @@ class AddressSummary(db.Model):
         'AddressTag',
         primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
         lazy='joined')
+
+    service_areas = db.relationship(
+        'ServiceAreaSummary',
+        primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
 
     zip_info = db.relationship(
         'AddressZip',
