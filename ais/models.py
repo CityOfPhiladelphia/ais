@@ -662,7 +662,7 @@ class AddressSummaryQuery(BaseQuery):
         """
         if not should_include:
             return self
-            
+
         # If it's a unit, don't waste time with additional queries.
         if is_unit:
             return self
