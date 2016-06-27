@@ -15,6 +15,11 @@ app.config.from_object('config')
 # Patch config with instance values
 app.config.from_pyfile('config.py')
 
+# Add profiler to app, if configured
+if app.config.get('PROFILE', False):
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
+
 # Init database extension
 app_db = SQLAlchemy(app)
 
