@@ -655,11 +655,14 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self.filter_by(unit_type=unit_type)
 
-    def include_child_units(self, is_range=False, is_unit=False):
+    def include_child_units(self, should_include=True, is_range=False, is_unit=False):
         """
         Find units of a set of addresses. If an address is a part of a ranged
         address, find all units in that parent range.
         """
+        if not should_include:
+            return self
+            
         # If it's a unit, don't waste time with additional queries.
         if is_unit:
             return self

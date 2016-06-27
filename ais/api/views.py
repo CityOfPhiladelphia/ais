@@ -82,6 +82,7 @@ def addresses_view(query):
         .filter_by(**loose_filters, **strict_filters)\
         .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
         .include_child_units(
+            'include_units' in request.args,
             is_range=parsed['components']['address']['high_num_full'] is not None,
             is_unit=parsed['components']['unit']['unit_num'] is not None)\
         .exclude_non_opa('opa_only' in request.args)\
