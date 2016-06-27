@@ -222,8 +222,7 @@ def account_number_view(number):
     Should only ever return one or zero corresponding addresses.
     """
     address = AddressSummary.query\
-        .join(AddressProperty, AddressProperty.street_address==AddressSummary.street_address)\
-        .filter(AddressProperty.opa_account_num==number)\
+        .filter(AddressSummary.opa_account_num==number)\
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()\
         .first()
