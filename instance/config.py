@@ -25,6 +25,7 @@ DATABASES = {
 
 DEBUG = (os.environ.get('DEBUG', 'False').title() == 'True')
 PROFILE = (os.environ.get('PROFILE', 'False').title() == 'True')
+SENTRY_DSN = os.environ.get('SENTRY_DSN', None)
 
 BASE_DATA_SOURCES = {
     'streets': {

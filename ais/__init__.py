@@ -20,6 +20,10 @@ if app.config.get('PROFILE', False):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
 
+if app.config.get('SENTRY_DSN', None):
+    from raven.contrib.flask import Sentry
+    sentry = Sentry(app, dsn=app.config['SENTRY_DSN'])
+
 # Init database extension
 app_db = SQLAlchemy(app)
 
