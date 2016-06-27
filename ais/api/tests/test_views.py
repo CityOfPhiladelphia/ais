@@ -180,3 +180,19 @@ def test_filter_for_only_opa_addresses(client):
 
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
+
+def test_multiple_addresses_have_all_units(client):
+    response = client.get('/addresses/1801 N 10th St?include_units')
+    assert_status(response, 200)
+    data = json.loads(response.get_data().decode())
+    num_results_1 = data['total_size']
+
+    response = client.get('/addresses/600 S 48th St?include_units')
+    assert_status(response, 200)
+    data = json.loads(response.get_data().decode())
+    num_results_2 = data['total_size']
+
+    response = client.get('/addresses/1801 N 10th St,600 S 48th St?include_units')
+    assert_status(response, 200)
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, num_results_1 + num_results_2)

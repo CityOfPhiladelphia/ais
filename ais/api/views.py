@@ -58,7 +58,8 @@ def addresses_view(query):
     TODO: Need a way to only return addresses that have OPA numbers. Filters?
 
     """
-    parsed = PassyunkParser().parse(query)
+    all_queries = [q.strip() for q in query.split(',')]
+    all_parsed = [PassyunkParser().parse(q) for q in all_queries]
 
     # Match a set of addresses. Filters will either be loose, where an omission
     # is ignored, or scrict, where an omission is treated as an explicit NULL.
@@ -66,35 +67,44 @@ def addresses_view(query):
     # all addresses that match the rest of the information; this is a loose
     # filter. However, if we do not provide an address_high, we should assume
     # that we're not looking for a ranged address; this is a strict filter.
-    loose_filters = NotNoneDict(
-        street_name=parsed['components']['street']['name'],
-        address_low=parsed['components']['address']['low'] or parsed['components']['address']['full'],
-        street_predir=parsed['components']['street']['predir'],
-        street_postdir=parsed['components']['street']['postdir'],
-        street_suffix=parsed['components']['street']['suffix'],
-    )
-    strict_filters = dict(
-        address_high=parsed['components']['address']['high_num_full'],
-        unit_num=parsed['components']['unit']['unit_num'],
-    )
+    all_addresses = None
 
-    addresses = AddressSummary.query\
-        .filter_by(**loose_filters, **strict_filters)\
-        .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
-        .include_child_units(
-            'include_units' in request.args,
-            is_range=parsed['components']['address']['high_num_full'] is not None,
-            is_unit=parsed['components']['unit']['unit_num'] is not None)\
-        .exclude_non_opa('opa_only' in request.args)\
-        .order_by_address()
-    paginator = QueryPaginator(addresses)
+    for parsed in all_parsed:
+        loose_filters = NotNoneDict(
+            street_name=parsed['components']['street']['name'],
+            address_low=parsed['components']['address']['low'] or parsed['components']['address']['full'],
+            street_predir=parsed['components']['street']['predir'],
+            street_postdir=parsed['components']['street']['postdir'],
+            street_suffix=parsed['components']['street']['suffix'],
+        )
+        strict_filters = dict(
+            address_high=parsed['components']['address']['high_num_full'],
+            unit_num=parsed['components']['unit']['unit_num'],
+        )
+
+        addresses = AddressSummary.query\
+            .filter_by(**loose_filters, **strict_filters)\
+            .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
+            .include_child_units(
+                'include_units' in request.args,
+                is_range=parsed['components']['address']['high_num_full'] is not None,
+                is_unit=parsed['components']['unit']['unit_num'] is not None)\
+            .exclude_non_opa('opa_only' in request.args)\
+
+        if all_addresses is None:
+            all_addresses = addresses
+        else:
+            all_addresses = all_addresses.union(addresses)
+
+    all_addresses = all_addresses.order_by_address()
+    paginator = QueryPaginator(all_addresses)
 
     # Ensure that we have results
-    normalized_address = parsed['components']['street_address']
+    normalized_addresses = [parsed['components']['street_address'] for parsed in all_parsed]
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_addresses})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -105,7 +115,7 @@ def addresses_view(query):
     # Render the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': query, 'normalized': normalized_address},
+        metadata={'query': query, 'normalized': normalized_addresses},
         pagination=paginator.get_page_info(page_num))
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
