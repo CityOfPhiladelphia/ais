@@ -72,7 +72,8 @@ def addresses_view(query):
     for parsed in all_parsed:
         loose_filters = NotNoneDict(
             street_name=parsed['components']['street']['name'],
-            address_low=parsed['components']['address']['low'] or parsed['components']['address']['full'],
+            address_low=parsed['components']['address']['low_num'] or parsed['components']['address']['full'],
+            address_low_suffix=parsed['components']['address']['addr_suffix'],
             street_predir=parsed['components']['street']['predir'],
             street_postdir=parsed['components']['street']['postdir'],
             street_suffix=parsed['components']['street']['suffix'],
