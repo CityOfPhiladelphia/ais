@@ -58,7 +58,7 @@ def addresses_view(query):
     TODO: Need a way to only return addresses that have OPA numbers. Filters?
 
     """
-    all_queries = list(filter(bool, (q.strip() for q in query.split(','))))
+    all_queries = list(filter(bool, (q.strip() for q in query.split(';'))))
     all_parsed = [PassyunkParser().parse(q) for q in all_queries]
 
     # Match a set of addresses. Filters will either be loose, where an omission
