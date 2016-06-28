@@ -219,3 +219,7 @@ def test_only_returns_non_child_addresses_on_block(client):
     addresses = set(f['properties']['street_address'] for f in data['features'])
     assert '14-18 N FRONT ST' in addresses
     assert '18 N FRONT ST' not in addresses
+
+def test_address_query_can_end_in_comma(client):
+    response = client.get('/addresses/1927 N PATTON ST,')
+    assert_status(response, 200)
