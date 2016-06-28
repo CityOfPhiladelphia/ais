@@ -223,3 +223,7 @@ def test_only_returns_non_child_addresses_on_block(client):
 def test_address_query_can_end_in_comma(client):
     response = client.get('/addresses/1927 N PATTON ST,')
     assert_status(response, 200)
+
+def test_owner_not_found(client):
+    response = client.get('/owner/FLIBBERTIGIBBET')
+    assert_status(response, 404)

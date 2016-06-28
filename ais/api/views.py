@@ -203,7 +203,7 @@ def owner(query):
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses with owner matching query.',
                            {'query': query})
-        return json_response(response-error, status=404)
+        return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
