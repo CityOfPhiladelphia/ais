@@ -197,6 +197,12 @@ def test_multiple_addresses_have_all_units(client):
     data = json.loads(response.get_data().decode())
     assert_num_results(data, num_results_1 + num_results_2)
 
+def test_fractional_addresses_are_ok(client):
+    response = client.get('/addresses/13 1/2 Manheim St')
+    assert_status(response, 200)
+    data = json.loads(response.get_data().decode())
+    assert data['query'] == '13 1/2 Manheim St'
+
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
     assert_status(response, 404)

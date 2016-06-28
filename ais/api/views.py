@@ -32,7 +32,7 @@ def validate_page_param(request, paginator):
     return page_num, None
 
 
-@app.route('/addresses/<query>')
+@app.route('/addresses/<path:query>')
 def addresses_view(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -74,6 +74,7 @@ def addresses_view(query):
             street_name=parsed['components']['street']['name'],
             address_low=parsed['components']['address']['low_num'] if parsed['components']['address']['low_num'] is not None else parsed['components']['address']['full'],
             address_low_suffix=parsed['components']['address']['addr_suffix'],
+            address_low_frac=parsed['components']['address']['fractional'],
             street_predir=parsed['components']['street']['predir'],
             street_postdir=parsed['components']['street']['postdir'],
             street_suffix=parsed['components']['street']['suffix'],
@@ -125,7 +126,7 @@ def addresses_view(query):
     # soundex or some other fuzzy match?
 
 
-@app.route('/block/<query>')
+@app.route('/block/<path:query>')
 def block_view(query):
     """
     Looks up information about the 100-range that the given address falls
