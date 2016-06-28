@@ -196,3 +196,20 @@ def test_multiple_addresses_have_all_units(client):
     assert_status(response, 200)
     data = json.loads(response.get_data().decode())
     assert_num_results(data, num_results_1 + num_results_2)
+
+def test_allows_0_as_address_low_num(client):
+    response = client.get('/addresses/0-98 Sharpnack')
+    assert_status(response, 404)
+
+def test_allows_0_as_block_low_num(client):
+    response = client.get('/block/0 N Front St')
+    assert_status(response, 200)
+
+def test_only_returns_non_child_addresses_on_block(client):
+    response = client.get('/block/0-98 Front')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    addresses = set(f['properties']['street_address'] for f in data['features'])
+    assert '14-18 N FRONT ST' in addresses
+    assert '18 N FRONT ST' not in addresses

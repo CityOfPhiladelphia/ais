@@ -2,6 +2,7 @@ import copy
 import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
+from sqlalchemy import or_
 from ais import app, app_db as db
 from ais.util import *
 
@@ -713,6 +714,17 @@ class AddressSummaryQuery(BaseQuery):
             .filter( AddressLink.address_2.in_(non_child_addresses.subquery()))
 
         return self.union(range_child_units).union(non_child_units)
+
+    def exclude_children(self, should_exclude=True):
+        if not should_exclude:
+            return self
+
+        return self\
+            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(
+                (AddressLink.relationship == 'has base') |
+                (AddressLink.relationship == None)
+            )
 
     def exclude_non_opa(self, should_exclude=True):
         if should_exclude:

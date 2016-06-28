@@ -72,7 +72,7 @@ def addresses_view(query):
     for parsed in all_parsed:
         loose_filters = NotNoneDict(
             street_name=parsed['components']['street']['name'],
-            address_low=parsed['components']['address']['low_num'] or parsed['components']['address']['full'],
+            address_low=parsed['components']['address']['low_num'] if parsed['components']['address']['low_num'] is not None else parsed['components']['address']['full'],
             address_low_suffix=parsed['components']['address']['addr_suffix'],
             street_predir=parsed['components']['street']['predir'],
             street_postdir=parsed['components']['street']['postdir'],
@@ -140,8 +140,9 @@ def block_view(query):
 
     # Ensure that we can get a valid address number
     try:
-        address_num = int(parsed['components']['address']['low'] or
-                          parsed['components']['address']['full'])
+        address_num = int(parsed['components']['address']['low_num']
+                          if parsed['components']['address']['low_num'] is not None
+                          else parsed['components']['address']['full'])
     except ValueError:
         error = json_error(400, 'No valid block number provided.',
                            {'query': query, 'normalized': normalized_address})
@@ -159,6 +160,7 @@ def block_view(query):
         .filter_by(**filters)\
         .filter(AddressSummary.address_low >= block_num)\
         .filter(AddressSummary.address_low < block_num + 100)\
+        .exclude_children()\
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
     paginator = QueryPaginator(addresses)
