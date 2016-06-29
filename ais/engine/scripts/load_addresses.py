@@ -57,9 +57,9 @@ parcel_layers = config['BASE_DATA_SOURCES']['parcels']
 address_parcel_table = db['address_parcel']
 address_property_table = db['address_property']
 address_error_table = db['address_error']
-WRITE_OUT = False
+WRITE_OUT = True
 
-DEV = True  # This will target a single address
+DEV = False  # This will target a single address
 DEV_ADDRESS = '1234 MARKET ST'
 DEV_ADDRESS_COMPS = {
     'address_low':      '1234',
