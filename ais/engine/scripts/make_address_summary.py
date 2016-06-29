@@ -122,9 +122,7 @@ generic_unit_tags = {}  # pound address => {tag key: [tag vals]}
 summary_rows = []
 geocode_errors = 0
 
-'''
-MAIN
-'''
+"""MAIN"""
 
 cur_first_character = None
 
@@ -134,9 +132,6 @@ for i, street_name in enumerate(street_names):
 	if first_character != cur_first_character:
 		print(street_name)
 		cur_first_character = first_character
-
-	# if i % 10 == 0:
-	# 	print(street_name)
 		
 	address_rows = street_map[street_name]
 
@@ -220,12 +215,8 @@ for i, street_name in enumerate(street_names):
 			# print('{} => {}'.format(field_name, value))
 
 		# Geocode
-		try:
-			geocode_rows = geocode_map[street_address]
-		except KeyError:
-			geocode_errors += 1
-		except Exception as e:
-			raise e
+		geocode_rows = geocode_map.get(street_address, [])
+		if len(geocode_rows) == 0: geocode_errors += 1
 
 		xy_map = {x['geocode_type']: x['geom'] for x in geocode_rows}
 		geocode_vals = None
@@ -257,9 +248,8 @@ for i, street_name in enumerate(street_names):
 			summary_row.update(geocode_vals)
 			summary_rows.append(summary_row)
 
-'''
-WRITE OUT
-'''
+
+"""WRITE OUT"""
 
 if WRITE_OUT:
 	print('Writing summary rows...')
