@@ -38,8 +38,8 @@ address_summary_fields = [
 	# 'seg_id',
 	# 'seg_side',
 ]
-sa_summary_fields = [{'name': 'street_address', 'type': 'character varying(255)'}]
-sa_summary_fields += [{'name': x, 'type': 'character varying(255)'} for x in sa_layer_ids]
+sa_summary_fields = [{'name': 'street_address', 'type': 'text'}]
+sa_summary_fields += [{'name': x, 'type': 'text'} for x in sa_layer_ids]
 sa_summary_row_template = {x: '' for x in sa_layer_ids}
 
 # DEV
@@ -100,6 +100,7 @@ last_x = None
 last_y = None
 last_sa_rows = None
 
+print('Intersecting addresses and service area polygons...')
 for i, address_summary_row in enumerate(address_summary_rows):
 	try:
 		if i % 10000 == 0:
