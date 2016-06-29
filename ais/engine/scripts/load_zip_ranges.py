@@ -94,14 +94,9 @@ if WRITE_OUT:
 	zip_range_table.create_index('usps_id')
 
 
-################################################################################
-# RELATE SANDBOX
-################################################################################
-
 print('\n** RELATE TO ADDRESSES**')
 print('Reading addresses...')
 addresses = db['address'].read(fields=['street_address'])
-# addresses = ais_db.read('address', ['street_address'], where="street_address = '1019 SPRUCE ST # 1F'")
 addresses = [Address(x['street_address']) for x in addresses]
 
 if WRITE_OUT:
@@ -153,15 +148,15 @@ for address in addresses:
 		street_address = address.street_address
 		street_full = address.street_full
 		unit_type = address.unit_type
+		unit_num = address.unit_num
 
 		matching_zip_range = None
 		match_type = None
 
 		# UNIT
-		if unit_type:
+		# TODO: handle unit types like REAR that don't have a unit num
+		if unit_type and unit_num:
 			try:
-				unit_num = address.unit_num
-				# unit_char_type = None
 				street_zip_ranges = zip_map_units[street_full]
 				
 				# Determine unit character type
