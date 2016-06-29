@@ -57,17 +57,17 @@ parcel_layers = config['BASE_DATA_SOURCES']['parcels']
 address_parcel_table = db['address_parcel']
 address_property_table = db['address_property']
 address_error_table = db['address_error']
-WRITE_OUT = True
+WRITE_OUT = False
 
-DEV = False  # This will target a single address
-DEV_ADDRESS = '119-23 1/2 CATHARINE ST # A'
+DEV = True  # This will target a single address
+DEV_ADDRESS = '1234 MARKET ST'
 DEV_ADDRESS_COMPS = {
-    'address_low':      '119',
-    # 'address_high':     952,
-    'street_name':      "'CATHARINE'",
+    'address_low':      '1234',
+    'address_high':     '',
+    'street_name':      "'MARKET'",
     'street_suffix':    "'ST'",
 }
-DEV_STREET_NAME = 'CATHARINE'
+DEV_STREET_NAME = 'MARKET'
 
 # Logging stuff.
 address_errors = []
@@ -124,8 +124,7 @@ for source in sources:
                 raise ValueError('Missing required address field: {}'\
                     .format(field_name))
         if 'preprocessor' not in source:
-            raise ValueError('No preprocessor specified for address source \
-                `{}`'.format(source_name))
+            raise ValueError('No preprocessor specified for address source `{}`'.format(source_name))
         preprocessor = source['preprocessor']
 
     # Get other params
@@ -169,10 +168,10 @@ for source in sources:
     else:
         if source_type == 'single_field':
             source_rows = source_table.read(fields=source_fields, \
-                aliases=aliases, where=where)
+                aliases=aliases, where=where, return_geom=False)
         elif source_type == 'comps':
             source_rows = source_table.read(fields=source_fields, \
-                aliases=aliases, where=where)
+                aliases=aliases, where=where, return_geom=False)
 
     # Loop over addresses
     for i, source_row in enumerate(source_rows):
@@ -198,7 +197,7 @@ for source in sources:
             # TODO: it might be helpful to log this, but right now we aren't
             # logging object IDs so there would be no way to identify the 
             # null address in the source dataset. Just skipping for now.
-            continue
+            continue 
 
         source_map.setdefault(source_address, []).append(source_name)
 
@@ -274,10 +273,20 @@ for source in sources:
             if not address.is_base:
                 base_address = address.base_address
                 if not base_address in street_addresses_seen:
+                    # Reparse. 
                     base_address_obj = Address(base_address)
+                    
+                    # TEMP: a small handful of addresses aren't reparsable,
+                    # meaning they give different results on the second round
+                    # of parsing.
+                    # https://github.com/CityOfPhiladelphia/passyunk/issues/11
+                    # TODO: write a parser test for this.
+                    if base_address != base_address_obj.street_address:
+                        raise ValueError('Base address is not reparsable')
+                    
                     addresses.append(base_address_obj)
                     street_addresses_seen.add(base_address)
-
+                    
                     # Add to source address map
                     _source_addresses = source_address_map.setdefault(base_address, [])
                     if not source_address in _source_addresses:
@@ -886,12 +895,6 @@ for parcel_layer in parcel_layers:
         #       'match_type':       match_type,
         #   }
         #   address_parcels.append(address_parcel)
-
-for ap in address_parcels:
-    for key, value in ap.items():
-        if isinstance(value, list):
-            pprint(ap)
-            sys.exit()
 
 if WRITE_OUT:
     print('Writing address-parcels...')
