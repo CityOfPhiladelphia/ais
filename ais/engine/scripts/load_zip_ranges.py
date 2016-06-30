@@ -3,7 +3,6 @@ import os
 import csv
 from copy import deepcopy
 from datetime import datetime
-from phladdress.parser import Parser
 import datum
 from ais import app
 from ais.models import Address
