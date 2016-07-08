@@ -175,7 +175,7 @@ def test_nonsynonymous_unit_types_not_used(client):
     assert_status(response, 404)
 
 def test_filter_for_only_opa_addresses(client):
-    response = client.get('/addresses/1801 N 10th St?opa_only')
+    response = client.get('/addresses/1234 Market St?opa_only&include_units')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())

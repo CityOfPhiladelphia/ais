@@ -735,10 +735,10 @@ class AddressSummaryQuery(BaseQuery):
             # units, their addresses are official.
             return self\
                 .filter(AddressSummary.opa_account_num != '')\
-                .filter(or_(
-                    AddressSummary.unit_type == None,
-                    AddressSummary.street_address == AddressSummary.opa_address
-                ))
+                .filter(
+                    (AddressSummary.unit_type == None) |
+                    (AddressSummary.street_address == AddressSummary.opa_address)
+                )
         else:
             return self
 
