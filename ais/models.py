@@ -728,7 +728,17 @@ class AddressSummaryQuery(BaseQuery):
 
     def exclude_non_opa(self, should_exclude=True):
         if should_exclude:
-            return self.filter(AddressSummary.opa_account_num != '')
+            # Filter for addresses that have OPA numbers. As a result of
+            # aggressive assignment of OPA numbers to units of a property,
+            # also filter out anything that is a unit where the given address
+            # is not the official OPA address. For condos, even though they are
+            # units, their addresses are official.
+            return self\
+                .filter(AddressSummary.opa_account_num != '')\
+                .filter(or_(
+                    AddressSummary.unit_type == None,
+                    AddressSummary.street_address == AddressSummary.opa_address
+                ))
         else:
             return self
 
