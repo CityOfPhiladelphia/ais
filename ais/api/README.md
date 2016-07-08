@@ -17,13 +17,13 @@ as valid requests:
 
 ```bash
 # Authorization via request header
-curl "https://api.phila.gov/ais/v1/addresses/1234 Market St" \
+curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St" \
     -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
 ```
 
 ```bash
 # Authorization via querystring parameter
-curl "https://api.phila.gov/ais/v1/addresses/1234 Market St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
+curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
 ```
 
 ### Response Structure & Metadata
@@ -87,11 +87,36 @@ query's return objects that represent addresses. Any result set can be further
 filtered to contain only addresses that have OPA account numbers by using the
 `opa_only` querystring parameter.
 
+You can request that units contained within a given property be returned along
+with the top-level property by specifying the `include_units` querystring
+parameter. This parameter is only relevant for *address* queries.
+
+
 **Addresses**
 
 Retrieve addresses that match some address string.
 
 Example:
 ```bash
-curl "https://api.phila.gov/ais/v1/addresses/1234 Market St"
+curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
+```
+
+
+**Owner**
+
+Retrieve addresses that have owner names matching the query. Queries are treated
+as substrings of owner names. You can search for multiple substrings by
+separating search terms by spaces.
+
+Examples:
+```bash
+# Request properties owned by anyone whose first or last name contains "Poe"
+curl "https://api.phila.gov/ais/v1/owners/Poe"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
+
+# Request properties owned by anyone whose first or last name contains "Severus"
+# AND whose first or last name contains "Snape" (both conditions must be met)
+curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
 ```
