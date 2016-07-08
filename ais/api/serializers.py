@@ -132,7 +132,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('dor_parcel_id', address.dor_parcel_id or None),
 
                 ('opa_account_num', address.opa_account_num or None),
-                ('opa_owners', address.opa_owners or None),
+                ('opa_owners', address.opa_owners.split('|') if address.opa_owners else None),
                 ('opa_address', address.opa_address or None),
 
                 ('geom_type', geom_type),
