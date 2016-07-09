@@ -3,6 +3,7 @@ import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 from ais import app, app_db as db
 from ais.util import *
 
@@ -730,14 +731,22 @@ class AddressSummaryQuery(BaseQuery):
         if should_exclude:
             # Filter for addresses that have OPA numbers. As a result of
             # aggressive assignment of OPA numbers to units of a property,
-            # also filter out anything that is a unit where the given address
-            # is not the official OPA address. For condos, even though they are
-            # units, their addresses are official.
+            # also filter out anything that is a unit and has an OPA number
+            # equal to its base address.
+
+            BaseAddressSummary = aliased(AddressSummary)
+
             return self\
                 .filter(AddressSummary.opa_account_num != '')\
+                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(
-                    (AddressSummary.unit_type == None) |
-                    (AddressSummary.street_address == AddressSummary.opa_address)
+                    (AddressLink.relationship == 'has base') |
+                    (AddressLink.relationship == None)
+                )\
+                .outerjoin(BaseAddressSummary, AddressLink.address_2 == BaseAddressSummary.street_address)\
+                .filter(
+                    (BaseAddressSummary.opa_account_num != AddressSummary.opa_account_num) |
+                    (BaseAddressSummary.opa_account_num == None)
                 )
         else:
             return self

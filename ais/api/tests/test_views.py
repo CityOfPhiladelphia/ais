@@ -112,6 +112,13 @@ def test_child_address_has_units_with_base_first(client):
     assert_attr(feature, 'street_address', '1801 N 10TH ST')
     assert_opa_address(feature, '1801-23 N 10TH ST')
 
+def test_child_address_has_opa_units(client):
+    response = client.get('/addresses/11 N 2nd St?include_units&opa_only')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1, op=gt)
+
 def test_child_address_has_all_units_in_ranged_address(client):
     response = client.get('/addresses/1801 N 10th St')
     assert_status(response, 200)
