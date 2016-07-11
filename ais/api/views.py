@@ -70,9 +70,15 @@ def addresses_view(query):
     all_addresses = None
 
     for parsed in all_parsed:
+        unit_type = parsed['components']['unit']['unit_type']
+        unit_num = parsed['components']['unit']['unit_num']
+        high_num = parsed['components']['address']['high_num_full']
+        low_num = parsed['components']['address']['low_num']
+
         loose_filters = NotNoneDict(
             street_name=parsed['components']['street']['name'],
-            address_low=parsed['components']['address']['low_num'] if parsed['components']['address']['low_num'] is not None else parsed['components']['address']['full'],
+            address_low=low_num if low_num is not None
+                        else parsed['components']['address']['full'],
             address_low_suffix=parsed['components']['address']['addr_suffix'],
             address_low_frac=parsed['components']['address']['fractional'],
             street_predir=parsed['components']['street']['predir'],
@@ -80,18 +86,18 @@ def addresses_view(query):
             street_suffix=parsed['components']['street']['suffix'],
         )
         strict_filters = dict(
-            address_high=parsed['components']['address']['high_num_full'],
-            unit_num=parsed['components']['unit']['unit_num'],
+            address_high=high_num,
+            unit_num=unit_num if unit_num or not unit_type else '',
         )
 
         addresses = AddressSummary.query\
             .filter_by(**loose_filters, **strict_filters)\
-            .filter_by_unit_type(parsed['components']['unit']['unit_type'])\
+            .filter_by_unit_type(unit_type)\
             .include_child_units(
                 'include_units' in request.args,
-                is_range=parsed['components']['address']['high_num_full'] is not None,
-                is_unit=parsed['components']['unit']['unit_num'] is not None)\
-            .exclude_non_opa('opa_only' in request.args)\
+                is_range=high_num is not None,
+                is_unit=unit_type is not None)\
+            .exclude_non_opa('opa_only' in request.args)
 
         if all_addresses is None:
             all_addresses = addresses

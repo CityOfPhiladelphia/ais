@@ -1,6 +1,6 @@
 import json
 import pytest
-from ais import app
+from ais import app, app_db
 from operator import eq, gt
 
 @pytest.fixture
@@ -141,6 +141,33 @@ def test_unit_address_in_db(client):
 
     feature = data['features'][0]
     assert_opa_address(feature, '826-28 N 3RD ST # 1')
+
+def test_unit_address_without_unit_num_in_db(client):
+    UNIT_SQL = '''
+        SELECT unit.street_address
+          FROM address_summary AS unit
+          JOIN address_link ON address_1 = unit.street_address
+          JOIN address_summary AS base ON address_2 = base.street_address
+
+        WHERE relationship = 'has base'
+          AND unit.opa_account_num IS NOT NULL
+          AND unit.opa_account_num != ''
+          AND unit.opa_account_num != base.opa_account_num
+          AND unit.unit_num IN ('', NULL)
+
+        LIMIT 1
+    '''
+    result = app_db.engine.execute(UNIT_SQL)
+    street_address = result.first()[0]
+
+    response = client.get('/addresses/{}?opa_only'.format(street_address))
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, street_address)
 
 def test_unit_address_not_in_db(client):
     response = client.get('/addresses/826-28 N 3rd St # 11')
