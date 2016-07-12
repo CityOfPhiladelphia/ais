@@ -1,7 +1,7 @@
 alembic==0.8.4
 cx-Oracle==5.2.1
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ef13c4348db5aa82e99766676b81d642b81af1e4#egg=datum
--e git+https://github.com/CityOfPhiladelphia/passyunk.git@0f1493be4b61ecdfe4c1da8b6e11810a5e209ae4#egg=passyunk
+-e git+https://github.com/CityOfPhiladelphia/passyunk.git@54bc3a68931993483b28f9a7716b35c25c63e20d#egg=passyunk
 Flask==0.10.1
 Flask-Migrate==1.8.0
 Flask-Script==2.0.5
