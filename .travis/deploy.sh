@@ -97,9 +97,9 @@ ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
     # Clone or pull the latest code
     if test -d $PROJECT_NAME ; then
         cd $PROJECT_NAME
-        git fetch
+        git fetch --all
         git checkout $TRAVIS_BRANCH
-        git pull
+        git reset --hard origin/$TRAVIS_BRANCH
     else
         git clone https://github.com/${TRAVIS_REPO_SLUG}.git
         cd $PROJECT_NAME
