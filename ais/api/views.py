@@ -60,6 +60,8 @@ def addresses_view(query):
     TODO: Need a way to only return addresses that have OPA numbers. Filters?
 
     """
+    query = query.strip('/')
+
     all_queries = list(filter(bool, (q.strip() for q in query.split(';'))))
     all_parsed = [PassyunkParser().parse(q) for q in all_queries]
 
@@ -145,6 +147,8 @@ def block_view(query):
           would be instead of hardcoding a low of 0 and high of 100. Maybe this
           would go at a new route, like `segment` or `block-face`.
     """
+    query = query.strip('/')
+
     parsed = PassyunkParser().parse(query)
     normalized_address = parsed['components']['street_address']
 
@@ -199,6 +203,8 @@ def block_view(query):
 @app.route('/owner/<query>')
 @cache_for(hours=1)
 def owner(query):
+    query = query.strip('/')
+
     owner_parts = query.upper().split()
 
     # Match a set of addresses
