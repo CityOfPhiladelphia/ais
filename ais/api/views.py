@@ -33,6 +33,13 @@ def validate_page_param(request, paginator):
     return page_num, None
 
 
+@app.errorhandler(404)
+@app.errorhandler(500)
+def handle_errors(e):
+    error = json_error(e.code, e.description, None)
+    return json_response(response=error, status=e.code)
+
+
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
 def addresses_view(query):

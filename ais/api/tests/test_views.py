@@ -266,3 +266,14 @@ def test_general_responses_are_cached(client):
     response = client.get('/addresses/1234 Market St')
     assert response.cache_control.max_age is not None
     assert response.cache_control.max_age > 0
+
+def test_not_found(client):
+    response = client.get('/nothinhere/')
+    assert_status(response, 404)
+
+    # Ensure that the content is JSON
+    response_content = response.get_data().decode()
+    try:
+        data = json.loads(response_content)
+    except ValueError:
+        raise Exception('Response is not JSON: {}'.format(response_content))
