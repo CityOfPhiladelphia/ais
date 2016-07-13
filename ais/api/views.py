@@ -8,6 +8,7 @@ Does three primary things:
 from ais import app
 from ais.models import Address, AddressProperty, AddressSummary, AddressLink
 from flask import Response, request
+from flask_cachecontrol import cache_for
 from passyunk.parser import PassyunkParser
 
 from .errors import json_error
@@ -33,6 +34,7 @@ def validate_page_param(request, paginator):
 
 
 @app.route('/addresses/<path:query>')
+@cache_for(hours=1)
 def addresses_view(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -133,6 +135,7 @@ def addresses_view(query):
 
 
 @app.route('/block/<path:query>')
+@cache_for(hours=1)
 def block_view(query):
     """
     Looks up information about the 100-range that the given address falls
@@ -194,6 +197,7 @@ def block_view(query):
 
 
 @app.route('/owner/<query>')
+@cache_for(hours=1)
 def owner(query):
     owner_parts = query.upper().split()
 
@@ -226,6 +230,7 @@ def owner(query):
 
 
 @app.route('/account/<number>')
+@cache_for(hours=1)
 def account_number_view(number):
     """
     Looks up information about the property with the given OPA account number.

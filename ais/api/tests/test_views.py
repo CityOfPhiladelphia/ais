@@ -261,3 +261,8 @@ def test_address_query_can_end_in_comma(client):
 def test_owner_not_found(client):
     response = client.get('/owner/FLIBBERTIGIBBET')
     assert_status(response, 404)
+
+def test_general_responses_are_cached(client):
+    response = client.get('/addresses/1234 Market St')
+    assert response.cache_control.max_age is not None
+    assert response.cache_control.max_age > 0
