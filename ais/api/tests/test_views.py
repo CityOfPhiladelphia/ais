@@ -258,6 +258,11 @@ def test_address_query_can_end_in_comma(client):
     response = client.get('/addresses/1927 N PATTON ST,')
     assert_status(response, 200)
 
+def test_block_can_exclude_non_opa(client):
+    # Ensure that no join collisions happen
+    response = client.get('/block/1800 N 10th St?opa_only')
+    assert_status(response, 200)
+
 def test_owner_not_found(client):
     response = client.get('/owner/FLIBBERTIGIBBET')
     assert_status(response, 404)

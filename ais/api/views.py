@@ -180,10 +180,15 @@ def block_view(query):
     addresses = AddressSummary.query\
         .filter_by(**filters)\
         .filter(AddressSummary.address_low >= block_num)\
-        .filter(AddressSummary.address_low < block_num + 100)\
-        .exclude_children()\
-        .exclude_non_opa('opa_only' in request.args)\
-        .order_by_address()
+        .filter(AddressSummary.address_low < block_num + 100)
+
+    if 'opa_only' in request.args:
+        # Filtering by OPA filters children as well.
+        addresses = addresses.exclude_non_opa()
+    else:
+        addresses = addresses.exclude_children()
+
+    addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
