@@ -259,9 +259,35 @@ def test_address_query_can_end_in_comma(client):
     assert_status(response, 200)
 
 def test_block_can_exclude_non_opa(client):
+    BLOCK_COUNT_SQL = '''
+        SELECT count(*)
+        FROM (
+          SELECT *
+          FROM address_summary
+            LEFT OUTER JOIN address_link ON address_link.address_1 = address_summary.street_address
+            LEFT OUTER JOIN address_summary AS base_address_summary ON address_link.address_2 = base_address_summary.street_address
+
+          WHERE address_summary.street_predir = 'N'
+            AND address_summary.street_name = '10TH'
+            AND address_summary.street_suffix = 'ST'
+            AND address_summary.address_low >= 1800
+            AND address_summary.address_low < 1900
+
+            AND address_summary.opa_account_num != ''
+            AND (address_link.relationship = 'has base' OR address_link.relationship IS NULL)
+            AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
+          ) AS block_addresses
+    '''
+    result = app_db.engine.execute(BLOCK_COUNT_SQL)
+    block_count = result.first()[0]
+
     # Ensure that no join collisions happen
     response = client.get('/block/1800 N 10th St?opa_only')
     assert_status(response, 200)
+
+    # Ensure it has the right number of results
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, block_count)
 
 def test_owner_not_found(client):
     response = client.get('/owner/FLIBBERTIGIBBET')
