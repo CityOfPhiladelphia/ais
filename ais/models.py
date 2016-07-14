@@ -736,28 +736,19 @@ class AddressSummaryQuery(BaseQuery):
             # also filter out anything that is a unit and has an OPA number
             # equal to its base address.
 
-            # NOTE: the exclude_children filter is redundant when excluding
-            #       non-OPA addresses.
-
             BaseAddressSummary = aliased(AddressSummary)
 
             return self\
                 .filter(AddressSummary.opa_account_num != '')\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
-                .filter(
-                    # Get rid of anything with a relationship of 'in range',
-                    # 'has generic unit', or 'matches unit'.
-                    (AddressLink.relationship == 'has base') |
-                    (AddressLink.relationship == None)
-                )\
                 .outerjoin(BaseAddressSummary, AddressLink.address_2 == BaseAddressSummary.street_address, from_joinpoint=True)\
-                .filter(
+                .filter(~(
                     # Get rid of anything where the OPA account number matches
                     # it's base's OPA account number. In the case where the
                     # address does not have a base, the base num will be None.
-                    (BaseAddressSummary.opa_account_num != AddressSummary.opa_account_num) |
-                    (BaseAddressSummary.opa_account_num == None)
-                )
+                    (AddressSummary.unit_type != None) &
+                    (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
+                ))
         else:
             return self
 

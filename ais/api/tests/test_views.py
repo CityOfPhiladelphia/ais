@@ -258,6 +258,31 @@ def test_address_query_can_end_in_comma(client):
     response = client.get('/addresses/1927 N PATTON ST,')
     assert_status(response, 200)
 
+def test_opa_query_returns_child_address(client):
+    CHILD_SQL = '''
+        SELECT child.street_address, parent.street_address
+        FROM address_summary AS child
+          JOIN address_link ON address_1 = child.street_address
+          JOIN address_summary AS parent ON address_2 = parent.street_address
+        WHERE relationship = 'in range'
+          AND child.opa_account_num != ''
+          AND parent.opa_account_num = child.opa_account_num
+          AND child.address_low != parent.address_low
+          AND child.address_low != parent.address_high
+        LIMIT 1
+    '''
+    result = app_db.engine.execute(CHILD_SQL)
+    child_address, parent_address = result.first()
+
+    response = client.get('/addresses/{}?opa_only'.format(child_address))
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    assert_num_results(data, 1)
+
+    feature = data['features'][0]
+    assert_opa_address(feature, parent_address)
+
 def test_block_can_exclude_non_opa(client):
     BLOCK_COUNT_SQL = '''
         SELECT count(*)
