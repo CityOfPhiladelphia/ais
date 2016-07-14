@@ -686,12 +686,12 @@ class AddressSummaryQuery(BaseQuery):
         # are not.
         else:
             range_parent_addresses = self\
-                .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+                .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
                 .filter(AddressLink.relationship == 'in range')\
                 .with_entities(AddressLink.address_2)
 
             non_child_addresses = self\
-                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
                 .filter(AddressLink.relationship == None)\
                 .with_entities(AddressSummary.street_address)
 
@@ -705,12 +705,12 @@ class AddressSummaryQuery(BaseQuery):
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
         range_child_units = AddressSummary.query\
-            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
             .filter(AddressLink.relationship == 'has base')\
             .filter( AddressLink.address_2.in_(range_child_addresses.subquery()))
 
         non_child_units = AddressSummary.query\
-            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
             .filter(AddressLink.relationship == 'has base')\
             .filter( AddressLink.address_2.in_(non_child_addresses.subquery()))
 
@@ -721,7 +721,7 @@ class AddressSummaryQuery(BaseQuery):
             return self
 
         return self\
-            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
             .filter(
                 (AddressLink.relationship == 'has base') |
                 (AddressLink.relationship == None)
