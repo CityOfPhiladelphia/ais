@@ -1,6 +1,9 @@
 import copy
 import re
+from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 from ais import app, app_db as db
 from ais.util import *
 
@@ -48,7 +51,7 @@ class StreetAlias(db.Model):
     street_postdir = db.Column(db.Text)
     street_full = db.Column(db.Text)
     seg_id = db.Column(db.Integer)
-    
+
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
 
@@ -137,8 +140,30 @@ ADDRESS_FIELDS = [
     'street_address',
 ]
 
+class AddressQuery(BaseQuery):
+    """A query class that knows how to sort addresses"""
+    def order_by_address(self):
+        return self.order_by(Address.street_name,
+                             Address.street_suffix,
+                             Address.street_predir,
+                             Address.street_postdir,
+                             Address.address_low,
+                             Address.address_high,
+                             Address.unit_num.nullsfirst())
+
+    def filter_by_owner(self, *owner_parts):
+        query = self.join(AddressProperty, AddressProperty.street_address==Address.street_address)\
+            .join(OpaProperty, OpaProperty.account_num==AddressProperty.opa_account_num)
+
+        for part in owner_parts:
+            query = query.filter(OpaProperty.owners.like('%{}%'.format(part)))
+        return query
+
+
 class Address(db.Model):
     """A street address with parsed components."""
+    query_class = AddressQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
@@ -153,6 +178,33 @@ class Address(db.Model):
     unit_num = db.Column(db.Text)
     street_full = db.Column(db.Text)
 
+    geocodes = db.relationship(
+        'Geocode',
+        primaryjoin='foreign(Geocode.street_address) == Address.street_address',
+        lazy='joined')
+
+    zip_info = db.relationship(
+        'AddressZip',
+        primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+
+    pwd_parcel = db.relationship(
+        'PwdParcel',
+        primaryjoin='foreign(PwdParcel.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+    dor_parcel = db.relationship(
+        'DorParcel',
+        primaryjoin='foreign(DorParcel.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+    opa_property = db.relationship(
+        'OpaProperty',
+        primaryjoin='foreign(OpaProperty.street_address) == Address.street_address',
+        lazy='joined',
+        uselist=False)
+
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             arg = args[0]
@@ -162,13 +214,13 @@ class Address(db.Model):
                 if p['type'] != 'address':
                     raise ValueError('Not an address')
                 c = p['components']
-                
+
                 # TEMP: Passyunk doesn't raise an error if the street name
                 # is missing for an address, so check here and do it manually.
                 if c['street']['name'] is None:
                     raise ValueError('No street name')
 
-                # TEMP: Passyunk doesn't raise an error if the address high is 
+                # TEMP: Passyunk doesn't raise an error if the address high is
                 # lower than the address low.
                 high_num_full = c['address']['high_num_full']
                 if high_num_full and high_num_full < c['address']['low_num']:
@@ -200,6 +252,54 @@ class Address(db.Model):
     def __iter__(self):
         for key in ADDRESS_FIELDS:
             yield (key, getattr(self, key))
+
+    @property
+    def geocode(self):
+        """Returns the "best" geocoded value"""
+        if not self.geocodes:
+            return None
+
+        priority = {
+            'pwd_parcel': 4,
+            'dor_parcel': 3,
+            'true_range': 2,
+            'centerline': 1,
+        }
+        return max(self.geocodes, key=lambda g: priority[g.geocode_type])
+
+    def get_geocode(self, geocode_type):
+        for g in self.geocodes:
+            if g.geocode_type == geocode_type:
+                return g
+        return None
+
+    @property
+    def zip_code(self):
+        return self.zip_info.zip_range.zip_code if self.zip_info else None
+
+    @property
+    def zip_4(self):
+        return self.zip_info.zip_range.zip_4 if self.zip_info else None
+
+    @property
+    def pwd_parcel_id(self):
+        return self.pwd_parcel.parcel_id if self.pwd_parcel else None
+
+    @property
+    def dor_parcel_id(self):
+        return self.dor_parcel.parcel_id if self.dor_parcel else None
+
+    @property
+    def opa_account_num(self):
+        return self.opa_property.account_num if self.opa_property else None
+
+    @property
+    def opa_owners(self):
+        return self.opa_property.owners if self.opa_property else None
+
+    @property
+    def opa_address(self):
+        return self.opa_property.source_address if self.opa_property else None
 
     @property
     def parity(self):
@@ -318,6 +418,15 @@ class Address(db.Model):
         return None
 
 class AddressTag(db.Model):
+    """
+    Current tags in the database are:
+    * li_address_key
+    * info_resident (private)
+    * info_company (private)
+    * voter_name (private?)
+    * pwd_account_num
+
+    """
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     key = db.Column(db.Text)
@@ -330,6 +439,15 @@ class SourceAddress(db.Model):
     street_address = db.Column(db.Text)
 
 class AddressLink(db.Model):
+    """
+    relationship choices:
+    * in range -- address falls in an official address range
+    * has base --
+    * has generic unit --
+    * matches unit --
+
+    74-78 LAUREL ST UNIT 6
+    """
     id = db.Column(db.Integer, primary_key=True)
     address_1 = db.Column(db.Text)
     relationship = db.Column(db.Text)
@@ -368,8 +486,8 @@ class AddressProperty(db.Model):
     properties.
     '''
     id = db.Column(db.Integer, primary_key=True)
-    street_address = db.Column(db.Text)
-    opa_account_num = db.Column(db.Text)
+    street_address = db.Column(db.Text) #, db.ForeignKey('address.street_address'))
+    opa_account_num = db.Column(db.Text) #, db.ForeignKey('opa_property.account_num'))
     match_type = db.Column(db.Text)
 
 class AddressZip(db.Model):
@@ -381,12 +499,30 @@ class AddressZip(db.Model):
     usps_id = db.Column(db.Text)
     match_type = db.Column(db.Text)
 
+    zip_range = db.relationship(
+        'ZipRange',
+        primaryjoin='foreign(ZipRange.usps_id) == AddressZip.usps_id',
+        lazy='joined',
+        uselist=False)
+
+
 
 #############
 # GEOCODING #
 #############
 
 class Geocode(db.Model):
+    """
+    Values for `geocode_type` are:
+    * pwd_parcel
+    * dor_parcel
+    * true_range
+    * centerline
+
+    Generally, values should be respected in that order. Centerline
+    can usually be disregarded.
+
+    """
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     geocode_type = db.Column(db.Text)     # parcel, curb, street
@@ -422,6 +558,13 @@ class ServiceAreaPolygon(db.Model):
     value = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
+    layer = db.relationship(
+        'ServiceAreaLayer',
+        primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPolygon.layer_id',
+        lazy='joined',
+        uselist=False,
+    )
+
 class ServiceAreaLineSingle(db.Model):
     '''
     A service area boundary line with a single value for right and left sides.
@@ -446,7 +589,7 @@ class ServiceAreaLineDual(db.Model):
 
 class ServiceAreaDiff(db.Model):
     '''
-    Layer of all Address Summary points where a difference was observed between 
+    Layer of all Address Summary points where a difference was observed between
     AIS and ULRS. One point per difference.
     '''
     id = db.Column(db.Integer, primary_key=True)
@@ -486,7 +629,138 @@ class ZipRange(db.Model):
 # PRODUCTS #
 ############
 
+class AddressSummaryQuery(BaseQuery):
+    """A query class that knows how to sort addresses"""
+    def order_by_address(self):
+        return self.order_by(AddressSummary.street_name,
+                             AddressSummary.street_suffix,
+                             AddressSummary.street_predir,
+                             AddressSummary.street_postdir,
+                             AddressSummary.address_low,
+                             AddressSummary.address_high,
+                             AddressSummary.unit_num.nullsfirst())
+
+    def filter_by_owner(self, *owner_parts):
+        query = self
+        for part in owner_parts:
+            query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        return query
+
+    def filter_by_unit_type(self, unit_type):
+        if not unit_type:
+            return self
+
+        synonymous_unit_types = ('APT', 'UNIT', '#', 'STE')
+        if unit_type in synonymous_unit_types:
+            return self.filter(
+                AddressSummary.unit_type.in_(synonymous_unit_types))
+        else:
+            return self.filter_by(unit_type=unit_type)
+
+    def include_child_units(self, should_include=True, is_range=False, is_unit=False):
+        """
+        Find units of a set of addresses. If an address is a part of a ranged
+        address, find all units in that parent range.
+        """
+        if not should_include:
+            return self
+
+        # If it's a unit, don't waste time with additional queries.
+        if is_unit:
+            return self
+
+        # If the query is for ranged addresses only, then use the entire set of
+        # addresses as parent addresses; use an empty set as addresses with no
+        # parent (non-child addresses).
+        if is_range:
+            range_parent_addresses = self\
+                .with_entities(AddressSummary.street_address)
+
+            non_child_addresses = self\
+                .with_entities(AddressSummary.street_address)\
+                .filter(False)
+
+        # If the query is not for ranged addresses, handle the case where more
+        # than one address may have been matched (e.g., the N and S variants
+        # along a street), but some are children of ranged addresses and some
+        # are not.
+        else:
+            range_parent_addresses = self\
+                .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+                .filter(AddressLink.relationship == 'in range')\
+                .with_entities(AddressLink.address_2)
+
+            non_child_addresses = self\
+                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+                .filter(AddressLink.relationship == None)\
+                .with_entities(AddressSummary.street_address)
+
+        # For the parent addresses, find all the child addresses within the
+        # ranges.
+        range_child_addresses = AddressLink.query\
+            .filter(AddressLink.relationship == 'in range')\
+            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))\
+            .with_entities(AddressLink.address_1)
+
+        # For both the range-child and non-child address sets, get all the units
+        # and union them on to the original set of addresses.
+        range_child_units = AddressSummary.query\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(AddressLink.relationship == 'has base')\
+            .filter( AddressLink.address_2.in_(range_child_addresses.subquery()))
+
+        non_child_units = AddressSummary.query\
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
+            .filter(AddressLink.relationship == 'has base')\
+            .filter( AddressLink.address_2.in_(non_child_addresses.subquery()))
+
+        return self.union(range_child_units).union(non_child_units)
+
+    def exclude_children(self, should_exclude=True):
+        if not should_exclude:
+            return self
+
+        return self\
+            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
+            .filter(
+                # Get rid of anything with a relationship of 'in range',
+                # 'has generic unit', or 'matches unit'.
+                (AddressLink.relationship == 'has base') |
+                (AddressLink.relationship == None)
+            )
+
+    def exclude_non_opa(self, should_exclude=True):
+        if should_exclude:
+            # Filter for addresses that have OPA numbers. As a result of
+            # aggressive assignment of OPA numbers to units of a property,
+            # also filter out anything that is a unit and has an OPA number
+            # equal to its base address.
+
+            BaseAddressSummary = aliased(AddressSummary)
+
+            return self\
+                .filter(AddressSummary.opa_account_num != '')\
+                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
+                .outerjoin(BaseAddressSummary, AddressLink.address_2 == BaseAddressSummary.street_address, from_joinpoint=True)\
+                .filter(~(
+                    # Get rid of anything where the OPA account number matches
+                    # it's base's OPA account number. In the case where the
+                    # address does not have a base, the base num will be None.
+                    (AddressSummary.unit_type != None) &
+                    (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
+                ))
+        else:
+            return self
+
+class ServiceAreaSummary(db.Model):
+    __table__ = db.Table('service_area_summary',
+                         db.MetaData(bind=db.engine),
+                         autoload=True)
+
+
 class AddressSummary(db.Model):
+    query_class = AddressSummaryQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
@@ -516,10 +790,68 @@ class AddressSummary(db.Model):
     pwd_account_nums = db.Column(db.Text)
     li_address_key = db.Column(db.Text)
     voters = db.Column(db.Text)
-    
+
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
+
+    geocodes = db.relationship(
+        'Geocode',
+        primaryjoin='foreign(Geocode.street_address) == AddressSummary.street_address',
+        lazy='joined')
+
+    tags = db.relationship(
+        'AddressTag',
+        primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
+        lazy='joined')
+
+    service_areas = db.relationship(
+        'ServiceAreaSummary',
+        primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+
+    zip_info = db.relationship(
+        'AddressZip',
+        primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+
+    pwd_parcel = db.relationship(
+        'PwdParcel',
+        primaryjoin='foreign(PwdParcel.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+    dor_parcel = db.relationship(
+        'DorParcel',
+        primaryjoin='foreign(DorParcel.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+    opa_property = db.relationship(
+        'OpaProperty',
+        primaryjoin='foreign(OpaProperty.street_address) == AddressSummary.street_address',
+        lazy='joined',
+        uselist=False)
+
+    @property
+    def geocode(self):
+        """Returns the "best" geocoded value"""
+        if not self.geocodes:
+            return None
+
+        priority = {
+            'pwd_parcel': 4,
+            'dor_parcel': 3,
+            'true_range': 2,
+            'centerline': 1,
+        }
+        return max(self.geocodes, key=lambda g: priority[g.geocode_type])
+
+    def get_geocode(self, geocode_type):
+        for g in self.geocodes:
+            if g.geocode_type == geocode_type:
+                return g
+        return None
 
 ######################
 # ERRORS / REPORTING #
@@ -577,7 +909,7 @@ class AddressError(db.Model):
 
 class MultipleSegLine(db.Model):
     '''
-    Lines connecting range addresses and segs wherever a range matches to 
+    Lines connecting range addresses and segs wherever a range matches to
     more than one street seg.
     '''
     id = db.Column(db.Integer, primary_key=True)

@@ -47,3 +47,50 @@ def parity_for_range(low, high):
 #         return shp_dumps(shp_t)
 
 
+class FilteredDict (dict):
+    """
+    A `dict` that excludes values that don't match some condition function. If
+    the condition function is `None`, the identity is assumed. That is, all
+    values that are false are excluded.
+    """
+    def __init__(self, cond, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cond = cond or (lambda value: value)
+        for key, val in list(self.items()):
+            if not cond(val):
+                del self[key]
+
+    def __setitem__(self, key, value):
+        if self.cond(value):
+            super().__setitem__(key, value)
+        elif key in self:
+            del self[key]
+
+
+class NotNoneDict (FilteredDict):
+    """
+    A `dict` that excludes values that are `None`.
+    """
+    def __init__(self, *args, **kwargs):
+        not_none = (lambda value: value is not None)
+        super().__init__(not_none, *args, **kwargs)
+
+
+def geom_to_shape(geom, from_srid, to_srid):
+    from geoalchemy2.shape import to_shape
+    shape = to_shape(geom)
+
+    from functools import partial
+    import pyproj
+    from shapely.ops import transform
+
+    project = partial(
+        pyproj.transform,
+        # source coordinate system; preserve_units so that pyproj does not
+        # assume meters
+        pyproj.Proj(init='epsg:{}'.format(from_srid), preserve_units=True),
+        # destination coordinate system
+        pyproj.Proj(init='epsg:{}'.format(to_srid), preserve_units=True))
+
+    return transform(project, shape)
