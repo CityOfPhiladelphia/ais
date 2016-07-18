@@ -23,5 +23,7 @@ deploy:
   provider: script
   script: .travis/deploy.sh --install-ssh
   on:
-    branch: staging
+    branch:
+      - staging
+      - master
 after_deploy: .travis/clean_up.sh
