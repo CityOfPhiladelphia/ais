@@ -1,0 +1,5 @@
+# Deployment requirements
+gunicorn==19.5.0
+psycogreen==1.0
+gevent==1.1.1
+honcho==0.7.1
