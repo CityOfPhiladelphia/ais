@@ -592,15 +592,14 @@ for address in addresses:
 
                 # RANGE ADDRESS
                 else:
-                    # Check for a previously matched seg
-                    if matching_seg:
-                        seg_ids = sorted([x['seg_id'] for x in \
-                            [matching_seg, seg]])
-                        notes = ', '.join([str(x) for x in seg_ids])
-                        had_street_error(street_address, 'Range address matches multiple street segments', notes=notes)
-
                     # If the low num is in range
                     if check_from <= address_low <= check_to:
+                        # Check for a previously matched seg
+                        if matching_seg:
+                            seg_ids = sorted([x['seg_id'] for x in \
+                                [matching_seg, seg]])
+                            notes = ', '.join([str(x) for x in seg_ids])
+                            had_street_error(street_address, 'Range address matches multiple street segments', notes=notes)
                         # Match it
                         matching_seg = seg
 
