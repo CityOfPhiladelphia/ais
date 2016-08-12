@@ -75,6 +75,21 @@ class AddressJsonSerializer (GeoJSONSerializer):
         else:
             return None
 
+    def transform_exceptions(self, data):
+        """
+        Handle specific exceptions in the formatting of data.
+        """
+
+        # Convert the recycling diversion rate to a percentage with fixed
+        # precision.
+        try:
+            rate = float(data['recycling_diversion_rate'])
+            data['recycling_diversion_rate'] = round(rate/100, 3)
+        except:
+            pass
+
+        return data
+
     def model_to_data(self, address):
         # Choose the appropriate geometry for the address. Project the geometry
         # into the desired SRS, if the geometry exists.
@@ -143,6 +158,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         data['properties'].update(tag_data)
         data['properties'].update(sa_data)
+
+        data = self.transform_exceptions(data)
 
         return data
 
