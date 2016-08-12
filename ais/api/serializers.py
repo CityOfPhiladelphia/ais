@@ -83,8 +83,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
         # Convert the recycling diversion rate to a percentage with fixed
         # precision.
         try:
-            rate = float(data['recycling_diversion_rate'])
-            data['recycling_diversion_rate'] = round(rate/100, 3)
+            rate = float(data['properties']['recycling_diversion_rate'])
+            data['properties']['recycling_diversion_rate'] = round(rate/100, 3)
         except:
             pass
 
