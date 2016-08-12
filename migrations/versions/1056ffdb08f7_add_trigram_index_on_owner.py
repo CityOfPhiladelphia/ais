@@ -17,7 +17,7 @@ import geoalchemy2
 
 def upgrade():
     op.execute('''
-        CREATE EXTENSION pg_trgm;
+        CREATE EXTENSION IF NOT EXISTS pg_trgm;
         CREATE INDEX address_summary_opa_owners_trigram_idx ON address_summary USING GIN (opa_owners gin_trgm_ops);
     ''')
 
