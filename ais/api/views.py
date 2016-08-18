@@ -37,7 +37,7 @@ def validate_page_param(request, paginator):
 @app.errorhandler(500)
 def handle_errors(e):
     code = getattr(e, 'code', 500)
-    description = getattr(e, 'description', 'Internal Server Error')
+    description = getattr(e, 'description', None)
     error = json_error(code, description, None)
     return json_response(response=error, status=code)
 
