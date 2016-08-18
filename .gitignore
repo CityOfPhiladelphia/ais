@@ -72,6 +72,8 @@ target/
 .env
 
 sandbox.py
+instance/config.py
+
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml

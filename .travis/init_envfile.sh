@@ -15,7 +15,7 @@ echo "" >> .env  # Add a blank line, just in case
 echo "PROJECT_NAME=$PROJECT_NAME" >> .env
 
 # Also make a dummy instance config file
-mkdir instance
+mkdir -p instance
 touch instance/config.py
 
 deactivate

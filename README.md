@@ -1,17 +1,18 @@
-Address Information Service
+#Address Information Service
 ---------------------------
 
-Address Information Service (AIS) provides access to city data within the
-specific domain of addresses.
+Address Information Service (AIS) provides a unified view of city data for an address
 
-AIS does not aim to be an open data platform; the City of Philadelphia uses
-Open Data Philly as their general purpose data platform. Instead, AIS provides
-address-specific services on top of that data so that it can better be used in
-geographically-based applications. This scope includes:
+## AIS is comprised of
 
-- Address parsing and normalization
-- Reconciling ranged addresses and units within buildings
-- Geocoding addresses
+- An address geocoder
+- An address standardizer (see Passyunk project)
+- A data integration environment
 
-Simple querying of well-known data, bulk downloads, etc. fall out of the scope
-of AIS.
+##Purpose of AIS
+
+- Simplify relationships between land, property, streets, and addresses
+- Provide a way of standardizing addresses citywide
+- Support applications that require geocoding and address-based data lookups
+- Provide a feedback mechanism for continually improving parity between department datasets
+- Deprecate Unified Land Records System (ULRS)

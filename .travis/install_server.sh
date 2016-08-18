@@ -19,6 +19,7 @@ deactivate
 
 # Set up the web server
 echo 'Setting up the web server configuration'
+sudo pip install honcho jinja2  # Jinja for export templates
 sudo honcho export upstart /etc/init \
     --app $PROJECT_NAME \
     --user nobody \
