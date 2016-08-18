@@ -2,6 +2,8 @@ import os
 import re
 
 SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+if 'SQLALCHEMY_POOL_SIZE' in os.environ:
+    SQLALCHEMY_POOL_SIZE = int(os.environ.get('SQLALCHEMY_POOL_SIZE'))
 
 # Suppress some weird warning.
 SQLALCHEMY_TRACK_MODIFICATIONS = False
