@@ -1,6 +1,19 @@
 AIS API
 =======
 
+Configuration
+-------------
+
+### Environment Variables
+
+SQLALCHEMY_DATABASE_URI -- The URL to the AIS database.
+
+SQLALCHEMY_POOL_SIZE -- How many connections to the database each worker should
+    keep open. To see how many connections your PostgreSQL database allows, run
+    `select * from pg_settings where name='max_connections';`. If using gevent
+    worker, you should set your pool size relatively high (say, to half of your
+    available connections).
+
 Usage
 -----
 
