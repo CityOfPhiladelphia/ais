@@ -36,8 +36,10 @@ def validate_page_param(request, paginator):
 @app.errorhandler(404)
 @app.errorhandler(500)
 def handle_errors(e):
-    error = json_error(e.code, e.description, None)
-    return json_response(response=error, status=e.code)
+    code = getattr(e, 'code', 500)
+    description = getattr(e, 'description', 'Internal Server Error')
+    error = json_error(code, description, None)
+    return json_response(response=error, status=code)
 
 
 @app.route('/addresses/<path:query>')
