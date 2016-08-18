@@ -314,6 +314,10 @@ def test_block_can_exclude_non_opa(client):
     data = json.loads(response.get_data().decode())
     assert_num_results(data, block_count)
 
+def test_invalid_block_raises_400(client):
+    response = client.get('/block/abcde')
+    assert_status(response, 400)
+
 def test_owner_not_found(client):
     response = client.get('/owner/FLIBBERTIGIBBET')
     assert_status(response, 404)

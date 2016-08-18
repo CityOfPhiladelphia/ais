@@ -166,7 +166,7 @@ def block_view(query):
         address_num = int(parsed['components']['address']['low_num']
                           if parsed['components']['address']['low_num'] is not None
                           else parsed['components']['address']['full'])
-    except ValueError:
+    except (TypeError, ValueError):
         error = json_error(400, 'No valid block number provided.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=400)
