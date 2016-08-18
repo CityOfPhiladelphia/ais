@@ -1,4 +1,7 @@
-from psycogreen.gevent import patch_psycopg
+import os
 
-def post_fork(server, worker):
-    patch_psycopg()
+if os.environ.get('WORKER_CLASS', 'gevent') == 'gevent':
+    from psycogreen.gevent import patch_psycopg
+
+    def post_fork(server, worker):
+        patch_psycopg()
