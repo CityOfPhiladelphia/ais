@@ -91,31 +91,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return data
 
     def model_to_data(self, address):
-        # Choose the appropriate geometry for the address. Project the geometry
-        # into the desired SRS, if the geometry exists.
-        if self.geom_type == 'centroid':
-            geocode_rel = (address.get_geocode(self.geom_source)
-                           if self.geom_source else address.geocode)
-
-            geom_type = self.geom_type
-            geom_source = (geocode_rel.geocode_type
-                           if geocode_rel else self.geom_source)
-            geom_data = self.geodict_from_rel(geocode_rel)
-
-        elif self.geom_type == 'parcel':
-            geocode_rel = getattr(address, self.geom_source)
-
-            geom_type = self.geom_type
-            geom_source = self.geom_source
-            geom_data = self.geodict_from_rel(geocode_rel)
-
-        # Build the set of associated tags
-        tag_data = OrderedDict()
-        for tag in address.tags:
-            if tag.key in self.excluded_tags:
-                continue
-            tag_data[tag.key] = tag.value
-
         # Build the set of associated service areas
         sa_data = OrderedDict()
         for col in address.service_areas.__table__.columns:
@@ -146,17 +121,22 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('pwd_parcel_id', address.pwd_parcel_id or None),
                 ('dor_parcel_id', address.dor_parcel_id or None),
 
+                ('li_address_key', address.li_address_key),
+                ('pwd_account_nums', address.pwd_account_nums.split('|') if address.pwd_account_nums else None),
+
                 ('opa_account_num', address.opa_account_num or None),
                 ('opa_owners', address.opa_owners.split('|') if address.opa_owners else None),
                 ('opa_address', address.opa_address or None),
 
-                ('geom_type', geom_type),
-                ('geom_source', geom_source),
+                ('geom_type', 'centroid' if address.geocode_type else None),
+                ('geom_source', address.geocode_type),
             ])),
-            ('geometry', geom_data),
+            ('geometry', OrderedDict([
+                ('type', 'Point'),
+                ('coordinates', [address.geocode_x, address.geocode_y])
+            ]) if address.geocode_type else None),
         ])
 
-        data['properties'].update(tag_data)
         data['properties'].update(sa_data)
 
         data = self.transform_exceptions(data)

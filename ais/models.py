@@ -798,12 +798,12 @@ class AddressSummary(db.Model):
     geocodes = db.relationship(
         'Geocode',
         primaryjoin='foreign(Geocode.street_address) == AddressSummary.street_address',
-        lazy='joined')
+        lazy='select')
 
     tags = db.relationship(
         'AddressTag',
         primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
-        lazy='joined')
+        lazy='select')
 
     service_areas = db.relationship(
         'ServiceAreaSummary',
@@ -814,23 +814,23 @@ class AddressSummary(db.Model):
     zip_info = db.relationship(
         'AddressZip',
         primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
-        lazy='joined',
+        lazy='select',
         uselist=False)
 
     pwd_parcel = db.relationship(
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == AddressSummary.street_address',
-        lazy='joined',
+        lazy='select',
         uselist=False)
     dor_parcel = db.relationship(
         'DorParcel',
         primaryjoin='foreign(DorParcel.street_address) == AddressSummary.street_address',
-        lazy='joined',
+        lazy='select',
         uselist=False)
     opa_property = db.relationship(
         'OpaProperty',
         primaryjoin='foreign(OpaProperty.street_address) == AddressSummary.street_address',
-        lazy='joined',
+        lazy='select',
         uselist=False)
 
     @property
