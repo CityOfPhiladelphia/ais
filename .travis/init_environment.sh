@@ -11,4 +11,4 @@ if ! python3.5 -V &>/dev/null ; then
 fi
 
 echo 'Create a virutal environment'
-virtualenv env -p python3.5
+virtualenv env -p python3.5 || echo 'Virtual environment already created.'
