@@ -19,7 +19,12 @@ deactivate
 
 # Set up the web server
 echo 'Setting up the web server configuration'
-sudo pip install honcho jinja2  # Jinja for export templates
+
+# NOTE: Use a custom version of honcho until issue #180 is resolved:
+# https://github.com/nickstenning/honcho/issues/180
+sudo pip install --upgrade jinja2 https://github.com/mjumbewu/honcho.git@upstart-logging-native#egg=honcho
+# sudo pip install honcho jinja2  # Jinja for export templates
+
 sudo honcho export upstart /etc/init \
     --app $PROJECT_NAME \
     --user nobody \
