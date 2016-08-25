@@ -88,6 +88,8 @@ deactivate
 # download the latest version of the code. Set up the environment file and run
 # the install script on the server to complete the setup process.
 ssh -i $KEYFILE ${INSTANCE_USER}@${INSTANCE_IP} "
+    set -e
+    
     echo 'Ensuring that git is installed'
     if ! hash git &>/dev/null ; then
         sudo apt-get update
