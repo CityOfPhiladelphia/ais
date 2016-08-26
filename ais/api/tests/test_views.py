@@ -195,7 +195,7 @@ def test_synounymous_unit_types_found(client):
     assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
     # STE
-    response = client.get('/addresses/826-28 N 3rd St Suite 1')
+    response = client.get('/addresses/826-28 N 3rd St Ste 1')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
