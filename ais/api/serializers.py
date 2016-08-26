@@ -60,21 +60,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return util.geom_to_shape(
             geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
 
-    def geom_to_geodict(self, geom):
-        from shapely.geometry import mapping
-        shape = self.geom_to_shape(geom)
-        data = mapping(shape)
-        return OrderedDict([
-            ('type', data['type']),
-            ('coordinates', data['coordinates'])
-        ])
-
-    def geodict_from_rel(self, relval):
-        if relval:
-            return self.geom_to_geodict(relval.geom)
-        else:
-            return None
-
     def transform_exceptions(self, data):
         """
         Handle specific exceptions in the formatting of data.
