@@ -1,6 +1,5 @@
 alembic==0.8.4
-cx-Oracle==5.2.1
--e git+https://github.com/CityOfPhiladelphia/datum.git@ef13c4348db5aa82e99766676b81d642b81af1e4#egg=datum
+-e git+https://github.com/CityOfPhiladelphia/datum.git@691f14794492ff47aacdee684080fee0b555c69f#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git@33968fe56ebaebb52bc5fde333236db9b4bc614c#egg=passyunk
 Flask==0.10.1
 Flask-Migrate==1.8.0
@@ -15,11 +14,9 @@ Mako==1.0.3
 MarkupSafe==0.23
 normality==0.2.4
 psycopg2==2.6.1
-pyproj==1.9.5
 python-editor==0.5
 PyYAML==3.11
 Shapely>=1.5.13
-six==1.10.0
 SQLAlchemy==1.0.12
 Werkzeug==0.11.4
 zope.interface==4.1.3
