@@ -103,8 +103,11 @@ def addresses_view(query):
             unit_num=unit_num if unit_num or not unit_type else '',
         )
 
+        filters = strict_filters.copy()
+        filters.update(loose_filters)
+
         addresses = AddressSummary.query\
-            .filter_by(**loose_filters, **strict_filters)\
+            .filter_by(**filters)\
             .filter_by_unit_type(unit_type)\
             .include_child_units(
                 'include_units' in request.args,
