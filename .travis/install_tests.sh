@@ -21,11 +21,13 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-if .travis/check_eb_config.py
+EB_ENV=$(.travis/check_eb_config.py)
+EB_ENV_IS_CONFIGURED=$?
+if $EB_ENV_IS_CONFIGURED
 then
   # 4a. If so, download the environment variables
   echo "Downloading environment for branch \"$TRAVIS_BRANCH\""
-  eb printenv > .env
+  eb printenv $EB_ENV > .env
 fi
 
 # Install the application dependencies
