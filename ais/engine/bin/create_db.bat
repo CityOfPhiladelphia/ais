@@ -8,6 +8,10 @@ rem set a few vars
 set PGUSER=postgres
 set PGPASSWORD=%POSTGRES_PASSWORD%
 
+rem drop database and role if exists
+psql -c "drop database if exists %ENGINE_DB%;"
+psql -c "drop role if exists %ENGINE_USER%;"
+
 rem create engine user and start using it
 psql -c "create role %ENGINE_USER% with superuser login password '%ENGINE_PASSWORD%';"
 
