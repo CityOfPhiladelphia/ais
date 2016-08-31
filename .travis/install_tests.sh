@@ -21,7 +21,7 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-if eb list | grep "*" > /dev/null
+if .travis/check_eb_config.py
 then
   # 4a. If so, download the environment variables
   echo "Downloading environment for branch \"$TRAVIS_BRANCH\""
