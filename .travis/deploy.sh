@@ -24,7 +24,7 @@ EOF
 echo "Checking for environment corresponding to current branch"
 EB_ENV=$(.travis/check_eb_config.py)
 EB_ENV_IS_CONFIGURED=$?
-if ! $EB_ENV_IS_CONFIGURED
+if ! [ $EB_ENV_IS_CONFIGURED = 0 ]
 then
   # 4a. If not, exit with 0.
   echo "No environment configured for branch \"$TRAVIS_BRANCH\""
