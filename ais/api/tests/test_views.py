@@ -91,6 +91,18 @@ def test_base_address_has_units_with_base_first(client):
     feature = data['features'][0]
     assert_attr(feature, 'street_address', '600 S 48TH ST')
 
+def test_geometry_is_lat_lng_by_default(client):
+    response = client.get('/addresses/600 S 48th St')
+    assert_status(response, 200)
+
+    data = json.loads(response.get_data().decode())
+    feature = data['features'][0]
+    # Make sure the point is in the Philadelphia region
+    coords = tuple(feature['geometry']['coordinates'])
+    assert (-76, 39) < coords < (-74, 41),\
+        ('Coordinates do not appear to be in Philadelphia, or do not represent '
+         'a longitude, latitude: {}').format(coords)
+
 def test_ranged_address_has_units_with_base_first(client):
     response = client.get('/addresses/1801-23 N 10th St?include_units')
     assert_status(response, 200)
