@@ -7,5 +7,10 @@ set -e
 echo 'Installing other application Python requirements'
 pip install --requirement requirements.app.txt
 
+# Create empty config.py
+echo 'Initializing the configuration'
+mkdir -p instance
+touch instance/config.py
+
 
 # Run any management commands for migration, static files, etc.
