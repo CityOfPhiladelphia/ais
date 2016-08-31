@@ -22,7 +22,7 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-if test ! eb list | grep "*"
+if ! eb list | grep "*" >  > /dev/null
 then
   # 4a. If not, exit with 0.
   echo "No environment configured for branch \"$TRAVIS_BRANCH\""
