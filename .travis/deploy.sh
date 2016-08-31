@@ -4,7 +4,7 @@ set -e
 
 # 1. Create a virtual environment
 echo "Creating a virtual environment"
-virtualenv env -p python3
+.travis/init_environment.sh
 source env/bin/activate
 
 # 2. Install the awsebcli
