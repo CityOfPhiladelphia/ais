@@ -10,8 +10,8 @@ with open('.elasticbeanstalk/config.yml') as cfgfile:
     cfg = yaml.load(cfgfile)
 
 # If the branch is not configured, exit with an error code
-env = cfg.get('branch-defaults', {}).get(branch)
-if env is None:
+branchcfg = cfg.get('branch-defaults', {}).get(branch)
+if branchcfg is None:
     sys.exit(1)
 
-print(env['environment'])
+print(branchcfg['environment'])
