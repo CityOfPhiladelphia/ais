@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 # 1. Create a virtual environment
 echo "Creating a virtual environment"
@@ -16,8 +16,8 @@ echo "Installing configuration for eb tool"
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
 [eb-cli]
-aws_secret_access_key = $AWS_ID
-aws_access_key_id = $AWS_SECRET
+aws_secret_access_key = $AWS_SECRET
+aws_access_key_id = $AWS_ID
 EOF
 
 # 4. Determine whether the current branch is configured for an environment
@@ -34,4 +34,4 @@ fi
 # 5. Push the current branch
 echo "Pushing code to environment"
 git checkout "$TRAVIS_BRANCH"
-eb deploy $EB_ENV --verbose --debug
+eb deploy $EB_ENV
