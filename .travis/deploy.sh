@@ -33,4 +33,6 @@ fi
 
 # 5. Push the current branch
 echo "Pushing code to environment"
+AWS_ACCESS_KEY_ID=$AWS_ID \
+AWS_SECRET_ACCESS_KEY=$AWS_SECRET \
 eb deploy $EB_ENV
