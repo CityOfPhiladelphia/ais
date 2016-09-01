@@ -34,4 +34,4 @@ fi
 # 5. Push the current branch
 echo "Pushing code to environment"
 git checkout "$TRAVIS_BRANCH"
-eb deploy $EB_ENV
+eb deploy $EB_ENV --verbose --debug
