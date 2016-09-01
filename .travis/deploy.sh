@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # 1. Create a virtual environment
 echo "Creating a virtual environment"
