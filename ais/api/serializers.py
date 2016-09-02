@@ -60,6 +60,18 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return util.geom_to_shape(
             geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
 
+    def project_shape(self, shape):
+        return util.project_shape(
+            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def shape_to_geodict(self, shape):
+        from shapely.geometry import mapping
+        data = mapping(shape)
+        return OrderedDict([
+            ('type', data['type']),
+            ('coordinates', data['coordinates'])
+        ])
+
     def transform_exceptions(self, data):
         """
         Handle specific exceptions in the formatting of data.
@@ -82,6 +94,14 @@ class AddressJsonSerializer (GeoJSONSerializer):
             if col.name in ('id', 'street_address'):
                 continue
             sa_data[col.name] = getattr(address.service_areas, col.name)
+
+        if address.geocode_type:
+            from shapely.geometry import Point
+            shape = Point(address.geocode_x, address.geocode_y)
+            shape = self.project_shape(shape)
+            geom_data = self.shape_to_geodict(shape)
+        else:
+            geom_data = None
 
         # Build the address feature, then attach tags and service areas
         data = OrderedDict([
@@ -116,10 +136,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('geom_type', 'centroid' if address.geocode_type else None),
                 ('geom_source', address.geocode_type),
             ])),
-            ('geometry', OrderedDict([
-                ('type', 'Point'),
-                ('coordinates', [address.geocode_x, address.geocode_y])
-            ]) if address.geocode_type else None),
+            ('geometry', geom_data),
         ])
 
         data['properties'].update(sa_data)

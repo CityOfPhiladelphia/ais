@@ -77,10 +77,7 @@ class NotNoneDict (FilteredDict):
         super().__init__(not_none, *args, **kwargs)
 
 
-def geom_to_shape(geom, from_srid, to_srid):
-    from geoalchemy2.shape import to_shape
-    shape = to_shape(geom)
-
+def project_shape(shape, from_srid, to_srid):
     from functools import partial
     import pyproj
     from shapely.ops import transform
@@ -94,3 +91,9 @@ def geom_to_shape(geom, from_srid, to_srid):
         pyproj.Proj(init='epsg:{}'.format(to_srid), preserve_units=True))
 
     return transform(project, shape)
+
+
+def geom_to_shape(geom, from_srid, to_srid):
+    from geoalchemy2.shape import to_shape
+    shape = to_shape(geom)
+    return project_shape(shape, from_srid, to_srid)
