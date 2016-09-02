@@ -3,7 +3,7 @@ import os
 import csv
 import re
 from datetime import datetime
-from phladdress.data import DIRS_STD, SUFFIXES_STD, UNIT_TYPES_STD
+from passyunk.data import DIRS_STD, SUFFIXES_STD
 import datum
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
@@ -11,7 +11,6 @@ from ais import app
 # DEV
 from pprint import pprint
 import traceback
-
 
 start = datetime.now()
 print('Starting...')
