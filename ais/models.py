@@ -4,6 +4,7 @@ from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
+from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
 from ais.util import *
 
@@ -751,12 +752,14 @@ class AddressSummaryQuery(BaseQuery):
                 ))
         else:
             return self
-
-class ServiceAreaSummary(db.Model):
-    __table__ = db.Table('service_area_summary',
-                         db.MetaData(bind=db.engine),
-                         autoload=True)
-
+try:
+    class ServiceAreaSummary(db.Model):
+        __table__ = db.Table('service_area_summary',
+                             db.MetaData(bind=db.engine),
+                             autoload=True)
+except NoSuchTableError:
+    # if table hasn't been created yet, suppress error
+    pass
 
 class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
