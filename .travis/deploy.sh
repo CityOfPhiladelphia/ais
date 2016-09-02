@@ -15,7 +15,7 @@ pip install awsebcli
 echo "Installing configuration for eb tool"
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
-[eb-cli]
+[phila]
 aws_secret_access_key = $AWS_SECRET
 aws_access_key_id = $AWS_ID
 EOF
