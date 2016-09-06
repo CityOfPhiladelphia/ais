@@ -4,6 +4,7 @@ from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
+from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
 from ais.util import *
 
