@@ -1,6 +1,6 @@
 alembic==0.8.4
--e git+https://github.com/CityOfPhiladelphia/datum.git@691f14794492ff47aacdee684080fee0b555c69f#egg=datum
--e git+https://github.com/CityOfPhiladelphia/passyunk.git@4d0ea060136b71cedb05b525c051094e14b620f9#egg=passyunk
+-e git+https://github.com/CityOfPhiladelphia/datum.git@2518c319425970a69a7f07fd42338ed0eea6924d#egg=datum
+-e git+https://github.com/CityOfPhiladelphia/passyunk.git@3281342bdf2d17f46721d700b122ac3d294e26df#egg=passyunk
 Flask==0.10.1
 Flask-Migrate==1.8.0
 Flask-Script==2.0.5
@@ -13,8 +13,8 @@ Jinja2==2.8
 Mako==1.0.3
 MarkupSafe==0.23
 normality==0.2.4
-psycopg2==2.6.1
-pyproj==1.9.5
+psycopg2==2.6.2
+pyproj==1.9.5.1
 python-editor==0.5
 PyYAML==3.11
 Shapely>=1.5.13

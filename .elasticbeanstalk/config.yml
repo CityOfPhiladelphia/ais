@@ -1,6 +1,6 @@
 branch-defaults:
   staging:
-    environment: ais-api-dev
+    environment: ais-api-staging
   master:
     environment: ais-api-prod
 global:
