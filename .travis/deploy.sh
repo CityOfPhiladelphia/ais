@@ -48,4 +48,8 @@ if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
 
   echo "Swapping out $EB_OLD_PROD_ENV for $EB_NEW_PROD_ENV"
   eb swap --destination_name $EB_OLD_PROD_ENV $EB_NEW_PROD_ENV
+
+  #
+  # NOTE: SNAPSHOT AND TERMINATE OLD PRODUCTION ENVIRONMENT NOW.
+  #
 fi

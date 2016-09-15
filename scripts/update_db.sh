@@ -16,6 +16,10 @@ STAGING_ENV=$($SCRIPT_DIR/get_staging_env.sh) || {
   exit 1 ;
 }
 
+#
+# NOTE: SPIN UP STAGING/SWAP INSTANCE NOW.
+#
+
 echo "Restoring the engine DB onto the staging environment [TODO]"
 # TODO pg_restore ...
 
