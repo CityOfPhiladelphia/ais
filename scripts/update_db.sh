@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 SCRIPT_DIR=$(dirname "$0")
 
