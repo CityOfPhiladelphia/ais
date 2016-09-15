@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 ENVS=$(eb list)
 
 __ENV_VAR_NAME=$1
