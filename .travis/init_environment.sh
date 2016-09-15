@@ -12,9 +12,3 @@ fi
 
 echo 'Create a virutal environment'
 virtualenv env -p python3.5 || echo 'Virtual environment already created.'
-
-if [$TRAVIS_BRANCH = "staging"] ; then
-    export SQLALCHEMY_DATABASE_URI=$DB_STAGING
-else
-    export SQLALCHEMY_DATABASE_URI=$DB_PROD
-fi
