@@ -1,6 +1,6 @@
 branch-defaults:
   staging:
-    environment: ais-api-dev
+    environment: ais-api-staging
   master:
     environment: ais-api-prod
 global:
@@ -8,5 +8,5 @@ global:
   default_ec2_keyname: ais-api-dev
   default_platform: Python 3.4
   default_region: us-east-1
-  profile: eb-cli
+  profile: phila
   sc: git

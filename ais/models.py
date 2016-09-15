@@ -752,12 +752,14 @@ class AddressSummaryQuery(BaseQuery):
                 ))
         else:
             return self
+
 try:
     class ServiceAreaSummary(db.Model):
         __table__ = db.Table('service_area_summary',
                              db.MetaData(bind=db.engine),
                              autoload=True)
 except NoSuchTableError:
+    ServiceAreaSummary = None
     # if table hasn't been created yet, suppress error
     pass
 
@@ -808,11 +810,12 @@ class AddressSummary(db.Model):
         primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
         lazy='select')
 
-    service_areas = db.relationship(
-        'ServiceAreaSummary',
-        primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
-        lazy='joined',
-        uselist=False)
+    if ServiceAreaSummary:
+        service_areas = db.relationship(
+            'ServiceAreaSummary',
+            primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
+            lazy='joined',
+            uselist=False)
 
     zip_info = db.relationship(
         'AddressZip',

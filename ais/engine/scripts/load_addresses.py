@@ -534,7 +534,7 @@ for address in addresses:
             # If there were warnings, raise them again
             for warning in street_warning_map.get(base_address, []):
                 had_street_warning(
-                    warning['street_address'],
+                    street_address,
                     warning['reason'],
                     notes=warning.get('notes')
                 )

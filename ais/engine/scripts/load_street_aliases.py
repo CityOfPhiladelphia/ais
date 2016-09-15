@@ -1,6 +1,6 @@
 import sys
 import traceback
-from phladdress.data import DIRS_STD, SUFFIXES_STD
+from passyunk.data import DIRS_STD, SUFFIXES_STD
 import datum
 from ais import app
 # DEV

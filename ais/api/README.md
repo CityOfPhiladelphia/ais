@@ -14,6 +14,22 @@ SQLALCHEMY_POOL_SIZE -- How many connections to the database each worker should
     worker, you should set your pool size relatively high (say, to half of your
     available connections).
 
+For deployment purposes, there is also a variable named `EB_BLUEGREEN_STATUS`.
+The three respected values for this variable are `Production`, `Staging`, and
+`Swap`.
+
+**Guidelines around deployment variables:**
+
+* There should be exactly one environment marked with a status of Production,
+  and exactly one marked with a status of either Staging or Swap.
+* New data is always deployed to the environment marked Staging or Swap.
+* For tests, use the environment with a status of Production, unless there is
+  an environment with a status of Swap.
+* For code deployment, deploy to the same environment as is used for tests.
+  If deploying to a Swap environment, then the final step in the deploy is to
+  swap out the production environment for the test one.
+
+
 Usage
 -----
 

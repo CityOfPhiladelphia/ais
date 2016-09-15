@@ -14,21 +14,21 @@ pip install awsebcli
 echo "Installing configuration for eb tool"
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
-[eb-cli]
-aws_secret_access_key = $AWS_ID
-aws_access_key_id = $AWS_SECRET
+[phila]
+aws_secret_access_key = $AWS_SECRET
+aws_access_key_id = $AWS_ID
 EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-EB_ENV=$(.travis/check_eb_config.py)
-EB_ENV_IS_CONFIGURED=$?
-if [ $EB_ENV_IS_CONFIGURED = 0 ]
-then
-  # 4a. If so, download the environment variables
-  echo "Downloading environment for branch \"$TRAVIS_BRANCH\""
-  eb printenv $EB_ENV > .env
-fi
+.travis/get_test_env.sh EB_ENV EB_BLUEGREEN_STATUS || {
+  echo "Could not find a production or swap environment" ;
+  exit 1 ;
+}
+
+# 5. Download the environment variables
+echo "Downloading environment for branch \"$TRAVIS_BRANCH\""
+eb printenv $EB_ENV | tail -n +2 > .env
 
 # Install the application dependencies
 .travis/install_app.sh
