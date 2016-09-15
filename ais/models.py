@@ -810,7 +810,7 @@ class AddressSummary(db.Model):
         primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
         lazy='select')
 
-    if ServiceAreaSummary: 
+    if ServiceAreaSummary:
         service_areas = db.relationship(
             'ServiceAreaSummary',
             primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
