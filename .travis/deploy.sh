@@ -22,13 +22,14 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-.travis/get_test_env.sh EB_ENV EB_BLUEGREEN_STATUS || {
+source scripts/eb_env_utils.sh
+get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find a production or swap environment" ;
   exit 1 ;
 }
 
 # 5. Push the current branch
-echo "Pushing code to environment"
+echo "Pushing code to $EB_BLUEGREEN_STATUS environment $EB_ENV"
 git checkout "$TRAVIS_BRANCH"
 eb deploy $EB_ENV
 

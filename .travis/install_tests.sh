@@ -21,13 +21,14 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-.travis/get_test_env.sh EB_ENV EB_BLUEGREEN_STATUS || {
+source scripts/eb_env_utils.sh
+get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find a production or swap environment" ;
   exit 1 ;
 }
 
 # 5. Download the environment variables
-echo "Downloading environment for branch \"$TRAVIS_BRANCH\""
+echo "Downloading environment for branch \"$TRAVIS_BRANCH\" from $EB_ENV"
 eb printenv $EB_ENV | tail -n +2 > .env
 
 # Install the application dependencies
