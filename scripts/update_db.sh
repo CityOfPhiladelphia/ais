@@ -21,10 +21,10 @@ get_staging_env EB_ENV EB_BLUEGREEN_STATUS || {
 # NOTE: SPIN UP STAGING/SWAP INSTANCE NOW.
 #
 
-echo "Restoring the engine DB onto the staging environment [TODO]"
+echo "Restoring the engine DB into the $EB_ENV environment [TODO]"
 # TODO pg_restore ...
 
-echo "Marking the staging environment as ready for testing (swap)"
+echo "Marking the $EB_ENV environment as ready for testing (swap)"
 eb setenv -e $EB_ENV EB_BLUEGREEN_STATUS=Swap
 
 echo "Restarting the latest master branch build (requires travis CLI)"
