@@ -11,7 +11,8 @@ echo "Dumping the engine DB [TODO]"
 # TODO pg_dump ...
 
 echo "Finding the staging environment"
-STAGING_ENV=$($SCRIPT_DIR/get_staging_env.sh) || {
+source $SCRIPT_DIR/eb_env_utils.sh
+get_staging_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find an environment marked staging or swap" ;
   exit 1 ;
 }
@@ -20,11 +21,11 @@ STAGING_ENV=$($SCRIPT_DIR/get_staging_env.sh) || {
 # NOTE: SPIN UP STAGING/SWAP INSTANCE NOW.
 #
 
-echo "Restoring the engine DB onto the staging environment [TODO]"
+echo "Restoring the engine DB into the $EB_ENV environment [TODO]"
 # TODO pg_restore ...
 
-echo "Marking the staging environment as ready for testing (swap)"
-eb setenv -e $STAGING_ENV EB_BLUEGREEN_STATUS=Swap
+echo "Marking the $EB_ENV environment as ready for testing (swap)"
+eb setenv -e $EB_ENV EB_BLUEGREEN_STATUS=Swap
 
 echo "Restarting the latest master branch build (requires travis CLI)"
 if ! hash travis ; then
