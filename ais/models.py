@@ -747,7 +747,7 @@ class AddressSummaryQuery(BaseQuery):
                     # Get rid of anything where the OPA account number matches
                     # it's base's OPA account number. In the case where the
                     # address does not have a base, the base num will be None.
-                    (AddressSummary.unit_type != None) &
+                    (AddressSummary.unit_type != '') &
                     (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
                 ))
         else:
