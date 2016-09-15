@@ -15,8 +15,8 @@ echo "Installing configuration for eb tool"
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
 [phila]
-aws_secret_access_key = $AWS_ID
-aws_access_key_id = $AWS_SECRET
+aws_secret_access_key = $AWS_SECRET
+aws_access_key_id = $AWS_ID
 EOF
 
 # 4. Determine whether the current branch is configured for an environment
