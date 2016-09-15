@@ -2,6 +2,25 @@
 
 EB_ENVS=$(eb list)
 
+get_prod_env() {
+  __ENV_VAR_NAME=$1
+  __ENV_STATUS_NAME=$2
+
+  # Find the environment that is either marked as staging or ready to swap in.
+  for env in $EB_ENVS ; do
+    vars=$(eb printenv $env)
+
+    echo "$vars" | grep --quiet "EB_BLUEGREEN_STATUS = Production"
+    if [ $? -eq 0 ] ; then
+      echo $env
+      return 0
+    fi
+  done
+
+  # If no environment is found, return with an error.
+  return 1
+}
+
 get_staging_env() {
   __ENV_VAR_NAME=$1
   __ENV_STATUS_NAME=$2

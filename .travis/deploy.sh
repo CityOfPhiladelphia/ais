@@ -35,7 +35,7 @@ eb deploy $EB_ENV
 
 if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
   EB_NEW_PROD_ENV=$EB_ENV
-  EB_OLD_PROD_ENV=$(.travis/get_prod_env.sh) || {
+  EB_OLD_PROD_ENV=$(get_prod_env) || {
     echo "Could not find a production environment to swap with" ;
     exit 1 ;
   }
