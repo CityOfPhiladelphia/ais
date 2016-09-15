@@ -24,6 +24,5 @@ deploy:
   script: .travis/deploy.sh
   on:
     branch:
-      - staging
       - master
 after_deploy: .travis/clean_up.sh

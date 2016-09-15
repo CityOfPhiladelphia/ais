@@ -22,16 +22,30 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-EB_ENV=$(.travis/check_eb_config.py)
-EB_ENV_IS_CONFIGURED=$?
-if ! [ $EB_ENV_IS_CONFIGURED = 0 ]
-then
-  # 4a. If not, exit with 0.
-  echo "No environment configured for branch \"$TRAVIS_BRANCH\""
-  exit 0
-fi
+.travis/get_test_env.sh EB_ENV EB_BLUEGREEN_STATUS || {
+  echo "Could not find a production or swap environment" ;
+  exit 1 ;
+}
 
 # 5. Push the current branch
 echo "Pushing code to environment"
 git checkout "$TRAVIS_BRANCH"
 eb deploy $EB_ENV
+
+if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
+  EB_NEW_PROD_ENV=$EB_ENV
+  EB_OLD_PROD_ENV=$(.travis/get_prod_env.sh) || {
+    echo "Could not find a production environment to swap with" ;
+    exit 1 ;
+  }
+
+  echo "Setting deployment environment variables"
+  # Start as background processes in parallel
+  eb setenv $EB_OLD_PROD_ENV EB_BLUEGREEN_STATUS=Staging &
+  eb setenv $EB_NEW_PROD_ENV EB_BLUEGREEN_STATUS=Production &
+  # Wait for both
+  wait $(jobs -p)
+
+  echo "Swapping out $EB_OLD_PROD_ENV for $EB_NEW_PROD_ENV"
+  eb swap --destination_name $EB_OLD_PROD_ENV $EB_NEW_PROD_ENV
+fi
