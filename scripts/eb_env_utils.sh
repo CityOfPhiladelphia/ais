@@ -8,11 +8,14 @@ get_prod_env() {
 
   # Find the environment that is either marked as staging or ready to swap in.
   for env in $EB_ENVS ; do
-    vars=$(eb printenv $env)
+    # Trim carriage returns (\r) off of the env name. On windows, bash will 
+    # strip the new-line (\n) characters but leave the \r.
+    trimmed_env=$(echo $env | tr -d '\r')
+    vars=$(eb printenv $trimmed_env)
 
     echo "$vars" | grep --quiet "EB_BLUEGREEN_STATUS = Production"
     if [ $? -eq 0 ] ; then
-      echo $env
+      echo $trimmed_env
       return 0
     fi
   done
@@ -27,18 +30,21 @@ get_staging_env() {
 
   # Find the environment that is either marked as staging or ready to swap in.
   for env in $EB_ENVS ; do
-    vars=$(eb printenv $env)
+    # Trim carriage returns (\r) off of the env name. On windows, bash will 
+    # strip the new-line (\n) characters but leave the \r.
+    trimmed_env=$(echo $env | tr -d '\r')
+    vars=$(eb printenv $trimmed_env)
 
     echo "$vars" | grep --quiet "EB_BLUEGREEN_STATUS = Staging"
     if [ $? -eq 0 ] ; then
-      eval "export $__ENV_VAR_NAME=$env"
+      eval "export $__ENV_VAR_NAME=$trimmed_env"
       eval "export $__ENV_STATUS_NAME=Staging"
       return 0
     fi
 
     echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
     if [ $? -eq 0 ] ; then
-      eval "export $__ENV_VAR_NAME=$env"
+      eval "export $__ENV_VAR_NAME=$trimmed_env"
       eval "export $__ENV_STATUS_NAME=Swap"
       return 0
     fi
@@ -54,9 +60,12 @@ get_test_env() {
 
   # Find the environment that is marked to swap in.
   for env in $EB_ENVS ; do
-    eb printenv $env | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
+    # Trim carriage returns (\r) off of the env name. On windows, bash will 
+    # strip the new-line (\n) characters but leave the \r.
+    trimmed_env=$(echo $env | tr -d '\r')
+    eb printenv $trimmed_env | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
     if [ $? -eq 0 ] ; then
-      eval "export $__ENV_VAR_NAME=$env"
+      eval "export $__ENV_VAR_NAME=$trimmed_env"
       eval "export $__ENV_STATUS_NAME=Swap"
       return 0
     fi
@@ -64,9 +73,10 @@ get_test_env() {
 
   # If none is marked to swap, then use the environment marked as production.
   for env in $EB_ENVS ; do
-    eb printenv $env | grep --quiet "EB_BLUEGREEN_STATUS = Production"
+    trimmed_env=$(echo $env | tr -d '\r')
+    eb printenv $trimmed_env | grep --quiet "EB_BLUEGREEN_STATUS = Production"
     if [ $? -eq 0 ] ; then
-      eval "export $__ENV_VAR_NAME=$env"
+      eval "export $__ENV_VAR_NAME=$trimmed_env"
       eval "export $__ENV_STATUS_NAME=Production"
       return 0
     fi
