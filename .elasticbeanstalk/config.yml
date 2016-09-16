@@ -1,8 +1,3 @@
-branch-defaults:
-  staging:
-    environment: ais-api-staging
-  master:
-    environment: ais-api-prod
 global:
   application_name: ais-api
   default_ec2_keyname: ais-api-dev
