@@ -144,15 +144,15 @@ def test_child_address_has_all_units_in_ranged_address(client):
         ('Child address has {} results, whereas the ranged address has {} '
          'results.').format(child_data['total_size'], ranged_data['total_size'])
 
-def test_unit_address_in_db(client):
-    response = client.get('/addresses/826-28 N 3rd St # 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
+# def test_unit_address_in_db(client):
+#     response = client.get('/addresses/826-28 N 3rd St # 1')
+#     assert_status(response, 200)
+#
+#     data = json.loads(response.get_data().decode())
+#     assert_num_results(data, 1)
+#
+#     feature = data['features'][0]
+#     assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
 def test_unit_address_without_unit_num_in_db(client):
     UNIT_SQL = '''
@@ -185,36 +185,36 @@ def test_unit_address_not_in_db(client):
     response = client.get('/addresses/826-28 N 3rd St # 11')
     assert_status(response, 404)
 
-def test_synounymous_unit_types_found(client):
-    # APT
-    response = client.get('/addresses/826-28 N 3rd St Apartment 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
-
-    # UNIT
-    response = client.get('/addresses/826-28 N 3rd St Unit 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
-
-    # STE
-    response = client.get('/addresses/826-28 N 3rd St Ste 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
+# def test_synonymous_unit_types_found(client):
+#     # APT
+#     response = client.get('/addresses/826-28 N 3rd St Apartment 1')
+#     assert_status(response, 200)
+#
+#     data = json.loads(response.get_data().decode())
+#     assert_num_results(data, 1)
+#
+#     feature = data['features'][0]
+#     assert_opa_address(feature, '826-28 N 3RD ST # 1')
+#
+#     # UNIT
+#     response = client.get('/addresses/826-28 N 3rd St Unit 1')
+#     assert_status(response, 200)
+#
+#     data = json.loads(response.get_data().decode())
+#     assert_num_results(data, 1)
+#
+#     feature = data['features'][0]
+#     assert_opa_address(feature, '826-28 N 3RD ST # 1')
+#
+#     # STE
+#     response = client.get('/addresses/826-28 N 3rd St Ste 1')
+#     assert_status(response, 200)
+#
+#     data = json.loads(response.get_data().decode())
+#     assert_num_results(data, 1)
+#
+#     feature = data['features'][0]
+#     assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
 def test_nonsynonymous_unit_types_not_used(client):
     response = client.get('/addresses/826-28 N 3rd St Floor 1')
