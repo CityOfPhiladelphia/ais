@@ -15,7 +15,7 @@ def startup():
     #mysterious_tables = ('address_link', 'parcel_curb')
     #ignore_tables = ignore_tables + mysterious_tables
 
-    return {'new_db':new_db, 'old_db':old_db, 'ignore_tables':ignore_tables}
+    return {'new_db': new_db, 'old_db': old_db, 'ignore_tables': ignore_tables}
 
 
 def test_compare_num_tables(startup):
@@ -46,7 +46,6 @@ def test_geocode_types(startup):
     old_db = startup['old_db']
 
     def get_geo_types(db):
-
         stmt = "SELECT DISTINCT geocode_type FROM geocode"
         geo_types = db.execute(stmt)
         results = sorted([f['geocode_type'] for f in geo_types])
@@ -58,6 +57,7 @@ def test_geocode_types(startup):
 
     assert n_geo_types == o_geo_types
 
+    
 @pytest.fixture(scope="module")
 def teardown():
     """Teardown fixture: close db connections"""
