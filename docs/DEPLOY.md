@@ -42,11 +42,41 @@ environment. Deployments are managed by the [Travis](https://travis-ci.org)
 continuous integration service. The master branch is automatically deployed
 when it changes on GitHub.
 
+## Configuration
+
+### Environment Variables
+
+SQLALCHEMY_DATABASE_URI -- The URL to the AIS database.
+
+SQLALCHEMY_POOL_SIZE -- How many connections to the database each worker should
+    keep open. To see how many connections your PostgreSQL database allows, run
+    `select * from pg_settings where name='max_connections';`. If using gevent
+    worker, you should set your pool size relatively high (say, to half of your
+    available connections).
+
+For deployment purposes, there is also a variable named `EB_BLUEGREEN_STATUS`.
+The three respected values for this variable are `Production`, `Staging`, and
+`Swap`.
+
+### Scaling
+
 The EC2 machines in the *ais-api-market* and *ais-api-broad* environments are
 in auto scaling groups that are triggered by the average CPU usage across the
 machines. If the machines are using more than an average 70% of their CPU for
 5 minutes, the group will scale up. It will scale back down if the average is
 lower than 40%.
+
+**Guidelines around deployment variables:**
+
+* There should be exactly one environment marked with a status of Production,
+  and exactly one marked with a status of either Staging or Swap.
+* New data is always deployed to the environment marked Staging or Swap.
+* For tests, use the environment with a status of Production, unless there is
+  an environment with a status of Swap.
+* For code deployment, deploy to the same environment as is used for tests.
+  If deploying to a Swap environment, then the final step in the deploy is to
+  swap out the production environment for the test one.
+
 
 ## Deploying the database to RDS
 
@@ -64,10 +94,9 @@ The last two steps are done on Travis CI. If the tests fail, the non-live
 environment will remain in a ready-to-swap state until the tests pass again, at
 which point Travis will make the swap.
 
-**NOTE: the environments are marked as *Production*, *Staging*, or *Swap* using
-  the environment variable `EB_BLUEGREEN_STATUS`. If the machines ever get out
-  of sync, you can set this variable on the environments manually using `eb
-  config set` (see below).**
+**NOTE: If the machines ever get out of sync with their `EB_BLUEGREEN_STATUS`,
+  you can set this variable on the environments manually using `eb config set`
+  (see below).**
 
 ## Deploying a development application
 
