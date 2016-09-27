@@ -42,6 +42,12 @@ environment. Deployments are managed by the [Travis](https://travis-ci.org)
 continuous integration service. The master branch is automatically deployed
 when it changes on GitHub.
 
+The EC2 machines in the *ais-api-market* and *ais-api-broad* environments are
+in auto scaling groups that are triggered by the average CPU usage across the
+machines. If the machines are using more than an average 70% of their CPU for
+5 minutes, the group will scale up. It will scale back down if the average is
+lower than 40%.
+
 ## Deploying the database to RDS
 
 The *scripts/update_db.sh* script can be used to run the engine update process.
