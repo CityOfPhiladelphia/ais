@@ -1,5 +1,8 @@
-import sys
+import sys, os
 from subprocess import call
+
+os.chdir("../ais/engine/scripts/")
+print(os.getcwd())
 
 Engine_Scripts = [
                   "load_streets",

@@ -6,7 +6,7 @@ echo $SCRIPT_DIR
 
 echo "Activating virtual environment"
 cd ../env/scripts
-./activate.bat
+./activate
 cd $SCRIPT_DIR
 
 echo "Running the engine"
