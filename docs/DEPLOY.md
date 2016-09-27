@@ -34,13 +34,36 @@ have installed on your machine.
 
 Now you're ready to deploy.
 
-## Deploying to AWS
+# Deploying to AWS
 
 There are two production-level environments for the AIS API: *ais-api-market*
 and *ais-api-broad*. Generally, you shouldn't deploy directly to a production
 environment. Deployments are managed by the [Travis](https://travis-ci.org)
 continuous integration service. The master branch is automatically deployed
 when it changes on GitHub.
+
+## Deploying the database to RDS
+
+The *scripts/update_db.sh* script can be used to run the engine update process.
+This process entails:
+
+1. Uploading the new database to the non-live production environment (*broad* or
+   *market*),
+2. Marking the non-live production environment as being ready to swap with the
+   live one,
+3. Running the API application tests against the database, and finally
+4. Swapping the live environment, if the tests pass.
+
+The last two steps are done on Travis CI. If the tests fail, the non-live
+environment will remain in a ready-to-swap state until the tests pass again, at
+which point Travis will make the swap.
+
+**NOTE: the environments are marked as *Production*, *Staging*, or *Swap* using
+  the environment variable `EB_BLUEGREEN_STATUS`. If the machines ever get out
+  of sync, you can set this variable on the environments manually using `eb
+  config set` (see below).**
+
+## Deploying a development application
 
 You can also create your own development environment. There are a couple of
 saved configurations that you can choose to work from. These configurations are
