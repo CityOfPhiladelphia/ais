@@ -10,11 +10,11 @@ cd ../env/scripts
 cd $SCRIPT_DIR
 
 echo "Running the engine"
-# # python build_engine.py
+python build_engine.py
 
 # Run pg_dump
 echo "Dumping the engine DB"
-# # pg_dump -Fc -U ais_engine -n public ais_engine > ais_engine.dump
+pg_dump -Fc -U ais_engine -n public ais_engine > ais_engine.dump
 
 # Get Staging Environment
 
@@ -56,15 +56,14 @@ $db_uri
 
 # Restore Database
 echo "Restoring the engine DB into the $EB_ENV environment "
-# # pg_restore -h $db_uri -d ais_engine -U ais_engine -c ais_engine.dump
-#pg_restore -d ais_engine_test -U ais_engine -c ais_engine.dump
+pg_restore -h $db_uri -d ais_engine -U ais_engine -c ais_engine.dump
 
 # Swap & Deploy
 echo "Marking the $EB_ENV environment as ready for testing (swap)"
-# # eb setenv -e $ENV_VAR_NAME EB_BLUEGREEN_STATUS=Swap
+eb setenv -e $ENV_VAR_NAME EB_BLUEGREEN_STATUS=Swap
 
 echo "Restarting the latest master branch build (requires travis CLI)"
-# Learn how to do this in powershell
+# Translate to powershell
 ##if ! hash travis ; then
 ##  echo "This step requires the Travis-CI CLI. To install and configure, see:
 ##  https://github.com/travis-ci/travis.rb#installation"
@@ -74,7 +73,7 @@ echo "Restarting the latest master branch build (requires travis CLI)"
 # Get last travis build and parse build number
 $lb = travis history --branch master --limit 1
 $LAST_BUILD = $l.split(' ')[0].split('#')[1]
-# # travis restart $LAST_BUILD
+travis restart $LAST_BUILD
 
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
