@@ -5,16 +5,29 @@ echo $SCRIPT_DIR
 # Build Engine
 
 echo "Activating virtual environment"
-cd ../env/scripts
+cd ../../../env/scripts
 ./activate
-cd $SCRIPT_DIR
 
 echo "Running the engine"
-python build_engine.py
+
+ais engine run load_streets
+ais engine run load_street_aliases
+ais engine run load_opa_properties
+ais engine run load_dor_parcels
+ais engine run load_pwd_parcels
+ais engine run load_curbs
+ais engine run load_addresses
+ais engine run load_zip_ranges
+ais engine run geocode_addresses
+ais engine run make_address_summary
+ais engine run load_service_areas
+ais engine run make_service_area_summary
+
+$db_dump_file_loc = $env:temp + "\ais_engine.dump"
 
 # Run pg_dump
 echo "Dumping the engine DB"
-pg_dump -Fc -U ais_engine -n public ais_engine > ais_engine.dump
+pg_dump -Fc -U ais_engine -n public ais_engine > db_dump_file_loc
 
 # Get Staging Environment
 
@@ -56,7 +69,7 @@ $db_uri
 
 # Restore Database
 echo "Restoring the engine DB into the $EB_ENV environment "
-pg_restore -h $db_uri -d ais_engine -U ais_engine -c ais_engine.dump
+pg_restore -h $db_uri -d ais_engine -U ais_engine -c db_dump_file_loc
 
 # Swap & Deploy
 echo "Marking the $EB_ENV environment as ready for testing (swap)"
