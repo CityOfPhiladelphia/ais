@@ -6,7 +6,7 @@ import instance.config as config
 def startup():
     """Startup fixture: make database connections and define tables to ignore"""
     new_db = Database(config.DATABASES['engine_production'])
-    old_db = Database(config.DATABASES['engine_staging'])
+    old_db = Database(config.DATABASES['engine'])
 
     #system tables
     ignore_tables = ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff')
