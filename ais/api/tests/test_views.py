@@ -155,6 +155,7 @@ def test_unit_address_in_db(client):
     feature = data['features'][0]
     assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
+@pytest.mark.skip(reason="todo - return OPA full address")
 def test_unit_address_without_unit_num_in_db(client):
     UNIT_SQL = '''
         SELECT unit.street_address
