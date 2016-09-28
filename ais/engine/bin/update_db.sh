@@ -11,7 +11,7 @@ echo "Dumping the engine DB [TODO]"
 # TODO pg_dump ...
 
 echo "Finding the staging environment"
-source $SCRIPT_DIR/eb_env_utils.sh
+source ../../bin/eb_env_utils.sh
 get_staging_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find an environment marked staging or swap" ;
   exit 1 ;
