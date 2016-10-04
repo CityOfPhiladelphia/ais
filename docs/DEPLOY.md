@@ -1,6 +1,18 @@
-# Working with Elastic Beanstalk
+# Deploying to Elastic Beanstalk
 
-## Getting set up
+## Production environments
+
+There are two production-level environments for the AIS API: *ais-api-market*
+and *ais-api-broad*. Generally, you shouldn't deploy directly to a production
+environment. Deployments are managed by the [Travis](https://travis-ci.org)
+continuous integration service. The master branch is automatically deployed
+when it changes on GitHub.
+
+## Development environments
+
+You can also create your own development environment.
+
+### Getting set up with Elastic Beanstalk
 
 Before you get started with Elastic Beanstalk, you'll have to install the `eb`
 command line client, and configure your credentials. The CLI tool is installed
@@ -14,7 +26,7 @@ pip install awsebcli awscli
 installed above)*
 
 You can find credentials for working with the CLI in the IAM settings of the
-AWS console. If you are using the CLI from your own work machine, look up your
+AWS console. If you want to use the CLI from your own work machine, look up your
 username at https://console.aws.amazon.com/iam/home#users; if you are using the
 CLI from a different machine, consider creating a new user. Any given set of
 credentials should ideally only be used in one place so that they can be easily
@@ -34,29 +46,60 @@ have installed on your machine.
 
 Now you're ready to deploy.
 
-# Deploying to AWS
+### Deploying a development application
 
-There are two production-level environments for the AIS API: *ais-api-market*
-and *ais-api-broad*. Generally, you shouldn't deploy directly to a production
-environment. Deployments are managed by the [Travis](https://travis-ci.org)
-continuous integration service. The master branch is automatically deployed
-when it changes on GitHub.
+There are a couple of saved configurations that you can choose to work from.
+These configurations are saved on AWS and can be retrieved by running:
+
+```bash
+eb config list
+```
+
+To create a new environment for demoing a development branch, you can run, for
+example:
+
+```bash
+eb create mynewdevenv --cfg ais-api-dev-sc
+```
+
+In the example above, `mynewdevenv` is the name of the new environment that I
+am creating, and `ais-api-dev-sc` is the name of the saved configuration that I
+am basing the environment on.
+
+Once you have your test environment, you may want to specify what database it
+reads from. You can do that by setting the `SQLALCHEMY_DATABASE_URI` environment
+variable:
+
+```bash
+eb setenv -e mynewtestenv "SQLALCHEMY_DATABASE_URI=postgresql://dbuser:dbpass@ais-engine-db-dev.subdomain.us-east-1.rds.amazonaws.com:5432/ais_engine"
+```
+
+Now if you run `eb printenv mynewtestenv` you should see the variable set.
+
+Finally, do deploy a particular branch to that development environment, check
+out that branch and run the following:
+
+```bash
+eb deploy mynewtestenv
+```
 
 ## Configuration
 
 ### Environment Variables
 
-SQLALCHEMY_DATABASE_URI -- The URL to the AIS database.
+There are a few environment variables that need to be set for an instance of
+the API. These have default variables set in the save configurations, but you
+may want to override them.
 
-SQLALCHEMY_POOL_SIZE -- How many connections to the database each worker should
+`SQLALCHEMY_DATABASE_URI` -- The URL to the AIS database.
+
+`SQLALCHEMY_POOL_SIZE` -- How many connections to the database each worker should
     keep open. To see how many connections your PostgreSQL database allows, run
-    `select * from pg_settings where name='max_connections';`. If using gevent
-    worker, you should set your pool size relatively high (say, to half of your
-    available connections).
+    `select * from pg_settings where name='max_connections';`.
 
 For deployment purposes, there is also a variable named `EB_BLUEGREEN_STATUS`.
 The three respected values for this variable are `Production`, `Staging`, and
-`Swap`.
+`Swap`. You should *not* set this variable for development instances.
 
 ### Scaling
 
@@ -97,41 +140,3 @@ which point Travis will make the swap.
 **NOTE: If the machines ever get out of sync with their `EB_BLUEGREEN_STATUS`,
   you can set this variable on the environments manually using `eb config set`
   (see below).**
-
-## Deploying a development application
-
-You can also create your own development environment. There are a couple of
-saved configurations that you can choose to work from. These configurations are
-saved on AWS and can be retrieved by running:
-
-```bash
-eb config list
-```
-
-To create a new environment for demoing a development branch, you can run, for
-example:
-
-```bash
-eb create mynewdevenv --cfg ais-api-dev-sc
-```
-
-In the example above, `mynewdevenv` is the name of the new environment that I
-am creating, and `ais-api-dev-sc` is the name of the saved configuration that I
-am basing the environment on.
-
-Once you have your test environment, you may want to specify what database it
-reads from. You can do that by setting the `SQLALCHEMY_DATABASE_URI` environment
-variable:
-
-```bash
-eb setenv -e mynewtestenv "SQLALCHEMY_DATABASE_URI=postgresql://dbuser:dbpass@ais-engine-db-dev.subdomain.us-east-1.rds.amazonaws.com:5432/ais_engine"
-```
-
-Now if you run `eb printenv mynewtestenv` you should see the variable set.
-
-Finally, do deploy a particular branch to that development environment, check
-out that branch and run the following:
-
-```bash
-eb deploy mynewtestenv
-```
