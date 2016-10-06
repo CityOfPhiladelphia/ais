@@ -150,6 +150,7 @@ class AddressQuery(BaseQuery):
                              Address.street_postdir,
                              Address.address_low,
                              Address.address_high,
+                             Address.unit_type.nullsfirst(),
                              Address.unit_num.nullsfirst())
 
     def filter_by_owner(self, *owner_parts):
@@ -639,6 +640,7 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.street_postdir,
                              AddressSummary.address_low,
                              AddressSummary.address_high,
+                             AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst())
 
     def filter_by_owner(self, *owner_parts):
