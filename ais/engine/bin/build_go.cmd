@@ -1,0 +1,1 @@
+build_engine > build_log.txt 2> build_errors.txt
