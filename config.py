@@ -631,6 +631,21 @@ SERVICE_AREAS = {
             },
         },
 
+        # GIS_RDA
+        #   investigate whether 2 addreses are same property
+        # {
+        #     'layer_id':             'rda_landbank_lama_assets',
+        #     'name':                 'RDA_Landbank_Lama_Assets',
+        #     'description':          '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_rda.lama_assets_0725',
+        #             'value_field':          'asset_id',
+        #         },
+        #     },
+        # },
+
         # GIS_RECYCLE
         {
             'layer_id':             'recreation_district',
