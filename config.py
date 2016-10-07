@@ -528,15 +528,27 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # {
+        #     'layer_id':             'police_sector',
+        #     'name':                 'Police Sector',
+        #     'description':          '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_police.Boundaries_Sector',
+        #             'value_field':          'distsec_id',
+        #         },
+        #     },
+        # },
         {
-            'layer_id':             'police_sector',
-            'name':                 'Police Sector',
-            'description':          '',
+            'layer_id': 'police_psa',
+            'name': 'Police PSA',
+            'description': '',
             'sources': {
-                'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_police.Boundaries_Sector',
-                    'value_field':          'distsec_id',
+                'polygon': {
+                    'db': 'gis_sa',
+                    'table': 'gis_police.Boundaries_PSA',
+                    'value_field': 'psa_num',
                 },
             },
         },
@@ -631,19 +643,19 @@ SERVICE_AREAS = {
                 },
             },
         },
-        {
-            'layer_id':             'snow_category',
-            'name':                 'Snow Category',
-            'description':          '',
-            'sources': {
-                'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.SNOWCAT_WS',
-                    'seg_id_field':         'seg_id',
-                    'value_field':          'snowcat',
-                },
-            },
-        },
+        # {
+        #     'layer_id':             'snow_category',
+        #     'name':                 'Snow Category',
+        #     'description':          '',
+        #     'sources': {
+        #         'line_single': {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_streets.SNOWCAT_WS',
+        #             'seg_id_field':         'seg_id',
+        #             'value_field':          'snowcat',
+        #         },
+        #     },
+        # },
         {
             'layer_id':             'sanitation_area',
             'name':                 'Sanitation Area',
