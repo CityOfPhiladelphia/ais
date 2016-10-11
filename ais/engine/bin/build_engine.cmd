@@ -11,43 +11,43 @@ echo "Activating virtual environment"
 cd ../../../env/scripts
 call activate.bat
 
-echo "Running the engine"
+echo. && echo "Running the engine"
 
-echo "Loading Streets"
-ais engine run load_streets
+echo. && echo "Loading Streets"
+REM ais engine run load_streets
 
-echo "Loading Street Aliases"
-ais engine run load_street_aliases
+echo. && echo "Loading Street Aliases"
+REM ais engine run load_street_aliases
 
-echo "Loading OPA Properties"
-ais engine run load_opa_properties
+echo. && echo "Loading OPA Properties"
+REM ais engine run load_opa_properties
 
-echo "Loading DOR parcels"
-ais engine run load_dor_parcels
+echo. && echo "Loading DOR parcels"
+REM ais engine run load_dor_parcels
 
-echo "Loading PWD Parcels"
-ais engine run load_pwd_parcels
+echo. && echo "Loading PWD Parcels"
+REM ais engine run load_pwd_parcels
 
-echo "Loading Curbs"
-ais engine run load_curbs
+echo. && echo "Loading Curbs"
+REM ais engine run load_curbs
 
-echo "Loading Addresses"
-ais engine run load_addresses
+echo. && echo "Loading Addresses"
+REM ais engine run load_addresses
 
-echo "Loading Zip Ranges"
-ais engine run load_zip_ranges
+echo. && echo "Loading Zip Ranges"
+REM ais engine run load_zip_ranges
 
-echo "Geocoding Addresses"
-ais engine run geocode_addresses
+echo. && echo "Geocoding Addresses"
+REM ais engine run geocode_addresses
 
-echo "Making Address Summary"
-ais engine run make_address_summary
+echo. && echo "Making Address Summary"
+REM ais engine run make_address_summary
 
-echo "Loading Service Areas"
-ais engine run load_service_areas
+echo. && echo "Loading Service Areas"
+REM ais engine run load_service_areas
 
-echo "Making Service Area Summary"
-ais engine run make_service_area_summary
+echo. && echo "Making Service Area Summary"
+REM ais engine run make_service_area_summary
 
 
 rem Get end time:
@@ -66,4 +66,5 @@ set /A hh=elapsed/(60*60*100), rest=elapsed%%(60*60*100), mm=rest/(60*100), rest
 if %mm% lss 10 set mm=0%mm%
 if %ss% lss 10 set ss=0%ss%
 if %cc% lss 10 set cc=0%cc%
-echo %hh%:%mm%:%ss%
+
+echo. && echo "Time elapsed: %hh%:%mm%:%ss%"
