@@ -499,6 +499,57 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # ZONING RCO OVERLAYS - CAN BE MULTIPLE PER ADDRESS? CLARIFY AND INCORPORATE
+        # {
+        #     'layer_id':             'zoning_rco',
+        #     'name':                 'Zoning_RCO',
+        #     'description':           '',
+        #     'sources': {
+        #         'polygon': {
+        #             'db': '                 gis_sa',
+        #             'table':                'gis_planning.Zoning_RCO',
+        #             'value_field':          'objectid',
+        #         },
+        #     },
+        # },
+        # STEEP SLOPE PROTECTION AREAS
+        # {
+        #     'layer_id':             'zoning_steepslopeprotectionarea',
+        #     'name':                 'Zoning_SteepSlopeProtectionArea',
+        #     'description':           '',
+        #     'sources': {
+        #         'polygon': {
+        #             'db': '                 gis_sa',
+        #             'table':                'gis_planning.Zoning_SteepSlopeProtectArea_r',
+        #             'value_field':          'overlay_na',
+        #         },
+        #     },
+        # },
+        # FEMA FLOOD ZONES
+        # {
+        #     'layer_id':             'fema_flood_plain_100',
+        #     'name':                 'Fema_Flood_Plain_100',
+        #     'description':           '',
+        #     'sources': {
+        #         'polygon': {
+        #             'db': '                 gis_sa',
+        #             'table':                'gis_planning.FEMA_100_FLOOD_PLAIN',
+        #             'value_field':          'fld_zone',
+        #         },
+        #     },
+        # },
+        # {
+        #     'layer_id':             'fema_flood_plain_500',
+        #     'name':                 'Fema_Flood_Plain_500',
+        #     'description':           '',
+        #     'sources': {
+        #         'polygon': {
+        #             'db': '                 gis_sa',
+        #             'table':                'gis_planning.FEMA_500_FLOOD_PLAIN',
+        #             'value_field':          'fld_zone',
+        #         },
+        #     },
+        # },
         # # Land use was slowing the service area summary script down
         # # considerably.
         # # {
@@ -528,18 +579,18 @@ SERVICE_AREAS = {
                 },
             },
         },
-        {
-            'layer_id':             'police_sector',
-            'name':                 'Police Sector',
-            'description':          '',
-            'sources': {
-                'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_police.Boundaries_Sector',
-                    'value_field':          'distsec_id',
-                },
-            },
-        },
+        # {
+        #     'layer_id':             'police_sector',
+        #     'name':                 'Police Sector',
+        #     'description':          '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_police.Boundaries_Sector',
+        #             'value_field':          'distsec_id',
+        #         },
+        #     },
+        # },
         {
             'layer_id':             'police_district',
             'name':                 'Police District',
@@ -567,6 +618,22 @@ SERVICE_AREAS = {
                 },
             },
         },
+
+        # GIS_RDA
+        #   SHOULD THIS GO IN SOURCES?
+        #     investigate whether 2 addreses are same property
+        # {
+        #     'layer_id':             'rda_landbank_lama_assets',
+        #     'name':                 'RDA_Landbank_Lama_Assets',
+        #     'description':          '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_rda.lama_assets_0725',
+        #             'value_field':          'asset_id',
+        #         },
+        #     },
+        # },
 
         # GIS_RECYCLE
         {
@@ -631,19 +698,19 @@ SERVICE_AREAS = {
                 },
             },
         },
-        {
-            'layer_id':             'snow_category',
-            'name':                 'Snow Category',
-            'description':          '',
-            'sources': {
-                'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.SNOWCAT_WS',
-                    'seg_id_field':         'seg_id',
-                    'value_field':          'snowcat',
-                },
-            },
-        },
+        # {
+        #     'layer_id':             'snow_category',
+        #     'name':                 'Snow Category',
+        #     'description':          '',
+        #     'sources': {
+        #         'line_single': {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_streets.SNOWCAT_WS',
+        #             'seg_id_field':         'seg_id',
+        #             'value_field':          'snowcat',
+        #         },
+        #     },
+        # },
         {
             'layer_id':             'sanitation_area',
             'name':                 'Sanitation Area',
