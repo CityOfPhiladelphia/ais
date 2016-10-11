@@ -31,6 +31,9 @@ parcel_curb_table.drop_index('parcel_source', 'parcel_row_id')
 print('Deleting existing curbs...')
 curb_table.delete()
 
+print('Deleting existing parcel curbs...')
+parcel_curb_table.delete()
+
 print('Reading curbs from source...')
 source_rows = source_table.read()
 curbs = []
