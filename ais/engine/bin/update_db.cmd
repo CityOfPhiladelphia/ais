@@ -39,7 +39,7 @@ del /f /s /q D:\temp 1>nul
 rmdir /s /q D:\temp
 mkdir D:\temp
 set db_dump_file_loc=D:\temp\ais_engine.dump
-REM ***************** pg_dump -Fc -U ais_engine -n public ais_engine > %db_dump_file_loc%
+pg_dump -Fc -U ais_engine -n public ais_engine > %db_dump_file_loc%
 
 REM ------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE SCHEMA public;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION postgis;"
-psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION pgtrgm;"
+REM psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION pgtrgm;"
 pg_restore -h %DB_URI% -d ais_engine -U ais_engine -c %db_dump_file_loc%
 
 REM------------------------------------------------------------------
@@ -70,12 +70,12 @@ REM ----THE REMAINING PART IS NOT FUNCTIONAL - NEED TO CONFIG PROD VM FOR TRAVIS
 REM Get last travis build and parse build number
 set lb=travis history --branch master --limit 1
 
-set LAST_BUILD=$lb.split(' ')[0].split('#')[1] # this is powershell > 2.0 syntax (5.0)
-$e = ($lb -split(' '))[0]
-$LAST_BUILD = ($e -split('#'))[1]
+REM set LAST_BUILD=$lb.split(' ')[0].split('#')[1] # this is powershell > 2.0 syntax (5.0)
+REM $e = ($lb -split(' '))[0]
+REM $LAST_BUILD = ($e -split('#'))[1]
 
-echo "Restarting the latest master branch build (requires travis CLI)"
-travis restart $LAST_BUILD
+REM echo "Restarting the latest master branch build (requires travis CLI)"
+REM travis restart $LAST_BUILD
 
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
