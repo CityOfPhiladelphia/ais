@@ -592,18 +592,6 @@ SERVICE_AREAS = {
         #     },
         # },
         {
-            'layer_id': 'police_psa',
-            'name': 'Police PSA',
-            'description': '',
-            'sources': {
-                'polygon': {
-                    'db': 'gis_sa',
-                    'table': 'gis_police.Boundaries_PSA',
-                    'value_field': 'psa_num',
-                },
-            },
-        },
-        {
             'layer_id':             'police_district',
             'name':                 'Police District',
             'description':          '',
@@ -632,7 +620,8 @@ SERVICE_AREAS = {
         },
 
         # GIS_RDA
-        #   investigate whether 2 addreses are same property
+        #   SHOULD THIS GO IN SOURCES?
+        #     investigate whether 2 addreses are same property
         # {
         #     'layer_id':             'rda_landbank_lama_assets',
         #     'name':                 'RDA_Landbank_Lama_Assets',
