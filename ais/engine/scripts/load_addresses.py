@@ -212,19 +212,14 @@ for source in sources:
 
         try:
             # Try parsing
-            comps = parsed_addresses.get(source_address)
-            if comps is None:
+            parsed_address = parsed_addresses.get(source_address)
+            if parsed_address is None:
                 try:
-                    comps = parser.parse(source_address)
-                    #comps = parser.parse(source_address)['components']
-                    #print(json.dumps(comps, sort_keys=True, indent=2))
-                    # parsed_addresses[source_address] = comps['components']
-                    parsed_addresses[source_address] = comps
-
+                    parsed_address = parser.parse(source_address)
+                    parsed_addresses[source_address] = parsed_address
                 except ValueError:
                     raise ValueError('Could not parse')
-
-            address = Address(comps)
+            address = Address(parsed_address)
 
             # Get street address and map to source address
             street_address = address.street_address
@@ -459,12 +454,6 @@ for i, address in enumerate(addresses):
         address_low = address.address_low
         address_suffix = address.address_low_suffix
         parity = address.parity
-
-        # try:
-        #     parity = address.parity
-        # except:
-        #     print(address.street_address, address_low)
-
         ranges_on_street = street_range_map[address.street_full]
 
         for range_on_street in ranges_on_street:

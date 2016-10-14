@@ -794,6 +794,11 @@ class AddressSummary(db.Model):
     street_full = db.Column(db.Text)
     zip_code = db.Column(db.Text)
     zip_4 = db.Column(db.Text)
+    usps_bldgfirm = db.Column(db.Text)
+    usps_type = db.Column(db.Text)
+    election_block_id = db.Column(db.Text)
+    election_precinct = db.Column(db.Text)
+
 
     # Foreign keys
     seg_id = db.Column(db.Integer)
