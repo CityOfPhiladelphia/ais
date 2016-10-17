@@ -994,49 +994,69 @@ ADDRESS_SUMMARY = {
         # tables: address-parcel, address-street, and address-property
         {
             'name':                 'zip_code',
-            'tag_key':              'zip_code',
+            'tag_key':              'usps_zipcode',
             'type':                 'text',
         },
         {
             'name':                 'zip_4',
-            'tag_key':              'zip_4',
+            'tag_key':              'usps_zip4',
             'type':                 'text',
         },
         {
-            'name':                 'seg_id',
-            'tag_key':              'seg_id',
-            'type':                 'number',
-        },
-        {
-            'name':                 'seg_side',
-            'tag_key':              'seg_side',
+            'name':                 'usps_type',
+            'tag_key':              'usps_type',
             'type':                 'text',
         },
         {
-            'name':                 'pwd_parcel_id',
-            'tag_key':              'pwd_parcel_id',
+            'name':                 'usps_bldgfirm',
+            'tag_key':              'usps_bldgfirm',
             'type':                 'text',
         },
         {
-            'name':                 'dor_parcel_id',
-            'tag_key':              'dor_parcel_id',
+            'name':                 'election_block_id',
+            'tag_key':              'election block_id',
             'type':                 'text',
         },
         {
-            'name':                 'opa_account_num',
-            'tag_key':              'opa_account_num',
+            'name':                 'election_precinct',
+            'tag_key':              'election precinct',
             'type':                 'text',
         },
-        {
-            'name':                 'opa_owners',
-            'tag_key':              'opa_owner',
-            'type':                 'text',
-        },
-        {
-            'name':                 'opa_address',
-            'tag_key':              'opa_address',
-            'type':                 'text',
-        },
+        # {
+        #     'name':                 'seg_id',
+        #     'tag_key':              'seg_id',
+        #     'type':                 'number',
+        # },
+        # {
+        #     'name':                 'seg_side',
+        #     'tag_key':              'seg_side',
+        #     'type':                 'text',
+        # },
+        # {
+        #     'name':                 'pwd_parcel_id',
+        #     'tag_key':              'pwd_parcel_id',
+        #     'type':                 'text',
+        # },
+        # {
+        #     'name':                 'dor_parcel_id',
+        #     'tag_key':              'dor_parcel_id',
+        #     'type':                 'text',
+        # },
+        # {
+        #     'name':                 'opa_account_num',
+        #     'tag_key':              'opa_account_num',
+        #     'type':                 'text',
+        # },
+        # {
+        #     'name':                 'opa_owners',
+        #     'tag_key':              'opa_owner',
+        #     'type':                 'text',
+        # },
+        # {
+        #     'name':                 'opa_address',
+        #     'tag_key':              'opa_address',
+        #     'type':                 'text',
+        # },
         {
             'name':                 'pwd_account_nums',
             'tag_key':              'pwd_account_num',
