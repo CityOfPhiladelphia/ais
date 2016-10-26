@@ -82,3 +82,7 @@ instance/config.py
 
 .travis/deploy_rsa
 .idea/
+
+# Logs
+*build_log*
+*build_errors*
