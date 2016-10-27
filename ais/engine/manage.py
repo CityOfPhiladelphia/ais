@@ -12,6 +12,8 @@ def path_for_script(root_path, script):
 @manager.option('script', help='Name of the script to run, e.g. '
                                '`load_addresses`. Use `all` to run all scripts.'
 )
+
+
 def run(script):
     """Run engine scripts."""
     root_path = app.root_path
@@ -26,3 +28,19 @@ def run(script):
         
     for path in paths:
         subprocess.call([sys.executable, path], env=os.environ.copy())
+
+# INCORPORATE BELOW AFTER CLICK REPLACEMENT ENGINE COMMANDS ARE IMPLEMENTED
+
+#Import database models with app context
+# from flask_migrate import Migrate, MigrateCommand
+# from ais import app, app_db as db
+# with app.app_context():
+#   from ais.models import *
+#
+# migrate = Migrate(app, db)
+#
+# manager = Manager(app)
+# manager.add_command('db', MigrateCommand)
+#
+# if __name__ == '__main__':
+#     manager.run()
