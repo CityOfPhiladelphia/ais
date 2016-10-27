@@ -55,6 +55,13 @@ class StreetAlias(db.Model):
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
+class StreetIntersection(db.Model):
+    """An intersection of street centerlines."""
+    id = db.Column(db.Integer, primary_key=True)
+    street_full_1 = db.Column(db.Text)
+    street_full_2 = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
+
 
 ###########
 # PARCELS #
@@ -208,40 +215,51 @@ class Address(db.Model):
         uselist=False)
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            arg = args[0]
-            # If a single string arg was passed, parse.
-            if isinstance(arg, str):
-                p = parser.parse(arg)
-                if p['type'] != 'address':
-                    raise ValueError('Not an address')
-                c = p['components']
 
-                # TEMP: Passyunk doesn't raise an error if the street name
-                # is missing for an address, so check here and do it manually.
-                if c['street']['name'] is None:
-                    raise ValueError('No street name')
+        assert len(args) > 0
+        arg = args[0]
 
-                # TEMP: Passyunk doesn't raise an error if the address high is
-                # lower than the address low.
-                high_num_full = c['address']['high_num_full']
-                if high_num_full and high_num_full < c['address']['low_num']:
-                    raise ValueError('Invalid range address')
+        if isinstance(arg, str):
+            p = parser.parse(arg)
+            # if p['type'] != 'address':
+            #     raise ValueError('Not an address')
 
-                kwargs = {
-                    'address_low':          c['address']['low_num'],
-                    'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
-                    'address_low_frac':     c['address']['fractional'],            # passyunk change
-                    'address_high':         c['address']['high_num_full'],
-                    'street_predir':        c['street']['predir'],
-                    'street_name':          c['street']['name'],
-                    'street_suffix':        c['street']['suffix'],
-                    'street_postdir':       c['street']['postdir'],
-                    'unit_type':            c['unit']['unit_type'],                # passyunk change
-                    'unit_num':             c['unit']['unit_num'],                 # passyunk change
-                    'street_full':          c['street']['full'],
-                    'street_address':       c['street_address'],
-                }
+        elif isinstance(arg, dict):
+            p = arg
+
+        else:
+            raise ValueError('Not an address')
+
+        if p['type'] != 'address':
+            raise ValueError('Not an address')
+
+        c = p['components']
+
+        # TEMP: Passyunk doesn't raise an error if the street name
+        # is missing for an address, so check here and do it manually.
+        if c['street']['name'] is None:
+            raise ValueError('No street name')
+
+        # TEMP: Passyunk doesn't raise an error if the address high is
+        # lower than the address low.
+        high_num_full = c['address']['high_num_full']
+        if high_num_full and high_num_full < c['address']['low_num']:
+            raise ValueError('Invalid range address')
+
+        kwargs = {
+            'address_low':          c['address']['low_num'],
+            'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
+            'address_low_frac':     c['address']['fractional'],            # passyunk change
+            'address_high':         c['address']['high_num_full'],
+            'street_predir':        c['street']['predir'],
+            'street_name':          c['street']['name'],
+            'street_suffix':        c['street']['suffix'],
+            'street_postdir':       c['street']['postdir'],
+            'unit_type':            c['unit']['unit_type'],                # passyunk change
+            'unit_num':             c['unit']['unit_num'],                 # passyunk change
+            'street_full':          c['street']['full'],
+            'street_address':       c['street_address'],
+        }
 
         super(Address, self).__init__(**kwargs)
 
@@ -783,8 +801,13 @@ class AddressSummary(db.Model):
     street_full = db.Column(db.Text)
     zip_code = db.Column(db.Text)
     zip_4 = db.Column(db.Text)
+    usps_bldgfirm = db.Column(db.Text)
+    usps_type = db.Column(db.Text)
+    election_block_id = db.Column(db.Text)
+    election_precinct = db.Column(db.Text)
 
     # Foreign keys
+    street_code = db.Column(db.Integer)
     seg_id = db.Column(db.Integer)
     seg_side = db.Column(db.Text)
     pwd_parcel_id = db.Column(db.Text)
