@@ -29,7 +29,7 @@ sa_layer_ids = [x['layer_id'] for x in sa_layer_defs]
 poly_table = db['service_area_polygon']
 line_single_table = db['service_area_line_single']
 line_dual_table = db['service_area_line_dual']
-sa_summary_table = db['service_area_summary']
+#sa_summary_table = db['service_area_summary']
 address_summary_table = db['address_summary']
 address_summary_fields = [
 	'street_address',
@@ -57,6 +57,8 @@ if WRITE_OUT:
 
 	print('Creating service area summary table...')
 	db.create_table('service_area_summary', sa_summary_fields)
+
+sa_summary_table = db['service_area_summary']
 
 # print('Reading single-value service area lines...')
 # line_single_map = {}  # layer_id => seg_id => value
@@ -134,7 +136,7 @@ for i, address_summary_row in enumerate(address_summary_rows):
 			# Add to map
 			# x_map = xy_map[x] = {}
 			# x_map[y] = sa_rows
-		
+
 		# Create and insert summary row
 		sa_summary_row = deepcopy(sa_summary_row_template)
 		sa_summary_row['street_address'] = street_address
