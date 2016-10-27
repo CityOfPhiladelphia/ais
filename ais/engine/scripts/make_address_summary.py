@@ -272,6 +272,16 @@ if WRITE_OUT:
 	db.execute(seg_stmt)
 	db.save()
 
+	print('Populating street codes...')
+	stcode_stmt = '''
+	    update address_summary asm
+	    set street_code = sts.street_code
+		from street_segment sts
+		where sts.seg_id = asm.seg_id
+	'''
+	db.execute(stcode_stmt)
+	db.save()
+
 	print('Populating PWD parcel IDs...')
 	parcel_stmt = '''
 		update address_summary asm

@@ -55,6 +55,13 @@ class StreetAlias(db.Model):
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
+class StreetIntersection(db.Model):
+    """An intersection of street centerlines."""
+    id = db.Column(db.Integer, primary_key=True)
+    street_full_1 = db.Column(db.Text)
+    street_full_2 = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
+
 
 ###########
 # PARCELS #
@@ -799,8 +806,8 @@ class AddressSummary(db.Model):
     election_block_id = db.Column(db.Text)
     election_precinct = db.Column(db.Text)
 
-
     # Foreign keys
+    street_code = db.Column(db.Integer)
     seg_id = db.Column(db.Integer)
     seg_side = db.Column(db.Text)
     pwd_parcel_id = db.Column(db.Text)
