@@ -272,6 +272,16 @@ if WRITE_OUT:
 	db.execute(seg_stmt)
 	db.save()
 
+	print('Populating street codes...')
+	stcode_stmt = '''
+	    update address_summary asm
+	    set street_code = sts.street_code
+		from street_segment sts
+		where sts.seg_id = asm.seg_id
+	'''
+	db.execute(stcode_stmt)
+	db.save()
+
 	print('Populating PWD parcel IDs...')
 	parcel_stmt = '''
 		update address_summary asm
@@ -317,19 +327,20 @@ if WRITE_OUT:
 	db.execute(prop_stmt)
 	db.save()
 
-	print('Populating ZIP codes...')
-	zip_stmt = '''
-		update address_summary asm
-		set zip_code = zr.zip_code,
-			zip_4 =
-				case when az.match_type = 'ignore_unit' then ''
-					else zr.zip_4 end
-		from address_zip az, zip_range zr
-		where asm.street_address = az.street_address and
-			az.usps_id = zr.usps_id
-	'''.format(address_summary_table)
-	db.execute(zip_stmt)
-	db.save()
+	# This is depreciated in favor of Zip Codes/Zip4s read from Passyunk Components (address_tag table)
+	# print('Populating ZIP codes...')
+	# zip_stmt = '''
+	# 	update address_summary asm
+	# 	set zip_code = zr.zip_code,
+	# 		zip_4 =
+	# 			case when az.match_type = 'ignore_unit' then ''
+	# 				else zr.zip_4 end
+	# 	from address_zip az, zip_range zr
+	# 	where asm.street_address = az.street_address and
+	# 		az.usps_id = zr.usps_id
+	# '''.format(address_summary_table)
+	#db.execute(zip_stmt)
+	#db.save()
 
 db.close()
 print('{} geocode errors'.format(geocode_errors))

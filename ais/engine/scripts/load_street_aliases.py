@@ -1,11 +1,14 @@
 import sys
 import traceback
+from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
 import datum
 from ais import app
 # DEV
 from pprint import pprint
 
+print('Starting...')
+start = datetime.now()
 
 """SET UP"""
 
@@ -83,3 +86,4 @@ alias_table.create_index('seg_id')
 db.save()
 source_db.close()
 db.close()
+print('Finished in {} seconds'.format(datetime.now() - start))
