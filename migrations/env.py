@@ -4,9 +4,6 @@ from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 import logging
 
-# Register models
-# import ais.models
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -30,19 +27,6 @@ target_metadata = current_app.extensions['migrate'].db.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-def exclude_tables_from_config(config_):
-    tables_ = config_.get("tables", None)
-    if tables_ is not None:
-        tables = tables_.split(",")
-    return tables
-
-exclude_tables = exclude_tables_from_config(config.get_section('exclude'))
-
-def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table" and name in exclude_tables:
-        return False
-    else:
-        return True
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -89,7 +73,6 @@ def run_migrations_online():
     context.configure(connection=connection,
                       target_metadata=target_metadata,
                       process_revision_directives=process_revision_directives,
-                      include_object=include_object,
                       **current_app.extensions['migrate'].configure_args)
 
     try:
