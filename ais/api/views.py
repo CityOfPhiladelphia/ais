@@ -108,7 +108,7 @@ def addresses_view(query):
         filters = strict_filters.copy()
         filters.update(loose_filters)
 
-        print(filters)
+        #print(filters)
 
         addresses = AddressSummary.query\
             .filter_by(**filters)\
@@ -119,7 +119,7 @@ def addresses_view(query):
                 is_unit=unit_type is not None)\
             .exclude_non_opa('opa_only' in request.args)
 
-        print(addresses)
+        #print(addresses)
 
         if all_addresses is None:
             all_addresses = addresses
