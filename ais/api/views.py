@@ -157,7 +157,8 @@ def addresses_view(query):
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_addresses},
-        pagination=paginator.get_page_info(page_num))
+        pagination=paginator.get_page_info(page_num),
+        srid=request.args.get('srid') if 'srid' in request.args else 4326)
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
 
@@ -236,7 +237,8 @@ def block_view(query):
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_address},
-        pagination=paginator.get_page_info(page_num))
+        pagination=paginator.get_page_info(page_num),
+        srid=request.args.get('srid') if 'srid' in request.args else 4326)
     result = serializer.serialize_many(block_page)
     return json_response(response=result, status=200)
 
@@ -283,7 +285,8 @@ def owner(query):
     page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'parsed': owner_parts},
-        pagination=paginator.get_page_info(page_num))
+        pagination=paginator.get_page_info(page_num),
+        srid=request.args.get('srid') if 'srid' in request.args else 4326)
     result = serializer.serialize_many(page)
     return json_response(response=result, status=200)
 
