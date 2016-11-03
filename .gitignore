@@ -86,3 +86,4 @@ instance/config.py
 # Logs
 *build_log*
 *build_errors*
+ais/engine/log/
