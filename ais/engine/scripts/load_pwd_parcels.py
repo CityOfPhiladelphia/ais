@@ -114,6 +114,10 @@ for i, source_parcel in enumerate(source_parcels):
 			raise ValueError('Could not parse: {}'.format(source_address))
 
 		parcel = dict(address)
+		# Remove fields not in parcel tables:
+		parcel.pop('zip_code', None)
+		parcel.pop('zip_4', None)
+		# Add fields:
 		parcel.update({
 			parcel_geom_field:	geometry,
 			'parcel_id':		parcel_id,

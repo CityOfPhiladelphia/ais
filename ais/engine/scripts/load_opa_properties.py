@@ -92,7 +92,7 @@ for i, source_prop in enumerate(source_props):
 			comps = parsed['components']
 		except:
 			raise ValueError('Could not parse')
-		address = Address(comps)
+		address = Address(parsed)
 		street_address = comps['street_address']
 
 		# Owners

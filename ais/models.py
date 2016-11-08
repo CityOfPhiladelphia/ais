@@ -7,6 +7,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
 from ais.util import *
+from pprint import pprint
 
 Parser = app.config['PARSER']
 parser = Parser()
@@ -54,6 +55,14 @@ class StreetAlias(db.Model):
     seg_id = db.Column(db.Integer)
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
+
+class StreetIntersection(db.Model):
+    """An intersection of street centerlines."""
+    id = db.Column(db.Integer, primary_key=True)
+    street_code_1 = db.Column(db.Text)
+    street_code_2 = db.Column(db.Text)
+    int_ids = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
 
 ###########
@@ -139,6 +148,8 @@ ADDRESS_FIELDS = [
     'unit_num',
     'street_full',
     'street_address',
+    'zip_code',
+    'zip_4',
 ]
 
 class AddressQuery(BaseQuery):
@@ -179,17 +190,19 @@ class Address(db.Model):
     unit_type = db.Column(db.Text)
     unit_num = db.Column(db.Text)
     street_full = db.Column(db.Text)
+    zip_code = db.Column(db.Text)
+    zip_4 = db.Column(db.Text)
 
     geocodes = db.relationship(
         'Geocode',
         primaryjoin='foreign(Geocode.street_address) == Address.street_address',
         lazy='joined')
 
-    zip_info = db.relationship(
-        'AddressZip',
-        primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
-        lazy='joined',
-        uselist=False)
+    # zip_info = db.relationship(
+    #     'AddressZip',
+    #     primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
+    #     lazy='joined',
+    #     uselist=False)
 
     pwd_parcel = db.relationship(
         'PwdParcel',
@@ -208,40 +221,49 @@ class Address(db.Model):
         uselist=False)
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            arg = args[0]
-            # If a single string arg was passed, parse.
-            if isinstance(arg, str):
-                p = parser.parse(arg)
-                if p['type'] != 'address':
-                    raise ValueError('Not an address')
-                c = p['components']
 
-                # TEMP: Passyunk doesn't raise an error if the street name
-                # is missing for an address, so check here and do it manually.
-                if c['street']['name'] is None:
-                    raise ValueError('No street name')
+        assert len(args) > 0
+        arg = args[0]
 
-                # TEMP: Passyunk doesn't raise an error if the address high is
-                # lower than the address low.
-                high_num_full = c['address']['high_num_full']
-                if high_num_full and high_num_full < c['address']['low_num']:
-                    raise ValueError('Invalid range address')
+        if isinstance(arg, str):
+            p = parser.parse(arg)
+        elif isinstance(arg, dict):
+            p = arg
+        else:
+            raise ValueError('Not an address')
 
-                kwargs = {
-                    'address_low':          c['address']['low_num'],
-                    'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
-                    'address_low_frac':     c['address']['fractional'],            # passyunk change
-                    'address_high':         c['address']['high_num_full'],
-                    'street_predir':        c['street']['predir'],
-                    'street_name':          c['street']['name'],
-                    'street_suffix':        c['street']['suffix'],
-                    'street_postdir':       c['street']['postdir'],
-                    'unit_type':            c['unit']['unit_type'],                # passyunk change
-                    'unit_num':             c['unit']['unit_num'],                 # passyunk change
-                    'street_full':          c['street']['full'],
-                    'street_address':       c['street_address'],
-                }
+        if p['type'] != 'address':
+            raise ValueError('Not an address')
+
+        c = p['components']
+
+        # TEMP: Passyunk doesn't raise an error if the street name
+        # is missing for an address, so check here and do it manually.
+        if c['street']['name'] is None:
+            raise ValueError('No street name')
+
+        # TEMP: Passyunk doesn't raise an error if the address high is
+        # lower than the address low.
+        high_num_full = c['address']['high_num_full']
+        if high_num_full and high_num_full < c['address']['low_num']:
+            raise ValueError('Invalid range address')
+
+        kwargs = {
+            'address_low':          c['address']['low_num'],
+            'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
+            'address_low_frac':     c['address']['fractional'],            # passyunk change
+            'address_high':         c['address']['high_num_full'],
+            'street_predir':        c['street']['predir'],
+            'street_name':          c['street']['name'],
+            'street_suffix':        c['street']['suffix'],
+            'street_postdir':       c['street']['postdir'],
+            'unit_type':            c['unit']['unit_type'],                # passyunk change
+            'unit_num':             c['unit']['unit_num'],                 # passyunk change
+            'street_full':          c['street']['full'],
+            'street_address':       c['street_address'],
+            'zip_code':             c['zipcode'],
+            'zip_4':                c['zip4'],
+        }
 
         super(Address, self).__init__(**kwargs)
 
@@ -275,13 +297,14 @@ class Address(db.Model):
                 return g
         return None
 
-    @property
-    def zip_code(self):
-        return self.zip_info.zip_range.zip_code if self.zip_info else None
+    # @property
+    # def zip_code(self):
+    #     #return self.zip_info.zip_range.zip_code if self.zip_info else None
+    #
+    # @property
+    # def zip_4(self):
+    #     #return self.zip_info.zip_range.zip_4 if self.zip_info else None
 
-    @property
-    def zip_4(self):
-        return self.zip_info.zip_range.zip_4 if self.zip_info else None
 
     @property
     def pwd_parcel_id(self):
@@ -752,6 +775,7 @@ class AddressSummaryQuery(BaseQuery):
                     (AddressSummary.unit_type != '') &
                     (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
                 ))
+
         else:
             return self
 
@@ -783,8 +807,13 @@ class AddressSummary(db.Model):
     street_full = db.Column(db.Text)
     zip_code = db.Column(db.Text)
     zip_4 = db.Column(db.Text)
+    usps_bldgfirm = db.Column(db.Text)
+    usps_type = db.Column(db.Text)
+    election_block_id = db.Column(db.Text)
+    election_precinct = db.Column(db.Text)
 
     # Foreign keys
+    street_code = db.Column(db.Integer)
     seg_id = db.Column(db.Integer)
     seg_side = db.Column(db.Text)
     pwd_parcel_id = db.Column(db.Text)
@@ -819,11 +848,11 @@ class AddressSummary(db.Model):
             lazy='joined',
             uselist=False)
 
-    zip_info = db.relationship(
-        'AddressZip',
-        primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
-        lazy='select',
-        uselist=False)
+    # zip_info = db.relationship(
+    #     'AddressZip',
+    #     primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
+    #     lazy='select',
+    #     uselist=False)
 
     pwd_parcel = db.relationship(
         'PwdParcel',
@@ -840,6 +869,11 @@ class AddressSummary(db.Model):
         primaryjoin='foreign(OpaProperty.street_address) == AddressSummary.street_address',
         lazy='select',
         uselist=False)
+
+    __table_args__ = (
+        db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
+        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree')
+    )
 
     @property
     def geocode(self):

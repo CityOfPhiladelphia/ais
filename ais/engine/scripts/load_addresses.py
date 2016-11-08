@@ -7,6 +7,7 @@ import datum
 from ais import app
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
+from passyunk.parser import PassyunkParser
 # DEV
 import traceback
 from pprint import pprint
@@ -18,7 +19,8 @@ start = datetime.now()
 config = app.config
 Parser = config['PARSER']
 
-sources = config['ADDRESS_SOURCES']
+parser_tags = config['ADDRESSES']['parser_tags']
+sources = config['ADDRESSES']['sources']
 db = datum.connect(config['DATABASES']['engine'])
 address_table = db['address']
 address_tag_table = db['address_tag']
@@ -27,6 +29,7 @@ address_link_table = db['address_link']
 street_segment_table = db['street_segment']
 address_street_table = db['address_street']
 true_range_view_name = 'true_range'
+
 # TODO: something more elegant here.
 true_range_select_stmt = '''
     select
@@ -81,9 +84,12 @@ source_address_map = {}  # street_address => [source_addresses]
 addresses = []
 street_addresses_seen = set()
 address_tags = []
+parser_address_tags = []
 address_tag_strings = set()  # Pipe-joined addr/key/value triples
 source_addresses = []
 links = []  # dicts of address, relationship, address triples
+parser = PassyunkParser()
+parsed_addresses = {}
 
 if WRITE_OUT:
     print('Dropping indexes...')
@@ -206,10 +212,14 @@ for source in sources:
 
         try:
             # Try parsing
-            try:
-                address = Address(source_address)
-            except:
-                raise ValueError('Could not parse')
+            parsed_address = parsed_addresses.get(source_address)
+            if parsed_address is None:
+                try:
+                    parsed_address = parser.parse(source_address)
+                    parsed_addresses[source_address] = parsed_address
+                except ValueError:
+                    raise ValueError('Could not parse')
+            address = Address(parsed_address)
 
             # Get street address and map to source address
             street_address = address.street_address
@@ -334,6 +344,22 @@ if WRITE_OUT:
     insert_rows = [dict(x) for x in addresses]
     address_table.write(insert_rows, chunk_size=150000)
     del insert_rows
+
+print('Writing {} parser_address_tags...'.format(len(parsed_addresses)))
+for source_address, comps in parsed_addresses.items():
+    for tag_field, path in parser_tags.items():
+        value = comps['components']
+        for item in path:
+            value = value.get(item)
+        parser_address_tag = {
+            'street_address': source_address,
+            'key': tag_field,
+            'value': value
+        }
+        parser_address_tags.append(parser_address_tag)
+
+if WRITE_OUT:
+    address_tag_table.write(parser_address_tags, chunk_size=150000)
 
 
 ###############################################################################

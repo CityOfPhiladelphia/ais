@@ -415,6 +415,10 @@ for i, source_parcel in enumerate(source_parcels):
         # Make parcel object
         if should_add_parcel:
             parcel = dict(address)
+            #Remove fields not in parcel tables:
+            parcel.pop('zip_code', None)
+            parcel.pop('zip_4', None)
+            #Add fields:
             parcel.update({
                 'parcel_id':        parcel_id,
                 'source_object_id': object_id,
