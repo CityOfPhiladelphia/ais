@@ -2,7 +2,7 @@ import copy
 import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
-from sqlalchemy import or_, text
+from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -872,8 +872,7 @@ class AddressSummary(db.Model):
 
     __table_args__ = (
         db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
-        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree'),
-        #db.Index('address_summary_opa_owners_trigram_idx', text('opa_owners gin_trgm_ops'), postgresql_using='gin')
+        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree')
     )
 
     @property
