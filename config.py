@@ -80,7 +80,7 @@ BASE_DATA_SOURCES = {
                 'geom':                 'shape',
             },
             # Query only active parcels
-            'where':            'status in (1, 3)',  
+            'where':            'status in (1, 3)',
         },
     },
     'properties': {
@@ -153,131 +153,144 @@ def make_pwd_account_address(comps):
     a = re.sub('-R(EAR)?(?= )', 'R', a)
     return a
 
-ADDRESS_SOURCES = [
-    {
-        'name':                 'opa_property',
-        'table':                'opa_property',
-        'db':                   'engine',
-        'address_fields': {
-            'street_address':       'street_address',
-        },
+
+ADDRESSES = {
+    'parser_tags': {
+
+        'usps_zipcode': ['zipcode'],
+        'usps_zip4': ['zip4'],
+        'usps_type': ['uspstype'],
+        'usps_bldgfirm': ['bldgfirm'],
+        'election block_id': ['election', 'blockid'],
+        'election precinct': ['election', 'precinct'],
     },
-    {
-        'name':                 'pwd_parcels',
-        'table':                'pwd_parcel',
-        'db':                   'engine',
-        'address_fields': {
-            'street_address':       'street_address',
-        },
-    },
-    {
-        'name':                 'dor_parcels',
-        'table':                'dor_parcel',
-        'db':                   'engine',
-        'address_fields': {
-            'street_address':       'street_address',
-        },
-    },
-    {
-        'name':                 'info_commercial',
-        'table':                'gis_gsg.infogroup_commercial',
-        'db':                   'gis',
-        'address_fields':       {
-            'street_address':       'primary_address',
-        },
-        'tag_fields': [
-            {
-                'key':              'info_company',
-                'source_field':     'company_name',
+
+    'sources': [
+        {
+            'name':                 'opa_property',
+            'table':                'opa_property',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
             },
-        ],
-    },
-    {
-        'name':                 'info_residents',
-        'table':                'gis_gsg.infogroup_residential',
-        'db':                   'gis',
-        'address_fields':       {
-            'street_address':       'caddr',
         },
-        'tag_fields': [
-            {
-                'key':              'info_resident',
-                'source_field':     'name',
+        {
+            'name':                 'pwd_parcels',
+            'table':                'pwd_parcel',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
             },
-        ],
-    },
-    # HANSEN DIRECT
-    # {
-    #     'name':                 'li_address_keys',
-    #     'table':                'imsv7.address',
-    #     'db':                   'lidb',
-    #     'address_fields':       {
-    #         'address_low':          'stno',
-    #         'address_low_suffix':   'postdir',
-    #         'address_high':         'hseextn',
-    #         'street_predir':        'predir',
-    #         'street_name':          'stname',
-    #         'street_suffix':        'suffix',
-    #         # 'street_postdir':       'postdir',
-    #         'unit_num':             'condnum',
-    #     },
-    #     'preprocessor':          make_li_address,
-    #     'tag_fields': [
-    #         {
-    #             'key':              'li_address_key',
-    #             'source_field':     'addrkey',
-    #         },
-    #     ],
-    #     # 'where':                '''
-    #         # expdate is null and
-    #         # addby in ('INTERFACE', 'ADDRESS_MODULE', 'MAN_UNEXPIRED')
-    #     # ''',
-    # },
-    # NICK'S DB
-    {
-        'name':                 'li_address_keys',
-        'table':                'gis_lni.parsed_addr',
-        'db':                   'gislni',
-        'address_fields':       {
-            'street_address':       'addr_concat',
         },
-        'tag_fields': [
-            {
-                'key':              'li_address_key',
-                'source_field':     'addrkey',
+        {
+            'name':                 'dor_parcels',
+            'table':                'dor_parcel',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
             },
-        ],
-    },
-    {
-        'name':                 'voters',
-        'table':                'voters',
-        'db':                   'gis',
-        'address_fields':       {
-                'street_address':   'street_address',
         },
-        'tag_fields': [
-            {
-                'key':          'voter_name',
-                'source_field': 'full_name',
+        {
+            'name':                 'info_commercial',
+            'table':                'gis_gsg.infogroup_commercial',
+            'db':                   'gis',
+            'address_fields':       {
+                'street_address':       'primary_address',
             },
-        ],
-    },
-    {
-        'name':                 'pwd_accounts',
-        'table':                'gisuser.phl_gis_vw',
-        'db':                   'pwd_billing',
-        'address_fields':       {
-            'street_address':       'address',
+            'tag_fields': [
+                {
+                    'key':              'info_company',
+                    'source_field':     'company_name',
+                },
+            ],
         },
-        'preprocessor':         make_pwd_account_address,
-        'tag_fields': [
-            {
-                'key':          'pwd_account_num',
-                'source_field': 'water1_acc_no',
+        {
+            'name':                 'info_residents',
+            'table':                'gis_gsg.infogroup_residential',
+            'db':                   'gis',
+            'address_fields':       {
+                'street_address':       'caddr',
             },
-        ],
-    },
-]
+            'tag_fields': [
+                {
+                    'key':              'info_resident',
+                    'source_field':     'name',
+                },
+            ],
+        },
+        # HANSEN DIRECT
+        # {
+        #     'name':                 'li_address_keys',
+        #     'table':                'imsv7.address',
+        #     'db':                   'lidb',
+        #     'address_fields':       {
+        #         'address_low':          'stno',
+        #         'address_low_suffix':   'postdir',
+        #         'address_high':         'hseextn',
+        #         'street_predir':        'predir',
+        #         'street_name':          'stname',
+        #         'street_suffix':        'suffix',
+        #         # 'street_postdir':       'postdir',
+        #         'unit_num':             'condnum',
+        #     },
+        #     'preprocessor':          make_li_address,
+        #     'tag_fields': [
+        #         {
+        #             'key':              'li_address_key',
+        #             'source_field':     'addrkey',
+        #         },
+        #     ],
+        #     # 'where':                '''
+        #         # expdate is null and
+        #         # addby in ('INTERFACE', 'ADDRESS_MODULE', 'MAN_UNEXPIRED')
+        #     # ''',
+        # },
+        # NICK'S DB
+        {
+            'name':                 'li_address_keys',
+            'table':                'gis_lni.parsed_addr',
+            'db':                   'gislni',
+            'address_fields':       {
+                'street_address':       'addr_concat',
+            },
+            'tag_fields': [
+                {
+                    'key':              'li_address_key',
+                    'source_field':     'addrkey',
+                },
+            ],
+        },
+        {
+            'name':                 'voters',
+            'table':                'voters',
+            'db':                   'gis',
+            'address_fields':       {
+                    'street_address':   'street_address',
+            },
+            'tag_fields': [
+                {
+                    'key':          'voter_name',
+                    'source_field': 'full_name',
+                },
+            ],
+        },
+        {
+            'name':                 'pwd_accounts',
+            'table':                'gisuser.phl_gis_vw',
+            'db':                   'pwd_billing',
+            'address_fields':       {
+                'street_address':       'address',
+            },
+            'preprocessor':         make_pwd_account_address,
+            'tag_fields': [
+                {
+                    'key':          'pwd_account_num',
+                    'source_field': 'water1_acc_no',
+                },
+            ],
+        },
+    ]
+}
 
 # ERROR_TABLES = {
 #     'dor_parcels': {
@@ -981,12 +994,32 @@ ADDRESS_SUMMARY = {
         # tables: address-parcel, address-street, and address-property
         {
             'name':                 'zip_code',
-            'tag_key':              'zip_code',
+            'tag_key':              'usps_zipcode',
             'type':                 'text',
         },
         {
             'name':                 'zip_4',
-            'tag_key':              'zip_4',
+            'tag_key':              'usps_zip4',
+            'type':                 'text',
+        },
+        {
+            'name':                 'usps_type',
+            'tag_key':              'usps_type',
+            'type':                 'text',
+        },
+        {
+            'name':                 'usps_bldgfirm',
+            'tag_key':              'usps_bldgfirm',
+            'type':                 'text',
+        },
+        {
+            'name':                 'election_block_id',
+            'tag_key':              'election block_id',
+            'type':                 'text',
+        },
+        {
+            'name':                 'election_precinct',
+            'tag_key':              'election precinct',
             'type':                 'text',
         },
         {
