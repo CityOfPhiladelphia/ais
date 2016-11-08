@@ -1,11 +1,15 @@
 import sys
 import traceback
+from datetime import datetime
 from pprint import pprint
 # from phladdress.parser import Parser
 from ais import app
 from datum import Database
 from ais.models import StreetSegment
 
+
+print('Starting...')
+start = datetime.now()
 
 """SET UP"""
 
@@ -120,3 +124,4 @@ FINISH
 print('{} errors'.format(error_count))
 source_db.close()
 db.close()
+print('Finished in {} seconds'.format(datetime.now() - start))
