@@ -38,7 +38,7 @@ The root of the `FeatureCollection` contains:
   of query. *Address* and *block* query responses contain the original `query`
   as well as a `normalized` representation of the query. *Owner* query responses
   contain the original `query` and a list of `parsed` query components.
-  *Account* query responses contain the original 'query'.
+  *Account* query responses contain the original `query`.
 * Matched addresses as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
   objects. The `feature` list is sorted by:
   * `street_name`
@@ -92,7 +92,7 @@ You can request that units contained within a given property be returned along
 with the top-level property by specifying the `include_units` querystring
 parameter. This parameter is only relevant for *address* queries.
 
-You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the 'srid=####' querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
 
 
 **Addresses**
