@@ -67,10 +67,10 @@ Address `Feature` objects contain:
   * `street_full` (e.g., **N BROAD ST**)
   * `zip_code`
   * `zip_4`
-  * `usps_bldgfirm' (e.g. "JOHN WANAMAKER FINANCE STATION")
-  * `usps_type' (S: Street, H: High-rise, F: Firm)
-  * `election_block_id'
-  * `election_precinct'  
+  * `usps_bldgfirm` (e.g. "JOHN WANAMAKER FINANCE STATION")
+  * `usps_type` (S: Street, H: High-rise, F: Firm)
+  * `election_block_id`
+  * `election_precinct`  
   * `pwd_parcel_id` (Phila. Water Dept.)
   * `dor_parcel_id` (Dept. of Records)
   * `opa_account_num` (Office of Prop. Assessment)
