@@ -126,17 +126,6 @@ def addresses_view(query):
         else:
             all_addresses = all_addresses.union(addresses)
 
-    # # TODO: Remove the following when street_code lives directly in the
-    # # address_summary table.
-    # from ais.models import StreetSegment
-    # segments = StreetSegment.query\
-    #     .with_entities(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .group_by(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .subquery()
-    # all_addresses = all_addresses\
-    #     .outerjoin(segments, AddressSummary.street_full==segments.c.street_full)\
-    #     .add_columns(segments.c.street_code)
-
     all_addresses = all_addresses.order_by_address()
     paginator = QueryPaginator(all_addresses)
 
@@ -207,17 +196,6 @@ def block_view(query):
         .exclude_children()\
         .exclude_non_opa('opa_only' in request.args)
 
-    # # TODO: Remove the following when street_code lives directly in the
-    # # address_summary table.
-    # from ais.models import StreetSegment
-    # segments = StreetSegment.query\
-    #     .with_entities(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .group_by(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .subquery()
-    # addresses = addresses\
-    #     .outerjoin(segments, AddressSummary.street_full==segments.c.street_full)\
-    #     .add_columns(segments.c.street_code)
-
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
 
@@ -256,17 +234,6 @@ def owner(query):
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
 
-    # # TODO: Remove the following when street_code lives directly in the
-    # # address_summary table.
-    # from ais.models import StreetSegment
-    # segments = StreetSegment.query\
-    #     .with_entities(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .group_by(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .subquery()
-    # addresses = addresses\
-    #     .outerjoin(segments, AddressSummary.street_full==segments.c.street_full)\
-    #     .add_columns(segments.c.street_code)
-
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
@@ -303,17 +270,6 @@ def account_number_view(number):
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
 
-    # # TODO: Remove the following when street_code lives directly in the
-    # # address_summary table.
-    # from ais.models import StreetSegment
-    # segments = StreetSegment.query\
-    #     .with_entities(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .group_by(StreetSegment.street_full, StreetSegment.street_code)\
-    #     .subquery()
-    # addresses = addresses\
-    #     .outerjoin(segments, AddressSummary.street_full==segments.c.street_full)\
-    #     .add_columns(segments.c.street_code)
-
     address = addresses.first()
     # Make sure we found a property
     if address is None:
@@ -322,8 +278,9 @@ def account_number_view(number):
         return json_response(response=error, status=404)
 
     # Render the response
-    serializer = AddressJsonSerializer()
-    #     srid=request.args.get('srid') if 'srid' in request.args else 4326
-    # )
+    serializer = AddressJsonSerializer(
+        metadata={'query': number},
+        srid=request.args.get('srid') if 'srid' in request.args else 4326
+    )
     result = serializer.serialize(address)
     return json_response(response=result, status=200)
