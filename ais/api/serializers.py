@@ -88,10 +88,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return data
 
     def model_to_data(self, address):
-        # TODO: Remove the following when street_code lives directly in the
-        # address_summary table.
-        address, street_code = address
-        address.street_code = street_code
+        # # TODO: Remove the following when street_code lives directly in the
+        # # address_summary table.
+        # address, street_code = address
+        # address.street_code = street_code
 
         # Build the set of associated service areas
         sa_data = OrderedDict()
@@ -127,7 +127,13 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_code', address.street_code),
 
                 ('zip_code', address.zip_code or None),
-                ('zip_4', address.zip_4 or None),
+                ('zip_4', address.zip_4 if address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),
+
+                ('usps_bldgfirm', address.usps_bldgfirm),
+                ('usps_type', address.usps_type),
+
+                ('election_block_id', address.election_block_id),
+                ('election_precinct', address.election_precinct),
 
                 ('pwd_parcel_id', address.pwd_parcel_id or None),
                 ('dor_parcel_id', address.dor_parcel_id or None),
