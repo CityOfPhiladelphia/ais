@@ -19,6 +19,9 @@ ais engine run load_streets
 echo. && echo "Loading Street Aliases"
 ais engine run load_street_aliases
 
+echo. && echo "Making Intersections"
+ais engine run make_street_intersections
+
 echo. && echo "Loading OPA Properties"
 ais engine run load_opa_properties
 
