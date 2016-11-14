@@ -5,11 +5,11 @@ import instance.config as config
 @pytest.fixture
 def startup():
     """Startup fixture: make database connections and define tables to ignore"""
-    new_db = Database(config.DATABASES['engine_production'])
-    old_db = Database(config.DATABASES['engine'])
+    new_db = Database(config.DATABASES['engine'])
+    old_db = Database(config.DATABASES['engine_production'])
 
     #system tables
-    ignore_tables = ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff')
+    ignore_tables = ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'street_intersection')
 
     #tables of question id'd in debugging
     #mysterious_tables = ('address_link', 'parcel_curb')
@@ -26,15 +26,16 @@ def test_compare_num_tables(startup):
 def test_num_rows_bt_db_tables(startup):
     """"Test #2: Check if all tables within 10% of rows as old version"""
     new_db_tables = startup['new_db'].tables
+    print(new_db_tables)
     for ntable in new_db_tables:
 
         if ntable in startup['ignore_tables']:
             continue
 
-        ndbtable = startup['new_db'][ntable]
-        n_rows = ndbtable.count
-        odbtable = startup['old_db'][ntable]
-        o_rows = odbtable.count
+        ndb_table = startup['new_db'][ntable]
+        n_rows = ndb_table.count
+        odb_table = startup['old_db'][ntable]
+        o_rows = odb_table.count
         fdif = abs((n_rows - o_rows) / o_rows)
 
         assert fdif <= 0.1, (ntable, fdif)

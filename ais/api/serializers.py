@@ -202,3 +202,56 @@ class AddressSummaryJsonSerializer (GeoJSONSerializer):
             ])),
         ])
         return data
+
+class IntersectionJsonSerializer (GeoJSONSerializer):
+
+    def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
+        self.geom_type = geom_type
+        self.geom_source = geom_source
+        super().__init__(**kwargs)
+
+    def geom_to_shape(self, geom):
+        return util.geom_to_shape(
+            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def project_shape(self, shape):
+        return util.project_shape(
+            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def shape_to_geodict(self, shape):
+        from shapely.geometry import mapping
+        data = mapping(shape)
+        return OrderedDict([
+            ('type', data['type']),
+            ('coordinates', data['coordinates'])
+        ])
+
+
+    def model_to_data(self, streetintersection):
+
+        if streetintersection.geocode_type:
+            from shapely.geometry import Point
+            shape = Point(streetintersection.geocode_x, streetintersection.geocode_y)
+            shape = self.project_shape(shape)
+            geom_data = self.shape_to_geodict(shape)
+        else:
+            geom_data = None
+
+        # Build the intersection feature, then attach properties
+        data = OrderedDict([
+            ('type', 'Feature'),
+            ('properties', OrderedDict([
+                #('street_name_1', streetintersection.street_code_1),
+                #('street_full_name_1', streetintersection.address_low),
+                ('street_code_1', streetintersection.street_code_1),
+                ('street_code_2', streetintersection.street_code_2),
+
+                ('geom_type', 'centroid' if streetintersection.geocode_type else None),
+                ('geom_source', streetintersection.geocode_type),
+            ])),
+            ('geometry', geom_data),
+        ])
+
+        data = self.transform_exceptions(data)
+
+        return data

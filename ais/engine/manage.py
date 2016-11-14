@@ -41,3 +41,5 @@ def run(script):
 #
 # if __name__ == '__main__':
 #     manager.run()
+
+app.config['DEBUG'] = True

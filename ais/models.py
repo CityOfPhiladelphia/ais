@@ -56,8 +56,15 @@ class StreetAlias(db.Model):
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
+
+class StreetIntersectionQuery(BaseQuery):
+    """A query class that knows how to sort addresses"""
+
+
 class StreetIntersection(db.Model):
     """An intersection of street centerlines."""
+    query_class = StreetIntersectionQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_code_1 = db.Column(db.Text)
     street_code_2 = db.Column(db.Text)

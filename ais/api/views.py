@@ -6,7 +6,7 @@ Does three primary things:
 """
 
 from ais import app
-from ais.models import Address, AddressProperty, AddressSummary, AddressLink
+from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection
 from flask import Response, request
 from flask_cachecontrol import cache_for
 from passyunk.parser import PassyunkParser
@@ -83,8 +83,8 @@ def addresses_view(query):
     all_addresses = None
 
     for parsed in all_parsed:
-        unit_type = parsed['components']['unit']['unit_type']
-        unit_num = parsed['components']['unit']['unit_num']
+        unit_type = parsed['components']['address_unit']['unit_type']
+        unit_num = parsed['components']['address_unit']['unit_num']
         high_num = parsed['components']['address']['high_num_full']
         low_num = parsed['components']['address']['low_num']
 
@@ -284,3 +284,91 @@ def account_number_view(number):
     )
     result = serializer.serialize(address)
     return json_response(response=result, status=200)
+
+
+@app.route('/search/<path:query>')
+@cache_for(hours=1)
+def search_view(query):
+    """
+    Looks up information about the address given in the query. Response is an
+    object with the information for the matching address. The object includes:
+    * A standardized, unambiguous address string
+    * Address components
+    * OPA #
+    * DOR "ID"
+    * L&I Key
+    * Zoning something or other
+
+    TODO: Give each address a score every time someone accesses it. This can be
+          used for semi-intelligent ordering. For example, if I query for "440
+          Broad St", I'll most often mean the school district building. However,
+          with default ordering, a building on S Broad with a whole bunch of
+          units comes up first. That's annoying. But if 440 N Broad was accessed
+          a bunch of times, it should have a higher popularity score than any
+          one of those units, and that should help it to the top of the list.
+
+    TODO: Allow paginator to use skip/limit semantics instead of or in addition
+          to page. Maybe allow one of page or skip but not both.
+
+    TODO: Need a way to only return addresses that have OPA numbers. Filters?
+
+    """
+    query = query.strip('/')
+
+    all_queries = list(filter(bool, (q.strip() for q in query.split(';'))))
+    all_parsed = [PassyunkParser().parse(q) for q in all_queries]
+    print(all_parsed)
+
+    # Match a set of addresses. Filters will either be loose, where an omission
+    # is ignored, or scrict, where an omission is treated as an explicit NULL.
+    # For example, if the street_predir is omitted, then we should still match
+    # all addresses that match the rest of the information; this is a loose
+    # filter. However, if we do not provide an address_high, we should assume
+    # that we're not looking for a ranged address; this is a strict filter.
+    all_addresses = None
+
+    for parsed in all_parsed:
+        street_full_1 = parsed['components']['street']['full']
+        street_name_1 = parsed['components']['street']['name']
+        street_code_1 = parsed['components']['street']['street_code']
+        street_full_2= parsed['components']['street_2']['full']
+        street_name_2 = parsed['components']['street_2']['name']
+        street_code_2 = parsed['components']['street_2']['street_code']
+
+        loose_filters = NotNoneDict(
+            #street_predir=parsed['components']['street']['predir'],
+            #street_postdir=parsed['components']['street']['postdir'],
+            #street_suffix=parsed['components']['street']['suffix'],
+        )
+        strict_filters = dict(
+            street_code_1=street_code_1,
+            street_code_2=street_code_2,
+            # #unit_num=unit_num if unit_num or not unit_type else '',
+            # unit_num = unit_num or '',
+            # #unit_type=unit_type or '',
+        )
+
+        filters = strict_filters.copy()
+        #filters.update(loose_filters)
+
+        #print(filters)
+        search_type = "unknown"
+        search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
+        if search_type == "intersection":
+            print(search_type)
+            intersections = StreetIntersection.query\
+                .filter_by(**filters)
+            print(intersections)
+            intersection = intersections.first()
+            # Make sure we found an intersection
+            if intersection is None:
+                error = json_error(404, 'Could not find intersection with provided street names.',
+                    {'name_1': street_name_1, 'name_2': street_name_2})
+                return json_response(response=error, status=404)
+            serializer = AddressJsonSerializer(
+                metadata={'query': {'street_name_1': street_name_1, 'street_name_2': street_name_2}},
+                srid=request.args.get('srid') if 'srid' in request.args else 4326)
+            result = serializer.serialize(intersection)
+        else:
+            result = None
+        return json_response(response=result, status=200)
