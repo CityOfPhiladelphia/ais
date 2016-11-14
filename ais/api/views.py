@@ -290,28 +290,6 @@ def account_number_view(number):
 @cache_for(hours=1)
 def search_view(query):
     """
-    Looks up information about the address given in the query. Response is an
-    object with the information for the matching address. The object includes:
-    * A standardized, unambiguous address string
-    * Address components
-    * OPA #
-    * DOR "ID"
-    * L&I Key
-    * Zoning something or other
-
-    TODO: Give each address a score every time someone accesses it. This can be
-          used for semi-intelligent ordering. For example, if I query for "440
-          Broad St", I'll most often mean the school district building. However,
-          with default ordering, a building on S Broad with a whole bunch of
-          units comes up first. That's annoying. But if 440 N Broad was accessed
-          a bunch of times, it should have a higher popularity score than any
-          one of those units, and that should help it to the top of the list.
-
-    TODO: Allow paginator to use skip/limit semantics instead of or in addition
-          to page. Maybe allow one of page or skip but not both.
-
-    TODO: Need a way to only return addresses that have OPA numbers. Filters?
-
     """
     query = query.strip('/')
 
@@ -335,8 +313,8 @@ def search_view(query):
         street_name_2 = parsed['components']['street_2']['name']
         street_code_2 = parsed['components']['street_2']['street_code']
 
-        street_code_1 = str(min(int(street_code_1), int(street_code_2)))
-        street_code_2 = str(max(int(street_code_1), int(street_code_2)))
+        street_code_min = str(min(int(street_code_1), int(street_code_2)))
+        street_code_max = str(max(int(street_code_1), int(street_code_2)))
 
         loose_filters = NotNoneDict(
             #street_predir=parsed['components']['street']['predir'],
@@ -344,8 +322,8 @@ def search_view(query):
             #street_suffix=parsed['components']['street']['suffix'],
         )
         strict_filters = dict(
-            street_code_1=street_code_1,
-            street_code_2=street_code_2,
+            street_code_1=street_code_min,
+            street_code_2=street_code_max,
             # #unit_num=unit_num if unit_num or not unit_type else '',
             # unit_num = unit_num or '',
             # #unit_type=unit_type or '',
@@ -358,7 +336,7 @@ def search_view(query):
         search_type = "unknown"
         search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
         if search_type == "intersection":
-            print("Search Type: ", search_type)
+            print("Search Type: ", search_type, street_code_1, street_code_2)
             intersections = StreetIntersection.query\
                 .filter_by(**filters)
             #print(intersections)
