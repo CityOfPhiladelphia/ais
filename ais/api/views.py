@@ -13,7 +13,7 @@ from passyunk.parser import PassyunkParser
 
 from .errors import json_error
 from .paginator import QueryPaginator
-from .serializers import AddressJsonSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer
 from ..util import NotNoneDict
 
 
@@ -317,7 +317,7 @@ def search_view(query):
 
     all_queries = list(filter(bool, (q.strip() for q in query.split(';'))))
     all_parsed = [PassyunkParser().parse(q) for q in all_queries]
-    print(all_parsed)
+    #print(all_parsed)
 
     # Match a set of addresses. Filters will either be loose, where an omission
     # is ignored, or scrict, where an omission is treated as an explicit NULL.
@@ -334,6 +334,9 @@ def search_view(query):
         street_full_2= parsed['components']['street_2']['full']
         street_name_2 = parsed['components']['street_2']['name']
         street_code_2 = parsed['components']['street_2']['street_code']
+
+        street_code_1 = str(min(int(street_code_1), int(street_code_2)))
+        street_code_2 = str(max(int(street_code_1), int(street_code_2)))
 
         loose_filters = NotNoneDict(
             #street_predir=parsed['components']['street']['predir'],
@@ -355,17 +358,18 @@ def search_view(query):
         search_type = "unknown"
         search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
         if search_type == "intersection":
-            print(search_type)
+            print("Search Type: ", search_type)
             intersections = StreetIntersection.query\
                 .filter_by(**filters)
-            print(intersections)
+            #print(intersections)
             intersection = intersections.first()
+            print(intersection)
             # Make sure we found an intersection
             if intersection is None:
                 error = json_error(404, 'Could not find intersection with provided street names.',
                     {'name_1': street_name_1, 'name_2': street_name_2})
                 return json_response(response=error, status=404)
-            serializer = AddressJsonSerializer(
+            serializer = IntersectionJsonSerializer(
                 metadata={'query': {'street_name_1': street_name_1, 'street_name_2': street_name_2}},
                 srid=request.args.get('srid') if 'srid' in request.args else 4326)
             result = serializer.serialize(intersection)
