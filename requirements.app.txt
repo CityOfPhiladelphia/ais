@@ -1,5 +1,6 @@
 alembic==0.8.4
--e git+https://github.com/CityOfPhiladelphia/datum.git@2518c319425970a69a7f07fd42338ed0eea6924d#egg=datum
+#-e git+https://github.com/CityOfPhiladelphia/datum.git@2518c319425970a69a7f07fd42338ed0eea6924d#egg=datum
+-e git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
 Flask==0.10.1
 Flask-Migrate==1.8.0
