@@ -33,11 +33,11 @@ def run(script):
 # from ais import app, app_db as db
 # with app.app_context():
 #   from ais.models import *
-#
+
 # migrate = Migrate(app, db)
-#
+
 # manager = Manager(app)
 # manager.add_command('db', MigrateCommand)
-#
+
 # if __name__ == '__main__':
 #     manager.run()
