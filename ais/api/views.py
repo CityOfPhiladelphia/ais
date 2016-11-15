@@ -291,6 +291,7 @@ def account_number_view(number):
 def search_view(query):
     """
     """
+    query_original = query
     query = query.strip('/')
 
     all_queries = list(filter(bool, (q.strip() for q in query.split(';'))))
@@ -313,8 +314,8 @@ def search_view(query):
         street_name_2 = parsed['components']['street_2']['name']
         street_code_2 = parsed['components']['street_2']['street_code']
 
-        street_code_min = str(min(int(street_code_1), int(street_code_2)))
-        street_code_max = str(max(int(street_code_1), int(street_code_2)))
+        street_code_min = str(min(int(street_code_1), int(street_code_2))) if street_code_1 and street_code_2 else ''
+        street_code_max = str(max(int(street_code_1), int(street_code_2))) if street_code_1 and street_code_2 else ''
 
         loose_filters = NotNoneDict(
             #street_predir=parsed['components']['street']['predir'],
@@ -324,9 +325,6 @@ def search_view(query):
         strict_filters = dict(
             street_code_1=street_code_min,
             street_code_2=street_code_max,
-            # #unit_num=unit_num if unit_num or not unit_type else '',
-            # unit_num = unit_num or '',
-            # #unit_type=unit_type or '',
         )
 
         filters = strict_filters.copy()
@@ -336,12 +334,12 @@ def search_view(query):
         search_type = "unknown"
         search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
         if search_type == "intersection":
-            print("Search Type: ", search_type, street_code_1, street_code_2)
+            #print("Search Type: ", search_type, street_code_1, street_code_2)
             intersections = StreetIntersection.query\
                 .filter_by(**filters)
             #print(intersections)
             intersection = intersections.first()
-            print(intersection)
+            #print(intersection)
             # Make sure we found an intersection
             if intersection is None:
                 error = json_error(404, 'Could not find intersection with provided street names.',
@@ -351,6 +349,8 @@ def search_view(query):
                 metadata={'query': {'street_name_1': street_name_1, 'street_name_2': street_name_2}},
                 srid=request.args.get('srid') if 'srid' in request.args else 4326)
             result = serializer.serialize(intersection)
+
+            return json_response(response=result, status=200)
         else:
-            result = None
-        return json_response(response=result, status=200)
+            print("address", query_original)
+            #addresses_view(query_original)
