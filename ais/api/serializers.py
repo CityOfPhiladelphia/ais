@@ -249,8 +249,7 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
                 ('street_code_1', intersection.street_code_1),
                 ('street_code_2', intersection.street_code_2),
                 ('intersection_ids', intersection.int_ids),
-
-                ('geom_type', 'centroid'),
+                ('geom_type', 'One point chosen from multiple points of intersections (instead of midpoint between multiple intersecting centerlines of same street codes)' if len(intersection.int_ids) > 8 else 'centroid)'),
                 #('geom_source', streetintersection.geocode_type),
             ])),
             ('geometry', geom_data),
