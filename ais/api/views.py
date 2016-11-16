@@ -334,21 +334,29 @@ def search_view(query):
         search_type = "unknown"
         search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
         if search_type == "intersection":
-            #print("Search Type: ", search_type, street_code_1, street_code_2)
             intersections = StreetIntersection.query\
                 .filter_by(**filters)
-            #print(intersections)
-            intersection = intersections.first()
-            #print(intersection)
-            # Make sure we found an intersection
-            if intersection is None:
-                error = json_error(404, 'Could not find intersection with provided street names.',
-                    {'name_1': street_name_1, 'name_2': street_name_2})
-                return json_response(response=error, status=404)
+            paginator = QueryPaginator(intersections)
+
+            # Ensure that we have results
+            intersections_count = paginator.collection_size
+            if intersections_count == 0:
+                error = json_error(404, 'Could not find any intersection matching query.',
+                                   {'query': query_original, 'normalized': {'name_1': street_name_1, 'name_2': street_name_2}})
+                return json_response(response=error, status=200)
+
+            # Validate the pagination
+            page_num, error = validate_page_param(request, paginator)
+            if error:
+                return json_response(response=error, status=error['status'])
+
+            # Render the response
+            intersection_page = paginator.get_page(page_num)
             serializer = IntersectionJsonSerializer(
-                metadata={'query': {'street_name_1': street_name_1, 'street_name_2': street_name_2}},
+                metadata={'query': query_original, 'normalized': [street_name_1 + ' & '+ street_name_2,]},
+                pagination=paginator.get_page_info(page_num),
                 srid=request.args.get('srid') if 'srid' in request.args else 4326)
-            result = serializer.serialize(intersection)
+            result = serializer.serialize_many(intersection_page)
 
             return json_response(response=result, status=200)
         else:
