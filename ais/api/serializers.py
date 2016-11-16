@@ -30,7 +30,7 @@ class GeoJSONSerializer (BaseSerializer):
     def render(self, data):
         final_data = []
         if self.metadata:
-            final_data += self.metadata.items()
+            final_data += sorted(self.metadata.items(),reverse=True)
 
         # Render as a feature collection if in a list
         if isinstance(data, list):

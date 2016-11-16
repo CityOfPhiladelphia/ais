@@ -313,27 +313,25 @@ def search_view(query):
         street_full_2= parsed['components']['street_2']['full']
         street_name_2 = parsed['components']['street_2']['name']
         street_code_2 = parsed['components']['street_2']['street_code']
-
         street_code_min = str(min(int(street_code_1), int(street_code_2))) if street_code_1 and street_code_2 else ''
         street_code_max = str(max(int(street_code_1), int(street_code_2))) if street_code_1 and street_code_2 else ''
-
-        loose_filters = NotNoneDict(
-            #street_predir=parsed['components']['street']['predir'],
-            #street_postdir=parsed['components']['street']['postdir'],
-            #street_suffix=parsed['components']['street']['suffix'],
-        )
-        strict_filters = dict(
-            street_code_1=street_code_min,
-            street_code_2=street_code_max,
-        )
-
-        filters = strict_filters.copy()
-        #filters.update(loose_filters)
-
-        #print(filters)
         search_type = "unknown"
         search_type = "intersection" if street_name_1 is not None and street_name_2 is not None else search_type
         if search_type == "intersection":
+
+            loose_filters = NotNoneDict(
+                #street_predir=parsed['components']['street']['predir'],
+                #street_postdir=parsed['components']['street']['postdir'],
+                #street_suffix=parsed['components']['street']['suffix'],
+            )
+            strict_filters = dict(
+                street_code_1=street_code_min,
+                street_code_2=street_code_max,
+            )
+
+            filters = strict_filters.copy()
+            #filters.update(loose_filters)
+
             intersections = StreetIntersection.query\
                 .filter_by(**filters)
             paginator = QueryPaginator(intersections)
@@ -341,7 +339,7 @@ def search_view(query):
             # Ensure that we have results
             intersections_count = paginator.collection_size
             if intersections_count == 0:
-                error = json_error(404, 'Could not find any intersection matching query.',
+                error = json_error(200, 'Could not find any intersection matching query.',
                                    {'query': query_original, 'normalized': {'name_1': street_name_1, 'name_2': street_name_2}})
                 return json_response(response=error, status=200)
 
@@ -353,12 +351,87 @@ def search_view(query):
             # Render the response
             intersection_page = paginator.get_page(page_num)
             serializer = IntersectionJsonSerializer(
-                metadata={'query': query_original, 'normalized': [street_name_1 + ' & '+ street_name_2,]},
+                metadata={'search type': search_type, 'query': query, 'normalized': [street_name_1 + ' & '+ street_name_2,]},
                 pagination=paginator.get_page_info(page_num),
                 srid=request.args.get('srid') if 'srid' in request.args else 4326)
             result = serializer.serialize_many(intersection_page)
 
             return json_response(response=result, status=200)
+
         else:
-            print("address", query_original)
             #addresses_view(query_original)
+            all_addresses = None
+
+            for parsed in all_parsed:
+                unit_type = parsed['components']['address_unit']['unit_type']
+                unit_num = parsed['components']['address_unit']['unit_num']
+                high_num = parsed['components']['address']['high_num_full']
+                low_num = parsed['components']['address']['low_num']
+
+                loose_filters = NotNoneDict(
+                    street_name=parsed['components']['street']['name'],
+                    address_low=low_num if low_num is not None
+                    else parsed['components']['address']['full'],
+                    address_low_suffix=parsed['components']['address']['addr_suffix'],
+                    address_low_frac=parsed['components']['address']['fractional'],
+                    street_predir=parsed['components']['street']['predir'],
+                    street_postdir=parsed['components']['street']['postdir'],
+                    street_suffix=parsed['components']['street']['suffix'],
+                )
+                strict_filters = dict(
+                    address_high=high_num,
+                    # unit_num=unit_num if unit_num or not unit_type else '',
+                    unit_num=unit_num or '',
+                    # unit_type=unit_type or '',
+                )
+
+                filters = strict_filters.copy()
+                filters.update(loose_filters)
+
+                # print(filters)
+
+                addresses = AddressSummary.query \
+                    .filter_by(**filters) \
+                    .filter_by_unit_type(unit_type) \
+                    .include_child_units(
+                    'include_units' in request.args,
+                    is_range=high_num is not None,
+                    is_unit=unit_type is not None) \
+                    .exclude_non_opa('opa_only' in request.args)
+
+                if parsed['components']['address']['full'] is not None:
+                    search_type = "address"
+                    # print(addresses)
+
+            if all_addresses is None:
+                all_addresses = addresses
+            else:
+                all_addresses = all_addresses.union(addresses)
+
+            all_addresses = all_addresses.order_by_address()
+            paginator = QueryPaginator(all_addresses)
+
+            # Ensure that we have results
+            normalized_addresses = [parsed['components']['street_address'] for parsed in all_parsed]
+            addresses_count = paginator.collection_size
+            if addresses_count == 0:
+                error = json_error(404, 'Could not find addresses matching query.',
+                                   {'query': query, 'normalized': normalized_addresses})
+                return json_response(response=error, status=404)
+
+            # Validate the pagination
+            page_num, error = validate_page_param(request, paginator)
+            if error:
+                return json_response(response=error, status=error['status'])
+
+            # Render the response
+            addresses_page = paginator.get_page(page_num)
+            serializer = AddressJsonSerializer(
+                metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
+                pagination=paginator.get_page_info(page_num),
+                srid=request.args.get('srid') if 'srid' in request.args else 4326)
+            result = serializer.serialize_many(addresses_page)
+            return json_response(response=result, status=200)
+
+            # TODO: If it's not a perfect match, do we want to do something like a
+            # soundex or some other fuzzy match?
