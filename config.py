@@ -157,10 +157,10 @@ def make_pwd_account_address(comps):
 ADDRESSES = {
     'parser_tags': {
 
-        'usps_zipcode': ['zipcode'],
-        'usps_zip4': ['zip4'],
-        'usps_type': ['uspstype'],
-        'usps_bldgfirm': ['bldgfirm'],
+        'usps_zipcode': ['mailing', 'zipcode'],
+        'usps_zip4': ['mailing', 'zip4'],
+        'usps_type': ['mailing', 'uspstype'],
+        'usps_bldgfirm': ['mailing', 'bldgfirm'],
         'election block_id': ['election', 'blockid'],
         'election precinct': ['election', 'precinct'],
     },

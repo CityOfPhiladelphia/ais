@@ -257,12 +257,12 @@ class Address(db.Model):
             'street_name':          c['street']['name'],
             'street_suffix':        c['street']['suffix'],
             'street_postdir':       c['street']['postdir'],
-            'unit_type':            c['unit']['unit_type'],                # passyunk change
-            'unit_num':             c['unit']['unit_num'],                 # passyunk change
+            'unit_type':            c['address_unit']['unit_type'],                # passyunk change
+            'unit_num':             c['address_unit']['unit_num'],                 # passyunk change
             'street_full':          c['street']['full'],
             'street_address':       c['street_address'],
-            'zip_code':             c['zipcode'],
-            'zip_4':                c['zip4'],
+            'zip_code':             c['mailing']['zipcode'],
+            'zip_4':                c['mailing']['zip4'],
         }
 
         super(Address, self).__init__(**kwargs)
