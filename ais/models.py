@@ -64,6 +64,51 @@ class StreetIntersection(db.Model):
     int_ids = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
+    # def __init__(self, *args, **kwargs):
+    #     assert len(args) > 0
+    #     arg = args[0]
+    #
+    #     if isinstance(arg, str):
+    #         p = parser.parse(arg)
+    #     elif isinstance(arg, dict):
+    #         p = arg
+    #     else:
+    #         raise ValueError('Not an address')
+    #
+    #     if p['type'] != 'intersection_addr':
+    #         raise ValueError('Not an intersection')
+    #
+    #     c = p['components']
+    #
+    #     # TEMP: Passyunk doesn't raise an error if the street name
+    #     # is missing for an address, so check here and do it manually.
+    #     if c['street']['name'] is None:
+    #         raise ValueError('No street name')
+    #
+    #     # TEMP: Passyunk doesn't raise an error if the address high is
+    #     # lower than the address low.
+    #     high_num_full = c['address']['high_num_full']
+    #     if high_num_full and high_num_full < c['address']['low_num']:
+    #         raise ValueError('Invalid range address')
+    #
+    #     kwargs = {
+    #         'address_low': c['address']['low_num'],
+    #         'street_1_full': c['street']['full'],
+    #         'street_1_name': c['street']['name'],
+    #         'street_1_code': c['street']['street_code'],
+    #         'street_1_predir': c['street']['full'],
+    #         'street_1_postdir': c['street']['name'],
+    #         'street_1_suffix': c['street']['street_code'],
+    #         'street_2_full': c['street_2']['full'],
+    #         'street_2_name': c['street_2']['name'],
+    #         'street_2_code': c['street_2']['street_code'],
+    #         'street_2_predir': c['street_2']['full'],
+    #         'street_2_postdir': c['street_2']['name'],
+    #         'street_2_suffix': c['street_2']['street_code'],
+    #     }
+    #
+    #     super(StreetIntersection, self).__init__(**kwargs)
+
 
 ###########
 # PARCELS #
