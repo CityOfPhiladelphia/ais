@@ -2,8 +2,11 @@ import json
 import pytest
 from ais import app, app_db, models
 from operator import eq, gt
+import requests
 
 def test_no_unit_sorted_first():
+    r = requests.get('http://ipinfo.io/json')
+    print(r.json())
     """
     e.g., 2401 Pennsylvania Ave Ofc should never precede 2401 Pennsylvania Ave.
     """
