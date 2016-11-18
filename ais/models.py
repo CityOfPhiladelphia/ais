@@ -56,58 +56,36 @@ class StreetAlias(db.Model):
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
+class StreetIntersectionQuery(BaseQuery):
+
+    def choose_one(self):
+        #print(self.query)
+        #print(type(self))
+        query = self.order_by(StreetIntersection.geom)
+        return query.limit(1)
+
+    def order_by_intersection(self):
+        return self.order_by(StreetIntersection.geom)
+
 class StreetIntersection(db.Model):
     """An intersection of street centerlines."""
-    id = db.Column(db.Integer, primary_key=True)
-    street_code_1 = db.Column(db.Text)
-    street_code_2 = db.Column(db.Text)
-    int_ids = db.Column(db.Text)
-    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
+    query_class = StreetIntersectionQuery
 
-    # def __init__(self, *args, **kwargs):
-    #     assert len(args) > 0
-    #     arg = args[0]
-    #
-    #     if isinstance(arg, str):
-    #         p = parser.parse(arg)
-    #     elif isinstance(arg, dict):
-    #         p = arg
-    #     else:
-    #         raise ValueError('Not an address')
-    #
-    #     if p['type'] != 'intersection_addr':
-    #         raise ValueError('Not an intersection')
-    #
-    #     c = p['components']
-    #
-    #     # TEMP: Passyunk doesn't raise an error if the street name
-    #     # is missing for an address, so check here and do it manually.
-    #     if c['street']['name'] is None:
-    #         raise ValueError('No street name')
-    #
-    #     # TEMP: Passyunk doesn't raise an error if the address high is
-    #     # lower than the address low.
-    #     high_num_full = c['address']['high_num_full']
-    #     if high_num_full and high_num_full < c['address']['low_num']:
-    #         raise ValueError('Invalid range address')
-    #
-    #     kwargs = {
-    #         'address_low': c['address']['low_num'],
-    #         'street_1_full': c['street']['full'],
-    #         'street_1_name': c['street']['name'],
-    #         'street_1_code': c['street']['street_code'],
-    #         'street_1_predir': c['street']['full'],
-    #         'street_1_postdir': c['street']['name'],
-    #         'street_1_suffix': c['street']['street_code'],
-    #         'street_2_full': c['street_2']['full'],
-    #         'street_2_name': c['street_2']['name'],
-    #         'street_2_code': c['street_2']['street_code'],
-    #         'street_2_predir': c['street_2']['full'],
-    #         'street_2_postdir': c['street_2']['name'],
-    #         'street_2_suffix': c['street_2']['street_code'],
-    #     }
-    #
-    #     super(StreetIntersection, self).__init__(**kwargs)
+    id = db.Column(db.Integer, primary_key=True)
+    int_ids = db.Column(db.Text)
+    street_1_full = db.Column(db.Text)
+    street_1_name = db.Column(db.Text)
+    street_1_code = db.Column(db.Text)
+    street_1_predir = db.Column(db.Text)
+    street_1_postdir = db.Column(db.Text)
+    street_1_suffix = db.Column(db.Text)
+    street_2_full = db.Column(db.Text)
+    street_2_name = db.Column(db.Text)
+    street_2_code = db.Column(db.Text)
+    street_2_predir = db.Column(db.Text)
+    street_2_postdir = db.Column(db.Text)
+    street_2_suffix = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
 
 ###########

@@ -244,36 +244,32 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             geom_data = None
 
         # Build the intersection feature, then attach properties
-        num_ints = intersection.int_ids.count('|') + 1
+        #num_ints = intersection.int_ids.count('|') + 1
         data = OrderedDict([
             ('type', 'Feature'),
             ('properties', OrderedDict([
-                #('street_name_1', streetintersection.street_code_1),
-                #('street_full_name_1', streetintersection.address_low),
-                ('street_code_1', intersection.street_code_1),
-                ('street_code_2', intersection.street_code_2),
                 #('intersection_ids', intersection.int_ids),
                 #('geom_type', 'One point chosen from multiple points of intersections (instead of midpoint between multiple intersecting centerlines of same street codes)' if len(intersection.int_ids) > 8 else 'intersection'),
-                ('number of intersection points', num_ints),
-                # ('street_1', OrderedDict([
-                #     ('full_name', intersection.street_1_full),
-                #     ('name', intersection.street_1_name),
-                #     ('predir', intersection.street_1_predir),
-                #     ('postdir', intersection.street_1_postdir),
-                #     ('street_code', intersection.street_code_1),
-                #     ('suffix', intersection.street_1_suffix),
-                # ])
-                #  ),
-                # ('street_2', OrderedDict([
-                #     ('full_name', intersection.street_2_full),
-                #     ('name', intersection.street_2_name),
-                #     ('predir', intersection.street_2_predir),
-                #     ('postdir', intersection.street_2_postdir),
-                #     ('street_code', intersection.street_code_2),
-                #     ('suffix', intersection.street_2_suffix),
-                #
-                # ])
-                #  ),
+                #('number of intersection points', num_ints),
+                ('street_1', OrderedDict([
+                    ('full_name', intersection.street_1_full),
+                    ('name', intersection.street_1_name),
+                    ('predir', intersection.street_1_predir),
+                    ('postdir', intersection.street_1_postdir),
+                    ('street_code', intersection.street_1_code),
+                    ('suffix', intersection.street_1_suffix),
+                ])
+                 ),
+                ('street_2', OrderedDict([
+                    ('full_name', intersection.street_2_full),
+                    ('name', intersection.street_2_name),
+                    ('predir', intersection.street_2_predir),
+                    ('postdir', intersection.street_2_postdir),
+                    ('street_code', intersection.street_2_code),
+                    ('suffix', intersection.street_2_suffix),
+
+                ])
+                 ),
             ])),
             ('geometry', geom_data),
         ])
