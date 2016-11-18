@@ -294,7 +294,7 @@ def search_view(query):
     API Endpoint for various types of geocoding (not solely addresses)
 
     TODO:
-    1. populate int_ids
+    1. get int_ids on-the-fly in api
     2. implement batch geocoding
     3. implement choose one vs midpoint option
     """
@@ -329,7 +329,8 @@ def search_view(query):
             intersections = StreetIntersection.query\
                 .filter_by(**filters)\
                 .order_by_intersection()\
-                .limit(1)
+                .choose_one()
+                #.limit(1)
 
             if all_intersections is None:
                 all_intersections = intersections

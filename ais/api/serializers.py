@@ -249,7 +249,6 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             ('type', 'Feature'),
             ('properties', OrderedDict([
                 #('intersection_ids', intersection.int_ids),
-                #('geom_type', 'One point chosen from multiple points of intersections (instead of midpoint between multiple intersecting centerlines of same street codes)' if len(intersection.int_ids) > 8 else 'intersection'),
                 #('number of intersection points', num_ints),
                 ('street_1', OrderedDict([
                     ('full_name', intersection.street_1_full),
