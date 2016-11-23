@@ -126,6 +126,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
+                ('seg_id', address.seg_id),
 
                 ('zip_code', address.zip_code or None),
                 ('zip_4', address.zip_4 if address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),

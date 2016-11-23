@@ -53,7 +53,7 @@ for agency in config['BASE_DATA_SOURCES']['parcels']:
         insert into parcel_curb (parcel_source, parcel_row_id, curb_id) (
           select
             '{agency}',
-            p.parcel_id,
+            p.id,
             c.curb_id
           from {agency}_parcel p
           join curb c
