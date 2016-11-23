@@ -252,21 +252,22 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
                 #('intersection_ids', intersection.int_ids),
                 #('number of intersection points', num_ints),
                 ('street_1', OrderedDict([
-                    ('full_name', intersection.street_1_full),
-                    ('name', intersection.street_1_name),
-                    ('predir', intersection.street_1_predir),
-                    ('postdir', intersection.street_1_postdir),
                     ('street_code', intersection.street_1_code),
-                    ('suffix', intersection.street_1_suffix),
+                    ('street_full', intersection.street_1_full),
+                    ('street_name', intersection.street_1_name),
+                    ('street_predir', intersection.street_1_predir),
+                    ('street_postdir', intersection.street_1_postdir),
+                    ('street_suffix', intersection.street_1_suffix),
+
                 ])
                  ),
                 ('street_2', OrderedDict([
-                    ('full_name', intersection.street_2_full),
-                    ('name', intersection.street_2_name),
-                    ('predir', intersection.street_2_predir),
-                    ('postdir', intersection.street_2_postdir),
                     ('street_code', intersection.street_2_code),
-                    ('suffix', intersection.street_2_suffix),
+                    ('street_full', intersection.street_2_full),
+                    ('street_name', intersection.street_2_name),
+                    ('street_predir', intersection.street_2_predir),
+                    ('street_postdir', intersection.street_2_postdir),
+                    ('street_suffix', intersection.street_2_suffix),
 
                 ])
                  ),

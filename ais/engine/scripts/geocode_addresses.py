@@ -510,8 +510,7 @@ for i, address_row in enumerate(address_rows):
 			CURBSIDE
 			'''
 
-			#TODO: make this work with multiple parcel sources
-			
+
 			if seg_id and parcel_id:
 				# TODO: use pwd parcel if matched spatially
 				parcel_id = str(parcel_id) if isinstance(parcel_id, int) else parcel_id
