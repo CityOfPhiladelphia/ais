@@ -29,8 +29,8 @@ def run(script):
 
 # ACTIVATE BELOW WHEN running "ais db migrate"
 #Import database models with app context
-# from flask_migrate import Migrate, MigrateCommand
-# from ais import app, app_db as db
+from flask_migrate import Migrate, MigrateCommand
+#from ais import app, app_db as db
 # with app.app_context():
 #   from ais.models import *
 
@@ -41,3 +41,5 @@ def run(script):
 
 # if __name__ == '__main__':
 #     manager.run()
+
+#app.config['DEBUG'] = True

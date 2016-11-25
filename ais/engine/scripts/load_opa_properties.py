@@ -117,9 +117,9 @@ for i, source_prop in enumerate(source_props):
 			'street_suffix': comps['street']['suffix'] or '',
 			'street_postdir': comps['street']['postdir'] or '',
 			# 'unit_num': comps['unit']['num'] or '',
-			'unit_num': comps['unit']['unit_num'] or '',
-			# 'unit_type': comps['unit']['type'] or '',
-			'unit_type': comps['unit']['unit_type'] or '',
+			'unit_num': comps['address_unit']['unit_num'] or '',
+			# 'unit_type': comps['address_unit']['type'] or '',
+			'unit_type': comps['address_unit']['unit_type'] or '',
 			'street_address': street_address,
 		}
 		props.append(prop)

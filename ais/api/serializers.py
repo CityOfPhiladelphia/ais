@@ -1,6 +1,7 @@
 import json
 from collections import OrderedDict
 from ais import util, models
+from geoalchemy2.shape import to_shape
 
 
 class BaseSerializer:
@@ -29,7 +30,7 @@ class GeoJSONSerializer (BaseSerializer):
     def render(self, data):
         final_data = []
         if self.metadata:
-            final_data += self.metadata.items()
+            final_data += sorted(self.metadata.items(),reverse=True)
 
         # Render as a feature collection if in a list
         if isinstance(data, list):
@@ -125,6 +126,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('unit_num', address.unit_num),
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
+                ('seg_id', address.seg_id),
 
                 ('zip_code', address.zip_code or None),
                 ('zip_4', address.zip_4 if address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),
@@ -201,4 +203,76 @@ class AddressSummaryJsonSerializer (GeoJSONSerializer):
                 ('coordinates', [address.geocode_x, address.geocode_y]),
             ])),
         ])
+        return data
+
+class IntersectionJsonSerializer (GeoJSONSerializer):
+
+    def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
+        #self.geom_type = 'Point'
+        #self.geom_source = geom_source
+        super().__init__(**kwargs)
+
+    def geom_to_shape(self, geom):
+        return util.geom_to_shape(
+            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def project_shape(self, shape):
+        return util.project_shape(
+            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def shape_to_geodict(self, shape):
+        from shapely.geometry import mapping
+        print("SHAPE: ", shape)
+        data = mapping(shape)
+        return OrderedDict([
+            ('type', data['type']),
+            ('coordinates', data['coordinates'])
+        ])
+
+    def model_to_data(self, intersection):
+
+        if intersection.geom is not None:
+            from shapely.geometry import Point
+            shape = to_shape(intersection.geom)
+            shape = self.project_shape(shape)
+            geom_data = self.shape_to_geodict(shape)
+            # ss_data = OrderedDict()
+            # for col in intersection.service_areas.__table__.columns:
+            #     if col.name in ('id', 'street_address'):
+            #         continue
+            #     sa_data[col.name] = getattr(address.service_areas, col.name)
+        else:
+            geom_data = None
+
+        # Build the intersection feature, then attach properties
+        #num_ints = intersection.int_ids.count('|') + 1
+        data = OrderedDict([
+            ('type', 'Feature'),
+            ('properties', OrderedDict([
+                #('intersection_ids', intersection.int_ids),
+                #('number of intersection points', num_ints),
+                ('street_1', OrderedDict([
+                    ('street_code', intersection.street_1_code),
+                    ('street_full', intersection.street_1_full),
+                    ('street_name', intersection.street_1_name),
+                    ('street_predir', intersection.street_1_predir),
+                    ('street_postdir', intersection.street_1_postdir),
+                    ('street_suffix', intersection.street_1_suffix),
+
+                ])
+                 ),
+                ('street_2', OrderedDict([
+                    ('street_code', intersection.street_2_code),
+                    ('street_full', intersection.street_2_full),
+                    ('street_name', intersection.street_2_name),
+                    ('street_predir', intersection.street_2_predir),
+                    ('street_postdir', intersection.street_2_postdir),
+                    ('street_suffix', intersection.street_2_suffix),
+
+                ])
+                 ),
+            ])),
+            ('geometry', geom_data),
+        ])
+
         return data

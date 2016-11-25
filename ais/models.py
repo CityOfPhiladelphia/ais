@@ -56,12 +56,34 @@ class StreetAlias(db.Model):
 
     # street_segment = db.relationship('StreetSegment', back_populates='aliases')
 
+class StreetIntersectionQuery(BaseQuery):
+
+    def choose_one(self):
+        #print(self.query)
+        #print(type(self))
+        query = self.order_by(StreetIntersection.geom)
+        return query.limit(1)
+
+    def order_by_intersection(self):
+        return self.order_by(StreetIntersection.geom)
+
 class StreetIntersection(db.Model):
     """An intersection of street centerlines."""
+    query_class = StreetIntersectionQuery
+
     id = db.Column(db.Integer, primary_key=True)
-    street_code_1 = db.Column(db.Text)
-    street_code_2 = db.Column(db.Text)
-    int_ids = db.Column(db.Text)
+    street_1_full = db.Column(db.Text)
+    street_1_name = db.Column(db.Text)
+    street_1_code = db.Column(db.Text, index=True)
+    street_1_predir = db.Column(db.Text)
+    street_1_postdir = db.Column(db.Text)
+    street_1_suffix = db.Column(db.Text)
+    street_2_full = db.Column(db.Text)
+    street_2_name = db.Column(db.Text)
+    street_2_code = db.Column(db.Text, index=True)
+    street_2_predir = db.Column(db.Text)
+    street_2_postdir = db.Column(db.Text)
+    street_2_suffix = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
 
@@ -257,12 +279,12 @@ class Address(db.Model):
             'street_name':          c['street']['name'],
             'street_suffix':        c['street']['suffix'],
             'street_postdir':       c['street']['postdir'],
-            'unit_type':            c['unit']['unit_type'],                # passyunk change
-            'unit_num':             c['unit']['unit_num'],                 # passyunk change
+            'unit_type':            c['address_unit']['unit_type'],                # passyunk change
+            'unit_num':             c['address_unit']['unit_num'],                 # passyunk change
             'street_full':          c['street']['full'],
             'street_address':       c['street_address'],
-            'zip_code':             c['zipcode'],
-            'zip_4':                c['zip4'],
+            'zip_code':             c['mailing']['zipcode'],
+            'zip_4':                c['mailing']['zip4'],
         }
 
         super(Address, self).__init__(**kwargs)
