@@ -42,4 +42,4 @@ from flask_migrate import Migrate, MigrateCommand
 # if __name__ == '__main__':
 #     manager.run()
 
-#app.config['DEBUG'] = True
+app.config['DEBUG'] = True

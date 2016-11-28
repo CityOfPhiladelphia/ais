@@ -92,7 +92,7 @@ def addresses_view(query):
         loose_filters = NotNoneDict(
             street_name=parsed['components']['street']['name'],
             address_low=low_num if low_num is not None
-                        else parsed['components']['address']['full'],
+            else parsed['components']['address']['full'],
             address_low_suffix=parsed['components']['address']['addr_suffix'],
             address_low_frac=parsed['components']['address']['fractional'],
             street_predir=parsed['components']['street']['predir'],
@@ -101,26 +101,26 @@ def addresses_view(query):
         )
         strict_filters = dict(
             address_high=high_num,
-            #unit_num=unit_num if unit_num or not unit_type else '',
-            unit_num = unit_num or '',
-            #unit_type=unit_type or '',
+            # unit_num=unit_num if unit_num or not unit_type else '',
+            unit_num=unit_num or '',
+            # unit_type=unit_type or '',
         )
 
         filters = strict_filters.copy()
         filters.update(loose_filters)
 
-        #print(filters)
+        # print(filters)
 
-        addresses = AddressSummary.query\
-            .filter_by(**filters)\
-            .filter_by_unit_type(unit_type)\
+        addresses = AddressSummary.query \
+            .filter_by(**filters) \
+            .filter_by_unit_type(unit_type) \
             .include_child_units(
-                'include_units' in request.args,
-                is_range=high_num is not None,
-                is_unit=unit_type is not None)\
+            'include_units' in request.args,
+            is_range=high_num is not None,
+            is_unit=unit_type is not None) \
             .exclude_non_opa('opa_only' in request.args)
 
-        #print(addresses)
+        # print(addresses)
 
         if all_addresses is None:
             all_addresses = addresses
@@ -131,7 +131,7 @@ def addresses_view(query):
     paginator = QueryPaginator(all_addresses)
 
     # Ensure that we have results
-    normalized_addresses = [parsed['components']['street_address'] for parsed in all_parsed]
+    normalized_addresses = [parsed['components']['output_address'] for parsed in all_parsed]
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
@@ -170,7 +170,7 @@ def block_view(query):
     query = query.strip('/')
 
     parsed = PassyunkParser().parse(query)
-    normalized_address = parsed['components']['street_address']
+    normalized_address = parsed['components']['output_address']
 
     # Ensure that we can get a valid address number
     try:
@@ -271,6 +271,25 @@ def account_number_view(number):
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
 
+    addresses = addresses.order_by_address()
+    paginator = QueryPaginator(addresses)
+
+    # Ensure that we have results
+    #normalized_addresses = parsed['components']['output_address']
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': number})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Render the response
+    addresses_page = paginator.get_page(page_num)
+
     address = addresses.first()
     # Make sure we found a property
     if address is None:
@@ -281,9 +300,84 @@ def account_number_view(number):
     # Render the response
     serializer = AddressJsonSerializer(
         metadata={'query': number},
+        pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else 4326
     )
-    result = serializer.serialize(address)
+    result = serializer.serialize_many(addresses)
+    return json_response(response=result, status=200)
+
+
+@app.route('/pwd_parcel_id/<id>')
+@cache_for(hours=1)
+def pwd_parcel_id(id):
+    """
+    Looks up information about the property with the given PWD parcel id.
+    """
+    addresses = AddressSummary.query\
+        .filter(AddressSummary.pwd_parcel_id==id)\
+        .order_by_address()
+
+    addresses = addresses.order_by_address()
+    paginator = QueryPaginator(addresses)
+
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': id})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Render the response
+    addresses_page = paginator.get_page(page_num)
+
+    # Render the response
+    serializer = AddressJsonSerializer(
+        metadata={'query': id},
+        pagination=paginator.get_page_info(page_num),
+        srid=request.args.get('srid') if 'srid' in request.args else 4326
+    )
+    result = serializer.serialize_many(addresses_page)
+    return json_response(response=result, status=200)
+
+
+@app.route('/dor_parcel_id/<id>')
+@cache_for(hours=1)
+def dor_parcel_id(id):
+    """
+    Looks up information about the property with the given DOR parcel id.
+    """
+    addresses = AddressSummary.query\
+        .filter(AddressSummary.dor_parcel_id==id)\
+        .order_by_address()
+
+    addresses = addresses.order_by_address()
+    paginator = QueryPaginator(addresses)
+
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': id})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Render the response
+    addresses_page = paginator.get_page(page_num)
+
+    # Render the response
+    serializer = AddressJsonSerializer(
+        metadata={'query': id},
+        pagination=paginator.get_page_info(page_num),
+        srid=request.args.get('srid') if 'srid' in request.args else 4326
+    )
+    result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
 
 
@@ -304,8 +398,6 @@ def search_view(query):
     if len(query) + arg_len < 60:
 
         parsed = PassyunkParser().parse(query)
-        all_addresses = None
-        all_intersections = None
         search_type = parsed['type']
 
         if search_type == "intersection_addr":
@@ -328,15 +420,9 @@ def search_view(query):
                 .filter_by(**filters)\
                 .order_by_intersection()\
                 .choose_one()
-                #.limit(1)
 
-            if all_intersections is None:
-                all_intersections = intersections
-            else:
-                all_intersections = all_intersections.union(intersections)
-
-            all_intersections = all_intersections.from_self().order_by_intersection()
-            paginator = QueryPaginator(all_intersections)
+            intersections = intersections.from_self().order_by_intersection()
+            paginator = QueryPaginator(intersections)
 
             #Ensure that we have results
             intersections_count = paginator.collection_size
@@ -395,18 +481,14 @@ def search_view(query):
                 'include_units' in request.args,
                 is_range=high_num is not None,
                 is_unit=unit_type is not None) \
-                .exclude_non_opa('opa_only' in request.args)
+                .exclude_non_opa('opa_only' in request.args) \
+                #.in_street('in_street' in request.args)
 
-            if all_addresses is None:
-                all_addresses = addresses
-            else:
-                all_addresses = all_addresses.union(addresses)
-
-            all_addresses = all_addresses.order_by_address()
-            paginator = QueryPaginator(all_addresses)
+            addresses = addresses.order_by_address()
+            paginator = QueryPaginator(addresses)
 
             # Ensure that we have results
-            normalized_addresses = parsed['components']['street_address']
+            normalized_addresses = parsed['components']['output_address']
             addresses_count = paginator.collection_size
             if addresses_count == 0:
                 error = json_error(404, 'Could not find addresses matching query.',
@@ -428,36 +510,74 @@ def search_view(query):
             result = serializer.serialize_many(addresses_page)
             return json_response(response=result, status=200)
 
-        # Uncomment once Passyunk changes are pushed - then standardize metatdata/pagination
-        # elif search_type == "account":
-        #     # MODIFY 'OUTPUT' VAR TO MATCH PASSYUNK VAR ONCE READY
-        #     """
-        #         Looks up information about the property with the given OPA account number.
-        #         Should only ever return one or zero corresponding addresses.
-        #     """
-        #     output = parsed['output']
-        #     addresses = AddressSummary.query \
-        #         .filter(AddressSummary.opa_account_num == output) \
-        #         .exclude_non_opa('opa_only' in request.args) \
-        #         .order_by_address()
-        #
-        #     address = addresses.first()
-        #     # Make sure we found a property
-        #     if address is None:
-        #         error = json_error(404, 'Could not find property with account number.',
-        #                            {'number': output})
-        #         return json_response(response=error, status=404)
-        #
-        #     #WHAT SHOULD THIS LOOK LIKE FOR ACCOUNTS?
-        #     normalized_addresses = parsed['components']['street_address']
-        #
-        #     # Render the response
-        #     serializer = AddressJsonSerializer(
-        #         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
-        #         srid=request.args.get('srid') if 'srid' in request.args else 4326
-        #     )
-        #     result = serializer.serialize(address)
-        #     return json_response(response=result, status=200)
+        elif search_type == "opa_account":
+            """
+                Looks up information about the property with the given OPA account number.
+                Should only ever return one or zero corresponding addresses.
+            """
+            addresses = AddressSummary.query \
+                .filter(AddressSummary.opa_account_num==query)\
+                .order_by_address()
+
+            addresses = addresses.order_by_address()
+            paginator = QueryPaginator(addresses)
+
+            normalized_opa_account_num = parsed['components']['output_address']
+            addresses_count = paginator.collection_size
+            if addresses_count == 0:
+                error = json_error(404, 'Could not find addresses matching query.',
+                                   {'opa_account_num': query})
+                return json_response(response=error, status=404)
+
+            # Validate the pagination
+            page_num, error = validate_page_param(request, paginator)
+            if error:
+                return json_response(response=error, status=error['status'])
+
+            # Render the response
+            addresses_page = paginator.get_page(page_num)
+
+            # Render the response
+            serializer = AddressJsonSerializer(
+                metadata={'search type': search_type, 'query': query, 'normalized': normalized_opa_account_num},
+                pagination=paginator.get_page_info(page_num),
+                srid=request.args.get('srid') if 'srid' in request.args else 4326
+            )
+            result = serializer.serialize_many(addresses_page)
+            return json_response(response=result, status=200)
+
+        elif search_type == 'mapreg':
+            addresses = AddressSummary.query \
+                    .filter(AddressSummary.dor_parcel_id==query)\
+                    .order_by_address()
+
+            addresses = addresses.order_by_address()
+            paginator = QueryPaginator(addresses)
+
+            normalized_map_reg = parsed['components']['output_address']
+            addresses_count = paginator.collection_size
+            if addresses_count == 0:
+                error = json_error(404, 'Could not find addresses matching query.',
+                                   {'reg_map': query})
+                return json_response(response=error, status=404)
+
+            # Validate the pagination
+            page_num, error = validate_page_param(request, paginator)
+            if error:
+                return json_response(response=error, status=error['status'])
+
+            # Render the response
+            addresses_page = paginator.get_page(page_num)
+
+            # Render the response
+            serializer = AddressJsonSerializer(
+                metadata={'search type': search_type, 'query': query, 'normalized': normalized_map_reg},
+                pagination=paginator.get_page_info(page_num),
+                srid=request.args.get('srid') if 'srid' in request.args else 4326
+            )
+            result = serializer.serialize_many(addresses_page)
+            return json_response(response=result, status=200)
+
         else:
             error = json_error(404, 'Could not find addresses matching query.',
                                {'query': query})

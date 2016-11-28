@@ -149,7 +149,7 @@ def multi_strip(str_):
 #     return addr
 
 def make_pwd_account_address(comps):
-    a = comps['street_address']
+    a = comps['output_address']
     a = re.sub('-R(EAR)?(?= )', 'R', a)
     return a
 

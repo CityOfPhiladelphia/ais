@@ -294,6 +294,17 @@ num_multiple_parcel_matches = 0
 num_null_xsect_pts = 0
 num_no_seg_shp = 0
 num_parcel_id_not_in_pcurb_map = 0
+num_pwd_in_st0 = 0
+num_pwd_in_st1 = 0
+num_pwd_in_st2 = 0
+num_null_xsect_pts_pwd = 0
+num_dor_in_st0 = 0
+num_dor_in_st1 = 0
+num_dor_in_st2 = 0
+num_null_xsect_pts_dor = 0
+pwd_null_xsect_parcel_ids = []
+num_pwd_null_parcel_xys = 0
+pwd_null_parcel_xys = []
 
 for i, address_row in enumerate(address_rows):
 	try:
@@ -455,6 +466,7 @@ for i, address_row in enumerate(address_rows):
 					#print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
 					num_multiple_parcel_matches += 1
 					parcel_id = None
+					parcel_xy = None
 
 			elif seg_id:
 				'''
@@ -513,30 +525,42 @@ for i, address_row in enumerate(address_rows):
 
 			if seg_id and parcel_id:
 				# TODO: use pwd parcel if matched spatially
-				parcel_id = str(parcel_id) if isinstance(parcel_id, int) else parcel_id
+				parcel_id = str(parcel_id)
+				if parcel_layer_name == 'pwd': num_pwd_in_st0 += 1
+				if parcel_layer_name == 'dor': num_dor_in_st0 += 1
 				if parcel_id in parcel_curb_map and seg_shp is not None:
-					#print(parcel_id)
-					#print("curbside")
+					if parcel_layer_name == 'pwd': num_pwd_in_st1 += 1
+					if parcel_layer_name == 'dor': num_dor_in_st1 += 1
 					curb_id = parcel_curb_map[parcel_id]
 					curb_shp = curb_map[curb_id]
 
 					# Project parcel centroid to centerline
-					proj_dist = seg_shp.project(parcel_xy)
-					proj_xy = seg_shp.interpolate(proj_dist)
-					proj_shp = LineString([parcel_xy, proj_xy])
+					if parcel_xy:
+						proj_dist = seg_shp.project(parcel_xy)
+						proj_xy = seg_shp.interpolate(proj_dist)
+						proj_shp = LineString([parcel_xy, proj_xy])
 
-					# Get point of intersection and add
-					xsect_line_shp = curb_shp.intersection(proj_shp)
-					xsect_pt = None
-					if isinstance(xsect_line_shp, LineString):
-						xsect_pt = xsect_line_shp.coords[1]
-					elif isinstance(xsect_line_shp, MultiLineString):
-						xsect_pt = xsect_line_shp[-1:][0].coords[1]
+						# Get point of intersection and add
+						xsect_line_shp = curb_shp.intersection(proj_shp)
+						xsect_pt = None
+						if isinstance(xsect_line_shp, LineString):
+							xsect_pt = xsect_line_shp.coords[1]
+						elif isinstance(xsect_line_shp, MultiLineString):
+							xsect_pt = xsect_line_shp[-1:][0].coords[1]
+						else:
+							num_null_xsect_pts += 1
+							if parcel_layer_name == 'pwd':
+								num_null_xsect_pts_pwd += 1
+								pwd_null_xsect_parcel_ids.append({parcel_id: [type(proj_xy), type(proj_shp), type(xsect_line_shp)]})
+							if parcel_layer_name == 'dor': num_null_xsect_pts_dor += 1
+						if xsect_pt:
+							if parcel_layer_name == 'pwd': num_pwd_in_st2 += 1
+							if parcel_layer_name == 'dor': num_dor_in_st2 += 1
+							xsect_pt_shp = Point(xsect_pt)
+							#print(xsect_pt_shp, dumps(xsect_pt_shp))
 					else:
-						num_null_xsect_pts += 1
-					if xsect_pt:
-						xsect_pt_shp = Point(xsect_pt)
-						#print(xsect_pt_shp, dumps(xsect_pt_shp))
+						num_pwd_null_parcel_xys += 1
+						pwd_null_parcel_xys.append(parcel_id)
 
 						curb_geocode_row = {
 							'street_address': street_address,
@@ -549,7 +573,7 @@ for i, address_row in enumerate(address_rows):
 						xy_in_st_shape = Point(xy_in_street)
 						in_st_geocode_row = {
 							'street_address': street_address,
-							'geocode_type': 'in_street',
+							'geocode_type': parcel_layer_name + '_street',
 							# 'estimated': '0',
 							'geom': dumps(xy_in_st_shape)
 						}
@@ -558,6 +582,8 @@ for i, address_row in enumerate(address_rows):
 				elif seg_shp is not None:
 					#print("parcel id not in parcel_curb_map :", parcel_source, parcel_id)
 					num_parcel_id_not_in_pcurb_map += 1
+					if parcel_layer_name == 'pwd': num_pwd_in_st0 += 1
+					if parcel_layer_name == 'dor': num_dor_in_st0 += 1
 
 
 	except ValueError as e:
@@ -566,10 +592,19 @@ for i, address_row in enumerate(address_rows):
 	except Exception:
 		print(traceback.format_exc())
 		sys.exit()
-# print("num_multiple_parcel_matches: ", num_multiple_parcel_matches)
-# print("num_null_xsect_pts: ", num_null_xsect_pts)
-# print("num_parcel_id_not_in_pcurb_map: ", num_parcel_id_not_in_pcurb_map)
-# print("num_no_seg_shp: ", num_no_seg_shp)
+print("num_multiple_parcel_matches: ", num_multiple_parcel_matches)
+print("num_null_xsect_pts: ", num_null_xsect_pts)
+print("num_parcel_id_not_in_pcurb_map: ", num_parcel_id_not_in_pcurb_map)
+print("num_no_seg_shp: ", num_no_seg_shp)
+print("num_pwd_null_parcel_xys: ", num_pwd_null_parcel_xys)
+print(num_dor_in_st0, num_dor_in_st1, num_dor_in_st2, num_null_xsect_pts_dor, num_pwd_in_st0, num_pwd_in_st1, num_pwd_in_st2, num_null_xsect_pts_pwd)
+
+with open("geocode_debug_output_xsect.txt", "w") as text_file:
+    print("parcel_ids: {}".format(pwd_null_xsect_parcel_ids), file=text_file)
+
+with open("geocode_debug_output_xy.txt", "w") as text_file:
+    print("null xy parcel_ids: {}".format(pwd_null_parcel_xys), file=text_file)
+
 if WRITE_OUT:
 	print('Writing XYs...')
 	geocode_table.write(geocode_rows, chunk_size=150000)
