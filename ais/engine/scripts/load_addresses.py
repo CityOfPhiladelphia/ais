@@ -214,11 +214,17 @@ for source in sources:
             # Try parsing
             parsed_address = parsed_addresses.get(source_address)
             if parsed_address is None:
+                # Passyunk no longer raising errors
                 try:
                     parsed_address = parser.parse(source_address)
                     parsed_addresses[source_address] = parsed_address
-                except ValueError:
-                    raise ValueError('Could not parse')
+
+                except:
+                   raise ValueError('Could not parse')
+
+            if parsed_address['type'] == "none":
+                raise ValueError('Unknown address type')
+
             address = Address(parsed_address)
 
             # Get street address and map to source address

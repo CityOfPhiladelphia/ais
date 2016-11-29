@@ -314,7 +314,8 @@ def pwd_parcel(id):
     Looks up information about the property with the given PWD parcel id.
     """
     addresses = AddressSummary.query\
-        .filter(AddressSummary.pwd_parcel_id==id)\
+        .filter(AddressSummary.pwd_parcel_id==id) \
+        .exclude_non_opa('opa_only' in request.args) \
         .order_by_address()
 
     addresses = addresses.order_by_address()
@@ -351,7 +352,8 @@ def dor_parcel(id):
     Looks up information about the property with the given DOR parcel id.
     """
     addresses = AddressSummary.query\
-        .filter(AddressSummary.dor_parcel_id==id)\
+        .filter(AddressSummary.dor_parcel_id==id) \
+        .exclude_non_opa('opa_only' in request.args) \
         .order_by_address()
 
     addresses = addresses.order_by_address()
@@ -548,6 +550,9 @@ def search_view(query):
             return json_response(response=result, status=200)
 
         elif search_type == 'mapreg':
+
+            query = query.replace('-','')
+            print(query)
             addresses = AddressSummary.query \
                     .filter(AddressSummary.dor_parcel_id==query)\
                     .order_by_address()
