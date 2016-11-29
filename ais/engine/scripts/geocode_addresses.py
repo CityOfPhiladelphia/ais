@@ -224,9 +224,18 @@ curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
 parcel_curb_map = {}  # parcel_id => curb_id
+pwd_parcel_curb_map = {}
+dor_parcel_curb_map = {}
 parcel_curb_rows = parcel_curb_table.read()
-parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
+# parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
+parcel_curb_map = {}
+pwd_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'pwd'}
+dor_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'dor'}
+parcel_curb_map['dor'] = dor_parcel_curb_map
+parcel_curb_map['pwd'] = pwd_parcel_curb_map
 
+# with open("parcel_curb_map_output.txt", "w") as text_file:
+#     print("parcel_curb_map: {}".format(parcel_curb_map), file=text_file)
 
 print('Reading addresses from AIS...')
 address_rows = address_table.read(fields=address_fields, \
@@ -275,10 +284,6 @@ for addr_parcel_row in addr_parcel_rows:
 	addr_parcel_map.setdefault(street_address, {})
 	addr_parcel_map[street_address].setdefault(parcel_source, [])
 	addr_parcel_map[street_address][parcel_source].append(parcel_row_id)
-	
-	# if not street_address in addr_parcel_map:
-	# 	addr_parcel_map[street_address] = {}
-	# addr_parcel_map[street_address][parcel_source] = parcel_id
 
 '''
 MAIN
@@ -290,21 +295,6 @@ geocode_count = 0
 
 # address-parcels to insert from spatial match
 address_parcels = []
-num_multiple_parcel_matches = 0
-num_null_xsect_pts = 0
-num_no_seg_shp = 0
-num_parcel_id_not_in_pcurb_map = 0
-num_pwd_in_st0 = 0
-num_pwd_in_st1 = 0
-num_pwd_in_st2 = 0
-num_null_xsect_pts_pwd = 0
-num_dor_in_st0 = 0
-num_dor_in_st1 = 0
-num_dor_in_st2 = 0
-num_null_xsect_pts_dor = 0
-pwd_null_xsect_parcel_ids = []
-num_pwd_null_parcel_xys = 0
-pwd_null_parcel_xys = []
 
 for i, address_row in enumerate(address_rows):
 	try:
@@ -442,15 +432,6 @@ for i, address_row in enumerate(address_rows):
 				if len(parcel_ids) == 1:
 					parcel_id = parcel_ids[0]
 					parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
-					# except KeyError:
-					# 	if parcel_id is None:
-					# 		print(street_address)
-					# 		print('nonasdfsadfe')
-					# 	sys.exit()
-						# pprint(parcel_xy_map[parcel_layer_name])
-						# print(parcel_source)
-						# print(parcel_id)
-						# sys.exit()
 					geocode_rows.append({
 						# 'address_id': address_id,
 						'street_address':	street_address,
@@ -464,7 +445,7 @@ for i, address_row in enumerate(address_rows):
 					# TODO: could get the combined centroid of the parcels,
 					# if they're adjacent
 					#print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
-					num_multiple_parcel_matches += 1
+					#num_multiple_parcel_matches += 1
 					parcel_id = None
 					parcel_xy = None
 
@@ -526,12 +507,8 @@ for i, address_row in enumerate(address_rows):
 			if seg_id and parcel_id:
 				# TODO: use pwd parcel if matched spatially
 				parcel_id = str(parcel_id)
-				if parcel_layer_name == 'pwd': num_pwd_in_st0 += 1
-				if parcel_layer_name == 'dor': num_dor_in_st0 += 1
-				if parcel_id in parcel_curb_map and seg_shp is not None:
-					if parcel_layer_name == 'pwd': num_pwd_in_st1 += 1
-					if parcel_layer_name == 'dor': num_dor_in_st1 += 1
-					curb_id = parcel_curb_map[parcel_id]
+				if parcel_id in parcel_curb_map[parcel_layer_name] and seg_shp is not None:
+					curb_id = parcel_curb_map[parcel_layer_name][parcel_id]
 					curb_shp = curb_map[curb_id]
 
 					# Project parcel centroid to centerline
@@ -547,43 +524,23 @@ for i, address_row in enumerate(address_rows):
 							xsect_pt = xsect_line_shp.coords[1]
 						elif isinstance(xsect_line_shp, MultiLineString):
 							xsect_pt = xsect_line_shp[-1:][0].coords[1]
-						else:
-							num_null_xsect_pts += 1
-							if parcel_layer_name == 'pwd':
-								num_null_xsect_pts_pwd += 1
-								pwd_null_xsect_parcel_ids.append({parcel_id: [type(proj_xy), type(proj_shp), type(xsect_line_shp)]})
-							if parcel_layer_name == 'dor': num_null_xsect_pts_dor += 1
 						if xsect_pt:
-							if parcel_layer_name == 'pwd': num_pwd_in_st2 += 1
-							if parcel_layer_name == 'dor': num_dor_in_st2 += 1
 							xsect_pt_shp = Point(xsect_pt)
-							#print(xsect_pt_shp, dumps(xsect_pt_shp))
-					else:
-						num_pwd_null_parcel_xys += 1
-						pwd_null_parcel_xys.append(parcel_id)
-
-						curb_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': 'curb',
-							#'estimated': '0',
-							'geom': dumps(xsect_pt_shp)
-						}
-						# Get midpoint between proj_xy and xsect_pt
-						xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
-						xy_in_st_shape = Point(xy_in_street)
-						in_st_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': parcel_layer_name + '_street',
-							# 'estimated': '0',
-							'geom': dumps(xy_in_st_shape)
-						}
-						geocode_rows.append(curb_geocode_row)
-						geocode_rows.append(in_st_geocode_row)
-				elif seg_shp is not None:
-					#print("parcel id not in parcel_curb_map :", parcel_source, parcel_id)
-					num_parcel_id_not_in_pcurb_map += 1
-					if parcel_layer_name == 'pwd': num_pwd_in_st0 += 1
-					if parcel_layer_name == 'dor': num_dor_in_st0 += 1
+							curb_geocode_row = {
+								'street_address': street_address,
+								'geocode_type': parcel_layer_name + '_curb',
+								'geom': dumps(xsect_pt_shp)
+							}
+							# Get midpoint between proj_xy and xsect_pt
+							xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
+							xy_in_st_shape = Point(xy_in_street)
+							in_st_geocode_row = {
+								'street_address': street_address,
+								'geocode_type': parcel_layer_name + '_street',
+								'geom': dumps(xy_in_st_shape)
+							}
+							geocode_rows.append(curb_geocode_row)
+							geocode_rows.append(in_st_geocode_row)
 
 
 	except ValueError as e:
@@ -592,18 +549,6 @@ for i, address_row in enumerate(address_rows):
 	except Exception:
 		print(traceback.format_exc())
 		sys.exit()
-print("num_multiple_parcel_matches: ", num_multiple_parcel_matches)
-print("num_null_xsect_pts: ", num_null_xsect_pts)
-print("num_parcel_id_not_in_pcurb_map: ", num_parcel_id_not_in_pcurb_map)
-print("num_no_seg_shp: ", num_no_seg_shp)
-print("num_pwd_null_parcel_xys: ", num_pwd_null_parcel_xys)
-print(num_dor_in_st0, num_dor_in_st1, num_dor_in_st2, num_null_xsect_pts_dor, num_pwd_in_st0, num_pwd_in_st1, num_pwd_in_st2, num_null_xsect_pts_pwd)
-
-with open("geocode_debug_output_xsect.txt", "w") as text_file:
-    print("parcel_ids: {}".format(pwd_null_xsect_parcel_ids), file=text_file)
-
-with open("geocode_debug_output_xy.txt", "w") as text_file:
-    print("null xy parcel_ids: {}".format(pwd_null_parcel_xys), file=text_file)
 
 if WRITE_OUT:
 	print('Writing XYs...')

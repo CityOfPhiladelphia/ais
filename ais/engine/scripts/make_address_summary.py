@@ -25,6 +25,8 @@ geocode_table = db['geocode']
 address_table = db['address']
 max_values = config['ADDRESS_SUMMARY']['max_values']
 geocode_types = config['ADDRESS_SUMMARY']['geocode_types']
+geocode_types_on_curb = config['ADDRESS_SUMMARY']['geocode_types_on_curb']
+geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
 
 tag_table = db['address_tag']
 link_table = db['address_link']
@@ -228,27 +230,28 @@ for i, street_name in enumerate(street_names):
 
         xy_map = {x['geocode_type']: x['geom'] for x in geocode_rows}
         geocode_vals = None
-
+        # Geocode parcel xys
         for geocode_type in geocode_types:
             if geocode_type in xy_map:
                 xy_wkt = xy_map[geocode_type]
                 x, y = wkt_to_xy(xy_wkt)
 
-                # Rename geocode type for estimated PWD
-                # parcel_estimated = False
-                # if geocode_type == 'pwd_parcel':
-                # 	for geocode_row in geocode_rows:
-                # 		if geocode_row['geocode_type'] == 'pwd_parcel':
-                # 			parcel_estimated = geocode_row['estimated']
-                # 			break
-                # if parcel_estimated:
-                # 	geocode_type = 'pwd_parcel_spatial'
-
                 geocode_vals = {
                     'geocode_type': geocode_type,
                     'geocode_x': x,
                     'geocode_y': y,
+                    'geocode_street_x': None,
+                    'geocode_street_y': None,
                 }
+                break
+        # Geocode parcel xys in street (same geocode_type as parcel xy)
+        for geocode_type in geocode_types_in_street:
+            if geocode_type in xy_map:
+                xy_wkt = xy_map[geocode_type]
+                x, y = wkt_to_xy(xy_wkt)
+                geocode_vals['geocode_street_x'] = x
+                geocode_vals['geocode_street_y'] = y
+
                 break
 
         # Only write out addresses with an XY

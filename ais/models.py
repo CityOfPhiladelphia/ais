@@ -18,16 +18,33 @@ ENGINE_SRID = config['ENGINE_SRID']
 # STREETS #
 ###########
 
+# class Street(db.Model):
+#     """A street centerline."""
+#     predir = db.Column(db.Text, nullable=False)
+#     name = db.Column(db.Text, nullable=False)
+#     suffix = db.Column(db.Text, nullable=False)
+#     postdir = db.Column(db.Text, nullable=False)
+#     full = db.Column(db.Text, unique=True, index=True, nullable=False)
+#     code = db.Column(db.Integer, unique=True, index=True, nullable=False)
+#     segs = addresses = db.relationship('Address', backref='person',
+#                                 lazy='dynamic')
+
 class StreetSegment(db.Model):
     """A segment of a street centerline."""
     id = db.Column(db.Integer, primary_key=True)
     seg_id = db.Column(db.Integer)
     street_code = db.Column(db.Integer)
+    #street_code = db.Column(db.Integer, db.ForeignKey('street.code'))
     street_predir = db.Column(db.Text)
+    #street_predir = db.Column(db.Text, db.ForeignKey('street.predir'))
     street_name = db.Column(db.Text)
+    #street_name = db.Column(db.Text, db.ForeignKey('street.name'))
     street_suffix = db.Column(db.Text)
+    #street_suffix = db.Column(db.Text, db.ForeignKey('street.suffix'))
     street_postdir = db.Column(db.Text)
+    #street_postdir = db.Column(db.Text, db.ForeignKey('street.postdir'))
     street_full = db.Column(db.Text)
+    #street_full = db.Column(db.Text, db.ForeignKey('street.full'))
     left_from = db.Column(db.Integer)
     left_to = db.Column(db.Integer)
     right_from = db.Column(db.Integer)
@@ -59,8 +76,6 @@ class StreetAlias(db.Model):
 class StreetIntersectionQuery(BaseQuery):
 
     def choose_one(self):
-        #print(self.query)
-        #print(type(self))
         query = self.order_by(StreetIntersection.geom)
         return query.limit(1)
 
@@ -318,15 +333,6 @@ class Address(db.Model):
             if g.geocode_type == geocode_type:
                 return g
         return None
-
-    # @property
-    # def zip_code(self):
-    #     #return self.zip_info.zip_range.zip_code if self.zip_info else None
-    #
-    # @property
-    # def zip_4(self):
-    #     #return self.zip_info.zip_range.zip_4 if self.zip_info else None
-
 
     @property
     def pwd_parcel_id(self):
@@ -696,6 +702,7 @@ class AddressSummaryQuery(BaseQuery):
 
     def filter_by_unit_type(self, unit_type):
         if not unit_type:
+        #if not unit_type or unit_type == '':
             return self
 
         synonymous_unit_types = ('APT', 'UNIT', '#', 'STE')
@@ -856,6 +863,10 @@ class AddressSummary(db.Model):
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
+    # geocode_curb_x = db.Column(db.Float)
+    # geocode_curb_y = db.Column(db.Float)
+    geocode_street_x = db.Column(db.Float)
+    geocode_street_y = db.Column(db.Float)
 
     geocodes = db.relationship(
         'Geocode',

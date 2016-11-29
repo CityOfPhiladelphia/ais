@@ -149,7 +149,7 @@ def multi_strip(str_):
 #     return addr
 
 def make_pwd_account_address(comps):
-    a = comps['output_address']
+    a = comps['street_address']
     a = re.sub('-R(EAR)?(?= )', 'R', a)
     return a
 
@@ -985,6 +985,15 @@ ADDRESS_SUMMARY = {
         'true_range',
         # 'centerline',
         # 'curb',
+    ],
+    'geocode_types_on_curb': [
+        'pwd_curb',
+        'dor_curb',
+    ],
+    'geocode_types_in_street': [
+        'pwd_street',
+        'dor_street',
+        'true_range',
     ],
     # Max number of attribute values to pipe-delimit
     'max_values':           5,

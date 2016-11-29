@@ -307,9 +307,9 @@ def account_number_view(number):
     return json_response(response=result, status=200)
 
 
-@app.route('/pwd_parcel_id/<id>')
+@app.route('/pwd_parcel/<id>')
 @cache_for(hours=1)
-def pwd_parcel_id(id):
+def pwd_parcel(id):
     """
     Looks up information about the property with the given PWD parcel id.
     """
@@ -344,9 +344,9 @@ def pwd_parcel_id(id):
     return json_response(response=result, status=200)
 
 
-@app.route('/dor_parcel_id/<id>')
+@app.route('/dor_parcel/<id>')
 @cache_for(hours=1)
-def dor_parcel_id(id):
+def dor_parcel(id):
     """
     Looks up information about the property with the given DOR parcel id.
     """
@@ -505,7 +505,8 @@ def search_view(query):
             serializer = AddressJsonSerializer(
                 metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
                 pagination=paginator.get_page_info(page_num),
-                srid=request.args.get('srid') if 'srid' in request.args else 4326)
+                srid=request.args.get('srid') if 'srid' in request.args else 4326,
+                in_street='in_street' in request.args)
 
             result = serializer.serialize_many(addresses_page)
             return json_response(response=result, status=200)

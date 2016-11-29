@@ -52,9 +52,10 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
+    def __init__(self, geom_type='centroid', geom_source=None, in_street=False, **kwargs):
         self.geom_type = geom_type
         self.geom_source = geom_source
+        self.in_street = in_street
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -103,7 +104,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         if address.geocode_type:
             from shapely.geometry import Point
-            shape = Point(address.geocode_x, address.geocode_y)
+            if self.in_street: print("TRUE")
+            shape = Point(address.geocode_street_x, address.geocode_street_y) if self.in_street else Point(address.geocode_x, address.geocode_y)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
         else:
