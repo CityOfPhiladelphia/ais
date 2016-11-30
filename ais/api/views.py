@@ -551,7 +551,7 @@ def search_view(query):
 
         elif search_type == 'mapreg':
 
-            query = query.replace('-','')
+            normalized_query = query.replace('-','') if query.index('-') == 6 else query
             print(query)
             addresses = AddressSummary.query \
                     .filter(AddressSummary.dor_parcel_id==query)\
@@ -577,7 +577,7 @@ def search_view(query):
 
             # Render the response
             serializer = AddressJsonSerializer(
-                metadata={'search type': search_type, 'query': query, 'normalized': normalized_map_reg},
+                metadata={'search type': search_type, 'query': normalized_query, 'normalized': normalized_map_reg},
                 pagination=paginator.get_page_info(page_num),
                 srid=request.args.get('srid') if 'srid' in request.args else 4326
             )
