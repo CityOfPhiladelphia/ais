@@ -230,6 +230,7 @@ def test_filter_for_only_opa_addresses(client):
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
 
+@pytest.mark.skip(reason="batch queries no longer supported")
 def test_multiple_addresses_have_all_units(client):
     response = client.get('/addresses/1801 N 10th St?include_units')
     assert_status(response, 200)

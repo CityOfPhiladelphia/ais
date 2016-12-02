@@ -102,9 +102,9 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 continue
             sa_data[col.name] = getattr(address.service_areas, col.name)
 
-        if address.geocode_type:
+        parcel_source_geocode_types = ("dor_street", "dor_parcel", "pwd_street", "pwd_parcel")
+        if address.geocode_type in parcel_source_geocode_types:
             from shapely.geometry import Point
-            if self.in_street: print("TRUE")
             shape = Point(address.geocode_street_x, address.geocode_street_y) if self.in_street else Point(address.geocode_x, address.geocode_y)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
