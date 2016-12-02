@@ -711,19 +711,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'snow_category',
-        #     'name':                 'Snow Category',
-        #     'description':          '',
-        #     'sources': {
-        #         'line_single': {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_streets.SNOWCAT_WS',
-        #             'seg_id_field':         'seg_id',
-        #             'value_field':          'snowcat',
-        #         },
-        #     },
-        # },
         {
             'layer_id':             'sanitation_area',
             'name':                 'Sanitation Area',
