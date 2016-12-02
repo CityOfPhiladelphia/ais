@@ -911,7 +911,7 @@ class AddressSummary(db.Model):
         #db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
         #db.Index('address_summary_pwd_parcel_id_idx', 'pwd_parcel_id', postgresql_using='btree'),
         #db.Index('address_summary_dor_parcel_id_idx', 'dor_parcel_id', postgresql_using='btree'),
-        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree')
+        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree'),
     )
 
     @property
