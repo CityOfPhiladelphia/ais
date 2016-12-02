@@ -152,7 +152,7 @@ def addresses_view(query):
     if error:
         return json_response(response=error, status=error['status'])
 
-    # Render the response
+    # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
@@ -223,7 +223,7 @@ def block_view(query):
     if error:
         return json_response(response=error, status=error['status'])
 
-    # Render the response
+    # Serialize the response
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_address},
@@ -260,7 +260,7 @@ def owner(query):
     if error:
         return json_response(response=error, status=error['status'])
 
-    # Render the response
+    # Serialize the response
     page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'parsed': owner_parts},
@@ -298,10 +298,8 @@ def account_number_view(number):
     if error:
         return json_response(response=error, status=error['status'])
 
-    # Render the response
-    addresses_page = paginator.get_page(page_num)
-
     # Serialize the response
+    addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'query': number},
         pagination=paginator.get_page_info(page_num),
@@ -374,10 +372,8 @@ def dor_parcel(id):
     if error:
         return json_response(response=error, status=error['status'])
 
-    # Render the response
+    # Serialize the response
     addresses_page = paginator.get_page(page_num)
-
-    # Render the response
     serializer = AddressJsonSerializer(
         metadata={'query': id},
         pagination=paginator.get_page_info(page_num),
@@ -427,6 +423,7 @@ def intersection(query):
                            {'query': query_original, 'normalized': {'name_1': street_1_name, 'name_2': street_2_name}})
         return json_response(response=error, status=200)
 
+    # Serialize the response:
     serializer = IntersectionJsonSerializer(
         metadata={'search type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ]},
         srid=request.args.get('srid') if 'srid' in request.args else default_srid)
