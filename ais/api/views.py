@@ -92,7 +92,7 @@ def addresses_view(query):
         loose_filters = NotNoneDict(
             street_name=parsed['components']['street']['name'],
             address_low=low_num if low_num is not None
-            else parsed['components']['address']['full'],
+                else parsed['components']['address']['full'],
             address_low_suffix=parsed['components']['address']['addr_suffix'],
             address_low_frac=parsed['components']['address']['fractional'],
             street_predir=parsed['components']['street']['predir'],
@@ -101,26 +101,20 @@ def addresses_view(query):
         )
         strict_filters = dict(
             address_high=high_num,
-            # unit_num=unit_num if unit_num or not unit_type else '',
             unit_num=unit_num or '',
-            # unit_type=unit_type or '',
         )
 
         filters = strict_filters.copy()
         filters.update(loose_filters)
 
-        # print(filters)
-
         addresses = AddressSummary.query \
             .filter_by(**filters) \
             .filter_by_unit_type(unit_type) \
             .include_child_units(
-            'include_units' in request.args,
-            is_range=high_num is not None,
-            is_unit=unit_type is not None) \
+                'include_units' in request.args,
+                is_range=high_num is not None,
+                is_unit=unit_type is not None) \
             .exclude_non_opa('opa_only' in request.args)
-
-        # print(addresses)
 
         if all_addresses is None:
             all_addresses = addresses
