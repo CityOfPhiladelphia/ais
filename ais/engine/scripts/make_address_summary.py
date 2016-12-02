@@ -25,7 +25,7 @@ geocode_table = db['geocode']
 address_table = db['address']
 max_values = config['ADDRESS_SUMMARY']['max_values']
 geocode_types = config['ADDRESS_SUMMARY']['geocode_types']
-geocode_types_on_curb = config['ADDRESS_SUMMARY']['geocode_types_on_curb']
+#geocode_types_on_curb = config['ADDRESS_SUMMARY']['geocode_types_on_curb']
 geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
 
 tag_table = db['address_tag']

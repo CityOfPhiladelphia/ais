@@ -849,9 +849,9 @@ class AddressSummary(db.Model):
     street_code = db.Column(db.Integer)
     seg_id = db.Column(db.Integer)
     seg_side = db.Column(db.Text)
-    pwd_parcel_id = db.Column(db.Text)
-    dor_parcel_id = db.Column(db.Text)
-    opa_account_num = db.Column(db.Text)
+    pwd_parcel_id = db.Column(db.Text, index=True)
+    dor_parcel_id = db.Column(db.Text, index=True)
+    opa_account_num = db.Column(db.Text, index=True)
     opa_owners = db.Column(db.Text)
     opa_address = db.Column(db.Text)
     info_residents = db.Column(db.Text)
@@ -908,9 +908,9 @@ class AddressSummary(db.Model):
         uselist=False)
 
     __table_args__ = (
-        db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
-        db.Index('address_summary_pwd_parcel_id_idx', 'pwd_parcel_id', postgresql_using='btree'),
-        db.Index('address_summary_dor_parcel_id_idx', 'dor_parcel_id', postgresql_using='btree'),
+        #db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
+        #db.Index('address_summary_pwd_parcel_id_idx', 'pwd_parcel_id', postgresql_using='btree'),
+        #db.Index('address_summary_dor_parcel_id_idx', 'dor_parcel_id', postgresql_using='btree'),
         db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree')
     )
 

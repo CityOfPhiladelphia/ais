@@ -1,4 +1,4 @@
-"""empty message
+"""New inital migration
 
 Revision ID: 660618c660d1
 Revises: None
