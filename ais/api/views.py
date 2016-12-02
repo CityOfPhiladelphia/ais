@@ -158,8 +158,8 @@ def addresses_view(query):
         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
         pagination=paginator.get_page_info(page_num),
         srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in requestargs)
-
+        in_street='in_street' in requestargs
+    )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
 
@@ -228,7 +228,9 @@ def block_view(query):
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'normalized': normalized_address},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid)
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        in_street='in_street' in request.args
+    )
     result = serializer.serialize_many(block_page)
     return json_response(response=result, status=200)
 
@@ -265,7 +267,9 @@ def owner(query):
     serializer = AddressJsonSerializer(
         metadata={'query': query, 'parsed': owner_parts},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid)
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        in_street='in_street' in request.args
+    )
     result = serializer.serialize_many(page)
     return json_response(response=result, status=200)
 
@@ -303,7 +307,8 @@ def account_number_view(number):
     serializer = AddressJsonSerializer(
         metadata={'query': number},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        in_street = 'in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
@@ -339,7 +344,8 @@ def pwd_parcel(id):
     serializer = AddressJsonSerializer(
         metadata={'query': id},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        in_street='in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
@@ -377,7 +383,8 @@ def dor_parcel(id):
     serializer = AddressJsonSerializer(
         metadata={'query': id},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        in_street='in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
