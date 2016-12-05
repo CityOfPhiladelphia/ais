@@ -134,7 +134,8 @@ def addresses_view(query):
             'include_units' in request.args,
             is_range=high_num is not None,
             is_unit=unit_type is not None) \
-        .exclude_non_opa('opa_only' in request.args)
+        .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_location('parcel_geocode_location' in request.args, request)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -155,7 +156,7 @@ def addresses_view(query):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
+        metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses, 'request args': requestargs},
         pagination=paginator.get_page_info(page_num),
         srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
         in_street='in_street' in requestargs
@@ -181,6 +182,7 @@ def block_view(query):
     query = query.strip('/')
 
     parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
     normalized_address = parsed['components']['output_address']
 
     # Ensure that we can get a valid address number
@@ -226,7 +228,7 @@ def block_view(query):
     # Serialize the response
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': query, 'normalized': normalized_address},
+        metadata={'search type': search_type, 'query': query, 'normalized': normalized_address, 'request_args': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
         in_street='in_street' in request.args
@@ -281,14 +283,17 @@ def account_number_view(number):
     Looks up information about the property with the given OPA account number.
     Returns all addresses with opa_account_num matching query.
     """
+    query = number.strip('/')
+    parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
+    normalized = parsed['components']['output_address']
+
     addresses = AddressSummary.query\
         .filter(AddressSummary.opa_account_num==number)\
         .exclude_non_opa('opa_only' in request.args)\
         .order_by_address()
 
     paginator = QueryPaginator(addresses)
-
-    #normalized_addresses = parsed['components']['output_address']
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
@@ -305,7 +310,7 @@ def account_number_view(number):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': number},
+        metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'request_args': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
         in_street = 'in_street' in request.args
@@ -358,6 +363,8 @@ def dor_parcel(id):
     Looks up information about the property with the given DOR parcel id.
     """
     normalized_id = id.replace('-', '') if '-' in id and id.index('-') == 6 else id
+    parsed = PassyunkParser().parse(id)
+    search_type = parsed['type']
 
     addresses = AddressSummary.query\
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
@@ -381,7 +388,7 @@ def dor_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': id},
+        metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'request_args': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
         in_street='in_street' in request.args
@@ -432,7 +439,7 @@ def intersection(query):
 
     # Serialize the response:
     serializer = IntersectionJsonSerializer(
-        metadata={'search type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ]},
+        metadata={'search type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'request_args': request.args},
         srid=request.args.get('srid') if 'srid' in request.args else default_srid)
     result = serializer.serialize_many(intersections)
 
@@ -470,10 +477,17 @@ def search_view(query):
         parsed = PassyunkParser().parse(query)
         search_type = parsed['type']
 
-        # get the corresponding view function
-        view = parser_search_type_map[search_type]
-        # call it
-        return view(query)
+        if search_type != 'none':
+            # get the corresponding view function
+            view = parser_search_type_map[search_type]
+            # call it
+            return view(query)
+
+        else:
+            # Handle search type = 'none:
+            error = json_error(400, 'Query not recognized.',
+                               {'query': query})
+            return json_response(response=error, status=404)
 
     else:
         error = json_error(400, 'Query exceeds character limit.',

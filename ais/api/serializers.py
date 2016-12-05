@@ -92,8 +92,33 @@ class AddressJsonSerializer (GeoJSONSerializer):
     def model_to_data(self, address):
         # # TODO: Remove the following when street_code lives directly in the
         # # address_summary table.
-        # address, street_code = address
-        # address.street_code = street_code
+        from collections import Iterable
+
+        shape = None
+        # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
+        # creating an iterable  object
+        if isinstance(address, Iterable):
+            address, parcel_geocode_location_shape = address
+            # If joined geom is empty, keep shape = None and get shape by default from geocode_x, geocode_y
+            shape = self.geom_to_shape(parcel_geocode_location_shape) if parcel_geocode_location_shape is not None else None
+
+        if not shape:
+            from shapely.geometry import Point
+            shape = Point(address.geocode_x, address.geocode_y)
+
+        shape = self.project_shape(shape)
+        geom_data = self.shape_to_geodict(shape)
+
+        # # Old method - using "in_street" flag
+        #parcel_source_geocode_types = ("dor_street", "dor_parcel", "pwd_street", "pwd_parcel")
+        # if address.geocode_type in parcel_source_geocode_types:
+        #     from shapely.geometry import Point
+        #     shape = Point(address.geocode_street_x, address.geocode_street_y) if self.in_street else Point(address.geocode_x, address.geocode_y)
+        #     shape = self.project_shape(shape)
+        #     geom_data = self.shape_to_geodict(shape)
+        # else:
+        #     geom_data = None
+
 
         # Build the set of associated service areas
         sa_data = OrderedDict()
@@ -101,15 +126,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
             if col.name in ('id', 'street_address'):
                 continue
             sa_data[col.name] = getattr(address.service_areas, col.name)
-
-        parcel_source_geocode_types = ("dor_street", "dor_parcel", "pwd_street", "pwd_parcel")
-        if address.geocode_type in parcel_source_geocode_types:
-            from shapely.geometry import Point
-            shape = Point(address.geocode_street_x, address.geocode_street_y) if self.in_street else Point(address.geocode_x, address.geocode_y)
-            shape = self.project_shape(shape)
-            geom_data = self.shape_to_geodict(shape)
-        else:
-            geom_data = None
 
         # Build the address feature, then attach tags and service areas
         data = OrderedDict([

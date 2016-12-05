@@ -808,9 +808,26 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
-    # def in_street(self, use_in_street_xy=True):
-    #     if use_in_street_xy:
-    #         return self
+
+    def get_parcel_geocode_location(self, parcel_geocode_location='', request=''):
+        if parcel_geocode_location:
+            # If request arg parcel_geocode_location is included, get address geom_data from geocode table
+            # where geocode_type = value specified in request arg.
+            parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
+
+            geocode_xy_join = self \
+                .outerjoin(Geocode, Geocode.street_address==AddressSummary.street_address) \
+                .filter(Geocode.geocode_type == parcel_geocode_location_val) \
+                .add_columns(Geocode.geom)
+
+            # If geom exists for geocode_type specified in request.args, return, else return default best geocode type
+            if geocode_xy_join.first():
+                return geocode_xy_join
+            else:
+                return self
+
+        else:
+            return self
 
 try:
     class ServiceAreaSummary(db.Model):
