@@ -135,7 +135,8 @@ def addresses_view(query):
             is_range=high_num is not None,
             is_unit=unit_type is not None) \
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_location('parcel_geocode_location' in request.args, request)
+        .get_parcel_geocode_location('parcel_geocode_location' in request.args, request) \
+        .get_parcel_geocode_in_street('in_street' in request.args)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -159,7 +160,6 @@ def addresses_view(query):
         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses, 'request args': requestargs},
         pagination=paginator.get_page_info(page_num),
         srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in requestargs
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
@@ -208,7 +208,8 @@ def block_view(query):
         .filter(AddressSummary.address_low >= block_num)\
         .filter(AddressSummary.address_low < block_num + 100)\
         .exclude_children()\
-        .exclude_non_opa('opa_only' in request.args)
+        .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_in_street('in_street' in request.args)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -247,7 +248,8 @@ def owner(query):
     # Match a set of addresses
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts)\
-        .exclude_non_opa('opa_only' in request.args)\
+        .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_in_street('in_street' in request.args) \
         .order_by_address()
 
     paginator = QueryPaginator(addresses)
@@ -290,8 +292,10 @@ def account_number_view(number):
 
     addresses = AddressSummary.query\
         .filter(AddressSummary.opa_account_num==number)\
-        .exclude_non_opa('opa_only' in request.args)\
+        .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_in_street('in_street' in request.args) \
         .order_by_address()
+
 
     paginator = QueryPaginator(addresses)
 
@@ -313,7 +317,6 @@ def account_number_view(number):
         metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'request_args': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street = 'in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
@@ -328,6 +331,7 @@ def pwd_parcel(id):
     addresses = AddressSummary.query\
         .filter(AddressSummary.pwd_parcel_id==id) \
         .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_in_street('in_street' in request.args) \
         .order_by_address()
 
     addresses = addresses.order_by_address()
@@ -350,7 +354,6 @@ def pwd_parcel(id):
         metadata={'query': id},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)
@@ -369,6 +372,7 @@ def dor_parcel(id):
     addresses = AddressSummary.query\
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
         .exclude_non_opa('opa_only' in request.args) \
+        .get_parcel_geocode_in_street('in_street' in request.args) \
         .order_by_address()
 
     addresses = addresses.order_by_address()
@@ -391,7 +395,6 @@ def dor_parcel(id):
         metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'request_args': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
     )
     result = serializer.serialize_many(addresses_page)
     return json_response(response=result, status=200)

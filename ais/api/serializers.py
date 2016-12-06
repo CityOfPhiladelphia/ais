@@ -98,9 +98,12 @@ class AddressJsonSerializer (GeoJSONSerializer):
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable  object
         if isinstance(address, Iterable):
-            address, parcel_geocode_location_shape = address
+
+            address, parcel_geocode_location_shape, geocode_street_type = address
             # If joined geom is empty, keep shape = None and get shape by default from geocode_x, geocode_y
             shape = self.geom_to_shape(parcel_geocode_location_shape) if parcel_geocode_location_shape is not None else None
+
+            print(geocode_street_type)  # return in serialized response
 
         if not shape:
             from shapely.geometry import Point

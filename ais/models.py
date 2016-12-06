@@ -810,24 +810,52 @@ class AddressSummaryQuery(BaseQuery):
 
 
     def get_parcel_geocode_location(self, parcel_geocode_location='', request=''):
-        if parcel_geocode_location:
-            # If request arg parcel_geocode_location is included, get address geom_data from geocode table
-            # where geocode_type = value specified in request arg.
+        if parcel_geocode_location and 'in_street' not in request.args:
+            # If request arg parcel_geocode_location is included (and if in_street arg is not),
+            # get address geom_data from geocode table where geocode_type = value specified in request arg.
             parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
 
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address==AddressSummary.street_address) \
                 .filter(Geocode.geocode_type == parcel_geocode_location_val) \
-                .add_columns(Geocode.geom)
+                .add_columns(Geocode.geom, Geocode.geocode_type)
 
             # If geom exists for geocode_type specified in request.args, return, else return default best geocode type
             if geocode_xy_join.first():
                 return geocode_xy_join
             else:
+                # If geom doesn't exist for geocode_type specified in request.arg (or if specified geocode_type doesn't exist),
+                # return result of query without flag
                 return self
 
         else:
             return self
+
+
+    def get_parcel_geocode_in_street(self, in_street=''):
+        # If request arg "in_street" is included, get address geom_data from geocode table where
+        # highest available priority geocode_types_in_street is selected
+        if in_street:
+
+            geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
+
+            geocode_xy_join = self \
+                .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
+
+            for geocode_type in geocode_types_in_street:
+
+                in_street_xy_row = geocode_xy_join \
+                    .filter(Geocode.geocode_type == geocode_type) \
+                    .add_columns(Geocode.geom, Geocode.geocode_type)
+
+                if in_street_xy_row.first():
+
+                    return in_street_xy_row
+                    break
+
+        else:
+            return self
+
 
 try:
     class ServiceAreaSummary(db.Model):
