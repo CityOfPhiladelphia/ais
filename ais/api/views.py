@@ -148,36 +148,41 @@ def addresses_view(query):
     normalized_addresses = parsed['components']['output_address']
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        # Try to cascade to street centerline segment
-        if seg_id:
+        # # Try to cascade to street centerline segment
+        # if seg_id:
+        #
+        #     cascadedseg = StreetSegment.query \
+        #         .filter_by_seg_id(seg_id)
+        #
+        #     paginator = QueryPaginator(cascadedseg)
+        #     addresses_count = paginator.collection_size
+        #
+        #     # Validate the pagination
+        #     page_num, error = validate_page_param(request, paginator)
+        #     if error:
+        #         return json_response(response=error, status=error['status'])
+        #
+        #     # Render the response
+        #     addresses_page = paginator.get_page(page_num)
+        #     # Use custom cascaded seg serializer
+        #     # print("low_num: ", low_num)
+        #     serializer = CascadedSegJsonSerializer(
+        #         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
+        #         pagination=paginator.get_page_info(page_num),
+        #         srid=request.args.get('srid') if 'srid' in request.args else 4326,
+        #         address_low_num=low_num,
+        #         address_high_num=high_num,
+        #     )
+        #     result = serializer.serialize_many(addresses_page)
+        #     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
+        #
+        #     return json_response(response=result, status=200)
+        #
+        # else:
 
-            cascadedseg = StreetSegment.query \
-                .filter_by_seg_id(seg_id)
-
-            paginator = QueryPaginator(cascadedseg)
-
-            # Validate the pagination
-            page_num, error = validate_page_param(request, paginator)
-            if error:
-                return json_response(response=error, status=error['status'])
-
-            # Render the response
-            addresses_page = paginator.get_page(page_num)
-            # Use custom cascaded seg serializer
-            # print("low_num: ", low_num)
-            serializer = CascadedSegJsonSerializer(
-                metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
-                pagination=paginator.get_page_info(page_num),
-                srid=request.args.get('srid') if 'srid' in request.args else 4326,
-                address_low_num=low_num,
-                address_high_num=high_num,
-            )
-            result = serializer.serialize_many(addresses_page)
-            return json_response(response=result, status=200)
-        else:
-            error = json_error(404, 'Could not find addresses matching query.',
-                               {'query': query, 'normalized': normalized_addresses})
-            return json_response(response=error, status=404)
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': query, 'normalized': normalized_addresses})
+        return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -192,10 +197,9 @@ def addresses_view(query):
         srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
     )
     result = serializer.serialize_many(addresses_page)
-    return json_response(response=result, status=200)
+    #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
 
-    # TODO: If it's not a perfect match, do we want to do something like a
-    # soundex or some other fuzzy match?
+    return json_response(response=result, status=200)
 
 
 @app.route('/block/<path:query>')
@@ -265,6 +269,7 @@ def block_view(query):
         in_street='in_street' in request.args
     )
     result = serializer.serialize_many(block_page)
+    #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
     return json_response(response=result, status=200)
 
 
@@ -305,6 +310,8 @@ def owner(query):
         in_street='in_street' in request.args
     )
     result = serializer.serialize_many(page)
+    #result = serializer.serialize_many(page) if addresses_count > 1 else serializer.serialize(next(page))
+
     return json_response(response=result, status=200)
 
 
@@ -349,6 +356,8 @@ def account_number_view(number):
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
     result = serializer.serialize_many(addresses_page)
+    #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
+
     return json_response(response=result, status=200)
 
 
@@ -386,6 +395,7 @@ def pwd_parcel(id):
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
     result = serializer.serialize_many(addresses_page)
+    #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
     return json_response(response=result, status=200)
 
 
@@ -427,6 +437,7 @@ def dor_parcel(id):
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
     result = serializer.serialize_many(addresses_page)
+    #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
     return json_response(response=result, status=200)
 
 
@@ -465,16 +476,34 @@ def intersection(query):
         .order_by_intersection() \
         .choose_one()
 
+    paginator = QueryPaginator(intersections)
+    intersections_count = paginator.collection_size
+
+    if intersections_count == 0:
+        error = json_error(404, 'Could not find intersection matching query.',
+                           {'query': id})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+
+    if error:
+        return json_response(response=error, status=error['status'])
+
     if not intersections:
         error = json_error(404, 'Could not find any intersection matching query.',
                            {'query': query_original, 'normalized': {'name_1': street_1_name, 'name_2': street_2_name}})
         return json_response(response=error, status=200)
 
     # Serialize the response:
+    intersections_page = paginator.get_page(page_num)
     serializer = IntersectionJsonSerializer(
         metadata={'search type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'request_args': request.args},
+        pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid)
-    result = serializer.serialize_many(intersections)
+
+    result = serializer.serialize_many(intersections_page)
+    #result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
 
     return json_response(response=result, status=200)
 
