@@ -29,8 +29,17 @@ ENGINE_SRID = config['ENGINE_SRID']
 #     segs = addresses = db.relationship('Address', backref='person',
 #                                 lazy='dynamic')
 
+class StreetSegmentQuery(BaseQuery):
+
+    def filter_by_seg_id(self, seg_id):
+        query = self.filter(StreetSegment.seg_id==seg_id)
+        return query.limit(1)
+
+
 class StreetSegment(db.Model):
     """A segment of a street centerline."""
+    query_class = StreetSegmentQuery
+
     id = db.Column(db.Integer, primary_key=True)
     seg_id = db.Column(db.Integer)
     street_code = db.Column(db.Integer)

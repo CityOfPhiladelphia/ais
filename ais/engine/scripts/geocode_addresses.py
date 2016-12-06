@@ -6,7 +6,7 @@ from datetime import datetime
 from shapely.wkt import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 import datum
-from ais import app
+from ais import app, util
 from ais.models import Address
 # DEV
 import traceback
@@ -65,72 +65,72 @@ if FILTER_STREET_NAME not in [None, '']:
 	WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})"\
 		.format(seg_table.name, WHERE_STREET_NAME)
 
-def interpolate_buffered(line, distance_ratio, _buffer):
-	'''
-	Interpolate along a line with a buffer at both ends.
-	'''
-	length = line.length
-	buffered_length = length - (_buffer * 2)	
-	buffered_distance = distance_ratio * buffered_length
-	absolute_distance = _buffer + buffered_distance
-	return line.interpolate(absolute_distance)
-
-def offset(line, point, distance, seg_side):
-	# line = line[0]  # Get first part of multipart
-
-	# Check for vertical line
-	if line.coords[0][0] == line.coords[1][0]:
-		pt_0 = line.coords[0]
-		pt_1 = line.coords[1]
-		upwards = True if pt_1[1] > pt_0[1] else False
-		if (upwards and seg_side == 'R') or (not upwards and seg_side == 'L'):
-			x_factor = 1
-		else:
-			x_factor = -1 
-		return Point([point.x + (distance * x_factor), point.y])
-
-	assert None not in [line, point]
-	assert distance > 0
-	assert seg_side in ['L', 'R']
-
-	xsect_x = point.x
-	xsect_y = point.y
-	coord_1 = None
-	coord_2 = None
-
-	# Find coords on either side of intersect point
-	for i, coord in enumerate(line.coords[:-1]):
-		coord_x, coord_y = coord
-		next_coord = line.coords[i + 1]
-		next_coord_x, next_coord_y = next_coord
-		sandwich_x = coord_x < xsect_x < next_coord_x
-		sandwich_y = coord_y <= xsect_y <= next_coord_y
-		if sandwich_x or sandwich_y:
-			coord_1 = coord
-			coord_2 = next_coord
-			break
-
-	# Normalize coords to place in proper quadrant
-	norm_x = next_coord[0] - coord[0]
-	norm_y = next_coord[1] - coord[1]
-
-	# Get angle of seg
-	seg_angle = atan2(norm_y, norm_x)
-	# print('seg angle: {}'.format(degrees(seg_angle)))
-
-	# Get angle of offset line
-	if seg_side == 'L':
-		offset_angle = seg_angle + (pi / 2)
-	else:
-		offset_angle = seg_angle - (pi / 2)
-	# print('offset angle: {}'.format(degrees(offset_angle)))
-
-	# Get offset point
-	delta_x = cos(offset_angle) * distance
-	delta_y = sin(offset_angle) * distance
-	x = xsect_x + delta_x
-	y = xsect_y + delta_y
-	return Point([x, y])
+# def interpolate_buffered(line, distance_ratio, _buffer):
+# 	'''
+# 	Interpolate along a line with a buffer at both ends.
+# 	'''
+# 	length = line.length
+# 	buffered_length = length - (_buffer * 2)
+# 	buffered_distance = distance_ratio * buffered_length
+# 	absolute_distance = _buffer + buffered_distance
+# 	return line.interpolate(absolute_distance)
+#
+# def offset(line, point, distance, seg_side):
+# 	# line = line[0]  # Get first part of multipart
+#
+# 	# Check for vertical line
+# 	if line.coords[0][0] == line.coords[1][0]:
+# 		pt_0 = line.coords[0]
+# 		pt_1 = line.coords[1]
+# 		upwards = True if pt_1[1] > pt_0[1] else False
+# 		if (upwards and seg_side == 'R') or (not upwards and seg_side == 'L'):
+# 			x_factor = 1
+# 		else:
+# 			x_factor = -1
+# 		return Point([point.x + (distance * x_factor), point.y])
+#
+# 	assert None not in [line, point]
+# 	assert distance > 0
+# 	assert seg_side in ['L', 'R']
+#
+# 	xsect_x = point.x
+# 	xsect_y = point.y
+# 	coord_1 = None
+# 	coord_2 = None
+#
+# 	# Find coords on either side of intersect point
+# 	for i, coord in enumerate(line.coords[:-1]):
+# 		coord_x, coord_y = coord
+# 		next_coord = line.coords[i + 1]
+# 		next_coord_x, next_coord_y = next_coord
+# 		sandwich_x = coord_x < xsect_x < next_coord_x
+# 		sandwich_y = coord_y <= xsect_y <= next_coord_y
+# 		if sandwich_x or sandwich_y:
+# 			coord_1 = coord
+# 			coord_2 = next_coord
+# 			break
+#
+# 	# Normalize coords to place in proper quadrant
+# 	norm_x = next_coord[0] - coord[0]
+# 	norm_y = next_coord[1] - coord[1]
+#
+# 	# Get angle of seg
+# 	seg_angle = atan2(norm_y, norm_x)
+# 	# print('seg angle: {}'.format(degrees(seg_angle)))
+#
+# 	# Get angle of offset line
+# 	if seg_side == 'L':
+# 		offset_angle = seg_angle + (pi / 2)
+# 	else:
+# 		offset_angle = seg_angle - (pi / 2)
+# 	# print('offset angle: {}'.format(degrees(offset_angle)))
+#
+# 	# Get offset point
+# 	delta_x = cos(offset_angle) * distance
+# 	delta_y = sin(offset_angle) * distance
+# 	x = xsect_x + delta_x
+# 	y = xsect_y + delta_y
+# 	return Point([x, y])
 
 if WRITE_OUT:
 	print('Dropping indexes...')
@@ -364,11 +364,11 @@ for i, address_row in enumerate(address_rows):
 			# print('Old intersect: {}'.format(seg_xsect_xy_old))
 
 			# New method: interpolate buffered
-			seg_xsect_xy = interpolate_buffered(seg_shp, distance_ratio, \
+			seg_xsect_xy = util.interpolate_buffered(seg_shp, distance_ratio, \
 				centerline_end_buffer)
 			# print('Intersect: {}'.format(seg_xsect_xy))
 
-			seg_xy = offset(seg_shp, seg_xsect_xy, centerline_offset, \
+			seg_xy = util.offset(seg_shp, seg_xsect_xy, centerline_offset, \
 				seg_side)
 			# print('Offset to {}: {}'.format(seg_side, seg_xy))
 			geocode_rows.append({
@@ -398,9 +398,9 @@ for i, address_row in enumerate(address_rows):
 			
 			# true_xsect_xy = seg_shp.interpolate(true_distance_ratio, \
 			# 	normalized=True)
-			true_xsect_xy = interpolate_buffered(seg_shp, true_distance_ratio, \
+			true_xsect_xy = util.interpolate_buffered(seg_shp, true_distance_ratio, \
 				centerline_end_buffer)
-			true_seg_xy = offset(seg_shp, true_xsect_xy, centerline_offset, \
+			true_seg_xy = util.offset(seg_shp, true_xsect_xy, centerline_offset, \
 				seg_side)
 			# print('true: {}'.format(true_seg_xy))
 			geocode_rows.append({
@@ -456,7 +456,7 @@ for i, address_row in enumerate(address_rows):
 
 				for test_offset in range(10, 50, 10):
 					# Get test XY
-					test_xy_shp = offset(seg_shp, true_xsect_xy, \
+					test_xy_shp = util.offset(seg_shp, true_xsect_xy, \
 						test_offset, seg_side)
 					test_xy_wkt = dumps(test_xy_shp)
 
@@ -500,7 +500,7 @@ for i, address_row in enumerate(address_rows):
 
 
 			'''
-			CURBSIDE
+			CURBSIDE & IN_STREET (MIDPOINT B/T CURB & CENTERLINE)
 			'''
 
 

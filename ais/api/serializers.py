@@ -2,7 +2,9 @@ import json
 from collections import OrderedDict
 from ais import util, models
 from geoalchemy2.shape import to_shape
-
+from shapely import wkt
+from ais import app, app_db as db
+from itertools import chain
 
 class BaseSerializer:
     def model_to_data(self, instance):
@@ -226,6 +228,7 @@ class AddressSummaryJsonSerializer (GeoJSONSerializer):
         ])
         return data
 
+
 class IntersectionJsonSerializer (GeoJSONSerializer):
 
     def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
@@ -295,5 +298,119 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             ])),
             ('geometry', geom_data),
         ])
+
+        return data
+
+
+class CascadedSegJsonSerializer (GeoJSONSerializer):
+
+    def __init__(self,  address_low_num=None, address_high_num=None, geom_type='centroid', geom_source=None, **kwargs):
+        #self.geom_type = 'Point'
+        #self.geom_source = geom_source
+        self.address_low_num = address_low_num
+        self.address_high_num = address_high_num
+        super().__init__(**kwargs)
+
+    def linestring_to_midpoint(self, geom):
+        return geom.centroid
+
+    def geom_to_shape(self, geom):
+        return util.geom_to_shape(
+            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def project_shape(self, shape):
+        return util.project_shape(
+            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+
+    def shape_to_geodict(self, shape):
+        from shapely.geometry import mapping
+        data = mapping(shape)
+        return OrderedDict([
+            ('type', data['type']),
+            ('coordinates', data['coordinates'])
+        ])
+
+    def model_to_data(self, cascadedsegment):
+        sa_data = OrderedDict()
+        if cascadedsegment.geom is not None:
+            from shapely.geometry import Point
+            config = app.config
+            #true_range_view = db['true_range']
+            centerline_offset = config['GEOCODE']['centerline_offset']
+            centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
+            seg_side = "R" if cascadedsegment.right_from % 2 == self.address_low_num % 2 else "L"
+
+            true_range_stmt = '''
+                            Select true_left_from, true_left_to, true_right_from, true_right_to
+                             from true_range
+                             where seg_id = {seg_id}
+                        '''.format(seg_id=cascadedsegment.seg_id)
+            true_range_result = db.engine.execute(true_range_stmt).fetchall()
+            true_range_result = list(chain(*true_range_result))
+            side_delta = 0
+            if true_range_result:
+                side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
+                    else true_range_result[1] - true_range_result[0]
+            else:
+                side_delta = cascadedsegment.right_to - cascadedsegment.right_from if seg_side == "R" \
+                    else cascadedsegment.left_to - cascadedsegment.left_from
+            if side_delta == 0:
+                distance_ratio = 0.5
+            else:
+                distance_ratio = (self.address_low_num - cascadedsegment.right_from) / side_delta
+            shape = to_shape(cascadedsegment.geom)
+            # New method: interpolate buffered
+            seg_xsect_xy=util.interpolate_buffered(shape, distance_ratio, centerline_end_buffer)
+            seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
+            shape = self.project_shape(seg_xy)
+            geom_data = self.shape_to_geodict(shape)
+            #print(seg_xy)
+            #seg_xy_wkt = seg_xy.to_wkt()
+
+            # GET INTERSECTING SERVICE AREAS
+            # service_areas = models.ServiceAreaPolygon.query \
+            #          .filter(models.ServiceAreaPolygon.geom.ST_INTERSECTS(seg_xy))
+            #
+            stmt = '''
+                SELECT layer_id, value
+                from service_area_polygon
+                where ST_Intersects(geom, ST_GeometryFromText('SRID=2272;{shape}'))
+            '''.format(shape=seg_xy)
+            result = db.engine.execute(stmt)
+
+            for item in result.fetchall():
+                sa_data[item[0]] = item[1]
+        else:
+            geom_data = None
+
+        # Build the intersection feature, then attach properties
+        #num_ints = intersection.int_ids.count('|') + 1
+        data = OrderedDict([
+            ('type', 'Feature'),
+            ('properties', OrderedDict([
+                #('intersection_ids', intersection.int_ids),
+                #('number of intersection points', num_ints),
+                #('street', OrderedDict([
+                ('seg_id', cascadedsegment.seg_id),
+                #('seg_side', cascadedsegment.seg_side),
+                ('street_code', cascadedsegment.street_code),
+                ('street_full', cascadedsegment.street_full),
+                ('street_name', cascadedsegment.street_name),
+                ('street_predir', cascadedsegment.street_predir),
+                ('street_postdir', cascadedsegment.street_postdir),
+                ('street_suffix', cascadedsegment.street_suffix),
+                ('left_from', cascadedsegment.left_from),
+                ('left_to', cascadedsegment.left_to),
+                ('right_from', cascadedsegment.right_from),
+                ('right_to', cascadedsegment.right_to),
+                #])
+                 #)
+            ])),
+            #('service areas', sa_data),
+            ('geometry', geom_data),
+        ])
+
+        data['properties'].update(sa_data)
+        #data = self.transform_exceptions(data)
 
         return data

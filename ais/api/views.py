@@ -6,15 +6,17 @@ Does three primary things:
 """
 
 from ais import app
-from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection
+from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection, StreetSegment, \
+    AddressStreet, ServiceAreaLayer
 from flask import Response, request
 from flask_cachecontrol import cache_for
 from passyunk.parser import PassyunkParser
 
 from .errors import json_error
 from .paginator import QueryPaginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, CascadedSegJsonSerializer
 from ..util import NotNoneDict
+from sqlalchemy import func
 import re
 
 default_srid = 4326
@@ -106,6 +108,7 @@ def addresses_view(query):
     unit_num = parsed['components']['address_unit']['unit_num']
     high_num = parsed['components']['address']['high_num_full']
     low_num = parsed['components']['address']['low_num']
+    seg_id = parsed['components']['cl_seg_id']
 
     loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
@@ -145,9 +148,36 @@ def addresses_view(query):
     normalized_addresses = parsed['components']['output_address']
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_addresses})
-        return json_response(response=error, status=404)
+        # Try to cascade to street centerline segment
+        if seg_id:
+
+            cascadedseg = StreetSegment.query \
+                .filter_by_seg_id(seg_id)
+
+            paginator = QueryPaginator(cascadedseg)
+
+            # Validate the pagination
+            page_num, error = validate_page_param(request, paginator)
+            if error:
+                return json_response(response=error, status=error['status'])
+
+            # Render the response
+            addresses_page = paginator.get_page(page_num)
+            # Use custom cascaded seg serializer
+            # print("low_num: ", low_num)
+            serializer = CascadedSegJsonSerializer(
+                metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
+                pagination=paginator.get_page_info(page_num),
+                srid=request.args.get('srid') if 'srid' in request.args else 4326,
+                address_low_num=low_num,
+                address_high_num=high_num,
+            )
+            result = serializer.serialize_many(addresses_page)
+            return json_response(response=result, status=200)
+        else:
+            error = json_error(404, 'Could not find addresses matching query.',
+                               {'query': query, 'normalized': normalized_addresses})
+            return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
