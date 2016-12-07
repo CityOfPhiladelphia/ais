@@ -234,8 +234,12 @@ def addresses_view(query):
     addresses_count = paginator.collection_size
     # Handle unmatched addresses
     if addresses_count == 0:
-        # Try to cascade to street centerline segment
-        return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+        # # Try to cascade to street centerline segment
+        # return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+        # Or alternately raise error:
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
