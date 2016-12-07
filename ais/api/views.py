@@ -16,6 +16,7 @@ from .errors import json_error
 from .paginator import QueryPaginator
 from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, CascadedSegJsonSerializer
 from ..util import NotNoneDict
+from collections import OrderedDict
 from sqlalchemy import func
 import re
 
@@ -51,6 +52,89 @@ def handle_errors(e):
     description = getattr(e, 'description', None)
     error = json_error(code, description, None)
     return json_response(response=error, status=code)
+
+
+@app.route('/unknown/<path:query>')
+@cache_for(hours=1)
+def unknown_cascade_view(**kwargs):
+
+    query = kwargs.get('query')
+    normalized_address = kwargs.get('normalized_address')
+    search_type = kwargs.get('search_type')
+    parsed = kwargs.get('parsed')
+    seg_id = parsed['components']['cl_seg_id']
+    base_address = parsed['components']['base_address']
+
+    if seg_id:
+
+        cascadedseg = StreetSegment.query \
+            .filter_by_seg_id(seg_id)
+
+        paginator = QueryPaginator(cascadedseg)
+        addresses_count = paginator.collection_size
+
+        # Validate the pagination
+        page_num, error = validate_page_param(request, paginator)
+        if error:
+            return json_response(response=error, status=error['status'])
+
+        # Get remaining components from Passyunk
+        pcomps = OrderedDict([
+            ('street_address', parsed['components']['output_address']),
+            ('address_low', parsed['components']['address']['low_num']),
+            ('address_low_suffix', parsed['components']['address']['addr_suffix']),
+            ('address_low_frac', parsed['components']['address']['fractional']),
+            ('address_high', parsed['components']['address']['high_num_full']),
+            ('street_predir', parsed['components']['street']['predir']),
+            ('street_name', parsed['components']['street']['name']),
+            ('street_suffix', parsed['components']['street']['suffix']),
+            ('street_postdir', parsed['components']['street']['postdir']),
+            ('unit_type', parsed['components']['address_unit']['unit_type']),
+            ('unit_num', parsed['components']['address_unit']['unit_num']),
+            ('street_full', parsed['components']['street']['full']),
+            ('street_code', parsed['components']['street']['street_code']),
+            ('seg_id', parsed['components']['cl_seg_id']),
+            ('zip_code', parsed['components']['mailing']['zipcode']),
+            ('zip_4', parsed['components']['mailing']['zip4']),
+            ('usps_bldgfirm', parsed['components']['mailing']['bldgfirm']),
+            ('usps_type', parsed['components']['mailing']['uspstype']),
+            ('election_block_id', parsed['components']['election']['blockid']),
+            ('election_precinct', parsed['components']['election']['precinct'])
+        ])
+
+        # Add fields from address summary
+        null_address_comps = OrderedDict([
+                ('pwd_parcel_id', None),
+                ('dor_parcel_id', None),
+                ('li_address_key', None),
+                ('pwd_account_nums', None),
+                ('opa_account_num', None),
+                ('opa_owners', None),
+                ('opa_address', None),
+            ])
+
+        # Render the response
+        addresses_page = paginator.get_page(page_num)
+        # Use cascaded seg serializer
+        serializer = CascadedSegJsonSerializer(
+            metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address},
+            pagination=paginator.get_page_info(page_num),
+            srid=request.args.get('srid') if 'srid' in request.args else 4326,
+            pcomps=pcomps,
+            null_address_comps=null_address_comps,
+            normalized_address=normalized_address,
+            base_address=base_address
+        )
+        result = serializer.serialize_many(addresses_page)
+        # result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
+
+        return json_response(response=result, status=200)
+
+    else:
+
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
 
 
 @app.route('/addresses/<path:query>')
@@ -109,6 +193,7 @@ def addresses_view(query):
     high_num = parsed['components']['address']['high_num_full']
     low_num = parsed['components']['address']['low_num']
     seg_id = parsed['components']['cl_seg_id']
+    base_address = parsed['components']['base_address']
 
     loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
@@ -145,44 +230,12 @@ def addresses_view(query):
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
-    normalized_addresses = parsed['components']['output_address']
+    normalized_address = parsed['components']['output_address']
     addresses_count = paginator.collection_size
+    # Handle unmatched addresses
     if addresses_count == 0:
-        # # Try to cascade to street centerline segment
-        # if seg_id:
-        #
-        #     cascadedseg = StreetSegment.query \
-        #         .filter_by_seg_id(seg_id)
-        #
-        #     paginator = QueryPaginator(cascadedseg)
-        #     addresses_count = paginator.collection_size
-        #
-        #     # Validate the pagination
-        #     page_num, error = validate_page_param(request, paginator)
-        #     if error:
-        #         return json_response(response=error, status=error['status'])
-        #
-        #     # Render the response
-        #     addresses_page = paginator.get_page(page_num)
-        #     # Use custom cascaded seg serializer
-        #     # print("low_num: ", low_num)
-        #     serializer = CascadedSegJsonSerializer(
-        #         metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses},
-        #         pagination=paginator.get_page_info(page_num),
-        #         srid=request.args.get('srid') if 'srid' in request.args else 4326,
-        #         address_low_num=low_num,
-        #         address_high_num=high_num,
-        #     )
-        #     result = serializer.serialize_many(addresses_page)
-        #     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
-        #
-        #     return json_response(response=result, status=200)
-        #
-        # else:
-
-        error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_addresses})
-        return json_response(response=error, status=404)
+        # Try to cascade to street centerline segment
+        return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -192,9 +245,11 @@ def addresses_view(query):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search type': search_type, 'query': query, 'normalized': normalized_addresses, 'request args': requestargs},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs},
         pagination=paginator.get_page_info(page_num),
         srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
+        normalized_address=normalized_address,
+        base_address=base_address
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -263,7 +318,7 @@ def block_view(query):
     # Serialize the response
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search type': search_type, 'query': query, 'normalized': normalized_address, 'request_args': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
         in_street='in_street' in request.args
@@ -351,7 +406,7 @@ def account_number_view(number):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'request_args': request.args},
+        metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -432,7 +487,7 @@ def dor_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'request_args': request.args},
+        metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -498,7 +553,7 @@ def intersection(query):
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
     serializer = IntersectionJsonSerializer(
-        metadata={'search type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'request_args': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid)
 
