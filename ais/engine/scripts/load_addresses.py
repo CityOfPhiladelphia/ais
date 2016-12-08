@@ -392,7 +392,10 @@ for i, address in enumerate(addresses):
         street_range_map[street_full].append(address)
 
     base_address = address.base_address
-    if address.unit_type is not None:
+    # # Old method - only get 'has_base' link for addresses with units
+    #if address.unit_type is not None:
+    # # New method - get 'has_base' link for addresses with units AND addresses with number suffixes
+    if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
             base_address_map[base_address] = []
         base_address_map[base_address].append(address)
@@ -407,7 +410,10 @@ for i, address in enumerate(addresses):
     if i % 100000 == 0:
         print(i)
 
-    if address.unit_type is not None:
+    # # Old Method: only include address with unit_type in 'has_base' link set
+    #if address.unit_type is not None
+    # # New Method: include addresses with low_suffixes in 'has_base' link set
+    if address.unit_type is not None or address.address_low_suffix is not None:
         # Base link
         base_link = {
             'address_1':        address.street_address,
