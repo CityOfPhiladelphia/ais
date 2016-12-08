@@ -166,7 +166,8 @@ def addresses_view(query):
     """
     query = query.strip('/')
 
-    # Batch queries have been depreciated for this endpoint; handle first query of batch query attempts:
+    # Batch queries have been depreciated for this endpoint;
+    # handle first query of batch query attempts:
     requestargs = {}
     if ';' in query:
         query = query[:query.index(';')]
@@ -179,7 +180,14 @@ def addresses_view(query):
         requestargs[arg] = val
 
     parsed = PassyunkParser().parse(query)
+    normalized_address = parsed['components']['output_address']
     search_type = parsed['type']
+
+    if search_type != 'address':
+        error = json_error(400, 'Not a valid address.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=400)
+
 
     # Match a set of addresses. Filters will either be loose, where an omission
     # is ignored, or scrict, where an omission is treated as an explicit NULL.
@@ -230,16 +238,15 @@ def addresses_view(query):
     paginator = QueryPaginator(addresses)
 
     # Ensure that we have results
-    normalized_address = parsed['components']['output_address']
     addresses_count = paginator.collection_size
     # Handle unmatched addresses
     if addresses_count == 0:
         # # Try to cascade to street centerline segment
-        # return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+        return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
         # Or alternately raise error:
-        error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        # error = json_error(404, 'Could not find addresses matching query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)

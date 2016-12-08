@@ -87,9 +87,10 @@ class GeoJSONSerializer (BaseSerializer):
         }
 
         if street_address == self.normalized_address:
+            print(0)
             # Base query response address (not joined with flag(s))
             for link_address in link_addresses:
-                #print(link_address)
+                match_type = None
                 related_address = {}
                 address_1 = link_address['address_1']
                 address_2 = link_address['address_2']
@@ -98,27 +99,24 @@ class GeoJSONSerializer (BaseSerializer):
                 if address_1 == street_address:
                     print(1, link_address)
                     match_type = query_address_1_match_map[relationship]
-                    related_address[link_address['address_2']] = relationship
+                    #related_address[link_address['address_2']] = relationship
 
-                elif address_2 == street_address and street_address == self.base_address and relationship == 'has base':
+                elif address_2 == street_address:
                     print(2, link_address)
-                    match_type = query_address_2_match_map[relationship] if match_type is None else match_type
-                    related_address[link_address['address_1']] = unit_address_1_match_map[relationship]
+                    if street_address == self.base_address:
+                        print(3, link_address)
+                        match_type = query_address_1_match_map[relationship]
+                        #related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
+                    else:
+                        print(4, link_address)
+                        match_type = query_address_1_match_map[relationship]
+                        #related_address[link_address['address_1']] = query_address_2_match_map[relationship]
 
-                elif address_2 == street_address and relationship == 'in range':
-                    match_type = query_address_1_match_map[relationship]
-                    related_address[link_address['address_1']] = query_address_2_match_map[relationship]
-                    print(3, link_address)
-
-                elif address_2 == self.base_address and street_address != self.base_address and relationship == 'has base':
-                    print(4, link_address)
-                    related_address[link_address['address_1']] = 'unit_sibling'
-
-                related_addresses.append(related_address)
+                #related_addresses.append(related_address)
 
         else:
+            print(00)
             # include_units flag joined child_unit addresses
-            #print(2, street_address, self.normalized_address)
             for link_address in link_addresses:
                 related_address = {}
                 address_1 = link_address['address_1']
@@ -129,13 +127,13 @@ class GeoJSONSerializer (BaseSerializer):
                     print(5, link_address)
                     match_type = unit_address_1_match_map[relationship]
                     related_address[link_address['address_2']] = query_address_2_match_map[relationship]
-                    related_addresses.append(related_address)
+                    #related_addresses.append(related_address)
                 elif address_2 == base_address and street_address != self.normalized_address:
                     print(6, link_address)
                     related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
-                    related_addresses.append(related_address)
+                    #related_addresses.append(related_address)
 
-        return match_type, related_addresses
+        return match_type#, related_addresses
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
@@ -212,7 +210,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
             sa_data[col.name] = getattr(address.service_areas, col.name)
 
         # Get address link relationships
-        match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
+            # Version with match_type and related_addresses
+        #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
+            # Version without related_addresses
+        match_type = self.get_address_link_relationships(address.street_address, self.base_address)
 
         # Build the address feature, then attach tags and service areas
         data = OrderedDict([
@@ -252,7 +253,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         ])
 
         data['properties'].update(sa_data)
-        data['properties'].update({'related_addresses': related_addresses})
+        #data['properties'].update({'related_addresses': related_addresses})
 
         data = self.transform_exceptions(data)
 
@@ -398,7 +399,10 @@ class CascadedSegJsonSerializer (GeoJSONSerializer):
             geom_data.update(geom_type)
 
             # Get address link relationships
-            match_type, related_addresses = self.get_address_link_relationships(self.normalized_address, self.base_address)
+            # Version with match_type and related_addresses
+            # match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
+            # Version without related_addresses
+            #match_type = self.get_address_link_relationships(self.normalized_address, self.base_address)
 
             # GET INTERSECTING SERVICE AREAS TODO: include fields for service areas where st_intersects is false
             # service_areas = models.ServiceAreaPolygon.query \
@@ -427,7 +431,7 @@ class CascadedSegJsonSerializer (GeoJSONSerializer):
         data['properties'].update(self.pcomps)
         data['properties'].update(self.null_address_comps)
         data['properties'].update(sa_data)
-        data['properties'].update({'related_addresses': related_addresses})
+        #data['properties'].update({'related_addresses': related_addresses})
         #data = self.transform_exceptions(data)
 
         return data
