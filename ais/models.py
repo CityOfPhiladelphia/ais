@@ -819,7 +819,7 @@ class AddressSummaryQuery(BaseQuery):
 
 
     def get_parcel_geocode_location(self, parcel_geocode_location='', request=''):
-        if parcel_geocode_location and 'in_street' not in request.args:
+        if self.first() and parcel_geocode_location and 'in_street' not in request.args:
             # If request arg parcel_geocode_location is included (and if in_street arg is not),
             # get address geom_data from geocode table where geocode_type = value specified in request arg.
             parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
@@ -844,7 +844,7 @@ class AddressSummaryQuery(BaseQuery):
     def get_parcel_geocode_in_street(self, in_street=''):
         # If request arg "in_street" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_in_street is selected
-        if in_street:
+        if self.first() and in_street:
 
             geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
 

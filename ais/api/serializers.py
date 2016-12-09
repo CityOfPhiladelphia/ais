@@ -139,12 +139,23 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type='centroid', geom_source=None, in_street=False, normalized_address=None, base_address=None, **kwargs):
+    def __init__(self, geom_type=None, geom_source=None, in_street=False, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=False, **kwargs):
+        #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
+        #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
         self.geom_source = geom_source
+        #self.in_street = True if kwargs.get('in_street') == True else False
         self.in_street = in_street
+        #self.normalized_address = kwargs.get('normalized_address') if 'normalized_address' in kwargs else None
         self.normalized_address = normalized_address
+        #self.base_address = kwargs.get('base_address') if 'base_address' in kwargs else None
         self.base_address = base_address
+        #self.shape = kwargs.get('shape') if 'shape' in kwargs else None
+        self.shape = shape
+        #self.estimated = True if 'estimated' in kwargs else False
+        self.estimated = estimated
+        #self.sa_data = kwargs.get('sa_data') if 'sa_data' in kwargs else None
+        self.sa_data = sa_data
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -180,13 +191,13 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
     def model_to_data(self, address):
 
-        from collections import Iterable, Generator
+        from collections import Iterable
 
-        shape = None
+        shape = self.shape
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable object
-        if isinstance(address, Iterable) and not isinstance(address, Generator):
+        if isinstance(address, Iterable) and not self.estimated:
 
             address, parcel_geocode_location_shape, geocode_response_type = address
             # If joined geom is empty, keep shape = None and get shape by default from geocode_x, geocode_y
@@ -198,22 +209,26 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         shape = self.project_shape(shape)
         geom_data = self.shape_to_geodict(shape)
-        geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type}
+        geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} if not self.estimated else {'geocode_type': 'true range'}
         geom_data.update(geom_type)
         geom_data.move_to_end('geocode_type', last=False)
 
+
         # Build the set of associated service areas
         sa_data = OrderedDict()
-        for col in address.service_areas.__table__.columns:
-            if col.name in ('id', 'street_address'):
-                continue
-            sa_data[col.name] = getattr(address.service_areas, col.name)
+        if not self.estimated:
+            for col in address.service_areas.__table__.columns:
+                if col.name in ('id', 'street_address'):
+                    continue
+                sa_data[col.name] = getattr(address.service_areas, col.name)
+        else:
+            sa_data = self.sa_data
 
-        # Get address link relationships
-            # Version with match_type and related_addresses
+        # # Get address link relationships
+            # # Version with match_type and related_addresses
         #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
-            # Version without related_addresses
-        match_type = self.get_address_link_relationships(address.street_address, self.base_address)
+            # # Version without related_addresses
+        match_type = self.get_address_link_relationships(address.street_address, self.base_address) if not self.estimated else 'estimated'
 
         # Build the address feature, then attach tags and service areas
         data = OrderedDict([
@@ -236,7 +251,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_code', address.street_code),
                 ('seg_id', address.seg_id),
                 ('zip_code', address.zip_code or None),
-                ('zip_4', address.zip_4 if address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),
+                ('zip_4', address.zip_4 if address.zip_4 and address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),
                 ('usps_bldgfirm', address.usps_bldgfirm),
                 ('usps_type', address.usps_type),
                 ('election_block_id', address.election_block_id),
@@ -323,115 +338,5 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             ])),
             ('geometry', geom_data),
         ])
-
-        return data
-
-
-class CascadedSegJsonSerializer (GeoJSONSerializer):
-
-    def __init__(self,  pcomps=None, null_address_comps=None, normalized_address=None, base_address=None, geom_type='centroid', geom_source=None, **kwargs):
-        #self.geom_type = 'Point'
-        #self.geom_source = geom_source
-        self.pcomps = pcomps
-        self.null_address_comps = null_address_comps
-        self.normalized_address = normalized_address
-        self.base_address = base_address
-        self.address_low_num = pcomps['address_low']
-        self.address_high_num = pcomps['address_high']
-        super().__init__(**kwargs)
-
-        print(pcomps)
-
-    def linestring_to_midpoint(self, geom):
-        return geom.centroid
-
-    def geom_to_shape(self, geom):
-        return util.geom_to_shape(
-            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
-
-    def project_shape(self, shape):
-        return util.project_shape(
-            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
-
-    def shape_to_geodict(self, shape):
-        from shapely.geometry import mapping
-        data = mapping(shape)
-        return OrderedDict([
-            ('type', data['type']),
-            ('coordinates', data['coordinates'])
-        ])
-
-    def model_to_data(self, cascadedsegment):
-        sa_data = OrderedDict()
-        if cascadedsegment.geom is not None:
-            from shapely.geometry import Point
-            config = app.config
-            centerline_offset = config['GEOCODE']['centerline_offset']
-            centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
-            seg_side = "R" if cascadedsegment.right_from % 2 == self.address_low_num % 2 else "L"
-
-            true_range_stmt = '''
-                            Select true_left_from, true_left_to, true_right_from, true_right_to
-                             from true_range
-                             where seg_id = {seg_id}
-                        '''.format(seg_id=cascadedsegment.seg_id)
-            true_range_result = db.engine.execute(true_range_stmt).fetchall()
-            true_range_result = list(chain(*true_range_result))
-            if true_range_result:
-                side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
-                    else true_range_result[1] - true_range_result[0]
-            else:
-                side_delta = cascadedsegment.right_to - cascadedsegment.right_from if seg_side == "R" \
-                    else cascadedsegment.left_to - cascadedsegment.left_from
-            if side_delta == 0:
-                distance_ratio = 0.5
-            else:
-                distance_ratio = (self.address_low_num - cascadedsegment.right_from) / side_delta
-
-            shape = to_shape(cascadedsegment.geom)
-
-            # New method: interpolate buffered
-            seg_xsect_xy=util.interpolate_buffered(shape, distance_ratio, centerline_end_buffer)
-            seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
-            shape = self.project_shape(seg_xy)
-            geom_data = self.shape_to_geodict(shape)
-            geom_type = {'geocode_type': 'true range'}
-            geom_data.update(geom_type)
-
-            # Get address link relationships
-            # Version with match_type and related_addresses
-            # match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
-            # Version without related_addresses
-            #match_type = self.get_address_link_relationships(self.normalized_address, self.base_address)
-
-            # GET INTERSECTING SERVICE AREAS TODO: include fields for service areas where st_intersects is false
-            # service_areas = models.ServiceAreaPolygon.query \
-            #          .filter(models.ServiceAreaPolygon.geom.ST_INTERSECTS(seg_xy))
-            #
-            stmt = '''
-                SELECT layer_id, value
-                from service_area_polygon
-                where ST_Intersects(geom, ST_GeometryFromText('SRID=2272;{shape}'))
-            '''.format(shape=seg_xy)
-            result = db.engine.execute(stmt)
-
-            for item in result.fetchall():
-                sa_data[item[0]] = item[1]
-        else:
-            geom_data = None
-
-        data = OrderedDict([
-            ('type', 'Feature'),
-            ('ais_feature_type', 'address'),
-            ('match_type', 'estimated'),
-            ('properties', OrderedDict([])),
-            ('geometry', geom_data),
-        ])
-
-        data['properties'].update(self.pcomps)
-        data['properties'].update(self.null_address_comps)
-        data['properties'].update(sa_data)
-        #data['properties'].update({'related_addresses': related_addresses})
-        #data = self.transform_exceptions(data)
 
         return data
