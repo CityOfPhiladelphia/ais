@@ -32,7 +32,7 @@ class Paginator:
         end = start + self.max_page_size
 
         for collection, size in zip(self.collections, self.collection_sizes):
-            #print((start, end))
+            print((start, end))
             if start < size:
                 partial_page = tuple(collection[start:end])
                 partial_size = len(partial_page)
