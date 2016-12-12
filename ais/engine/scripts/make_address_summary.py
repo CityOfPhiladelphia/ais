@@ -336,7 +336,7 @@ if WRITE_OUT:
 		update address_summary asm
 		set opa_account_num = op.account_num,
 			opa_owners = op.owners,
-			opa_address = op.street_address
+			opa_address = op.source_address
 		from address_property ap, opa_property op
 		where asm.street_address = ap.street_address and
 			ap.opa_account_num = op.account_num
