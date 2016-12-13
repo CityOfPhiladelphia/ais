@@ -6,7 +6,7 @@ from datetime import datetime
 from shapely.wkt import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 import datum
-from ais import app
+from ais import app, util
 from ais.models import Address
 # DEV
 import traceback
@@ -50,6 +50,7 @@ addr_parcel_table = db['address_parcel']
 true_range_view = db['true_range']
 centerline_offset = config['GEOCODE']['centerline_offset']
 centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
+geocode_priority_map = config['ADDRESS_SUMMARY']['geocode_priority']
 WRITE_OUT = True
 
 # DEV - use this to work on only one street name at a time
@@ -65,72 +66,72 @@ if FILTER_STREET_NAME not in [None, '']:
 	WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})"\
 		.format(seg_table.name, WHERE_STREET_NAME)
 
-def interpolate_buffered(line, distance_ratio, _buffer):
-	'''
-	Interpolate along a line with a buffer at both ends.
-	'''
-	length = line.length
-	buffered_length = length - (_buffer * 2)	
-	buffered_distance = distance_ratio * buffered_length
-	absolute_distance = _buffer + buffered_distance
-	return line.interpolate(absolute_distance)
-
-def offset(line, point, distance, seg_side):
-	# line = line[0]  # Get first part of multipart
-
-	# Check for vertical line
-	if line.coords[0][0] == line.coords[1][0]:
-		pt_0 = line.coords[0]
-		pt_1 = line.coords[1]
-		upwards = True if pt_1[1] > pt_0[1] else False
-		if (upwards and seg_side == 'R') or (not upwards and seg_side == 'L'):
-			x_factor = 1
-		else:
-			x_factor = -1 
-		return Point([point.x + (distance * x_factor), point.y])
-
-	assert None not in [line, point]
-	assert distance > 0
-	assert seg_side in ['L', 'R']
-
-	xsect_x = point.x
-	xsect_y = point.y
-	coord_1 = None
-	coord_2 = None
-
-	# Find coords on either side of intersect point
-	for i, coord in enumerate(line.coords[:-1]):
-		coord_x, coord_y = coord
-		next_coord = line.coords[i + 1]
-		next_coord_x, next_coord_y = next_coord
-		sandwich_x = coord_x < xsect_x < next_coord_x
-		sandwich_y = coord_y <= xsect_y <= next_coord_y
-		if sandwich_x or sandwich_y:
-			coord_1 = coord
-			coord_2 = next_coord
-			break
-
-	# Normalize coords to place in proper quadrant
-	norm_x = next_coord[0] - coord[0]
-	norm_y = next_coord[1] - coord[1]
-
-	# Get angle of seg
-	seg_angle = atan2(norm_y, norm_x)
-	# print('seg angle: {}'.format(degrees(seg_angle)))
-
-	# Get angle of offset line
-	if seg_side == 'L':
-		offset_angle = seg_angle + (pi / 2)
-	else:
-		offset_angle = seg_angle - (pi / 2)
-	# print('offset angle: {}'.format(degrees(offset_angle)))
-
-	# Get offset point
-	delta_x = cos(offset_angle) * distance
-	delta_y = sin(offset_angle) * distance
-	x = xsect_x + delta_x
-	y = xsect_y + delta_y
-	return Point([x, y])
+# def interpolate_buffered(line, distance_ratio, _buffer):
+# 	'''
+# 	Interpolate along a line with a buffer at both ends.
+# 	'''
+# 	length = line.length
+# 	buffered_length = length - (_buffer * 2)
+# 	buffered_distance = distance_ratio * buffered_length
+# 	absolute_distance = _buffer + buffered_distance
+# 	return line.interpolate(absolute_distance)
+#
+# def offset(line, point, distance, seg_side):
+# 	# line = line[0]  # Get first part of multipart
+#
+# 	# Check for vertical line
+# 	if line.coords[0][0] == line.coords[1][0]:
+# 		pt_0 = line.coords[0]
+# 		pt_1 = line.coords[1]
+# 		upwards = True if pt_1[1] > pt_0[1] else False
+# 		if (upwards and seg_side == 'R') or (not upwards and seg_side == 'L'):
+# 			x_factor = 1
+# 		else:
+# 			x_factor = -1
+# 		return Point([point.x + (distance * x_factor), point.y])
+#
+# 	assert None not in [line, point]
+# 	assert distance > 0
+# 	assert seg_side in ['L', 'R']
+#
+# 	xsect_x = point.x
+# 	xsect_y = point.y
+# 	coord_1 = None
+# 	coord_2 = None
+#
+# 	# Find coords on either side of intersect point
+# 	for i, coord in enumerate(line.coords[:-1]):
+# 		coord_x, coord_y = coord
+# 		next_coord = line.coords[i + 1]
+# 		next_coord_x, next_coord_y = next_coord
+# 		sandwich_x = coord_x < xsect_x < next_coord_x
+# 		sandwich_y = coord_y <= xsect_y <= next_coord_y
+# 		if sandwich_x or sandwich_y:
+# 			coord_1 = coord
+# 			coord_2 = next_coord
+# 			break
+#
+# 	# Normalize coords to place in proper quadrant
+# 	norm_x = next_coord[0] - coord[0]
+# 	norm_y = next_coord[1] - coord[1]
+#
+# 	# Get angle of seg
+# 	seg_angle = atan2(norm_y, norm_x)
+# 	# print('seg angle: {}'.format(degrees(seg_angle)))
+#
+# 	# Get angle of offset line
+# 	if seg_side == 'L':
+# 		offset_angle = seg_angle + (pi / 2)
+# 	else:
+# 		offset_angle = seg_angle - (pi / 2)
+# 	# print('offset angle: {}'.format(degrees(offset_angle)))
+#
+# 	# Get offset point
+# 	delta_x = cos(offset_angle) * distance
+# 	delta_y = sin(offset_angle) * distance
+# 	x = xsect_x + delta_x
+# 	y = xsect_y + delta_y
+# 	return Point([x, y])
 
 if WRITE_OUT:
 	print('Dropping indexes...')
@@ -224,9 +225,18 @@ curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
 parcel_curb_map = {}  # parcel_id => curb_id
+pwd_parcel_curb_map = {}
+dor_parcel_curb_map = {}
 parcel_curb_rows = parcel_curb_table.read()
-parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
+# parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
+parcel_curb_map = {}
+pwd_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'pwd'}
+dor_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'dor'}
+parcel_curb_map['dor'] = dor_parcel_curb_map
+parcel_curb_map['pwd'] = pwd_parcel_curb_map
 
+# with open("parcel_curb_map_output.txt", "w") as text_file:
+#     print("parcel_curb_map: {}".format(parcel_curb_map), file=text_file)
 
 print('Reading addresses from AIS...')
 address_rows = address_table.read(fields=address_fields, \
@@ -275,10 +285,6 @@ for addr_parcel_row in addr_parcel_rows:
 	addr_parcel_map.setdefault(street_address, {})
 	addr_parcel_map[street_address].setdefault(parcel_source, [])
 	addr_parcel_map[street_address][parcel_source].append(parcel_row_id)
-	
-	# if not street_address in addr_parcel_map:
-	# 	addr_parcel_map[street_address] = {}
-	# addr_parcel_map[street_address][parcel_source] = parcel_id
 
 '''
 MAIN
@@ -290,10 +296,6 @@ geocode_count = 0
 
 # address-parcels to insert from spatial match
 address_parcels = []
-num_multiple_parcel_matches = 0
-num_null_xsect_pts = 0
-num_no_seg_shp = 0
-num_parcel_id_not_in_pcurb_map = 0
 
 for i, address_row in enumerate(address_rows):
 	try:
@@ -363,17 +365,17 @@ for i, address_row in enumerate(address_rows):
 			# print('Old intersect: {}'.format(seg_xsect_xy_old))
 
 			# New method: interpolate buffered
-			seg_xsect_xy = interpolate_buffered(seg_shp, distance_ratio, \
+			seg_xsect_xy = util.interpolate_buffered(seg_shp, distance_ratio, \
 				centerline_end_buffer)
 			# print('Intersect: {}'.format(seg_xsect_xy))
 
-			seg_xy = offset(seg_shp, seg_xsect_xy, centerline_offset, \
+			seg_xy = util.offset(seg_shp, seg_xsect_xy, centerline_offset, \
 				seg_side)
 			# print('Offset to {}: {}'.format(seg_side, seg_xy))
 			geocode_rows.append({
 				# 'address_id': address_id,
 				'street_address': street_address,
-				'geocode_type': 'centerline',
+				'geocode_type': geocode_priority_map['centerline'],
 				# 'estimated': '1' if seg_estimated else '0',
 				'geom': dumps(seg_xy)
 			})
@@ -397,15 +399,15 @@ for i, address_row in enumerate(address_rows):
 			
 			# true_xsect_xy = seg_shp.interpolate(true_distance_ratio, \
 			# 	normalized=True)
-			true_xsect_xy = interpolate_buffered(seg_shp, true_distance_ratio, \
+			true_xsect_xy = util.interpolate_buffered(seg_shp, true_distance_ratio, \
 				centerline_end_buffer)
-			true_seg_xy = offset(seg_shp, true_xsect_xy, centerline_offset, \
+			true_seg_xy = util.offset(seg_shp, true_xsect_xy, centerline_offset, \
 				seg_side)
 			# print('true: {}'.format(true_seg_xy))
 			geocode_rows.append({
 				# 'address_id': address_id,
 				'street_address': street_address,
-				'geocode_type': 'true_range',
+				'geocode_type': geocode_priority_map['true_range'],
 				# 'estimated': '1' if true_estimated else '0',
 				'geom': dumps(true_seg_xy)
 			})
@@ -431,19 +433,10 @@ for i, address_row in enumerate(address_rows):
 				if len(parcel_ids) == 1:
 					parcel_id = parcel_ids[0]
 					parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
-					# except KeyError:
-					# 	if parcel_id is None:
-					# 		print(street_address)
-					# 		print('nonasdfsadfe')
-					# 	sys.exit()
-						# pprint(parcel_xy_map[parcel_layer_name])
-						# print(parcel_source)
-						# print(parcel_id)
-						# sys.exit()
 					geocode_rows.append({
 						# 'address_id': address_id,
 						'street_address':	street_address,
-						'geocode_type': 	source_table,
+						'geocode_type': 	geocode_priority_map[source_table],
 						# 'estimated': 		'0',
 						'geom':			dumps(parcel_xy)
 					})
@@ -453,8 +446,9 @@ for i, address_row in enumerate(address_rows):
 					# TODO: could get the combined centroid of the parcels,
 					# if they're adjacent
 					#print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
-					num_multiple_parcel_matches += 1
+					#num_multiple_parcel_matches += 1
 					parcel_id = None
+					parcel_xy = None
 
 			elif seg_id:
 				'''
@@ -463,7 +457,7 @@ for i, address_row in enumerate(address_rows):
 
 				for test_offset in range(10, 50, 10):
 					# Get test XY
-					test_xy_shp = offset(seg_shp, true_xsect_xy, \
+					test_xy_shp = util.offset(seg_shp, true_xsect_xy, \
 						test_offset, seg_side)
 					test_xy_wkt = dumps(test_xy_shp)
 
@@ -489,7 +483,7 @@ for i, address_row in enumerate(address_rows):
 						parcel_match_wkt = parcel_match['wkt']
 						geocode_rows.append({
 							'street_address': street_address,
-							'geocode_type': source_table + '_spatial',
+							'geocode_type': geocode_priority_map[source_table + '_spatial'],
 							# 'estimated': '1',
 							# 'geometry': dumps(pwd_parcel_xy)
 							'geom': parcel_match_wkt,
@@ -507,57 +501,47 @@ for i, address_row in enumerate(address_rows):
 
 
 			'''
-			CURBSIDE
+			CURBSIDE & IN_STREET (MIDPOINT B/T CURB & CENTERLINE)
 			'''
 
 
 			if seg_id and parcel_id:
 				# TODO: use pwd parcel if matched spatially
-				parcel_id = str(parcel_id) if isinstance(parcel_id, int) else parcel_id
-				if parcel_id in parcel_curb_map and seg_shp is not None:
-					#print(parcel_id)
-					#print("curbside")
-					curb_id = parcel_curb_map[parcel_id]
+				parcel_id = str(parcel_id)
+				if parcel_id in parcel_curb_map[parcel_layer_name] and seg_shp is not None:
+					curb_id = parcel_curb_map[parcel_layer_name][parcel_id]
 					curb_shp = curb_map[curb_id]
 
 					# Project parcel centroid to centerline
-					proj_dist = seg_shp.project(parcel_xy)
-					proj_xy = seg_shp.interpolate(proj_dist)
-					proj_shp = LineString([parcel_xy, proj_xy])
+					if parcel_xy:
+						proj_dist = seg_shp.project(parcel_xy)
+						proj_xy = seg_shp.interpolate(proj_dist)
+						proj_shp = LineString([parcel_xy, proj_xy])
 
-					# Get point of intersection and add
-					xsect_line_shp = curb_shp.intersection(proj_shp)
-					xsect_pt = None
-					if isinstance(xsect_line_shp, LineString):
-						xsect_pt = xsect_line_shp.coords[1]
-					elif isinstance(xsect_line_shp, MultiLineString):
-						xsect_pt = xsect_line_shp[-1:][0].coords[1]
-					else:
-						num_null_xsect_pts += 1
-					if xsect_pt:
-						xsect_pt_shp = Point(xsect_pt)
-						#print(xsect_pt_shp, dumps(xsect_pt_shp))
-
-						curb_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': 'curb',
-							#'estimated': '0',
-							'geom': dumps(xsect_pt_shp)
-						}
-						# Get midpoint between proj_xy and xsect_pt
-						xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
-						xy_in_st_shape = Point(xy_in_street)
-						in_st_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': 'in_street',
-							# 'estimated': '0',
-							'geom': dumps(xy_in_st_shape)
-						}
-						geocode_rows.append(curb_geocode_row)
-						geocode_rows.append(in_st_geocode_row)
-				elif seg_shp is not None:
-					#print("parcel id not in parcel_curb_map :", parcel_source, parcel_id)
-					num_parcel_id_not_in_pcurb_map += 1
+						# Get point of intersection and add
+						xsect_line_shp = curb_shp.intersection(proj_shp)
+						xsect_pt = None
+						if isinstance(xsect_line_shp, LineString):
+							xsect_pt = xsect_line_shp.coords[1]
+						elif isinstance(xsect_line_shp, MultiLineString):
+							xsect_pt = xsect_line_shp[-1:][0].coords[1]
+						if xsect_pt:
+							xsect_pt_shp = Point(xsect_pt)
+							curb_geocode_row = {
+								'street_address': street_address,
+								'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
+								'geom': dumps(xsect_pt_shp)
+							}
+							# Get midpoint between proj_xy and xsect_pt
+							xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
+							xy_in_st_shape = Point(xy_in_street)
+							in_st_geocode_row = {
+								'street_address': street_address,
+								'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
+								'geom': dumps(xy_in_st_shape)
+							}
+							geocode_rows.append(curb_geocode_row)
+							geocode_rows.append(in_st_geocode_row)
 
 
 	except ValueError as e:
@@ -566,10 +550,7 @@ for i, address_row in enumerate(address_rows):
 	except Exception:
 		print(traceback.format_exc())
 		sys.exit()
-# print("num_multiple_parcel_matches: ", num_multiple_parcel_matches)
-# print("num_null_xsect_pts: ", num_null_xsect_pts)
-# print("num_parcel_id_not_in_pcurb_map: ", num_parcel_id_not_in_pcurb_map)
-# print("num_no_seg_shp: ", num_no_seg_shp)
+
 if WRITE_OUT:
 	print('Writing XYs...')
 	geocode_table.write(geocode_rows, chunk_size=150000)

@@ -2,7 +2,8 @@ import copy
 import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
-from sqlalchemy import or_
+from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
+from sqlalchemy import func, and_
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -13,21 +14,48 @@ Parser = app.config['PARSER']
 parser = Parser()
 config = app.config
 ENGINE_SRID = config['ENGINE_SRID']
+default_SRID = 4326
 
 ###########
 # STREETS #
 ###########
 
+# class Street(db.Model):
+#     """A street centerline."""
+#     predir = db.Column(db.Text, nullable=False)
+#     name = db.Column(db.Text, nullable=False)
+#     suffix = db.Column(db.Text, nullable=False)
+#     postdir = db.Column(db.Text, nullable=False)
+#     full = db.Column(db.Text, unique=True, index=True, nullable=False)
+#     code = db.Column(db.Integer, unique=True, index=True, nullable=False)
+#     segs = addresses = db.relationship('Address', backref='person',
+#                                 lazy='dynamic')
+
+class StreetSegmentQuery(BaseQuery):
+
+    def filter_by_seg_id(self, seg_id):
+        query = self.filter(StreetSegment.seg_id==seg_id)
+        return query.limit(1)
+
+
 class StreetSegment(db.Model):
     """A segment of a street centerline."""
+    query_class = StreetSegmentQuery
+
     id = db.Column(db.Integer, primary_key=True)
     seg_id = db.Column(db.Integer)
     street_code = db.Column(db.Integer)
+    #street_code = db.Column(db.Integer, db.ForeignKey('street.code'))
     street_predir = db.Column(db.Text)
+    #street_predir = db.Column(db.Text, db.ForeignKey('street.predir'))
     street_name = db.Column(db.Text)
+    #street_name = db.Column(db.Text, db.ForeignKey('street.name'))
     street_suffix = db.Column(db.Text)
+    #street_suffix = db.Column(db.Text, db.ForeignKey('street.suffix'))
     street_postdir = db.Column(db.Text)
+    #street_postdir = db.Column(db.Text, db.ForeignKey('street.postdir'))
     street_full = db.Column(db.Text)
+    #street_full = db.Column(db.Text, db.ForeignKey('street.full'))
     left_from = db.Column(db.Integer)
     left_to = db.Column(db.Integer)
     right_from = db.Column(db.Integer)
@@ -59,8 +87,6 @@ class StreetAlias(db.Model):
 class StreetIntersectionQuery(BaseQuery):
 
     def choose_one(self):
-        #print(self.query)
-        #print(type(self))
         query = self.order_by(StreetIntersection.geom)
         return query.limit(1)
 
@@ -282,7 +308,7 @@ class Address(db.Model):
             'unit_type':            c['address_unit']['unit_type'],                # passyunk change
             'unit_num':             c['address_unit']['unit_num'],                 # passyunk change
             'street_full':          c['street']['full'],
-            'street_address':       c['street_address'],
+            'street_address':       c['output_address'],
             'zip_code':             c['mailing']['zipcode'],
             'zip_4':                c['mailing']['zip4'],
         }
@@ -318,15 +344,6 @@ class Address(db.Model):
             if g.geocode_type == geocode_type:
                 return g
         return None
-
-    # @property
-    # def zip_code(self):
-    #     #return self.zip_info.zip_range.zip_code if self.zip_info else None
-    #
-    # @property
-    # def zip_4(self):
-    #     #return self.zip_info.zip_range.zip_4 if self.zip_info else None
-
 
     @property
     def pwd_parcel_id(self):
@@ -572,7 +589,8 @@ class Geocode(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
-    geocode_type = db.Column(db.Text)     # parcel, curb, street
+    #geocode_type = db.Column(db.Text)     # parcel, curb, street
+    geocode_type = db.Column(db.Integer)  # parcel, curb, street
     geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
 class Curb(db.Model):
@@ -696,6 +714,7 @@ class AddressSummaryQuery(BaseQuery):
 
     def filter_by_unit_type(self, unit_type):
         if not unit_type:
+        #if not unit_type or unit_type == '':
             return self
 
         synonymous_unit_types = ('APT', 'UNIT', '#', 'STE')
@@ -705,7 +724,7 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self.filter_by(unit_type=unit_type)
 
-    def include_child_units(self, should_include=True, is_range=False, is_unit=False):
+    def include_child_units(self, should_include=True, is_range=False, is_unit=False, request=None):
         """
         Find units of a set of addresses. If an address is a part of a ranged
         address, find all units in that parent range.
@@ -752,15 +771,18 @@ class AddressSummaryQuery(BaseQuery):
 
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
+
+        # get geom for each child
         range_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
-            .filter( AddressLink.address_2.in_(range_child_addresses.subquery()))
+            .filter(AddressLink.address_2.in_(range_child_addresses.subquery()))
 
+        #get geom from parent
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
-            .filter( AddressLink.address_2.in_(non_child_addresses.subquery()))
+            .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
 
         return self.union(range_child_units).union(non_child_units)
 
@@ -801,6 +823,117 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
+
+    def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=default_SRID, request=None):
+        # if self.first() and parcel_geocode_location and 'on_street' not in request.args:
+        if self.first():
+            # If request arg parcel_geocode_location is included (and if on_street arg is not),
+            # get address geom_data from geocode table where geocode_type = value specified in request arg.
+            # parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
+            parcel_geocode_location_val = config['ADDRESS_SUMMARY']['geocode_priority'][str(parcel_geocode_location)]
+            print(parcel_geocode_location_val)
+
+            geocode_xy_join = self \
+                .outerjoin(Geocode, Geocode.street_address==AddressSummary.street_address) \
+                .filter(Geocode.geocode_type == parcel_geocode_location_val) \
+                .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
+            # .add_columns(Geocode.geom, Geocode.geocode_type)
+
+            # If geom exists for geocode_type specified in request.args, return, else return default best geocode type
+            if geocode_xy_join.first():
+                return geocode_xy_join
+            else:
+                # If geom doesn't exist for geocode_type specified in request.arg (or if specified geocode_type doesn't exist),
+                # return result of query without flag (set i=1 so all geocode_location flags are ignored)
+                return self.get_address_geoms(request=request, i=1)
+
+        else:
+            return self
+
+
+    def get_parcel_geocode_on_street(self, on_street=True, srid=default_SRID, request=None):
+        # If request arg "on_street" is included, get address geom_data from geocode table where
+        # highest available priority geocode_types_on_street is selected
+        if self.first() and on_street:
+
+            geocode_xy_join = self \
+                .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
+
+            for geocode_type in [3,4,5]:
+
+                on_street_xy_row = geocode_xy_join \
+                    .filter(Geocode.geocode_type == geocode_type) \
+                    .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
+
+                if on_street_xy_row.first():
+
+                    return on_street_xy_row
+                    break
+
+        else:
+            # call get_address_geoms but skip get_parcel_geocode_on_street method by setting i=1:
+            return self.get_address_geoms(request=request, i=1)
+
+    def get_parcel_geocode_on_curb(self, on_curb=True, srid=default_SRID, request=None):
+        # If request arg "on_curb" is included, get address geom_data from geocode table where
+        # highest available priority geocode_types_on_street is selected
+        if self.first() and on_curb:
+
+            geocode_xy_join = self \
+                .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
+
+            for geocode_type in [7,8,5]:
+
+                on_curb_xy_row = geocode_xy_join \
+                    .filter(Geocode.geocode_type == geocode_type) \
+                    .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
+
+                if on_curb_xy_row.first():
+
+                    return on_curb_xy_row
+                    break
+
+        else:
+            # call get_address_geoms but skip get_parcel_geocode_on_curb method by setting i=1:
+            return self.get_address_geoms(request=request, i=1)
+
+    def get_address_geoms(self, request=None, i=0):
+
+        if self.first():
+
+            srid = request.args.get('srid') if 'srid' in request.args else default_SRID
+
+            if 'parcel_geocode_location' in request.args and i==0:
+                parcel_geocode_location = request.args.get('parcel_geocode_location')
+                return self.get_parcel_geocode_location(parcel_geocode_location=parcel_geocode_location, srid=srid, request=request)
+
+            elif 'on_street' in request.args and i==0:
+                return self.get_parcel_geocode_on_street(on_street=True, srid=srid, request=request)
+
+            elif 'on_curb' in request.args and i==0:
+                return self.get_parcel_geocode_on_curb(on_curb=True, srid=srid, request=request)
+
+            stmt = self.with_entities(AddressSummary.street_address.label('street_address')).subquery()
+            add_subq = aliased(AddressSummary, stmt)
+
+            geo_subq = db.session.query(
+                Geocode.street_address, func.min(Geocode.geocode_type).label('geocode_type'))  \
+                .filter(Geocode.street_address == add_subq.street_address) \
+                .group_by(Geocode.street_address) \
+                .subquery()
+
+            geocode_xy_join = self \
+                .join(geo_subq, geo_subq.c.street_address == AddressSummary.street_address)\
+                .add_columns(geo_subq.c.geocode_type)\
+                .join(Geocode, and_(Geocode.street_address == AddressSummary.street_address, Geocode.geocode_type == geo_subq.c.geocode_type)) \
+                .add_columns(ST_Transform(Geocode.geom, srid))
+
+            return geocode_xy_join
+
+        else:
+            return self
+
+
 try:
     class ServiceAreaSummary(db.Model):
         __table__ = db.Table('service_area_summary',
@@ -838,9 +971,9 @@ class AddressSummary(db.Model):
     street_code = db.Column(db.Integer)
     seg_id = db.Column(db.Integer)
     seg_side = db.Column(db.Text)
-    pwd_parcel_id = db.Column(db.Text)
-    dor_parcel_id = db.Column(db.Text)
-    opa_account_num = db.Column(db.Text)
+    pwd_parcel_id = db.Column(db.Text, index=True)
+    dor_parcel_id = db.Column(db.Text, index=True)
+    opa_account_num = db.Column(db.Text, index=True)
     opa_owners = db.Column(db.Text)
     opa_address = db.Column(db.Text)
     info_residents = db.Column(db.Text)
@@ -852,6 +985,10 @@ class AddressSummary(db.Model):
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
+    # geocode_curb_x = db.Column(db.Float)
+    # geocode_curb_y = db.Column(db.Float)
+    geocode_street_x = db.Column(db.Float)
+    geocode_street_y = db.Column(db.Float)
 
     geocodes = db.relationship(
         'Geocode',
@@ -893,8 +1030,10 @@ class AddressSummary(db.Model):
         uselist=False)
 
     __table_args__ = (
-        db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
-        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree')
+        #db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),
+        #db.Index('address_summary_pwd_parcel_id_idx', 'pwd_parcel_id', postgresql_using='btree'),
+        #db.Index('address_summary_dor_parcel_id_idx', 'dor_parcel_id', postgresql_using='btree'),
+        db.Index('address_summary_sort_idx', street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num, postgresql_using='btree'),
     )
 
     @property

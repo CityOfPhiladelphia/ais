@@ -711,19 +711,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'snow_category',
-        #     'name':                 'Snow Category',
-        #     'description':          '',
-        #     'sources': {
-        #         'line_single': {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_streets.SNOWCAT_WS',
-        #             'seg_id_field':         'seg_id',
-        #             'value_field':          'snowcat',
-        #         },
-        #     },
-        # },
         {
             'layer_id':             'sanitation_area',
             'name':                 'Sanitation Area',
@@ -986,6 +973,28 @@ ADDRESS_SUMMARY = {
         # 'centerline',
         # 'curb',
     ],
+    # 'geocode_types_on_curb': [
+    #     'pwd_curb',
+    #     'dor_curb',
+    # ],
+    'geocode_types_in_street': [
+        'pwd_street',
+        'dor_street',
+        'true_range',
+    ],
+    'geocode_priority': {
+        'dor_curb': 8,
+        'pwd_curb': 7,
+        'true_range': 5,
+        'dor_street': 4,
+        'pwd_street': 3,
+        'pwd_parcel': 1,
+        'dor_parcel': 2,
+        'centerline': 6,
+        'pwd_parcel_spatial': 9,
+        'dor_parcel_spatial': 10
+    },
+
     # Max number of attribute values to pipe-delimit
     'max_values':           5,
     # TODO: strip out relationship fields from tag fields

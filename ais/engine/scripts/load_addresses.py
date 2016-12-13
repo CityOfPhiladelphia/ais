@@ -214,11 +214,17 @@ for source in sources:
             # Try parsing
             parsed_address = parsed_addresses.get(source_address)
             if parsed_address is None:
+                # Passyunk no longer raising errors
                 try:
                     parsed_address = parser.parse(source_address)
                     parsed_addresses[source_address] = parsed_address
-                except ValueError:
-                    raise ValueError('Could not parse')
+
+                except:
+                   raise ValueError('Could not parse')
+
+            if parsed_address['type'] == "none":
+                raise ValueError('Unknown address type')
+
             address = Address(parsed_address)
 
             # Get street address and map to source address
@@ -386,7 +392,10 @@ for i, address in enumerate(addresses):
         street_range_map[street_full].append(address)
 
     base_address = address.base_address
-    if address.unit_type is not None:
+    # # Old method - only get 'has_base' link for addresses with units
+    #if address.unit_type is not None:
+    # # New method - get 'has_base' link for addresses with units AND addresses with number suffixes
+    if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
             base_address_map[base_address] = []
         base_address_map[base_address].append(address)
@@ -401,12 +410,16 @@ for i, address in enumerate(addresses):
     if i % 100000 == 0:
         print(i)
 
-    if address.unit_type is not None:
+    # # Old Method: only include address with unit_type in 'has_base' link set
+    #if address.unit_type is not None
+    # # New Method: include addresses with low_suffixes in 'has_base' link set
+    if address.unit_type is not None or address.address_low_suffix is not None:
         # Base link
         base_link = {
             'address_1':        address.street_address,
             'relationship':     'has base',
-            'address_2':        address.base_address,
+            #'address_2': address.base_address,
+            'address_2':        address.base_address_no_suffix,
         }
         links.append(base_link)
 
