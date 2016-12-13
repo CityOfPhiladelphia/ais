@@ -98,7 +98,8 @@ def project_shape(shape, from_srid, to_srid):
 def geom_to_shape(geom, from_srid, to_srid):
     from geoalchemy2.shape import to_shape
     shape = to_shape(geom)
-    return project_shape(shape, from_srid, to_srid)
+    return shape
+	#return project_shape(shape, from_srid, to_srid)
 
 
 def interpolate_buffered(line, distance_ratio, _buffer):

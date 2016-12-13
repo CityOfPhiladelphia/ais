@@ -2,8 +2,10 @@ import json
 from collections import OrderedDict
 from ais import util, models
 from geoalchemy2.shape import to_shape
+from geoalchemy2.functions import ST_X, ST_Y
 from shapely import wkt
 from ais import app, app_db as db
+config = app.config
 from itertools import chain
 
 class BaseSerializer:
@@ -197,22 +199,19 @@ class AddressJsonSerializer (GeoJSONSerializer):
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable object
+
+        geom = None
         if isinstance(address, Iterable) and not self.estimated:
 
-            address, parcel_geocode_location_shape, geocode_response_type = address
-            # If joined geom is empty, keep shape = None and get shape by default from geocode_x, geocode_y
-            shape = self.geom_to_shape(parcel_geocode_location_shape) if parcel_geocode_location_shape is not None else None
+            address, geocode_response_type, geom = address
+            gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
+            geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])  # Prints george
 
-        if not shape:
-            from shapely.geometry import Point
-            shape = Point(address.geocode_x, address.geocode_y)
-
-        shape = self.project_shape(shape)
-        geom_data = self.shape_to_geodict(shape)
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} if not self.estimated else {'geocode_type': 'true range'}
+        shape = self.geom_to_shape(geom) if not shape else shape
+        geom_data = self.shape_to_geodict(shape)
         geom_data.update(geom_type)
         geom_data.move_to_end('geocode_type', last=False)
-
 
         # Build the set of associated service areas
         sa_data = OrderedDict()

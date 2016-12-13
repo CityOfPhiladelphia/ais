@@ -23,6 +23,7 @@ from ais import app_db as db
 from itertools import chain
 import re
 
+config = app.config
 default_srid = 4326
 # parser_search_type_map = {
 #     'address': 'addresses_view',
@@ -268,10 +269,10 @@ def addresses_view(query):
         .include_child_units(
             'include_units' in request.args,
             is_range=high_num is not None,
-            is_unit=unit_type is not None) \
+            is_unit=unit_type is not None,
+            request=request) \
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_location('parcel_geocode_location' in request.args, request) \
-        .get_parcel_geocode_in_street('in_street' in request.args)
+        .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -282,10 +283,6 @@ def addresses_view(query):
     if addresses_count == 0:
         # # Try to cascade to street centerline segment
         return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
-        # Or alternately raise error:
-        # error = json_error(404, 'Could not find addresses matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -348,7 +345,7 @@ def block_view(query):
         .filter(AddressSummary.address_low < block_num + 100)\
         .exclude_children()\
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_in_street('in_street' in request.args)
+        .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -389,7 +386,7 @@ def owner(query):
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts)\
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_in_street('in_street' in request.args) \
+        .get_address_geoms(request) \
         .order_by_address()
 
     paginator = QueryPaginator(addresses)
@@ -435,7 +432,7 @@ def account_number_view(number):
     addresses = AddressSummary.query\
         .filter(AddressSummary.opa_account_num==number)\
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_in_street('in_street' in request.args) \
+        .get_address_geoms(request) \
         .order_by_address()
 
 
@@ -475,7 +472,7 @@ def pwd_parcel(id):
     addresses = AddressSummary.query\
         .filter(AddressSummary.pwd_parcel_id==id) \
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_in_street('in_street' in request.args) \
+        .get_address_geoms(request) \
         .order_by_address()
 
     addresses = addresses.order_by_address()
@@ -517,7 +514,7 @@ def dor_parcel(id):
     addresses = AddressSummary.query\
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
         .exclude_non_opa('opa_only' in request.args) \
-        .get_parcel_geocode_in_street('in_street' in request.args) \
+        .get_address_geoms(request) \
         .order_by_address()
 
     addresses = addresses.order_by_address()

@@ -50,6 +50,7 @@ addr_parcel_table = db['address_parcel']
 true_range_view = db['true_range']
 centerline_offset = config['GEOCODE']['centerline_offset']
 centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
+geocode_priority_map = config['ADDRESS_SUMMARY']['geocode_priority']
 WRITE_OUT = True
 
 # DEV - use this to work on only one street name at a time
@@ -374,7 +375,7 @@ for i, address_row in enumerate(address_rows):
 			geocode_rows.append({
 				# 'address_id': address_id,
 				'street_address': street_address,
-				'geocode_type': 'centerline',
+				'geocode_type': geocode_priority_map['centerline'],
 				# 'estimated': '1' if seg_estimated else '0',
 				'geom': dumps(seg_xy)
 			})
@@ -406,7 +407,7 @@ for i, address_row in enumerate(address_rows):
 			geocode_rows.append({
 				# 'address_id': address_id,
 				'street_address': street_address,
-				'geocode_type': 'true_range',
+				'geocode_type': geocode_priority_map['true_range'],
 				# 'estimated': '1' if true_estimated else '0',
 				'geom': dumps(true_seg_xy)
 			})
@@ -435,7 +436,7 @@ for i, address_row in enumerate(address_rows):
 					geocode_rows.append({
 						# 'address_id': address_id,
 						'street_address':	street_address,
-						'geocode_type': 	source_table,
+						'geocode_type': 	geocode_priority_map[source_table],
 						# 'estimated': 		'0',
 						'geom':			dumps(parcel_xy)
 					})
@@ -482,7 +483,7 @@ for i, address_row in enumerate(address_rows):
 						parcel_match_wkt = parcel_match['wkt']
 						geocode_rows.append({
 							'street_address': street_address,
-							'geocode_type': source_table + '_spatial',
+							'geocode_type': geocode_priority_map[source_table + '_spatial'],
 							# 'estimated': '1',
 							# 'geometry': dumps(pwd_parcel_xy)
 							'geom': parcel_match_wkt,
@@ -528,7 +529,7 @@ for i, address_row in enumerate(address_rows):
 							xsect_pt_shp = Point(xsect_pt)
 							curb_geocode_row = {
 								'street_address': street_address,
-								'geocode_type': parcel_layer_name + '_curb',
+								'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
 								'geom': dumps(xsect_pt_shp)
 							}
 							# Get midpoint between proj_xy and xsect_pt
@@ -536,7 +537,7 @@ for i, address_row in enumerate(address_rows):
 							xy_in_st_shape = Point(xy_in_street)
 							in_st_geocode_row = {
 								'street_address': street_address,
-								'geocode_type': parcel_layer_name + '_street',
+								'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
 								'geom': dumps(xy_in_st_shape)
 							}
 							geocode_rows.append(curb_geocode_row)
