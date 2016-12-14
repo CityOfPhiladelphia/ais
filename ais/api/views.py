@@ -76,7 +76,7 @@ def unknown_cascade_view(**kwargs):
     centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
 
     if not seg_id:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(400, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
 
@@ -87,14 +87,14 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(400, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     if 'opa_only' in request.args:
-        error = json_error(404, 'Could not find any opa addresses matching query.',
+        error = json_error(400, 'Could not find any opa addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Make empty address object
     address = Address(parsed)
