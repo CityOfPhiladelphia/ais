@@ -207,7 +207,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])  # Prints george
 
-        geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} if not self.estimated else {'geocode_type': 'true range'}
+        geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
+            if not self.estimated['cascade_geocode_type'] else {'geocode_type': self.estimated['cascade_geocode_type']}
         shape = self.geom_to_shape(geom) if not shape else shape
         geom_data = self.shape_to_geodict(shape)
         geom_data.update(geom_type)

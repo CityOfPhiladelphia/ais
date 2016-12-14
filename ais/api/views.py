@@ -61,7 +61,7 @@ def handle_errors(e):
 @app.route('/unknown/<path:query>')
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
-
+    print("here")
     # TODO: IMPLEMENT ATTEMPT TO CASCADE TO BASE ADDRESS BEFORE CASCADE TO STREET SEGMENT
 
     query = kwargs.get('query')
@@ -114,13 +114,22 @@ def unknown_cascade_view(**kwargs):
                 '''.format(seg_id=cascadedseg.seg_id)
     true_range_result = db.engine.execute(true_range_stmt).fetchall()
     true_range_result = list(chain(*true_range_result))
-    # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
-    if true_range_result:
-        side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
-            else true_range_result[1] - true_range_result[0]
+    # # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
+    # if true_range_result:
+    #     side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
+    # else true_range_result[1] - true_range_result[0]
+    cascade_geocode_type = None
+
+    if true_range_result and seg_side=="R" and true_range_result[3] is not None and true_range_result[2] is not None:
+        side_delta = true_range_result[3] - true_range_result[2]
+        cascade_geocode_type = 'true range'
+    elif true_range_result and seg_side=="L" and true_range_result[1] is not None and true_range_result[0] is not None:
+        side_delta = true_range_result[1] - true_range_result[0]
+        cascade_geocode_type = 'true range'
     else:
         side_delta = cascadedseg.right_to - cascadedseg.right_from if seg_side == "R" \
             else cascadedseg.left_to - cascadedseg.left_from
+        cascade_geocode_type = 'full range'
     if side_delta == 0:
         distance_ratio = 0.5
     else:
@@ -167,7 +176,7 @@ def unknown_cascade_view(**kwargs):
         srid=request.args.get('srid') if 'srid' in request.args else 4326,
         normalized_address=normalized_address,
         base_address=base_address,
-        estimated=True,
+        estimated={'cascade_geocode_type': cascade_geocode_type},
         shape=seg_xy,
         sa_data=sa_data
     )
