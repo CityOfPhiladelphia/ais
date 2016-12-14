@@ -599,7 +599,7 @@ def intersection(query):
 
     if intersections_count == 0:
         error = json_error(400, 'Could not find intersection matching query.',
-                           {'query': id})
+                           {'query': query})
         return json_response(response=error, status=400)
 
     # Validate the pagination
