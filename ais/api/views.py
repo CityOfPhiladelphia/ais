@@ -639,9 +639,11 @@ def search_view(query):
 
     # Limit queries to < 80 characters total:
     arg_len = 0
-    for arg in request.args:
-        arg_len += len(arg)
-    entry_length = len(query) + arg_len
+    entry_length = len(query)
+    if request.args:
+        for arg in request.args:
+            arg_len += len(arg)
+        entry_length = entry_length + arg_len
     if not entry_length < 80:
         error = json_error(400, 'Query exceeds character limit.',
                            {'query': query})
