@@ -648,19 +648,19 @@ SERVICE_AREAS = {
         #     },
         # },
 
-        # GIS_RECYCLE
-        {
-            'layer_id':             'recreation_district',
-            'name':                 'Recreation District',
-            'description':          '',
-            'sources': {
-                'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_orphan.Recreation_Districts',
-                    'value_field':          'dist_num',
-                },
-            },
-        },
+        # # GIS_RECYCLE
+        # {
+        #     'layer_id':             'recreation_district',
+        #     'name':                 'Recreation District',
+        #     'description':          '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_orphan.Recreation_Districts',
+        #             'value_field':          'dist_num',
+        #         },
+        #     },
+        # },
 
        # GIS_STREETS
         {
