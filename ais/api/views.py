@@ -78,7 +78,7 @@ def unknown_cascade_view(**kwargs):
     if not seg_id:
         error = json_error(400, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # CASCADE TO STREET SEGMENT
     cascadedseg = StreetSegment.query \
@@ -369,9 +369,9 @@ def block_view(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find any address on a block matching query.',
+        error = json_error(400, 'Could not find any address on a block matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -410,9 +410,9 @@ def owner(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find any addresses with owner matching query.',
+        error = json_error(400, 'Could not find any addresses with owner matching query.',
                            {'query': query})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -457,9 +457,9 @@ def account_number_view(number):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(400, 'Could not find addresses matching query.',
                            {'query': number})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -498,7 +498,7 @@ def pwd_parcel(id):
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
                            {'query': id})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -538,9 +538,9 @@ def dor_parcel(id):
 
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(400, 'Could not find addresses matching query.',
                            {'query': id})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -598,9 +598,9 @@ def intersection(query):
     intersections_count = paginator.collection_size
 
     if intersections_count == 0:
-        error = json_error(404, 'Could not find intersection matching query.',
+        error = json_error(400, 'Could not find intersection matching query.',
                            {'query': id})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -609,9 +609,9 @@ def intersection(query):
         return json_response(response=error, status=error['status'])
 
     if not intersections:
-        error = json_error(404, 'Could not find any intersection matching query.',
+        error = json_error(400, 'Could not find any intersection matching query.',
                            {'query': query_original, 'normalized': {'name_1': street_1_name, 'name_2': street_2_name}})
-        return json_response(response=error, status=200)
+        return json_response(response=error, status=400)
 
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
