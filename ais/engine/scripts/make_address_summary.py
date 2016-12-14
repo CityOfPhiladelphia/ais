@@ -25,6 +25,7 @@ geocode_table = db['geocode']
 address_table = db['address']
 max_values = config['ADDRESS_SUMMARY']['max_values']
 geocode_types = config['ADDRESS_SUMMARY']['geocode_types']
+geocode_priority_map = config['ADDRESS_SUMMARY']['geocode_priority']
 #geocode_types_on_curb = config['ADDRESS_SUMMARY']['geocode_types_on_curb']
 geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
 
@@ -92,6 +93,8 @@ geocode_rows = geocode_table.read( \
 geocode_map = {}  # street_address => [geocode rows]
 for geocode_row in geocode_rows:
     street_address = geocode_row['street_address']
+    geocode_type_str = (list(geocode_priority_map.keys())[list(geocode_priority_map.values()).index(geocode_row['geocode_type'])])
+    geocode_row['geocode_type'] = geocode_type_str
     if not street_address in geocode_map:
         geocode_map[street_address] = []
     geocode_map[street_address].append(geocode_row)
