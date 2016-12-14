@@ -367,3 +367,48 @@ def test_not_found(client):
         data = json.loads(response_content)
     except ValueError:
         raise Exception('Response is not JSON: {}'.format(response_content))
+
+def test_intersection_query(client):
+    # TODO: Make functional without street suffix (st)?
+    response = client.get('/search/n 3rd and market st')
+    data = json.loads(response.get_data().decode())
+    feature = data['features'][0]
+    assert feature['ais_feature_type'] == 'intersection'
+    assert_status(response, 200)
+
+def test_intersection_query_no_predir(client):
+    # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
+    response = client.get('/search/12th and chestnut')
+    data = json.loads(response.get_data().decode())
+    message = data['message']
+    status = data['status']
+    expected = "Could not find intersection matching query."
+    assert message == expected
+    assert_status(response, 200)
+
+def test_cascade_to_true_range(client):
+    response = client.get('/search/1050 filbert st')
+    data = json.loads(response.get_data().decode())
+    feature = data['features'][0]
+    assert feature['geometry']['geocode_type'] == 'true range'
+    assert feature['match_type'] == 'estimated'
+    assert_status(response, 200)
+
+def test_cascade_to_full_range(client):
+    response = client.get('/search/3551 ashfield lane')
+    data = json.loads(response.get_data().decode())
+    feature = data['features'][0]
+    assert feature['geometry']['geocode_type'] == 'full range'
+    assert feature['match_type'] == 'estimated'
+    assert_status(response, 200)
+
+def test_query_character_limit(client):
+    response = client.get('/search/1234%20market%20st?on_curb&ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd')
+    data = json.loads(response.get_data().decode())
+    message = data['message']
+    expected = "Query exceeds character limit."
+    assert message == expected
+    assert_status(response, 400)
+
+
+
