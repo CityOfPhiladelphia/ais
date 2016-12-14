@@ -267,7 +267,8 @@ def test_fractional_addresses_are_ok(client):
 
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
-    assert_status(response, 404)
+    # assert_status(response, 404)
+    assert_status(response, 200)
 
 def test_allows_0_as_block_low_num(client):
     response = client.get('/block/0 N Front St')
@@ -342,13 +343,14 @@ def test_block_can_exclude_non_opa(client):
     data = json.loads(response.get_data().decode())
     assert_num_results(data, block_count)
 
-def test_invalid_block_raises_400(client):
+def test_invalid_block_raises_200(client):
     response = client.get('/block/abcde')
-    assert_status(response, 400)
+    assert_status(response, 200)
 
 def test_owner_not_found(client):
     response = client.get('/owner/FLIBBERTIGIBBET')
-    assert_status(response, 404)
+    # assert_status(response, 404)
+    assert_status(response, 200)
 
 def test_general_responses_are_cached(client):
     response = client.get('/addresses/1234 Market St')

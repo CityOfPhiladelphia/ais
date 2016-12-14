@@ -76,9 +76,9 @@ def unknown_cascade_view(**kwargs):
     centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
 
     if not seg_id:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(200, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # CASCADE TO STREET SEGMENT
     cascadedseg = StreetSegment.query \
@@ -87,14 +87,14 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(200, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     if 'opa_only' in request.args:
-        error = json_error(404, 'Could not find any opa addresses matching query.',
+        error = json_error(200, 'Could not find any opa addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Make empty address object
     address = Address(parsed)
@@ -240,9 +240,9 @@ def addresses_view(query):
     search_type = parsed['type']
 
     if search_type != 'address':
-        error = json_error(400, 'Not a valid address.',
+        error = json_error(200, 'Not a valid address.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=400)
+        return json_response(response=error, status=200)
 
 
     # Match a set of addresses. Filters will either be loose, where an omission
@@ -343,9 +343,9 @@ def block_view(query):
                           if parsed['components']['address']['low_num'] is not None
                           else parsed['components']['address']['full'])
     except (TypeError, ValueError):
-        error = json_error(400, 'No valid block number provided.',
+        error = json_error(200, 'No valid block number provided.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=400)
+        return json_response(response=error, status=200)
 
     # Match a set of addresses
     block_num = ((address_num // 100) * 100)
@@ -369,9 +369,9 @@ def block_view(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find any address on a block matching query.',
+        error = json_error(200, 'Could not find any address on a block matching query.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -410,9 +410,9 @@ def owner(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find any addresses with owner matching query.',
+        error = json_error(200, 'Could not find any addresses with owner matching query.',
                            {'query': query})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -457,9 +457,9 @@ def account_number_view(number):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(200, 'Could not find addresses matching query.',
                            {'query': number})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -496,9 +496,9 @@ def pwd_parcel(id):
 
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(200, 'Could not find addresses matching query.',
                            {'query': id})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -538,9 +538,9 @@ def dor_parcel(id):
 
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(200, 'Could not find addresses matching query.',
                            {'query': id})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -598,9 +598,9 @@ def intersection(query):
     intersections_count = paginator.collection_size
 
     if intersections_count == 0:
-        error = json_error(404, 'Could not find intersection matching query.',
-                           {'query': id})
-        return json_response(response=error, status=404)
+        error = json_error(200, 'Could not find intersection matching query.',
+                           {'query': query})
+        return json_response(response=error, status=200)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -609,7 +609,7 @@ def intersection(query):
         return json_response(response=error, status=error['status'])
 
     if not intersections:
-        error = json_error(404, 'Could not find any intersection matching query.',
+        error = json_error(200, 'Could not find any intersection matching query.',
                            {'query': query_original, 'normalized': {'name_1': street_1_name, 'name_2': street_2_name}})
         return json_response(response=error, status=200)
 
@@ -634,42 +634,43 @@ def search_view(query):
     API Endpoint for various types of geocoding (not solely addresses)
     TODO: Implement batch geocoding endpoint
     """
-    query_original = query
+    #query_original = query
     query = query.strip('/')
 
-    # Limit queries to < 60 characters total:
+    # Limit queries to < 80 characters total:
     arg_len = 0
     for arg in request.args:
         arg_len += len(arg)
-    if len(query) + arg_len < 60:
-
-        # We are not supporting batch queries, so if attempted only take first query
-        query = query[:query.index(';')] if ';' in query else query
-
-        parser_search_type_map = {
-            'address': addresses_view,
-            'intersection_addr': intersection,
-            'opa_account': account_number_view,
-            'mapreg': dor_parcel,
-            'block': block_view,
-        }
-
-        parsed = PassyunkParser().parse(query)
-        search_type = parsed['type']
-
-        if search_type != 'none':
-            # get the corresponding view function
-            view = parser_search_type_map[search_type]
-            # call it
-            return view(query)
-
-        else:
-            # Handle search type = 'none:
-            error = json_error(400, 'Query not recognized.',
-                               {'query': query})
-            return json_response(response=error, status=404)
-
-    else:
+    entry_length = len(query) + arg_len
+    if not entry_length < 80:
         error = json_error(400, 'Query exceeds character limit.',
                            {'query': query})
-        return json_response(response=error, status=404)
+        return json_response(response=error, status=400)
+
+    #TODO: Check for illegal characters in query
+
+    # We are not supporting batch queries, so if attempted only take first query
+    query = query[:query.index(';')] if ';' in query else query
+
+    parser_search_type_map = {
+        'address': addresses_view,
+        'intersection_addr': intersection,
+        'opa_account': account_number_view,
+        'mapreg': dor_parcel,
+        'block': block_view,
+    }
+
+    parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
+
+    if search_type != 'none':
+        # get the corresponding view function
+        view = parser_search_type_map[search_type]
+        # call it
+        return view(query)
+
+    else:
+        # Handle search type = 'none:
+        error = json_error(200, 'Query not recognized.',
+                           {'query': query})
+        return json_response(response=error, status=200)
