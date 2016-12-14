@@ -142,14 +142,16 @@ def unknown_cascade_view(**kwargs):
     seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
 
     # GET INTERSECTING SERVICE AREAS
+    from ais.models import ENGINE_SRID
+
     sa_stmt = '''
                     with foo as (SELECT layer_id, value
                     from service_area_polygon
-                    where ST_Intersects(geom, ST_GeometryFromText('SRID=2272;{shape}')))
+                    where ST_Intersects(geom, ST_GeometryFromText('SRID={srid};{shape}')))
                     SELECT cols.layer_id, foo.value
                     from service_area_polygon cols
                     left join foo on foo.layer_id = cols.layer_id
-        '''.format(shape=seg_xy)
+        '''.format(shape=seg_xy, srid=ENGINE_SRID)
 
     result = db.engine.execute(sa_stmt)
 

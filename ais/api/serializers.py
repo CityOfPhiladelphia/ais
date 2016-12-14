@@ -141,7 +141,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type=None, geom_source=None, in_street=False, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=False, **kwargs):
+    def __init__(self, geom_type=None, geom_source=None, in_street=False, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -195,7 +195,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         from collections import Iterable
 
-        shape = self.shape
+        shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable object
