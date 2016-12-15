@@ -412,5 +412,14 @@ def test_query_character_limit(client):
     assert message == expected
     assert_status(response, 404)
 
+def test_match_type_for_address_not_having_address_link(client):
+    response = client.get('/search/1849 blair st')
+    data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
+    feature = data['features'][0]
+    match_type = feature['match_type']
+    assert match_type == 'exact'
+
+
 
 
