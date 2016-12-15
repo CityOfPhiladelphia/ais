@@ -234,6 +234,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
             #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
                 # # Version without related_addresses
             match_type = self.get_address_link_relationships(address.street_address, self.base_address) if not self.estimated else 'estimated'
+
+            # Hack to get a match_type if address isn't in address_link table:
+            match_type = 'exact' if not match_type else match_type
+
         else:
             match_type = cascade_geocode_type
             geom_data = {'geocode_type': None, 'type': None, 'coordinates': None}
