@@ -202,39 +202,48 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
+            # for i in address:
+            #     print(i)
 
             address, geocode_response_type, geom = address
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])  # Prints george
 
+        cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated['cascade_geocode_type'] else None
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
             if not self.estimated['cascade_geocode_type'] else {'geocode_type': self.estimated['cascade_geocode_type']}
-        shape = self.geom_to_shape(geom) if not shape else shape
-        geom_data = self.shape_to_geodict(shape)
-        geom_data.update(geom_type)
-        geom_data.move_to_end('geocode_type', last=False)
 
-        # Build the set of associated service areas
-        sa_data = OrderedDict()
-        if not self.estimated:
-            for col in address.service_areas.__table__.columns:
-                if col.name in ('id', 'street_address'):
-                    continue
-                sa_data[col.name] = getattr(address.service_areas, col.name)
+        if cascade_geocode_type != 'parsed':
+            shape = self.geom_to_shape(geom) if not shape else shape
+            geom_data = self.shape_to_geodict(shape)
+            geom_data.update(geom_type)
+            geom_data.move_to_end('geocode_type', last=False)
+
+            # Build the set of associated service areas
+            sa_data = OrderedDict()
+            if not self.estimated:
+                for col in address.service_areas.__table__.columns:
+                    if col.name in ('id', 'street_address'):
+                        continue
+                    sa_data[col.name] = getattr(address.service_areas, col.name)
+            else:
+                sa_data = self.sa_data
+
+            # # Get address link relationships
+                # # Version with match_type and related_addresses
+            #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
+                # # Version without related_addresses
+            match_type = self.get_address_link_relationships(address.street_address, self.base_address) if not self.estimated else 'estimated'
         else:
-            sa_data = self.sa_data
-
-        # # Get address link relationships
-            # # Version with match_type and related_addresses
-        #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
-            # # Version without related_addresses
-        match_type = self.get_address_link_relationships(address.street_address, self.base_address) if not self.estimated else 'estimated'
+            match_type = cascade_geocode_type
+            geom_data = {'geocode_type': None, 'type': None, 'coordinates': None}
+            sa_data = {}
 
         # Build the address feature, then attach tags and service areas
         data = OrderedDict([
             ('type', 'Feature'),
             ('ais_feature_type', 'address'),
-            ('match_type', match_type),
+            ('match_type', match_type if match_type else None),
             ('properties', OrderedDict([
                 ('street_address', address.street_address),
                 ('address_low', address.address_low),
@@ -277,9 +286,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
 class IntersectionJsonSerializer (GeoJSONSerializer):
 
-    def __init__(self, geom_type='centroid', geom_source=None, **kwargs):
+    def __init__(self, geom_type='centroid', geom_source=None, estimated=None, **kwargs):
         #self.geom_type = 'Point'
         #self.geom_source = geom_source
+        self.estimated = estimated
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -305,15 +315,17 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             shape = to_shape(intersection.geom)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
+            match_type = 'exact'
         else:
-            geom_data = None
+            geom_data = {'geocode_type': None, 'type': None, 'coordinates': None}
+            match_type = self.estimated['cascade_geocode_type']
 
         # Build the intersection feature, then attach properties
         #num_ints = intersection.int_ids.count('|') + 1
         data = OrderedDict([
             ('type', 'Feature'),
             ('ais_feature_type', 'intersection'),
-            ('match_type', 'exact'),
+            ('match_type', match_type),
             ('properties', OrderedDict([
                 #('intersection_ids', intersection.int_ids),
                 #('number of intersection points', num_ints),

@@ -267,7 +267,10 @@ def test_fractional_addresses_are_ok(client):
 
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
-    assert_status(response, 404)
+    data = json.loads(response.get_data().decode())
+    feature = data['features'][0]
+    assert_status(response, 200)
+    assert feature['match_type'] == 'parsed'
     # assert_status(response, 200)
 
 def test_allows_0_as_block_low_num(client):
@@ -372,27 +375,29 @@ def test_intersection_query(client):
     # TODO: Make functional without street suffix (st)?
     response = client.get('/search/n 3rd and market st')
     data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
     feature = data['features'][0]
     assert feature['ais_feature_type'] == 'intersection'
-    assert_status(response, 200)
+
 
 def test_intersection_query_no_predir(client):
     # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
     response = client.get('/search/12th and chestnut')
     data = json.loads(response.get_data().decode())
-    message = data['message']
-    status = data['status']
-    expected = "Could not find intersection matching query."
-    assert message == expected
-    assert_status(response, 404)
+    assert_status(response, 200)
+    feature = data['features'][0]
+    match_type = feature['match_type']
+    assert match_type == 'parsed'
+
 
 def test_cascade_to_true_range(client):
     response = client.get('/search/1050 filbert st')
     data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true range'
     assert feature['match_type'] == 'estimated'
-    assert_status(response, 200)
+
 
 def test_cascade_to_full_range(client):
     response = client.get('/search/3551 ashfield lane')

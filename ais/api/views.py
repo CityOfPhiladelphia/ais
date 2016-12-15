@@ -25,13 +25,6 @@ import re
 
 config = app.config
 default_srid = 4326
-# parser_search_type_map = {
-#     'address': 'addresses_view',
-#     'intersection_addr': 'intersection',
-#     'opa_account': 'account_number_view',
-#     'mapreg': 'dor_parcel'
-# }
-
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -57,11 +50,95 @@ def handle_errors(e):
     error = json_error(code, description, None)
     return json_response(response=error, status=code)
 
+def unmatched_response(**kwargs):
+    query = kwargs.get('query')
+    parsed = kwargs.get('parsed')
+    search_type = kwargs.get('search_type')
+    normalized_address = kwargs.get('normalized_address')
+    address = kwargs.get('address')
+
+    if search_type == 'intersection':
+        intersection = StreetIntersection()
+        intersection.street_1_full = parsed['components']['street']['full']
+        intersection.street_1_name = parsed['components']['street']['name']
+        intersection.street_1_code = parsed['components']['street']['street_code']
+        intersection.street_1_predir = parsed['components']['street']['predir']
+        intersection.street_1_postdir = parsed['components']['street']['postdir']
+        intersection.street_1_suffix = parsed['components']['street']['suffix']
+        intersection.street_2_full = parsed['components']['street_2']['full']
+        intersection.street_2_name = parsed['components']['street_2']['name']
+        intersection.street_2_code = parsed['components']['street_2']['street_code']
+        intersection.street_2_predir = parsed['components']['street_2']['predir']
+        intersection.street_2_postdir = parsed['components']['street_2']['postdir']
+        intersection.street_2_suffix = parsed['components']['street_2']['suffix']
+
+        intersection_page = (intersection,)
+        paginator = Paginator(intersection_page)
+
+        # Validate the pagination
+        page_num, error = validate_page_param(request, paginator)
+
+        if error:
+            return json_response(response=error, status=error['status'])
+
+        # Serialize the response:
+        intersections_page = paginator.get_page(page_num)
+        serializer = IntersectionJsonSerializer(
+            metadata={'search_type': search_type, 'query': query,
+                      'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args},
+            pagination=paginator.get_page_info(page_num),
+            estimated={'cascade_geocode_type': 'parsed'}
+        )
+
+        result = serializer.serialize_many(intersections_page)
+        # result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
+
+        return json_response(response=result, status=200)
+
+    if not address:
+        # Fake 'type' as 'address' in order to create Address object for AddressJsonSerializer response
+        parsed['type'] = 'address'
+        address = Address(parsed)
+        print(address)
+        address.street_address = parsed['components']['output_address']
+        address.street_code = parsed['components']['street']['street_code']
+        address.seg_id = parsed['components']['cl_seg_id']
+        address.usps_bldgfirm = parsed['components']['mailing']['bldgfirm']
+        address.usps_type = parsed['components']['mailing']['uspstype']
+        address.election_block_id = parsed['components']['election']['blockid']
+        address.election_precinct = parsed['components']['election']['precinct']
+        address.li_address_key = None
+        address.pwd_account_nums = None
+
+    addresses = (address,)
+    paginator = Paginator(addresses)
+    # addresses_count = paginator.collection_size
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        # return json_response(response=error, status=error['status'])
+        return json_response(response=error, status=404)
+
+    # Render the response
+    addresses_page = paginator.get_page(page_num)
+
+    # Use AddressJsonSerializer
+    serializer = AddressJsonSerializer(
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address,
+                  'search_params': request.args},
+        pagination=paginator.get_page_info(page_num),
+        estimated={'cascade_geocode_type': 'parsed'}
+    )
+    result = serializer.serialize_many(addresses_page)
+
+    return json_response(response=result, status=200)
+
 
 @app.route('/unknown/<path:query>')
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
-    print("here")
+    # print("here")
     # TODO: IMPLEMENT ATTEMPT TO CASCADE TO BASE ADDRESS BEFORE CASCADE TO STREET SEGMENT
 
     query = kwargs.get('query')
@@ -75,27 +152,6 @@ def unknown_cascade_view(**kwargs):
     centerline_offset = config['GEOCODE']['centerline_offset']
     centerline_end_buffer = config['GEOCODE']['centerline_end_buffer']
 
-    if not seg_id:
-        error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
-
-    # CASCADE TO STREET SEGMENT
-    cascadedseg = StreetSegment.query \
-        .filter_by_seg_id(seg_id)
-
-    cascadedseg = cascadedseg.first()
-
-    if not cascadedseg:
-        error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
-
-    if 'opa_only' in request.args:
-        error = json_error(404, 'Could not find any opa addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
-
     # Make empty address object
     address = Address(parsed)
 
@@ -108,6 +164,33 @@ def unknown_cascade_view(**kwargs):
     address.election_precinct = parsed['components']['election']['precinct']
     address.li_address_key = None
     address.pwd_account_nums = None
+
+    if not seg_id:
+        # error = json_error(404, 'Could not find addresses matching query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+                                  search_type=search_type, address=address)
+
+    # CASCADE TO STREET SEGMENT
+    cascadedseg = StreetSegment.query \
+        .filter_by_seg_id(seg_id)
+
+    cascadedseg = cascadedseg.first()
+
+    if not cascadedseg:
+        # error = json_error(404, 'Could not find addresses matching query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+                                  search_type=search_type, address=address)
+
+    if 'opa_only' in request.args:
+        # error = json_error(404, 'Could not find any opa addresses matching query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+                                  search_type=search_type, address=address)
 
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
@@ -123,7 +206,7 @@ def unknown_cascade_view(**kwargs):
     # if true_range_result:
     #     side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
     # else true_range_result[1] - true_range_result[0]
-    cascade_geocode_type = None
+    #cascade_geocode_type = None
 
     if true_range_result and seg_side=="R" and true_range_result[3] is not None and true_range_result[2] is not None:
         side_delta = true_range_result[3] - true_range_result[2]
@@ -176,7 +259,7 @@ def unknown_cascade_view(**kwargs):
     # Render the response
     addresses_page = paginator.get_page(page_num)
 
-    # Use cascaded seg serializer
+    # Use AddressJsonSerializer
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
@@ -369,9 +452,11 @@ def block_view(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find any address on a block matching query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
+        # error = json_error(404, 'Could not find any address on a block matching query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+                                  search_type=search_type)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -450,7 +535,6 @@ def account_number_view(number):
         .exclude_non_opa('opa_only' in request.args) \
         .get_address_geoms(request) \
         .order_by_address()
-
 
     paginator = QueryPaginator(addresses)
 
@@ -567,13 +651,11 @@ def intersection(query):
     '''
     query_original = query
     query = query.strip('/')
-    arg_len = 0
-    for arg in request.args:
-        arg_len += len(arg)
 
-    if len(query) + arg_len < 60:
-        parsed = PassyunkParser().parse(query)
-        search_type = parsed['type']
+    parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
+    search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
+    normalized = parsed['components']['output_address']
 
     street_1_full = parsed['components']['street']['full']
     street_1_name = parsed['components']['street']['name']
@@ -598,20 +680,17 @@ def intersection(query):
     intersections_count = paginator.collection_size
 
     if intersections_count == 0:
-        error = json_error(404, 'Could not find intersection matching query.',
-                           {'query': query})
-        return json_response(response=error, status=404)
+        # error = json_error(404, 'Could not find intersection matching query.',
+        #                    {'query': query_original, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
+                                  search_type=search_type)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
 
     if error:
         return json_response(response=error, status=error['status'])
-
-    if not intersections:
-        error = json_error(404, 'Could not find any intersection matching query.',
-                           {'query': query_original, 'normalized': {'name_1': street_1_name, 'name_2': street_2_name}})
-        return json_response(response=error, status=404)
 
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
@@ -664,11 +743,11 @@ def search_view(query):
 
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
-
     if search_type != 'none':
         # get the corresponding view function
         view = parser_search_type_map[search_type]
         # call it
+        response = view(query)
         return view(query)
 
     else:
