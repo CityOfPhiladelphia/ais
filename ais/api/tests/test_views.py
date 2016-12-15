@@ -379,7 +379,6 @@ def test_intersection_query(client):
     feature = data['features'][0]
     assert feature['ais_feature_type'] == 'intersection'
 
-
 def test_intersection_query_no_predir(client):
     # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
     response = client.get('/search/12th and chestnut')
@@ -389,7 +388,6 @@ def test_intersection_query_no_predir(client):
     match_type = feature['match_type']
     assert match_type == 'parsed'
 
-
 def test_cascade_to_true_range(client):
     response = client.get('/search/1050 filbert st')
     data = json.loads(response.get_data().decode())
@@ -397,7 +395,6 @@ def test_cascade_to_true_range(client):
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true range'
     assert feature['match_type'] == 'estimated'
-
 
 def test_cascade_to_full_range(client):
     response = client.get('/search/3551 ashfield lane')

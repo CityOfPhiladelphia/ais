@@ -315,9 +315,18 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             shape = to_shape(intersection.geom)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
+
+            cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated[
+                'cascade_geocode_type'] else None
+            geom_type = {'geocode_type': 'choose one point of intersection'}
+            geom_data.update(geom_type)
             match_type = 'exact'
         else:
-            geom_data = {'geocode_type': None, 'type': None, 'coordinates': None}
+            geom_data = OrderedDict([
+                ('geocode_type', None),
+                ('type', None),
+                ('coordinates', None)
+            ])
             match_type = self.estimated['cascade_geocode_type']
 
         # Build the intersection feature, then attach properties
