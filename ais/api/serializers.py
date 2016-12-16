@@ -94,10 +94,10 @@ class GeoJSONSerializer (BaseSerializer):
             'in range': 'range_child'
         }
         street_address_variations = [address.street_address,
-                                     address.street_address.replace("{unit_type}", "APT"),
-                                     address.street_address.replace("{unit_type}", "UNIT"),
-                                     address.street_address.replace("{unit_type}", "#")]\
-                                    .format(unit_type=address.unit_type)
+                                     address.street_address.replace(address.unit_type, "APT"),
+                                     address.street_address.replace(address.unit_type, "UNIT"),
+                                     address.street_address.replace(address.unit_type, "#")]
+
 
         # if address.street_address == self.normalized_address:
         # Add OR condition for unit type variations (i.e. address 337 S CAMAC ST APT 2R -> # 2R
