@@ -747,11 +747,14 @@ def search_view(query):
         # get the corresponding view function
         view = parser_search_type_map[search_type]
         # call it
-        response = view(query)
         return view(query)
 
     else:
         # Handle search type = 'none:
-        error = json_error(404, 'Query not recognized.',
-                           {'query': query})
-        return json_response(response=error, status=404)
+            # Handle queries of pwd_parcel ids
+        if len(query) == 6 and util.RepresentsInt(query):
+            return pwd_parcel(query)
+        else:
+            error = json_error(404, 'Query not recognized.',
+                               {'query': query})
+            return json_response(response=error, status=404)
