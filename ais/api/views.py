@@ -752,7 +752,7 @@ def search_view(query):
     else:
         # Handle search type = 'none:
             # Handle queries of pwd_parcel ids
-        if len(query) == 6 and util.RepresentsInt(query):
+        if query.isdigit() and len(query) < 8:
             return pwd_parcel(query)
         else:
             error = json_error(404, 'Query not recognized.',

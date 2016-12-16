@@ -168,10 +168,3 @@ def offset(line, point, distance, seg_side):
 	x = xsect_x + delta_x
 	y = xsect_y + delta_y
 	return Point([x, y])
-
-def RepresentsInt(s):
-    try:
-        int(s)
-        return True
-    except ValueError:
-        return False
