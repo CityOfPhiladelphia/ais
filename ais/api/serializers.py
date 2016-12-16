@@ -90,7 +90,7 @@ class GeoJSONSerializer (BaseSerializer):
             'has generic unit': 'unit_sibling',
             'in range': 'range_child'
         }
-        print(self.normalized_address, address.street_address.replace("#", "UNIT"))
+        #print(self.normalized_address, address.street_address.replace("#", "UNIT"))
         street_address_variations = [address.street_address, address.street_address.replace("#", "APT"), address.street_address.replace("#", "UNIT")]
 
 
@@ -111,20 +111,20 @@ class GeoJSONSerializer (BaseSerializer):
 
                 # if address_1 == address.street_address:
                 if address_1 in street_address_variations:
-                    print(1, link_address)
+                    #print(1, link_address)
                     match_type = query_address_1_match_map[relationship]
                     #related_address[link_address['address_2']] = relationship
 
                 # elif address_2 == address.street_address:
                 elif address_2 in street_address_variations:
-                    print(2, link_address)
+                    #print(2, link_address)
                     # if address.street_address == base_address:
                     if base_address in street_address_variations:
-                        print(3, link_address)
+                        #print(3, link_address)
                         match_type = query_address_1_match_map[relationship]
                         #related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
                     else:
-                        print(4, link_address)
+                        #print(4, link_address)
                         match_type = query_address_1_match_map[relationship]
                         #related_address[link_address['address_1']] = query_address_2_match_map[relationship]
 
@@ -141,13 +141,13 @@ class GeoJSONSerializer (BaseSerializer):
 
                 # if address_1 == address.street_address:
                 if address_1 in street_address_variations:
-                    print(5, link_address)
+                    #print(5, link_address)
                     match_type = unit_address_1_match_map[relationship]
                     related_address[link_address['address_2']] = query_address_2_match_map[relationship]
                     #related_addresses.append(related_address)
                 # elif address_2 == base_address and address.street_address != self.normalized_address:
                 elif address_2 == base_address and self.normalized_address not in street_address_variations:
-                    print(6, link_address)
+                    #print(6, link_address)
                     related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
                     #related_addresses.append(related_address)
 

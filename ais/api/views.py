@@ -99,7 +99,7 @@ def unmatched_response(**kwargs):
         # Fake 'type' as 'address' in order to create Address object for AddressJsonSerializer response
         parsed['type'] = 'address'
         address = Address(parsed)
-        print(address)
+        #print(address)
         address.street_address = parsed['components']['output_address']
         address.street_code = parsed['components']['street']['street_code']
         address.seg_id = parsed['components']['cl_seg_id']
@@ -138,7 +138,7 @@ def unmatched_response(**kwargs):
 @app.route('/unknown/<path:query>')
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
-    # print("here")
+
     # TODO: IMPLEMENT ATTEMPT TO CASCADE TO BASE ADDRESS BEFORE CASCADE TO STREET SEGMENT
 
     query = kwargs.get('query')
