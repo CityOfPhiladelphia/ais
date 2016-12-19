@@ -8,7 +8,9 @@ source env/bin/activate
 
 # 2. Install the awsebcli
 echo "Installing AWS Elastic Beanstalk CLI"
-pip install awsebcli
+# pip install awsebcli
+# new version isn't working - install older version:
+pip install awsebcli==3.8.8 --force-reinstall
 
 # 3. Configure eb
 echo "Installing configuration for eb tool"
@@ -21,8 +23,6 @@ EOF
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
-echo eb list
-eb list
 source bin/eb_env_utils.sh
 get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find a production or swap environment" ;
