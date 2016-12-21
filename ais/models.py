@@ -823,6 +823,19 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
+    def get_all_parcel_geocode_locations(self, srid=default_SRID, request=None):
+
+        geocode_xy_join = self \
+            .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address) \
+            .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
+
+        # If geom exists for geocode_type specified in request.args, return, else return default best geocode type
+        if geocode_xy_join.first():
+            return geocode_xy_join
+        else:
+            # If geom doesn't exist for geocode_type specified in request.arg (or if specified geocode_type doesn't exist),
+            # return result of query without flag (set i=1 so all geocode_location flags are ignored)
+            return self.get_address_geoms(request=request, i=1)
 
     def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=default_SRID, request=None):
         # if self.first() and parcel_geocode_location and 'on_street' not in request.args:
@@ -830,6 +843,9 @@ class AddressSummaryQuery(BaseQuery):
             # If request arg parcel_geocode_location is included (and if on_street arg is not),
             # get address geom_data from geocode table where geocode_type = value specified in request arg.
             # parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
+            if parcel_geocode_location == 'all':
+                return self.get_all_parcel_geocode_locations(srid=srid, request=request)
+
             parcel_geocode_location_val = config['ADDRESS_SUMMARY']['geocode_priority'][str(parcel_geocode_location)]
             print(parcel_geocode_location_val)
 
