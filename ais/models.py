@@ -827,7 +827,8 @@ class AddressSummaryQuery(BaseQuery):
 
         geocode_xy_join = self \
             .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address) \
-            .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
+            .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid)) \
+            .order_by(Geocode.geocode_type)
 
         # If geom exists for geocode_type specified in request.args, return, else return default best geocode type
         if geocode_xy_join.first():
@@ -838,12 +839,12 @@ class AddressSummaryQuery(BaseQuery):
             return self.get_address_geoms(request=request, i=1)
 
     def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=default_SRID, request=None):
-        # if self.first() and parcel_geocode_location and 'on_street' not in request.args:
         if self.first():
             # If request arg parcel_geocode_location is included (and if on_street arg is not),
             # get address geom_data from geocode table where geocode_type = value specified in request arg.
             # parcel_geocode_location_val = str(request.args.get('parcel_geocode_location'))
-            if parcel_geocode_location == 'all':
+            #if parcel_geocode_location == 'all':
+            if 'parcel_geocode_location' in request.args and parcel_geocode_location in ('', 'all'):
                 return self.get_all_parcel_geocode_locations(srid=srid, request=request)
 
             parcel_geocode_location_val = config['ADDRESS_SUMMARY']['geocode_priority'][str(parcel_geocode_location)]
@@ -921,6 +922,7 @@ class AddressSummaryQuery(BaseQuery):
 
             if 'parcel_geocode_location' in request.args and i==0:
                 parcel_geocode_location = request.args.get('parcel_geocode_location')
+                print(parcel_geocode_location)
                 return self.get_parcel_geocode_location(parcel_geocode_location=parcel_geocode_location, srid=srid, request=request)
 
             elif 'on_street' in request.args and i==0:
