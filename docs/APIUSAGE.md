@@ -2,9 +2,9 @@
 
 [Authentication](#Authentication)
 
-[Response Structure & Metadata](#Response Structure & Metadata)
-
 [Queries](#Queries)
+
+[Response Structure & Metadata](#Response Structure & Metadata)
 
 ### <a name="Authentication"></a>Authentication
 
@@ -27,6 +27,56 @@ curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St" \
 # Authorization via querystring parameter
 curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
 ```
+
+## <a name="Queries"></a>Queries
+
+**Query Types**
+
+You can query the API by address, block, intersection, OPA account number, Regmap ID, PWD parcel ID  or owner name. All
+query's return objects representing addresses or intersections.  The /search endpoint handles all types of queries listed above exept for Owner, which can be queried using the /owner endpoint.
+
+**Query Flags**
+
+Any result set can be further
+filtered to contain only addresses that have OPA account numbers by using the
+`opa_only` querystring parameter.
+
+You can request that units contained within a given property be returned along
+with the top-level property by specifying the `include_units` querystring
+parameter. This parameter is only relevant for *address* queries.
+
+You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+
+
+**Addresses**
+
+Retrieve addresses that match some address string.
+
+Example:
+```bash
+curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
+```
+
+
+**Owner**
+
+Retrieve addresses that have owner names matching the query. Queries are treated
+as substrings of owner names. You can search for multiple substrings by
+separating search terms by spaces.
+
+Examples:
+```bash
+# Request properties owned by anyone whose first or last name contains "Poe"
+curl "https://api.phila.gov/ais/v1/owners/Poe"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
+
+# Request properties owned by anyone whose first or last name contains "Severus"
+# AND whose first or last name contains "Snape" (both conditions must be met)
+curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
+    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
+```
+
 
 ## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
@@ -85,47 +135,6 @@ Address `Feature` objects contain:
   * `geom_type` and `geom_source` (metadata about the `geometry` object --
     `geom_type` will be either `"centroid"` or `"parcel"`, and `geom_source`
     will begin with `pwd` or `dor`)
-
-
-## <a name="Queries"></a>Queries
-
-You can query the API by address, block, OPA account number, or owner name. All
-query's return objects that represent addresses. Any result set can be further
-filtered to contain only addresses that have OPA account numbers by using the
-`opa_only` querystring parameter.
-
-You can request that units contained within a given property be returned along
-with the top-level property by specifying the `include_units` querystring
-parameter. This parameter is only relevant for *address* queries.
-
-You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
-
-
-**Addresses**
-
-Retrieve addresses that match some address string.
-
-Example:
-```bash
-curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-```
-
-
-**Owner**
-
-Retrieve addresses that have owner names matching the query. Queries are treated
-as substrings of owner names. You can search for multiple substrings by
-separating search terms by spaces.
-
-Examples:
-```bash
-# Request properties owned by anyone whose first or last name contains "Poe"
-curl "https://api.phila.gov/ais/v1/owners/Poe"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-
-# Request properties owned by anyone whose first or last name contains "Severus"
-# AND whose first or last name contains "Snape" (both conditions must be met)
-curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-```
+    
+    
+Match_type indicates the relationship between the 'normalized' query string and the object response. 
