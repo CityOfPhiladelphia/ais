@@ -1,6 +1,12 @@
 # API Usage
 
-## Authentication
+[Authentication](#Authentication)
+
+[Response Structure & Metadata](#Response Structure & Metadata)
+
+[Queries](#Queries)
+
+### <a name="Authentication"></a>Authentication
 
 AIS does not have any authentication on its own, but it is made to sit behind
 Philadelphia's [GateKeeper](developer.phila.gov) instance. You must use a GK
@@ -22,7 +28,7 @@ curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St" \
 curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
 ```
 
-## Response Structure & Metadata
+## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
 Addresses for all endpoints except */account* are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
@@ -81,7 +87,7 @@ Address `Feature` objects contain:
     will begin with `pwd` or `dor`)
 
 
-## Queries
+## <a name="Queries"></a>Queries
 
 You can query the API by address, block, OPA account number, or owner name. All
 query's return objects that represent addresses. Any result set can be further
