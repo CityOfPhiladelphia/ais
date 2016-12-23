@@ -56,7 +56,7 @@ http://api.phila.gov/ais/v1/search/542611
 There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
 
     # Request properties owned by anyone whose first or last name contains "Poe"
-http://api.phila.gov/ais/v1/owner/Poe
+   http://api.phila.gov/ais/v1/owner/Poe
     
     # Request properties owned by anyone whose first or last name contains "Phil"
     # AND whose first or last name contains "Lee" (both conditions must be met)
@@ -75,11 +75,11 @@ The API can be sent additional query instructions via querystring parameters, or
 * **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
         
-* **'on_curb'**: Requests that the geometry of the response be on the curb in front of the parcel
+* **'on_curb'**: Specifies that the geometry of the response the best geocode_type on the curb in front of the parcel
     
-* **'on_street'**: Requests that the geometry of the response be on the street in front of the parcel
+* **'on_street'**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
    
-* **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. Options are: 
+* **'parcel_geocode_location=####'**: Specifies a geocode type to represent the geometry returned in the response. Options are: 
 
      * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
      * 'parcel_geocode_location' defaults to 'all'
