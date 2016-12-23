@@ -32,7 +32,7 @@ curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1
 
 **Query Types**
 
-The API handles a variety of query types through the /search endpoint: 
+The API handles a variety of query types through the **/search** endpoint: 
 
     * address - i.e. 
    http://api.phila.gov/ais/v1/search/1234%20market%20st
