@@ -68,21 +68,21 @@ http://api.phila.gov/ais/v1/owner/phil%20lee
 
 The API can be sent additional query instructions via querystring parameters, or flags:
 
-   **'opa_only'**: Filters results to contain only addresses that have OPA account numbers.
+* **'opa_only'**: Filters results to contain only addresses that have OPA account numbers.
     
-   **'include_units'**: Requests that units contained within a given property be returned along with the top-level property.
+* **'include_units'**: Requests that units contained within a given property be returned along with the top-level property.
     
-   **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
+* **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
         
-   **'on_curb'**: Requests that the geometry of the response be on the curb in front of the parcel
+* **'on_curb'**: Requests that the geometry of the response be on the curb in front of the parcel
     
-   **'on_street'**: Requests that the geometry of the response be on the street in front of the parcel
+* **'on_street'**: Requests that the geometry of the response be on the street in front of the parcel
    
-   **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. Options are: 
+* **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. Options are: 
 
-        * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
-        * 'parcel_geocode_location' defaults to 'all'
+     * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
+     * 'parcel_geocode_location' defaults to 'all'
 
 
 
