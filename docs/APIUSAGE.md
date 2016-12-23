@@ -39,19 +39,19 @@ The API handles a variety of query types through the **/search** endpoint:
 http://api.phila.gov/ais/v1/search/1234%20market%20st
     
 * **block** - i.e. 
-   * http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St
+http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St
     
 * **intersection** - i.e. 
-   * http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St
+http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St
     
 * **OPA account number** - i.e. 
-   * http://api.phila.gov/ais/v1/search/883309050
+http://api.phila.gov/ais/v1/search/883309050
     
 * **Regmap ID** - i.e. 
-   * http://api.phila.gov/ais/v1/search/001S07-0144    
+http://api.phila.gov/ais/v1/search/001S07-0144    
    
 * **PWD parcel ID** - i.e. 
-   * http://api.phila.gov/ais/v1/search/542611
+http://api.phila.gov/ais/v1/search/542611
    
 There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
 
