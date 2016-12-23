@@ -145,7 +145,7 @@ The root of the `FeatureCollection` contains:
       * `opa_address` (Official address, according to OPA)
     * The following list of `service areas`:
       * `center_city_district`
-      * `cua_zone": "Bethanna`
+      * `cua_zone`
       * `li_district`
       * `philly_rising_area`
       * `census_tract_2010`
