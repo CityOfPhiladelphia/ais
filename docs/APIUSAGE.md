@@ -30,6 +30,7 @@ curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1
 
 ## <a name="Queries"></a>Queries
 
+
 **Query Types**
 
 The API handles a variety of query types through the **/search** endpoint: 
@@ -61,6 +62,7 @@ http://api.phila.gov/ais/v1/owner/Poe
     # AND whose first or last name contains "Lee" (both conditions must be met)
 http://api.phila.gov/ais/v1/owner/phil%20lee
     
+
 
 **Query Flags**
 
