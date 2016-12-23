@@ -46,7 +46,7 @@ The API handles a variety of query types through the /search endpoint:
     
     * PWD parcel ID - i.e. 373800d
    
-There is an additoinal /owner endpoint for handling queries of owner names for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces.
+There is an additional /owner endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces.
 
 Examples:
 ```bash
@@ -62,17 +62,24 @@ curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
 
 **Query Flags**
 
-Any result set can be further filtered to contain only addresses that have OPA account numbers by using the
-`opa_only` querystring parameter.
+The API can be sent additional query instructions via querystring parameters, or flags. The following flags are currently operational:
 
-You can request that units contained within a given property be returned along
-with the top-level property by specifying the `include_units` querystring
-parameter. This parameter is only relevant for *address* queries.
-
-You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+    * 'opa_only': Filters results to contain only addresses that have OPA account numbers.
+    
+    * 'include_units': Requests that units contained within a given property be returned along with the top-level property.
+    
+    * 'srid'=####: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
+    where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+    
+    * 'parcel_geocode_location=####': Specifies a geometry type to be returned in the response. 
+        Options are 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
+        
+    * 'on_curb': Requests that the geometry of the response be on the curb in front of the parcel
+    
+    * 'on_street': Requests that the geometry of the response be on the street in front of the parcel
+    
 
 **Query Matching**
-
 
 
 
