@@ -52,19 +52,15 @@ The API handles a variety of query types through the /search endpoint:
     * PWD parcel ID - i.e. 
    http://api.phila.gov/ais/v1/search/542611
    
-There is an additional /owner endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces.
+There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
 
-Examples:
-```bash
-# Request properties owned by anyone whose first or last name contains "Poe"
-curl "https://api.phila.gov/ais/v1/owners/Poe"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-
-# Request properties owned by anyone whose first or last name contains "Severus"
-# AND whose first or last name contains "Snape" (both conditions must be met)
-curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-```
+    # Request properties owned by anyone whose first or last name contains "Poe"
+http://api.phila.gov/ais/v1/owner/Poe
+    
+    # Request properties owned by anyone whose first or last name contains "Phil"
+    # AND whose first or last name contains "Lee" (both conditions must be met)
+http://api.phila.gov/ais/v1/owner/phil%20lee
+    
 
 **Query Flags**
 
@@ -76,16 +72,17 @@ The API can be sent additional query instructions via querystring parameters, or
     
    **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
-    
-   **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. 
-
-        * Options are 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
-        * 'parcel_geocode_location' defaults to 'all'
         
    **'on_curb'**: Requests that the geometry of the response be on the curb in front of the parcel
     
    **'on_street'**: Requests that the geometry of the response be on the street in front of the parcel
+   
+   **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. 
+
+        * Options are 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
+        * 'parcel_geocode_location' defaults to 'all'
     
+
 
 **Query Matching**
 
