@@ -94,10 +94,10 @@ There are currently two distinct json response formats representing address and 
 The root of the `FeatureCollection` contains:
 * Metadata information.
   * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
-  * `search_params`:
-  * `query`:
-  * `normalized`:
-  * `type`:
+  * `search_params`: The querystring parameters or flags and their values included in query
+  * `query`: The querystring
+  * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
+  * `type`: "FeatureCollection"
 * Pagination information.
   * `page`: The current page of data
   * `page_count`: The total number of pages of data for the current query
@@ -109,7 +109,7 @@ The root of the `FeatureCollection` contains:
 
 Address `Feature` objects contain:
 * The following list of feature metatdata:
-  * `type`: Feature
+  * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
