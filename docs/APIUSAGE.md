@@ -88,9 +88,7 @@ The API can be sent additional query instructions via querystring parameters, or
 
 ## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
-There are currently two distinct json response formats representing address and intersection response objects. 
-
-Responses for all endpoints are returned in a paginated
+There are currently two distinct json response formats representing address and intersection response objects. Responses for all endpoints are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
 The root of the `FeatureCollection` contains:
@@ -107,80 +105,82 @@ The root of the `FeatureCollection` contains:
   * `total_size`: The total number of results across all pages for the current
                   query
 * Matched addresses (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
-  objects. Address `Feature` objects contain:
-    * The following list of feature metatdata:
-      * `type`: Feature
-      * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
-      * `match_type`: The relationship between the 'normalized' query string and the object response. Options are:
-        * `exact`:
-        * `generic_unit`: 
-        * `base`: 
-        * `unit_child`:
-        * `range-parent`:
-        * `range_child`:
-        * `unmatched`:
-    * The following list of `properties`:
-      * `street_address` (Full address)
-      * `address_low`
-      * `address_low_suffix`
-      * `address_low_frac`
-      * `address_high`
-      * `street_predir` (e.g., **N** BROAD ST)
-      * `street_name` (e.g., N **BROAD** ST)
-      * `street_suffix` (e.g., N BROAD **ST**)
-      * `street_postdir`
-      * `unit_type` (APT, STE, FL, #, UNIT, etc.)
-      * `unit_num`
-      * `street_full` (e.g., **N BROAD ST**)
-      * `zip_code`
-      * `zip_4`
-      * `usps_bldgfirm` (e.g. "JOHN WANAMAKER FINANCE STATION")
-      * `usps_type` (S: Street, H: High-rise, F: Firm)
-      * `election_block_id`
-      * `election_precinct`  
-      * `pwd_parcel_id` (Phila. Water Dept.)
-      * `dor_parcel_id` (Dept. of Records)
-      * `opa_account_num` (Office of Prop. Assessment)
-      * `opa_owners`
-      * `opa_address` (Official address, according to OPA)
-    * The following list of `service areas`:
-      * `center_city_district`
-      * `cua_zone`
-      * `li_district`
-      * `philly_rising_area`
-      * `census_tract_2010`
-      * `census_block_group_2010`
-      * `census_block_2010`
-      * `council_district_2016`
-      * `political_ward`
-      * `political_division`
-      * `planning_district`
-      * `elementary_school`
-      * `middle_school`
-      * `high_school`
-      * `zoning`
-      * `police_division`
-      * `police_district`
-      * `police_service_area`
-      * `rubbish_recycle_day`
-      * `recycling_diversion_rate`
-      * `leaf_collection_area`
-      * `sanitation_area`
-      * `sanitation_district`
-      * `historic_street`
-      * `highway_district`
-      * `highway_section`
-      * `highway_subsection`
-      * `traffic_district`
-      * `traffic_pm_district`
-      * `street_light_route`
-      * `pwd_maint_district`
-      * `pwd_pressure_district`
-      * `pwd_treatment_plant`
-      * `pwd_water_plate`
-      * `pwd_center_city_district`
-    * The following list of `geometry` attributes:
-      * `geocode_type`: 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', or 'centerline'
-      * `type`: The geometry type (i.e. Point, Line, Polygon) 
-      * `coordinates`: longitude, latitude with default SRID = 4326    
-  
+  objects. 
+
+Address `Feature` objects contain:
+* The following list of feature metatdata:
+  * `type`: Feature
+  * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
+  * `match_type`: The relationship between the 'normalized' query string and the object response. Options are:
+     * `exact`:
+     * `generic_unit`: 
+     * `base`: 
+     * `unit_child`:
+     * `range-parent`:
+     * `range_child`:
+     * `unmatched`:
+* The following list of `properties`:
+  * `street_address` (Full address)
+  * `address_low`
+  * `address_low_suffix`
+  * `address_low_frac`
+  * `address_high`
+  * `street_predir` (e.g., **N** BROAD ST)
+  * `street_name` (e.g., N **BROAD** ST)
+  * `street_suffix` (e.g., N BROAD **ST**)
+  * `street_postdir`
+  * `unit_type` (APT, STE, FL, #, UNIT, etc.)
+  * `unit_num`
+  * `street_full` (e.g., **N BROAD ST**)
+  * `zip_code`
+  * `zip_4`
+  * `usps_bldgfirm` (e.g. "JOHN WANAMAKER FINANCE STATION")
+  * `usps_type` (S: Street, H: High-rise, F: Firm)
+  * `election_block_id`
+  * `election_precinct`  
+  * `pwd_parcel_id` (Phila. Water Dept.)
+  * `dor_parcel_id` (Dept. of Records)
+  * `opa_account_num` (Office of Prop. Assessment)
+  * `opa_owners`
+  * `opa_address` (Official address, according to OPA)
+* The following list of `service areas`:
+  * `center_city_district`
+  * `cua_zone`
+  * `li_district`
+  * `philly_rising_area`
+  * `census_tract_2010`
+  * `census_block_group_2010`
+  * `census_block_2010`
+  * `council_district_2016`
+  * `political_ward`
+  * `political_division`
+  * `planning_district`
+  * `elementary_school`
+  * `middle_school`
+  * `high_school`
+  * `zoning`
+  * `police_division`
+  * `police_district`
+  * `police_service_area`
+  * `rubbish_recycle_day`
+  * `recycling_diversion_rate`
+  * `leaf_collection_area`
+  * `sanitation_area`
+  * `sanitation_district`
+  * `historic_street`
+  * `highway_district`
+  * `highway_section`
+  * `highway_subsection`
+  * `traffic_district`
+  * `traffic_pm_district`
+  * `street_light_route`
+  * `pwd_maint_district`
+  * `pwd_pressure_district`
+  * `pwd_treatment_plant`
+  * `pwd_water_plate`
+  * `pwd_center_city_district`
+* The following list of `geometry` attributes:
+  * `geocode_type`: 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', or 'centerline'
+  * `type`: The geometry type (i.e. Point, Line, Polygon) 
+  * `coordinates`: longitude, latitude with default SRID = 4326    
+
