@@ -64,7 +64,7 @@ http://api.phila.gov/ais/v1/owner/phil%20lee
 
 **Query Flags**
 
-The API can be sent additional query instructions via querystring parameters, or flags. The following flags are currently operational:
+The API can be sent additional query instructions via querystring parameters, or flags:
 
    **'opa_only'**: Filters results to contain only addresses that have OPA account numbers.
     
