@@ -507,7 +507,7 @@ def owner(query):
     # Serialize the response
     page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': query, 'parsed': owner_parts},
+        metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
         in_street='in_street' in request.args
