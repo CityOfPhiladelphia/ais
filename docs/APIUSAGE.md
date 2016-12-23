@@ -77,9 +77,9 @@ The API can be sent additional query instructions via querystring parameters, or
     
    **'on_street'**: Requests that the geometry of the response be on the street in front of the parcel
    
-   **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. 
+   **'parcel_geocode_location=####'**: Specifies a geometry type to be returned in the response. Options are: 
 
-        * Options are 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
+        * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
         * 'parcel_geocode_location' defaults to 'all'
     
 
