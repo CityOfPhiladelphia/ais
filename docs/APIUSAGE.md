@@ -111,7 +111,14 @@ The root of the `FeatureCollection` contains:
     * The following list of feature metatdata:
       * `type`: Feature
       * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
-      * `match_type`: indicates the relationship between the 'normalized' query string and the object response.
+      * `match_type`: The relationship between the 'normalized' query string and the object response. Options are:
+        * `exact`:
+        * `generic_unit`: 
+        * `base`: 
+        * `unit_child`:
+        * `range-parent`:
+        * `range_child`:
+        * `unmatched`:
     * The following list of `properties`:
       * `street_address` (Full address)
       * `address_low`
