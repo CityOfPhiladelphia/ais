@@ -173,7 +173,7 @@ The root of the `FeatureCollection` contains:
       * `pwd_water_plate`
       * `pwd_center_city_district`
     * The following list of `geometry` attributes:
-      * `geocode_type`: 
+      * `geocode_type`: 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', or 'centerline'
       * `type`: The geometry type (i.e. Point, Line, Polygon) 
       * `coordinates`: longitude, latitude with default SRID = 4326    
   
