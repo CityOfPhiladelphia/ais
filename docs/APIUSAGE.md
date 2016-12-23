@@ -88,9 +88,9 @@ The API can be sent additional query instructions via querystring parameters, or
 
 ## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
-There are currently two distinct json response formats representing address and intersection responses. 
+There are currently two distinct json response formats representing address and intersection response objects. 
 
-Addresses for all endpoints except */account* are returned in a paginated
+Responses for all endpoints are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
 The root of the `FeatureCollection` contains:
