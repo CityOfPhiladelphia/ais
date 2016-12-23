@@ -111,14 +111,14 @@ Address `Feature` objects contain:
 * The following list of feature metatdata:
   * `type`: Feature
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
-  * `match_type`: The relationship between the 'normalized' query string and the object response. Options are:
-     * `exact`:
-     * `generic_unit`: 
-     * `base`: 
-     * `unit_child`:
-     * `range-parent`:
-     * `range_child`:
-     * `unmatched`:
+  * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
+     * `exact`: Exact match
+     * `generic_unit`: Exact but interchanged generic unit_type (APT, UNIT, #, STE) 
+     * `base`: Base address match for unit address query
+     * `unit_child`: Unit address match for base address query
+     * `range-parent`: Ranged_address match for range_child query
+     * `range_child`: Range_child match for ranged_address query
+     * `unmatched`: Address cannot be matched. Location is estimated from query compoenents. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
   * `address_low`
