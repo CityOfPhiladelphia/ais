@@ -592,7 +592,7 @@ def pwd_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'query': id},
+        metadata={'search_type': 'pwd_parcel_id', 'query': id, 'normalized': id, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -704,6 +704,39 @@ def intersection(query):
 
     return json_response(response=result, status=200)
 
+# @app.route('/reverse_geocode/<path:query>')
+# @cache_for(hours=1)
+# def reverse_geocode(query):
+#     '''
+#     TODO: Call by search endpoint if search_type == "coordinates"
+#     '''
+#     from shapely.geometry import Point
+#     import re
+#
+#     query_original = query
+#     query = query.strip('/')
+#     coords = re.split(',|\s', query)
+#     print(type(coords))
+#     for item in coords: print(1, item, 2)
+#     coords = coords.remove(' ')
+#     print(coords)
+#     long, lat = coords
+#     print(long, lat)
+#     #long, lat = query.split(',')
+#     search_coords = Point(float(long), float(lat))
+#     #print(search_coords)
+#
+#     reverse_geocode_stmt = '''
+#                             SELECT street_address
+#                             from geocode
+#                             order by ST_Transform(geom, 4326) <-> st_geomfromtext('{search_coords}', 4326)
+#                             LIMIT 1
+#                             '''.format(search_coords=search_coords)
+#
+#     result = db.engine.execute(reverse_geocode_stmt)
+#     result = result.first()[0]
+#     print(result)
+#     return search_view(result)
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
