@@ -93,7 +93,7 @@ There are currently two distinct json response formats representing address and 
 
 The root of the `FeatureCollection` contains:
 * Metadata information.
-  * `search_type`: The query type recognized by Passyunk (address, intersection, opa_account_num 
+  * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
   * `search_params`:
   * `query`:
   * `normalized`:
