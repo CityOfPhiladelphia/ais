@@ -19,51 +19,34 @@ as valid requests:
 
 ```bash
 # Authorization via request header
-curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St" \
+curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" \
     -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
 ```
 
 ```bash
 # Authorization via querystring parameter
-curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
+curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
 ```
 
 ## <a name="Queries"></a>Queries
 
 **Query Types**
 
-You can query the API by address, block, intersection, OPA account number, Regmap ID, PWD parcel ID  or owner name. All
-query's return objects representing addresses or intersections.  The /search endpoint handles all types of queries listed above exept for Owner, which can be queried using the /owner endpoint.
+The API handles a variety of query types through the /search endpoint: 
 
-**Query Flags**
-
-Any result set can be further
-filtered to contain only addresses that have OPA account numbers by using the
-`opa_only` querystring parameter.
-
-You can request that units contained within a given property be returned along
-with the top-level property by specifying the `include_units` querystring
-parameter. This parameter is only relevant for *address* queries.
-
-You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
-
-
-**Addresses**
-
-Retrieve addresses that match some address string.
-
-Example:
-```bash
-curl "https://api.phila.gov/ais/v1/addresses/1234%20Market%20St"\
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-```
-
-
-**Owner**
-
-Retrieve addresses that have owner names matching the query. Queries are treated
-as substrings of owner names. You can search for multiple substrings by
-separating search terms by spaces.
+    * address - i.e. 1234 Market St
+    
+    * block - i.e. 1200-1299 block of Market St
+    
+    * intersection - i.e. N 12th and Market St
+    
+    * OPA account number - i.e. 875100760
+    
+    * Regmap ID - i.e. 001S07-0144
+    
+    * PWD parcel ID - i.e. 373800d
+   
+There is an additoinal /owner endpoint for handling queries of owner names for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces.
 
 Examples:
 ```bash
@@ -77,8 +60,25 @@ curl "https://api.phila.gov/ais/v1/owners/Severus%20Snape"\
     -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
 ```
 
+**Query Flags**
+
+Any result set can be further filtered to contain only addresses that have OPA account numbers by using the
+`opa_only` querystring parameter.
+
+You can request that units contained within a given property be returned along
+with the top-level property by specifying the `include_units` querystring
+parameter. This parameter is only relevant for *address* queries.
+
+You can request that the geometry of the address object by returned as coordinates of a particular projection, by specifying the `srid=####` querystring parameter, where #### is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+
+**Query Matching**
+
+
+
 
 ## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
+
+There are currently two distinct json response formats representing address and intersection responses. 
 
 Addresses for all endpoints except */account* are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
