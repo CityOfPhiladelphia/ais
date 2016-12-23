@@ -83,10 +83,6 @@ The API can be sent additional query instructions via querystring parameters, or
 
         * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
         * 'parcel_geocode_location' defaults to 'all'
-    
-
-
-**Query Matching**
 
 
 
@@ -98,19 +94,20 @@ Addresses for all endpoints except */account* are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
 The root of the `FeatureCollection` contains:
+* Metadata information.
+  * `serach_type`: The type of query 
+  * `search_params`:
+  * `query`:
+  * `normalized`:
+  * `type`:
 * Pagination information.
   * `page`: The current page of data
   * `page_count`: The total number of pages of data for the current query
   * `page_size`: The number of results on the current page
   * `total_size`: The total number of results across all pages for the current
                   query
-* Query information. The specific query information may differ based on the type
-  of query. *Address* and *block* query responses contain the original `query`
-  as well as a `normalized` representation of the query. *Owner* query responses
-  contain the original `query` and a list of `parsed` query components.
-  *Account* query responses contain the original `query`.
 * Matched addresses as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
-  objects. The `feature` list is sorted by:
+  objects. The `features` list is sorted by:
   * `street_name`
   * `street_suffix`
   * `street_predir`
@@ -120,8 +117,10 @@ The root of the `FeatureCollection` contains:
   * `unit_num` (with `NULL` values first)
 
 Address `Feature` objects contain:
-* A `geometry` representing the property. By default, the coordinates are
-  longitude, latitude.
+* The following list of feature metatdata:
+  * `type`: Feature
+  * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
+  * `match_type`: indicates the relationship between the 'normalized' query string and the object response.
 * The following list of `properties`:
   * `street_address` (Full address)
   * `address_low`
@@ -146,9 +145,44 @@ Address `Feature` objects contain:
   * `opa_account_num` (Office of Prop. Assessment)
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
-  * `geom_type` and `geom_source` (metadata about the `geometry` object --
-    `geom_type` will be either `"centroid"` or `"parcel"`, and `geom_source`
-    will begin with `pwd` or `dor`)
-    
-    
-Match_type indicates the relationship between the 'normalized' query string and the object response. 
+* The following list of `service areas`:
+  * `center_city_district`
+  * `cua_zone": "Bethanna`
+  * `li_district`
+  * `philly_rising_area`
+  * `census_tract_2010`
+  * `census_block_group_2010`
+  * `census_block_2010`
+  * `council_district_2016`
+  * `political_ward`
+  * `political_division`
+  * `planning_district`
+  * `elementary_school`
+  * `middle_school`
+  * `high_school`
+  * `zoning`
+  * `police_division`
+  * `police_district`
+  * `police_service_area`
+  * `rubbish_recycle_day`
+  * `recycling_diversion_rate`
+  * `leaf_collection_area`
+  * `sanitation_area`
+  * `sanitation_district`
+  * `historic_street`
+  * `highway_district`
+  * `highway_section`
+  * `highway_subsection`
+  * `traffic_district`
+  * `traffic_pm_district`
+  * `street_light_route`
+  * `pwd_maint_district`
+  * `pwd_pressure_district`
+  * `pwd_treatment_plant`
+  * `pwd_water_plate`
+  * `pwd_center_city_district`
+* The following list of `geometry` attributes:
+  * `geocode_type`: 
+  * `type`: The geometry type (i.e. Point, Line, Polygon) 
+  * `coordinates`: longitude, latitude with default SRID = 4326    
+  
