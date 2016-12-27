@@ -9,24 +9,7 @@
 ### <a name="Authentication"></a>Authentication
 
 AIS does not have any authentication on its own, but it is made to sit behind
-Philadelphia's [GateKeeper](developer.phila.gov) instance. You must use a GK
-API key to access the API. You can sign up for an API key at
-https://developer.phila.gov/keys.
-
-Authentication is performed in one of two ways: either with an `Authorization`
-header, or with a querystring parameter.  For example, the following would work
-as valid requests:
-
-```bash
-# Authorization via request header
-curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" \
-    -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"
-```
-
-```bash
-# Authorization via querystring parameter
-curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"
-```
+Philadelphia's [GateKeeper](developer.phila.gov) instance. 
 
 ## <a name="Queries"></a>Queries
 
