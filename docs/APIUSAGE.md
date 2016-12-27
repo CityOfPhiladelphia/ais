@@ -35,19 +35,19 @@ curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1
 
 The API handles a variety of query types through the **/search** endpoint: 
 
-* **address** - i.e. 
+* **address** -
 [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
-* **block** - i.e. 
+* **block** -
 [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
     
-* **intersection** - i.e. 
+* **intersection** -
 [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
     
-* **OPA account number** - i.e. 
+* **OPA account number** -
 http://api.phila.gov/ais/v1/search/883309050
     
-* **Regmap ID** - i.e. 
+* **Regmap ID** -
 http://api.phila.gov/ais/v1/search/001S07-0144    
    
 * **PWD parcel ID** - i.e. 
