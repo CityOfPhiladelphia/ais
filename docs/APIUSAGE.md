@@ -50,7 +50,7 @@ http://api.phila.gov/ais/v1/search/883309050
 * **Regmap ID** -
 http://api.phila.gov/ais/v1/search/001S07-0144    
    
-* **PWD parcel ID** - i.e. 
+* **PWD parcel ID** -
 http://api.phila.gov/ais/v1/search/542611
    
 There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
