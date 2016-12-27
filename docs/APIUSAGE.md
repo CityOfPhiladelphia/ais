@@ -36,13 +36,13 @@ curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1
 The API handles a variety of query types through the **/search** endpoint: 
 
 * **address** - i.e. 
-http://api.phila.gov/ais/v1/search/1234%20market%20st
+[http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 * **block** - i.e. 
-http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St
+[http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
     
 * **intersection** - i.e. 
-http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St
+[http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
     
 * **OPA account number** - i.e. 
 http://api.phila.gov/ais/v1/search/883309050
@@ -56,11 +56,11 @@ http://api.phila.gov/ais/v1/search/542611
 There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
 
     # Request properties owned by anyone whose first or last name contains "Poe"
-   http://api.phila.gov/ais/v1/owner/Poe
+http://api.phila.gov/ais/v1/owner/Poe
     
     # Request properties owned by anyone whose first or last name contains "Phil"
     # AND whose first or last name contains "Lee" (both conditions must be met)
-http://api.phila.gov/ais/v1/owner/phil%20lee
+[http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
     
 
 
