@@ -14,34 +14,26 @@ Currently AIS is only designated for internal use. Internal users must request a
 
 **Endpoints**
 
-There are currently three active API endpoints:
-* /search
-* /address
-* /owner
+There are three API endpoints:
 
-**Query Types**
+* **http://api.phila.gov/ais/v1//search** - Handles a variety of query types, including: 
+    * **address** -
+    [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
 
-The API handles a variety of query types through the **/search** endpoint: 
+    * **block** -
+    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
 
-* **address** -
-[http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
-    
-* **block** -
-[http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
-    
-* **intersection** -
-[http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
-    
-* **OPA account number** -
-http://api.phila.gov/ais/v1/search/883309050
-    
-* **Regmap ID** -
-http://api.phila.gov/ais/v1/search/001S07-0144    
-   
-* **PWD parcel ID** -
-http://api.phila.gov/ais/v1/search/542611
-   
-There is an additional **/owner** endpoint for retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces - i.e.
+    * **intersection** -
+    [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
+
+    * **OPA account number** -
+    http://api.phila.gov/ais/v1/search/883309050
+
+    * **Regmap ID** -
+    http://api.phila.gov/ais/v1/search/001S07-0144    
+
+
+* **http://api.phila.gov/ais/v1//owner** - retrieves addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
 
     # Request properties owned by anyone whose first or last name contains "Poe"
 http://api.phila.gov/ais/v1/owner/Poe
@@ -49,10 +41,15 @@ http://api.phila.gov/ais/v1/owner/Poe
     # Request properties owned by anyone whose first or last name contains "Phil"
     # AND whose first or last name contains "Lee" (both conditions must be met)
 [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
+
+
+* **http://api.phila.gov/ais/v1//address** - The original AIS endpoint designed to work with Property Search, this endpoint is being depreciated and replaced by the search endpoint. 
+
+[http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 
 
-1**Query Flags**
+**Query Flags**
 
 The API can be sent additional query instructions via querystring parameters, or flags:
 
