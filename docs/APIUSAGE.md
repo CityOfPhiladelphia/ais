@@ -43,9 +43,7 @@ http://api.phila.gov/ais/v1/owner/Poe
 [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
 
 
-* **Addresses**: **http://api.phila.gov/ais/v1//addresses** - The original AIS endpoint designed to work with Property Search, this endpoint is being depreciated and replaced by the search endpoint. 
-
-[http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+* **Addresses**: **http://api.phila.gov/ais/v1//addresses** - The original AIS endpoint designed to work with Property Search, this endpoint is being depreciated and replaced by the search endpoint. [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 
 
