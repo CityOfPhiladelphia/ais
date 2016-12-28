@@ -194,6 +194,14 @@ def unknown_cascade_view(**kwargs):
 
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
+
+    # Check if address low num is within centerline seg address range with parity
+    from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
+    if not from_num <= address.address_low <= to_num:
+        error = json_error(400, 'Address number is out of range.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=400)
+
     # Get geom from true_range view item with same seg_id
     true_range_stmt = '''
                     Select true_left_from, true_left_to, true_right_from, true_right_to
@@ -203,11 +211,6 @@ def unknown_cascade_view(**kwargs):
     true_range_result = db.engine.execute(true_range_stmt).fetchall()
     true_range_result = list(chain(*true_range_result))
     # # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
-    # if true_range_result:
-    #     side_delta = true_range_result[3] - true_range_result[2] if seg_side =="R" \
-    # else true_range_result[1] - true_range_result[0]
-    #cascade_geocode_type = None
-
     if true_range_result and seg_side=="R" and true_range_result[3] is not None and true_range_result[2] is not None:
         side_delta = true_range_result[3] - true_range_result[2]
         cascade_geocode_type = 'true range'
@@ -215,8 +218,9 @@ def unknown_cascade_view(**kwargs):
         side_delta = true_range_result[1] - true_range_result[0]
         cascade_geocode_type = 'true range'
     else:
-        side_delta = cascadedseg.right_to - cascadedseg.right_from if seg_side == "R" \
-            else cascadedseg.left_to - cascadedseg.left_from
+        # side_delta = cascadedseg.right_to - cascadedseg.right_from if seg_side == "R" \
+        #     else cascadedseg.left_to - cascadedseg.left_from
+        side_delta = to_num - from_num
         cascade_geocode_type = 'full range'
     if side_delta == 0:
         distance_ratio = 0.5
