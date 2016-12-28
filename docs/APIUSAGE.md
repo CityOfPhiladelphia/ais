@@ -49,7 +49,7 @@ http://api.phila.gov/ais/v1/owner/Poe
 
 **Query Flags**
 
-The API can be sent additional query instructions via querystring parameters, or flags:
+Additional query instructions can be sent via querystring parameters, or flags:
 
 * **'opa_only'**: Filters results to contain only addresses that have OPA account numbers.
     
