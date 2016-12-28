@@ -35,11 +35,11 @@ There are three API endpoints:
 
 * **http://api.phila.gov/ais/v1//owner** - retrieves addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
 
-    # Request properties owned by anyone whose first or last name contains "Poe"
+      ` Request properties owned by anyone whose first or last name contains "Poe" `
 http://api.phila.gov/ais/v1/owner/Poe
     
-    # Request properties owned by anyone whose first or last name contains "Phil"
-    # AND whose first or last name contains "Lee" (both conditions must be met)
+      ` Request properties owned by anyone whose first or last name contains "Phil" `
+      ` AND whose first or last name contains "Lee" (both conditions must be met) `
 [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
 
 
