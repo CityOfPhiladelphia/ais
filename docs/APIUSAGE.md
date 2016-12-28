@@ -12,6 +12,12 @@ Currently AIS is only designated for internal use. Internal users must request a
 
 ## <a name="Queries"></a>Queries
 
+**Endpoints**
+
+There are currently three active API endpoints:
+* /search
+* /address
+* /owner
 
 **Query Types**
 
