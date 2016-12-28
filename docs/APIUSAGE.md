@@ -8,8 +8,7 @@
 
 ### <a name="Authentication"></a>Authentication
 
-AIS does not have any authentication on its own, but it is made to sit behind
-Philadelphia's [GateKeeper](developer.phila.gov) instance. 
+Currently AIS is only designated for internal use. Internal users must request an API key.
 
 ## <a name="Queries"></a>Queries
 
@@ -47,7 +46,7 @@ http://api.phila.gov/ais/v1/owner/Poe
     
 
 
-**Query Flags**
+1**Query Flags**
 
 The API can be sent additional query instructions via querystring parameters, or flags:
 
