@@ -6,7 +6,7 @@
 
 [Response Structure & Metadata](#Response Structure & Metadata)
 
-### <a name="Authentication"></a>Authentication
+## <a name="Authentication"></a>Authentication
 
 Currently AIS is only designated for internal use.  Internal users must request an API key.
 
@@ -20,7 +20,7 @@ The API endpoints are:
 * [Addresses](#Addresses) - http://api.phila.gov/ais/v1/addresses
 
 
-<a name="Search"></a>__**Search**__ - is a resource whilch handles a variety of query types, including: 
+<a name="Search"></a>**Search** - is a resource whilch handles a variety of query types, including: 
 
    * **address** -
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
