@@ -66,10 +66,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
     
 * **'on_street'**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
    
-* **'parcel_geocode_location=####'**: Specifies a geocode type to represent the geometry returned in the response. Options are: 
-
-     * 'all', 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', 'centerline'
-     * 'parcel_geocode_location' defaults to 'all'
+* **'parcel_geocode_location'**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
 
 
 
@@ -131,7 +128,7 @@ Address `Feature` objects contain:
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
 * The following list of `geometry` attributes:
-  * `geocode_type`: 
+  * <a name="geocode_type"></a>`geocode_type`: 
     * `pwd_parcel` 
     * `dor_parcel` 
     * `pwd_curb`  
