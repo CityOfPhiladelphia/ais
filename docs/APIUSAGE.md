@@ -15,9 +15,9 @@ Currently AIS is only designated for internal use.  Internal users must request 
 **Endpoints**
 
 The API endpoints are:
-* [Search: ](#Search)  http://api.phila.gov/ais/v1//search
-* [Owner: ](#Owner)  http://api.phila.gov/ais/v1//owner
-* [Addresses: ](#Addresses)  http://api.phila.gov/ais/v1//addresses
+* [Search](#Search) - http://api.phila.gov/ais/v1/search
+* [Owner](#Owner) - http://api.phila.gov/ais/v1/owner
+* [Addresses](#Addresses) - http://api.phila.gov/ais/v1/addresses
 
 
 <a name="Search"></a>**Search** - Handles a variety of query types, including: 
