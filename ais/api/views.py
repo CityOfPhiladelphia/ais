@@ -195,7 +195,7 @@ def unknown_cascade_view(**kwargs):
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
 
-    # Check if address low num is within centerline seg address range with parity
+    # Check if address low num is within centerline seg full address range with parity:
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
     if not from_num <= address.address_low <= to_num:
         error = json_error(400, 'Address number is out of range.',
@@ -611,8 +611,9 @@ def dor_parcel(id):
     """
     Looks up information about the property with the given DOR parcel id.
     """
-    normalized_id = id.replace('-', '') if '-' in id and id.index('-') == 6 else id
     parsed = PassyunkParser().parse(id)
+    #normalized_id = id.replace('-', '') if '-' in id and id.index('-') == 6 else id # This is now handled by Passyunk
+    normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
 
     addresses = AddressSummary.query\
