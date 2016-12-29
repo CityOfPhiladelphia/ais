@@ -22,21 +22,22 @@ The API endpoints are:
 
 <a name="Search"></a>**Search** - is a resource whilch handles a variety of query types, including: 
 
-   * **address** -
+   * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
-   * **address range** - [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
+   * **address range** - Represents all addresses within a particular address range; inputted as a range of addresses followed by street name (with predirection) 
+   [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
 
-   * **block** -
+   * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
     [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
 
-   * **intersection** -
+   * **intersection** - Inputted as 'n street 1 and street 2', including predirections, i.e.
     [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
 
-   * **OPA account number** -
+   * **OPA account number** - Office of Property Assessment Account Number - 
     http://api.phila.gov/ais/v1/search/883309050
 
-   * **Regmap ID** -
+   * **Regmap ID** - This is the Department of Records Registry Map ID - 
     http://api.phila.gov/ais/v1/search/001S07-0144    
 
 
