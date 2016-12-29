@@ -130,6 +130,18 @@ Address `Feature` objects contain:
   * `opa_account_num` (Office of Prop. Assessment)
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
+* The following list of `geometry` attributes:
+  * `geocode_type`: 
+    * `pwd_parcel` 
+    * `dor_parcel` 
+    * `pwd_curb`  
+    * `dor_curb`
+    * `pwd_street`
+    * `dor_street`
+    * `true_range`
+    * `centerline`
+  * `type`: The geometry type (i.e. Point, Line, Polygon) 
+  * `coordinates`: longitude, latitude with default SRID = 4326    
 * The following list of `service areas`:
   * `center_city_district`
   * `cua_zone`
@@ -166,8 +178,3 @@ Address `Feature` objects contain:
   * `pwd_treatment_plant`
   * `pwd_water_plate`
   * `pwd_center_city_district`
-* The following list of `geometry` attributes:
-  * `geocode_type`: 'pwd_parcel', 'dor_parcel', 'pwd_curb', 'dor_curb', 'pwd_street', 'dor_street', 'true_range', or 'centerline'
-  * `type`: The geometry type (i.e. Point, Line, Polygon) 
-  * `coordinates`: longitude, latitude with default SRID = 4326    
-
