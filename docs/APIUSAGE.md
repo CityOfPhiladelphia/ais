@@ -8,15 +8,19 @@
 
 ### <a name="Authentication"></a>Authentication
 
-Currently AIS is only designated for internal use. Internal users must request an API key.
+Currently AIS is only designated for internal use.  Internal users must request an API key.
 
 ## <a name="Queries"></a>Queries
 
 **Endpoints**
 
-There are three API endpoints:
+The API endpoints are:
+* [Search](#Search)
+* [Owner](#Owner)
+* [Addresses](#Addresses)
 
-* **Search**: **http://api.phila.gov/ais/v1//search** - Handles a variety of query types, including: 
+
+* <a name="Search"></a>**Search**: http://api.phila.gov/ais/v1//search** - Handles a variety of query types, including: 
     * **address** -
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
 
