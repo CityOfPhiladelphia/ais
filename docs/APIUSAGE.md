@@ -128,15 +128,15 @@ Address `Feature` objects contain:
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
 * The following list of `geometry` attributes:
-  * <a name="geocode_type"></a>`geocode_type`: 
-    * `pwd_parcel` 
-    * `dor_parcel` 
-    * `pwd_curb`  
-    * `dor_curb`
-    * `pwd_street`
-    * `dor_street`
-    * `true_range`
-    * `centerline`
+  * <a name="geocode_type"></a>`geocode_type` - Possible options are:
+    * `pwd_parcel` - The PWD parcel centroid
+    * `dor_parcel` - The DOR parcel centroid
+    * `pwd_curb` - The PWD parcel centroid projected on the curb
+    * `dor_curb` - The DOR parcel centroid projected on the curb
+    * `pwd_street` - The PWD parcel projected on the street (midpoint between centerline and curb)
+    * `dor_street` - The DOR parcel projected on the street (midpoint between centerline and curb)
+    * `true_range` - The address number position interpolated along the actual range of addresses related to a street segment centerline 
+    * `full_range` - The address number position interpolated along the full range of addresses related to a street segment centerline
   * `type`: The geometry type (i.e. Point, Line, Polygon) 
   * `coordinates`: longitude, latitude with default SRID = 4326    
 * The following list of `service areas`:
