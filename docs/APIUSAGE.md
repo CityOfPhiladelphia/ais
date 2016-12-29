@@ -37,7 +37,7 @@ The API endpoints are:
     http://api.phila.gov/ais/v1/search/001S07-0144    
 
 
-* **Owner**: **http://api.phila.gov/ais/v1//owner** - retrieves addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
+* <a name="Owner"></a>**Owner**: **http://api.phila.gov/ais/v1//owner** - retrieves addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
 
       ` Request properties owned by anyone whose first or last name contains "Poe" `
 http://api.phila.gov/ais/v1/owner/Poe
@@ -47,7 +47,7 @@ http://api.phila.gov/ais/v1/owner/Poe
 [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
 
 
-* **Addresses**: **http://api.phila.gov/ais/v1//addresses** - The original AIS endpoint designed to work with Property Search, this endpoint is being depreciated and replaced by the search endpoint. [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+* <a name="Addresses"></a>**Addresses**: **http://api.phila.gov/ais/v1//addresses** - The original AIS endpoint designed to work with Property Search, this endpoint is being depreciated and replaced by the search endpoint. [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 
 
