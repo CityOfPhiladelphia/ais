@@ -62,7 +62,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
 * **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
         
-* **'on_curb'**: Specifies that the geometry of the response the best geocode_type on the curb in front of the parcel
+* **'on_curb'**: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel
     
 * **'on_street'**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
    
