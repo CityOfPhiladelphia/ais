@@ -20,7 +20,7 @@ The API endpoints are:
 * [Addresses](#Addresses) - http://api.phila.gov/ais/v1/addresses
 
 
-<a name="Search"></a>**Search** - is a resource whilch handles a variety of query types, including: 
+<a name="Search"></a>**Search** - is a resource which handles a variety of query types, including: 
 
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
