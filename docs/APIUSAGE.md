@@ -29,7 +29,7 @@ The API endpoints are:
    [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
 
    * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
-    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299block%20of%20Market%20St)
+    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St)
 
    * **intersection** - Inputted as 'n street 1 and street 2', including predirections, i.e.
     [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
