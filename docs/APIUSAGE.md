@@ -25,7 +25,7 @@ The API endpoints are:
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
-   * **address range** - Represents all addresses within a particular address range; inputted as a range of addresses followed by street name (with predirection) 
+   * **address range** - Represents all addresses within a particular address range; inputted as a range of addresses followed by street name (with predirection). This search type is currently under development. 
    [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
 
    * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
