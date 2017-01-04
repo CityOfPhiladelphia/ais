@@ -55,18 +55,18 @@ The API endpoints are:
 
 Additional query instructions can be sent via querystring parameters, or flags:
 
-* **'opa_only'**: Filters results to contain only addresses that have OPA account numbers.
+* **opa_only**: Filters results to contain only addresses that have OPA account numbers.
     
-* **'include_units'**: Requests that units contained within a given property be returned along with the top-level property.
+* **include_units**: Requests that units contained within a given property be returned along with the top-level property.
     
-* **'srid=####'**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
+* **srid=####**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
         
-* **'on_curb'**: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel
+* **on_curb**: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel
     
-* **'on_street'**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
+* **on_street**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
    
-* **'parcel_geocode_location'**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
+* **parcel_geocode_location**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
 
 
 
