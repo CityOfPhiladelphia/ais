@@ -1,0 +1,23 @@
+Search for an Office of Property Assessment (OPA) account number
+Query format requires a 9 digit numeric OPA account number:
+* [http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
+---
+tags:
+  - OPA account number
+parameters:
+  - name: number
+    in: path
+    description: An OPA account number
+    type: string
+    default: '875100760'
+    required: true
+responses:
+  200:
+    description: AIS address(es) matching the query OPA Account Number
+    schema:
+      id: address
+      properties:
+        result:
+          type: object
+          description: the response
+          default: ''

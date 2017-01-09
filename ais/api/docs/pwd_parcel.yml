@@ -1,23 +1,23 @@
-A simple test API
-This endpoint does nothing
-Only returns "test"
+Search for a Philadelphia Water Department (PWD) parcel ID
+Query format requires a numeric PWD parcel ID:
+* [http://api.phila.gov/ais/v1/pwd_parcel/5356001234001](http://api.phila.gov/ais/v1/pwd_parcel/5356001234001)
 ---
 tags:
   - pwd_parcel
 parameters:
   - name: id
     in: path
-    description: The querystring
+    description: A PWD parcel ID
     type: string
-    default: '1234 market St'
+    default: '5356001234001'
     required: true
 responses:
   200:
-    description: A single user item
+    description: AIS address(es) having the query PWD parcel ID
     schema:
-      id: return_test
+      id: address
       properties:
         result:
-          type: string
-          description: The test
+          type: object
+          description: The response
           default: 'test'

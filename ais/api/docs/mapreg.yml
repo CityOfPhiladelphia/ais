@@ -1,23 +1,24 @@
-A simple test API
-This endpoint does nothing
-Only returns "test"
+Search for a Department of Records (DOR) Registration Map ID
+Query format requires a ten digit alpha numberic DOR Parcel/Registration Map ID (optionally separating digits 6 & 7 with a hyphen):
+* [http://api.phila.gov/ais/v1/dor_parcel/001S070144](http://api.phila.gov/ais/v1/dor_parcel/001S070144)
+* [http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais/v1/dor_parcel/001S07-0144)
 ---
 tags:
-  - mapreg
+  - dor_parcel/regmap
 parameters:
   - name: id
     in: path
-    description: The querystring
+    description: A DOR Parcel/Registry Map ID
     type: string
-    default: '1234 market St'
+    default: '001S07-0144'
     required: true
 responses:
   200:
-    description: A single user item
+    description: AIS address(es) having the query Registry Map ID
     schema:
-      id: return_test
+      id: address
       properties:
         result:
-          type: string
-          description: The test
-          default: 'test'
+          type: object
+          description: the response
+          default: ''

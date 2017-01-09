@@ -8,7 +8,7 @@ Does three primary things:
 from ais import app
 from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection, StreetSegment, \
     AddressStreet, ServiceAreaLayer
-from flask import Response, request
+from flask import Response, request, redirect
 from flask_cachecontrol import cache_for
 from passyunk.parser import PassyunkParser
 
@@ -29,7 +29,7 @@ default_srid = 4326
 
 Swagger(app, sanitizer=MK_SANITIZER)
 Swagger.DEFAULT_CONFIG['specs'][0]['title'] = 'AIS API'
-Swagger.DEFAULT_CONFIG['static_url_path'] = '/'
+#Swagger.DEFAULT_CONFIG['static_url_path'] = '/'
 
 
 def json_response(*args, **kwargs):
@@ -377,11 +377,11 @@ def addresses_view(query):
         .filter_by(**filters) \
         .filter_by_unit_type(unit_type) \
         .include_child_units(
-            'include_units' in request.args,
+            'include_units' in request.args and request.args['include_units'].lower() != 'false',
             is_range=high_num is not None,
             is_unit=unit_type is not None,
             request=request) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
@@ -455,7 +455,7 @@ def block_view(query):
         .filter(AddressSummary.address_low >= block_num)\
         .filter(AddressSummary.address_low < block_num + 100)\
         .exclude_children()\
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
@@ -480,8 +480,7 @@ def block_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid
     )
     result = serializer.serialize_many(block_page)
     #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
@@ -499,7 +498,7 @@ def owner(query):
     # Match a set of addresses
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts)\
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -522,8 +521,7 @@ def owner(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
+        srid=request.args.get('srid') if 'srid' in request.args else default_srid
     )
     result = serializer.serialize_many(page)
     #result = serializer.serialize_many(page) if addresses_count > 1 else serializer.serialize(next(page))
@@ -533,7 +531,7 @@ def owner(query):
 
 @app.route('/account/<number>')
 @cache_for(hours=1)
-@swag_from('docs/OPA account number.yml')
+@swag_from('docs/OPA_account_number.yml')
 def account_number_view(number):
     """
     Looks up information about the property with the given OPA account number.
@@ -546,7 +544,7 @@ def account_number_view(number):
 
     addresses = AddressSummary.query\
         .filter(AddressSummary.opa_account_num==number)\
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -586,7 +584,7 @@ def pwd_parcel(id):
     """
     addresses = AddressSummary.query\
         .filter(AddressSummary.pwd_parcel_id==id) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -630,7 +628,7 @@ def dor_parcel(id):
 
     addresses = AddressSummary.query\
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -760,28 +758,10 @@ def intersection(query):
 @cache_for(hours=1)
 @swag_from('docs/search.yml')
 def search_view(query):
+    from copy import deepcopy
 
     """
     API Endpoint for various types of geocoding (not solely addresses)
-    TODO: Implement batch geocoding endpoint
-    ---
-    tags:
-      - search
-    parameters:
-      - name: search
-        in: path
-        type: string
-        description: AIS querystring
-    responses:
-      200:
-        description: AIS response
-        schema:
-          id: return_test
-          properties:
-            result:
-              type: string
-              description: The test
-              default: 'test'
     """
     #query_original = query
     query = query.strip('/')
@@ -814,8 +794,16 @@ def search_view(query):
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     if search_type != 'none':
+
         # get the corresponding view function
         view = parser_search_type_map[search_type]
+
+        # # remove args with 'false' value
+        # requestargs = dict(request.args)
+        # for arg in request.args:
+        #     if (requestargs[arg][0]).lower() == 'false':
+        #         del requestargs[arg]
+        # print(requestargs)
         # call it
         return view(query)
 
@@ -830,31 +818,33 @@ def search_view(query):
             return json_response(response=error, status=404)
 
 
-@app.route("/search/")
-def search_landing():
-    return """
-      <h1> Welcome to AIS API</h1>
-      <h2> Search endpoint </h2>
-    <p>
-      For documentation and testing, go
-      <a href="\index.html#!/search/get_search_query">here</a>
-     </p>
-
-    """
+# @app.route("/search/")
+# def search_landing():
+#     return redirect("/index.html#!/search/get_search_query", code=302)
+#     # return """
+#     #   <h1> Welcome to AIS API</h1>
+#     #   <h2> Search endpoint </h2>
+#     # <p>
+#     #   For documentation and testing, go
+#     #   <a href="\index.html#!/search/get_search_query">here</a>
+#     #  </p>
+#     #
+#     # """
 
 @app.route("/")
 def base_landing():
-    return """
-      <h1> Welcome to AIS API</h1>
-      <ul>
-         <li><a href="/addresses/">Addresses</a></li>
-         <li><a href="/block/">Block</a></li>
-         <li><a href="/intersection/">Intersection</a></li>
-         <li><a href="/account/">OPA Account Number</a></li>
-         <li><a href="/mapreg/">MapReg</a></li>
-         <li><a href="/pwd_parcel/">PWD Parcel ID</a></li>
-         <li><a href="/owner/">Owner</a></li>
-         <li><a href="/search/">Search</a></li>
-
-      </ul>
-    """
+    return redirect("/index.html", code=302)
+    # return """
+    #   <h1> Welcome to AIS API</h1>
+    #   <ul>
+    #      <li><a href="/addresses/">Addresses</a></li>
+    #      <li><a href="/block/">Block</a></li>
+    #      <li><a href="/intersection/">Intersection</a></li>
+    #      <li><a href="/account/">OPA Account Number</a></li>
+    #      <li><a href="/mapreg/">MapReg</a></li>
+    #      <li><a href="/pwd_parcel/">PWD Parcel ID</a></li>
+    #      <li><a href="/owner/">Owner</a></li>
+    #      <li><a href="/search/">Search</a></li>
+    #
+    #   </ul>
+    # """
