@@ -871,7 +871,7 @@ class AddressSummaryQuery(BaseQuery):
     def get_parcel_geocode_on_street(self, on_street=True, srid=default_SRID, request=None):
         # If request arg "on_street" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_on_street is selected
-        if self.first() and on_street:
+        if self.first() and on_street and request.args['on_street'].lower() != 'false':
 
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
@@ -894,7 +894,7 @@ class AddressSummaryQuery(BaseQuery):
     def get_parcel_geocode_on_curb(self, on_curb=True, srid=default_SRID, request=None):
         # If request arg "on_curb" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_on_street is selected
-        if self.first() and on_curb:
+        if self.first() and on_curb and request.args['on_curb'].lower() != 'false':
 
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
@@ -917,18 +917,16 @@ class AddressSummaryQuery(BaseQuery):
     def get_address_geoms(self, request=None, i=0):
 
         if self.first():
-
             srid = request.args.get('srid') if 'srid' in request.args else default_SRID
 
             if 'parcel_geocode_location' in request.args and i==0:
                 parcel_geocode_location = request.args.get('parcel_geocode_location')
-                print(parcel_geocode_location)
                 return self.get_parcel_geocode_location(parcel_geocode_location=parcel_geocode_location, srid=srid, request=request)
 
             elif 'on_street' in request.args and i==0:
                 return self.get_parcel_geocode_on_street(on_street=True, srid=srid, request=request)
 
-            elif 'on_curb' in request.args and i==0:
+            elif 'on_curb' in request.args and request.args['on_curb'].lower() != 'false' and i==0:
                 return self.get_parcel_geocode_on_curb(on_curb=True, srid=srid, request=request)
 
             stmt = self.with_entities(AddressSummary.street_address.label('street_address')).subquery()

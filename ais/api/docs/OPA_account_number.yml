@@ -1,4 +1,4 @@
-Search for an Office of Property Assessment (OPA) account number
+Search by Office of Property Assessment (OPA) account number
 Query format requires a 9 digit numeric OPA account number:
 * [http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
 ---

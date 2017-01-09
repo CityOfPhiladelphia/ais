@@ -1,5 +1,5 @@
-Search for a Department of Records (DOR) Registration Map ID
-Query format requires a ten digit alpha numberic DOR Parcel/Registration Map ID (optionally separating digits 6 & 7 with a hyphen):
+Search by Department of Records (DOR) Registration Map ID
+Query format requires a ten digit alpha numberic DOR Parcel/Registration Map ID (optionally separating digits 6 & 7 with a hyphen)
 * [http://api.phila.gov/ais/v1/dor_parcel/001S070144](http://api.phila.gov/ais/v1/dor_parcel/001S070144)
 * [http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais/v1/dor_parcel/001S07-0144)
 ---

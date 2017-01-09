@@ -1,4 +1,4 @@
-Search by address.
+Search by address
 This is the original AIS endpoint designed to work with [Property Search.](http://property.phila.gov/)
 [This endpoint](http://api.phila.gov/ais/v1/addresses/) is being depreciated and replaced by the [search endpoint](http://api.phila.gov/ais/v1/search)
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)

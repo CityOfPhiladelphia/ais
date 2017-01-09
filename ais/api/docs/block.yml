@@ -1,4 +1,4 @@
-Search for addresses on a block.
+Search by block
 Query format requires full block address range or include the signifier 'block'.
 * [1200-1299 market st](http://api.phila.gov/ais/v1/block/1200-1299%20market%20st)
 * [1200 block of market st](http://api.phila.gov/ais/v1/block/1200%20block%20of%20market%20st)
