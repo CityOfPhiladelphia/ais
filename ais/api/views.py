@@ -31,12 +31,6 @@ Swagger.DEFAULT_CONFIG['specs'][0]['title'] = 'AIS API'
 Swagger.DEFAULT_CONFIG['static_url_path'] = ""
 Swagger(app, sanitizer=MK_SANITIZER)
 
-from pprint import pprint
-pprint(dir(Swagger))
-pprint(Swagger.__dict__)
-# print(Swagger.DEFAULT_CONFIG)
-
-
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
 
