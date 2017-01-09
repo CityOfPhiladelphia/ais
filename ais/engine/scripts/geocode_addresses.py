@@ -66,73 +66,6 @@ if FILTER_STREET_NAME not in [None, '']:
 	WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})"\
 		.format(seg_table.name, WHERE_STREET_NAME)
 
-# def interpolate_buffered(line, distance_ratio, _buffer):
-# 	'''
-# 	Interpolate along a line with a buffer at both ends.
-# 	'''
-# 	length = line.length
-# 	buffered_length = length - (_buffer * 2)
-# 	buffered_distance = distance_ratio * buffered_length
-# 	absolute_distance = _buffer + buffered_distance
-# 	return line.interpolate(absolute_distance)
-#
-# def offset(line, point, distance, seg_side):
-# 	# line = line[0]  # Get first part of multipart
-#
-# 	# Check for vertical line
-# 	if line.coords[0][0] == line.coords[1][0]:
-# 		pt_0 = line.coords[0]
-# 		pt_1 = line.coords[1]
-# 		upwards = True if pt_1[1] > pt_0[1] else False
-# 		if (upwards and seg_side == 'R') or (not upwards and seg_side == 'L'):
-# 			x_factor = 1
-# 		else:
-# 			x_factor = -1
-# 		return Point([point.x + (distance * x_factor), point.y])
-#
-# 	assert None not in [line, point]
-# 	assert distance > 0
-# 	assert seg_side in ['L', 'R']
-#
-# 	xsect_x = point.x
-# 	xsect_y = point.y
-# 	coord_1 = None
-# 	coord_2 = None
-#
-# 	# Find coords on either side of intersect point
-# 	for i, coord in enumerate(line.coords[:-1]):
-# 		coord_x, coord_y = coord
-# 		next_coord = line.coords[i + 1]
-# 		next_coord_x, next_coord_y = next_coord
-# 		sandwich_x = coord_x < xsect_x < next_coord_x
-# 		sandwich_y = coord_y <= xsect_y <= next_coord_y
-# 		if sandwich_x or sandwich_y:
-# 			coord_1 = coord
-# 			coord_2 = next_coord
-# 			break
-#
-# 	# Normalize coords to place in proper quadrant
-# 	norm_x = next_coord[0] - coord[0]
-# 	norm_y = next_coord[1] - coord[1]
-#
-# 	# Get angle of seg
-# 	seg_angle = atan2(norm_y, norm_x)
-# 	# print('seg angle: {}'.format(degrees(seg_angle)))
-#
-# 	# Get angle of offset line
-# 	if seg_side == 'L':
-# 		offset_angle = seg_angle + (pi / 2)
-# 	else:
-# 		offset_angle = seg_angle - (pi / 2)
-# 	# print('offset angle: {}'.format(degrees(offset_angle)))
-#
-# 	# Get offset point
-# 	delta_x = cos(offset_angle) * distance
-# 	delta_y = sin(offset_angle) * distance
-# 	x = xsect_x + delta_x
-# 	y = xsect_y + delta_y
-# 	return Point([x, y])
-
 if WRITE_OUT:
 	print('Dropping indexes...')
 	geocode_table.drop_index('street_address')
@@ -219,17 +152,13 @@ for true_range_row in true_range_rows:
 
 # TODO: redo curb stuff so it works with multiple parcel sources
 print('Reading curbs...')
-curb_map = {}
 curb_rows = curb_table.read(return_geom=False, geom_field='geom', to_srid=2272)
 curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
 parcel_curb_map = {}  # parcel_id => curb_id
-pwd_parcel_curb_map = {}
-dor_parcel_curb_map = {}
 parcel_curb_rows = parcel_curb_table.read()
 # parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
-parcel_curb_map = {}
 pwd_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'pwd'}
 dor_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'dor'}
 parcel_curb_map['dor'] = dor_parcel_curb_map
