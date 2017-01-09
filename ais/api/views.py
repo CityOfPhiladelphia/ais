@@ -21,10 +21,16 @@ from ais import util
 from geoalchemy2.shape import to_shape
 from ais import app_db as db
 from itertools import chain
-import re
+from flasgger import Swagger, MK_SANITIZER
+from flasgger.utils import swag_from
 
 config = app.config
 default_srid = 4326
+
+Swagger(app, sanitizer=MK_SANITIZER)
+Swagger.DEFAULT_CONFIG['specs'][0]['title'] = 'AIS API'
+Swagger.DEFAULT_CONFIG['static_url_path'] = '/'
+
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -282,6 +288,7 @@ def unknown_cascade_view(**kwargs):
 
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/addresses.yml')
 def addresses_view(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -409,6 +416,7 @@ def addresses_view(query):
 
 @app.route('/block/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/block.yml')
 def block_view(query):
     """
     Looks up information about the 100-range that the given address falls
@@ -482,6 +490,7 @@ def block_view(query):
 
 @app.route('/owner/<query>')
 @cache_for(hours=1)
+@swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
 
@@ -524,6 +533,7 @@ def owner(query):
 
 @app.route('/account/<number>')
 @cache_for(hours=1)
+@swag_from('docs/OPA account number.yml')
 def account_number_view(number):
     """
     Looks up information about the property with the given OPA account number.
@@ -569,6 +579,7 @@ def account_number_view(number):
 
 @app.route('/pwd_parcel/<id>')
 @cache_for(hours=1)
+@swag_from('docs/pwd_parcel.yml')
 def pwd_parcel(id):
     """
     Looks up information about the property with the given PWD parcel id.
@@ -607,6 +618,7 @@ def pwd_parcel(id):
 
 @app.route('/dor_parcel/<id>')
 @cache_for(hours=1)
+@swag_from('docs/mapreg.yml')
 def dor_parcel(id):
     """
     Looks up information about the property with the given DOR parcel id.
@@ -650,6 +662,7 @@ def dor_parcel(id):
 
 @app.route('/intersection/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/intersection.yml')
 def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
@@ -745,11 +758,30 @@ def intersection(query):
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/search.yml')
 def search_view(query):
 
     """
     API Endpoint for various types of geocoding (not solely addresses)
     TODO: Implement batch geocoding endpoint
+    ---
+    tags:
+      - search
+    parameters:
+      - name: search
+        in: path
+        type: string
+        description: AIS querystring
+    responses:
+      200:
+        description: AIS response
+        schema:
+          id: return_test
+          properties:
+            result:
+              type: string
+              description: The test
+              default: 'test'
     """
     #query_original = query
     query = query.strip('/')
@@ -796,3 +828,33 @@ def search_view(query):
             error = json_error(404, 'Query not recognized.',
                                {'query': query})
             return json_response(response=error, status=404)
+
+
+@app.route("/search/")
+def search_landing():
+    return """
+      <h1> Welcome to AIS API</h1>
+      <h2> Search endpoint </h2>
+    <p>
+      For documentation and testing, go
+      <a href="\index.html#!/search/get_search_query">here</a>
+     </p>
+
+    """
+
+@app.route("/")
+def base_landing():
+    return """
+      <h1> Welcome to AIS API</h1>
+      <ul>
+         <li><a href="/addresses/">Addresses</a></li>
+         <li><a href="/block/">Block</a></li>
+         <li><a href="/intersection/">Intersection</a></li>
+         <li><a href="/account/">OPA Account Number</a></li>
+         <li><a href="/mapreg/">MapReg</a></li>
+         <li><a href="/pwd_parcel/">PWD Parcel ID</a></li>
+         <li><a href="/owner/">Owner</a></li>
+         <li><a href="/search/">Search</a></li>
+
+      </ul>
+    """

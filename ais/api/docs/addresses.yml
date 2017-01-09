@@ -1,0 +1,36 @@
+Search by address.
+This is the original AIS endpoint designed to work with [Property Search.](http://property.phila.gov/)
+[This endpoint](http://api.phila.gov/ais/v1/addresses/) is being depreciated and replaced by the [search endpoint](http://api.phila.gov/ais/v1/search)
+* [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
+---
+tags:
+  - address
+parameters:
+  - name: query
+    in: path
+    description: The querystring
+    type: string
+    default: '1234 market St'
+    required: true
+  - name: include_units
+    in: query
+    description: Requests that units contained within a given property be returned along with the top-level property.
+    type: boolean
+    default: false
+    required: false
+  - name: opa_only
+    in: query
+    description: Filters results to contain only addresses that have OPA account numbers.
+    type: boolean
+    default: false
+    required: false
+responses:
+  200:
+    description: An AIS response
+    schema:
+      id: return_test
+      properties:
+        result:
+          type: object
+          description: The response
+          default: {}

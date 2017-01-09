@@ -1,0 +1,2483 @@
+{
+"swagger": "2.0",
+"info": {
+"description": "Permit, license, inspection, contractor, appeals, case and violation data from the Department of Licenses & Inspections.\n\n**Examples of filter use**\n\n* To get all Locations for Zip Code 19107 ordered by Street Name and Street Number:\n  * http://api.phila.gov/li/v1/locations?$filter=substringof('19107',zip)%20eq%20true&orderby=street_name,street_number\n* To get all Cases with a Resolution Code \"CLOSED\" for a Location Id 525027:\n  * http://api.phila.gov/li/v1/locations(525027)/cases?$filter=resolution%20eq%20'CLOSED'\n* To get all Cases with a Resolution \"CLOSED\" ordered by Added Datetime descending:\n  * http://api.phila.gov/li/v1/cases?$filter=resolution%20eq%20'CLOSED'&orderby=added_datetime%20desc\n\n**NOTE ABOUT APPEAL BOARDS**\n\nThree separate boards hear and review appeals for citations, permit denials and revocations, and building variances issued by the Department of Licenses and Inspections and other City agencies. The Zoning Board of Adjustment (ZBA) hears and decides appeals in zoning matters, considers special exceptions, and grants variances. The L&I Review Board (LIRB) hears appeals to property violations issued by the Department of Licenses and Inspections and, in some instances, other city agencies, such as the Water Department and the Art and Historical Commissions. The Board of Building Standards (BBS) is an advisory board that reviews appeals related to building safety and the application of Philadelphiaâ€™s Building Code.\n\nEach Appeal has a unique Appeal Key that can be used to get further information about that appeal. Such information about each appeal includes an appeal number, application type, grounds (reason) for the appeal, the primary applicant applying for the appeal, and the associated Case or Permit. Further information includes the date of a previous or upcoming hearing and the decisions made at previous hearings. If an Appeal is denied, an applicant may progress the Appeal to Court. If the Appeal progresses to Court, information is available for the resulting Court Case once a decision has been reached, including the action date, case number, court action, court result, and any provisos.\n\nThis API conforms to the OData protocol specification. More information on the OData specification, including documentation and pre-built client libraries can be found on the [OData web site](http://www.odata.org/).\n",
+"version": "1.0.0",
+"title": "L&I Release v1",
+"x-handle": "li-v1",
+"x-internal-id": 8,
+"x-subscribed": false,
+"x-key-required": false,
+"x-key-self-registration": false,
+"contact": {
+"name": "Tom Swanson",
+"email": "tom.swanson@phila.gov"
+}
+},
+"host": "api.phila.gov",
+"schemes": [
+"https",
+"http"
+],
+"basePath": "/ais/v1",
+"paths": {
+"/search": {
+"get": {
+"description": "A location is typically a street address for a parcel of land or a sub-unit of a parcel. Each location is associated with a city, state, ZIP code, and geographic X-Y coordinates, as well as geographic divisions such as City Council District, Census Tract, Census Block Group, and Political Ward.",
+"summary": "Get all location data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Locations",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Location"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/locations({location_id})": {
+"get": {
+"description": "A location is typically a street address for a parcel of land or a sub-unit of a parcel. Each location is associated with a city, state, ZIP code, and geographic X-Y coordinates, as well as geographic divisions such as City Council District, Census Tract, Census Block Group, and Political Ward.",
+"summary": "Get data for an individual location.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "location_id",
+"description": "Location ID to retrieve data for.",
+"required": true,
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Locations",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Location"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/permits": {
+"get": {
+"description": "A permit grants legal permission to commence work on physical   changes or zoning changes to a lot or structure. These include but are not limited to new constructions, alterations, demolitions, occupancy changes, and installations of and modifications to electrical, mechanical, and plumbing systems.\n\nEach permit has a unique Permit Number. The Application Type Description (and the abbreviated Application Type) indicates the general nature of the permit application (for example, whether the permit is for new construction or mechanical work).\n\nThe Permit Code Description is more specific and describes in detail the objectives of the permitted work. For example, in the case of mechanical work a Code Description may specify the type and number of appliances to be installed (MEC-EQUIPMENT/APPLIANCE INSTAL). There is then a Description of Work for each specific permit to summarize the intent of the work. The Status and Last Modified Date indicate the current standing of the project. Contact information is provided for the primary contact and/or the contractor working on the project.\n",
+"summary": "Get all permit data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter permit results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Permits",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Permit"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/permits('{permit_number}')": {
+"get": {
+"description": "A permit grants legal permission to commence work on physical   changes or zoning changes to a lot or structure. These include but are not limited to new constructions, alterations, demolitions, occupancy changes, and installations of and modifications to electrical, mechanical, and plumbing systems. \n\nEach permit has a unique Permit Number. The Application Type Description (and the abbreviated Application Type) indicates the general nature of the permit application (for example, whether the permit is for new construction or mechanical work). \n\nThe Permit Code Description is more specific and describes in detail the objectives of the permitted work. For example, in the case of mechanical work a Code Description may specify the type and number of appliances to be installed (MEC-EQUIPMENT/APPLIANCE INSTAL). There is then a Description of Work for each specific permit to summarize the intent of the work. The Status and Last Modified Date indicate the current standing of the project. Contact information is provided for the primary contact and/or the contractor working on the project. \n",
+"summary": "Get data for an individual permit",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "permit_number",
+"description": "Permit number to retrieve data for.",
+"required": true,
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter permit results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Permits",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Permit"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/permitcontractors": {
+"get": {
+"description": "The Permit Contractors entity contains a listing of all contractors associated with a particular permit application. For example, a Major Alteration permit may have one or more contractors associated with the application.",
+"summary": "Get all permit contractor data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter permit contractor results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Permit Contractors",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Permit Contractors"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/permitcontractors({permit_contractor_id})": {
+"get": {
+"description": "The Permit Contractors entity contains a listing of all contractors associated with a particular permit application. For example, a Major Alteration permit may have one or more contractors associated with the application.",
+"summary": "Get data for an individual permit contractor",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "permit_contractor_id",
+"description": "Specific permit contractor ID to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter permit contractor results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Permit Contractors",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Permit Contractors"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/licenses": {
+"get": {
+"description": "Licenses are required for individuals and businesses to engage in select commercial activities. For example, vendors and restaurants require a license in order to sell goods and food and trades-people, such as plumbers and contractors, require a license in order to practice their trade. License Type and License Type Description indicates generally the type of license.\n\nEach license has a unique License Number, an issue date (given when payment and all pre-requisites have been met), and a month and year of expiration. Status indicates whether the license is Active, Inactive, or Expired. Inactive Date indicates if and when a license became inactive before expiring. Primary contact information is provided for each license.\n",
+"summary": "Get all license data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter license results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Licenses",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/License"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/licenses/('{license_number}')": {
+"get": {
+"description": "Licenses are required for individuals and businesses to engage in select commercial activities. For example, vendors and restaurants require a license in order to sell goods and food and trades-people, such as plumbers and contractors, require a license in order to practice their trade. License Type and License Type Description indicates generally the type of license.\n\nEach license has a unique License Number, an issue date (given when payment and all prerequisites have been met), and a month and year of expiration. Status indicates whether the license is Active, Inactive, or Expired. Inactive Date indicates if and when a license became inactive before expiring. Primary contact information is provided for each license.\n",
+"summary": "Get data for an individual license",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "license_number",
+"description": "License number to retrieve data for.",
+"type": "string"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter license results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Licenses",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/License"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/licensedcontractors": {
+"get": {
+"description": "Building contractors and certain trades-people such as plumbers and electricians require licenses to practice their trade. Each Licensed Contractor is issued a unique Contractor License Number. Contact information is given for the individual being licensed.",
+"summary": "Get all licensed contractor data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter licensed contractor results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Licensed Contractors",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Licensed Contractor"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/licensedcontractors('{licensed_contractor_id}')": {
+"get": {
+"description": "Building contractors and certain trades-people such as plumbers and electricians require licenses to practice their trade. Each Licensed Contractor is issued a unique Contractor License Number. Contact information is given for the individual being licensed.",
+"summary": "Get data for an individual licensed contractor.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "licensed_contractor_id",
+"description": "Licensed contractor id to retrieve data for.",
+"type": "string"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter licensed contractor results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Licensed Contractors",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Licensed Contractor"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/cases": {
+"get": {
+"description": "A case is a recorded instance, created when a property is inspected and cited for one or more violations of the Philadelphia Code. A property will be re-inspected after a certain time interval to see whether or not the violations on the case have been complied. Further actions may be taken by the department to resolve a case. These actions may include clean & seals, demolitions, or sending a case to court. Each case has a unique Case Number and cites a specific Location in violation. \n\nEach Case is also assigned a Priority, indicating whether the property is Non Hazardous, Unsafe, or Imminently Dangerous. Relevant dates are associated with each Case to indicate when the case was created/added, when it was last updated, and, in the event of a resolution, when the case was resolved.\n",
+"summary": "Get all case data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter case results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Cases",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Case"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/cases('{case_number}')": {
+"get": {
+"description": "A case is a recorded instance, created when a property is inspected and cited for one or more violations of the Philadelphia Code. A property will be re-inspected after a certain time interval to see whether or not the violations on the case have been complied. Further actions may be taken by the department to resolve a case. These actions may include clean & seals, demolitions, or sending a case to court. Each case has a unique Case Number and cites a specific Location in violation. \n\nEach Case is also assigned a Priority, indicating whether the property is Non Hazardous, Unsafe, or Imminently Dangerous. Relevant dates are associated with each Case to indicate when the case was created/added, when it was last updated, and, in the event of a resolution, when the case was resolved.\n",
+"summary": "Get data for an individual case",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "case_number",
+"description": "Case number to retrieve data for.",
+"type": "string"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter case results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Cases",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Case"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/violationdetails": {
+"get": {
+"description": "Each case cites the sections of the Philadelphia Code of which a property is found in violation. These citations are known as Violations, which are given a unique Violation ID for each time the property is found to be in violation. The Violation Code corresponds to the section of the Philadelphia Code being violated and is further described in the synonymous Violation Description. Each Violation has a corresponding Case number and Location, initial date of violation, and Status from the most recent inspection of the Location.",
+"summary": "Get all violation detail data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter violation results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Violations",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Violation Detail"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/violationdetails({violation_details_id})": {
+"get": {
+"description": "Each case cites the sections of the Philadelphia Code of which a property is found in violation. These citations are known as Violations, which are given a unique Violation ID for each time the property is found to be in violation. The Violation Code corresponds to the section of the Philadelphia Code being violated and is further described in the synonymous Violation Description. Each Violation has a corresponding Case number and Location, initial date of violation, and Status from the most recent inspection of the Location.",
+"summary": "Get data for an individual violation detail",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "violation_details_id",
+"description": "Violation details id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter violation results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Violations",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Violation Detail"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/zoningboardappeals": {
+"get": {
+"summary": "Get all Zoning Board appeal data.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter zoning board appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Zoning Board Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Zoning Board Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/zoningboardappeals({appeal_id})": {
+"get": {
+"summary": "Get data for an individual zoning board appeal.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "appeal_id",
+"description": "Appeal id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter zoning board appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Zoning Board Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Zoning Board Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/lireviewboardappeals": {
+"get": {
+"summary": "Get all L&I Review Board appeal data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter L&I Review Board appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of L&I Review Board Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/L&I Review Board Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/lireviewboardappeals({appeal_id})": {
+"get": {
+"summary": "Get data for an individual L&I Review Board appeal.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "appeal_id",
+"description": "Appeal id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter L&I Review Board appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of L&I Review Board Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/L&I Review Board Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/buildingboardappeals": {
+"get": {
+"summary": "Get all Board of Building Standards appeal data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Board of Building Standards appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Board of Building Standards Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Board of Building Standards Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/buildingboardappeals({appeal_id})": {
+"get": {
+"summary": "Get data for an individual Board of Building Standards appeal.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "appeal_id",
+"description": "Appeal id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Board of Building Standards appeal results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Board of Building Standards Appeals",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Board of Building Standards Appeals"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/appealhearings": {
+"get": {
+"summary": "Get all appeal hearing data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Appeal Hearing results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Appeal Hearings",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Appeal Hearings"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/appealhearings({appeal_hearing_id})": {
+"get": {
+"summary": "Get data for an individual appeal hearing",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "appeal_hearing_id",
+"description": "Appeal hearing id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Appeal Hearing results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Appeal Hearings",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Appeal Hearings"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/hearingdates": {
+"get": {
+"summary": "Get Hearing Date information",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Hearing Date results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Hearing Dates",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Hearing Dates"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/hearingdates('{hearing_id}')": {
+"get": {
+"summary": "Get Hearing Date information",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "hearing_id",
+"description": "Hearing id to retrieve data for.",
+"type": "string"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Hearing Date results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Hearing Dates",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Hearing Dates"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/locationhistories": {
+"get": {
+"description": "The Location Histories entity describes a history of various activities at a particular address. Activities may include Zoning Board Hearing Results, Code Enforcement Violations written, Permits Issued or Licenses Issued. For example, an address may have several open permits and a recently issued Business License in its history.",
+"summary": "Get all location history data",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Location History results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Location Histories",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Location History"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+},
+"/locationhistories({location_history_id})": {
+"get": {
+"description": "The Location Histories entity describes a history of various activities at a particular address. Activities may include Zoning Board Hearing Results, Code Enforcement Violations written, Permits Issued or Licenses Issued. For example, an address may have several open permits and a recently issued Business License in its history.",
+"summary": "Get data for an individual location history.",
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"in": "path",
+"name": "location_history_id",
+"description": "Location history id to retrieve data for.",
+"type": "integer",
+"format": "int32"
+},
+{
+"in": "query",
+"name": "$filter",
+"description": "Filter Location History results by specific fields. (No filter by default)",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$expand",
+"description": "Enter \"locations\" here to see all location data related to the returned licenses.",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$format",
+"description": "Format of returned data. Can be either XML or JSON (XML by default).",
+"required": false,
+"type": "string"
+},
+{
+"in": "query",
+"name": "$callback",
+"description": "Enables callbacks for asynchronous web service calls. (No callbacks by default)",
+"required": false,
+"type": "string"
+}
+],
+"responses": {
+"200": {
+"description": "An array of Location Histories",
+"schema": {
+"type": "array",
+"items": {
+"$ref": "#/definitions/Location History"
+}
+}
+},
+"default": {
+"description": "unexpected error",
+"schema": {
+"$ref": "#/definitions/errorModel"
+}
+}
+}
+}
+}
+},
+"definitions": {
+"Location": {
+"properties": {
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+},
+"street_number": {
+"type": "string",
+"description": "House Number"
+},
+"postfix": {
+"type": "string",
+"description": "House Number Postfix"
+},
+"street_direction": {
+"type": "string",
+"description": "Street Direction"
+},
+"street_name": {
+"type": "string",
+"description": "Street Name"
+},
+"street_suffix": {
+"type": "string",
+"description": "Street Suffix"
+},
+"city": {
+"type": "string",
+"description": "City"
+},
+"state": {
+"type": "string",
+"description": "State"
+},
+"zip": {
+"type": "string",
+"description": "ZIP Code"
+},
+"x": {
+"type": "number",
+"description": "Longitude"
+},
+"y": {
+"type": "number",
+"description": "Latitude"
+},
+"census_tract": {
+"type": "string",
+"description": "Census Tract"
+},
+"council_district": {
+"type": "string",
+"description": "Council District"
+},
+"condo_unit": {
+"type": "string",
+"description": "Condo Unit"
+},
+"unit_number": {
+"type": "string",
+"description": "Unit Number"
+},
+"census_block": {
+"type": "string",
+"description": "Census Block"
+},
+"ward": {
+"type": "string",
+"description": "Political Ward"
+}
+}
+},
+"Permit": {
+"properties": {
+"permit_number": {
+"type": "string",
+"description": "Permit Number"
+},
+"issued_datetime": {
+"type": "string",
+"description": "Issue Date Time"
+},
+"updated_datetime": {
+"type": "string",
+"description": "Last Updated Date Time"
+},
+"work_description": {
+"type": "string",
+"description": "Description of Permitted Work"
+},
+"permit_type_code": {
+"type": "string",
+"description": "Permit Type Code"
+},
+"permit_type_name": {
+"type": "string",
+"description": "Permit Type Name"
+},
+"application_type": {
+"type": "string",
+"description": "Application Type"
+},
+"application_description": {
+"type": "string",
+"description": "Application Description"
+},
+"status": {
+"type": "string",
+"description": "Permit Status"
+},
+"pri_contact_type": {
+"type": "string",
+"description": "Primary Contact Type"
+},
+"pri_contact_company_name": {
+"type": "string",
+"description": "Primary Contact Company Name"
+},
+"pri_contact_last_name": {
+"type": "string",
+"description": "Primary Contact Last Name"
+},
+"pri_contact_first_name": {
+"type": "string",
+"description": "Primary Contact First Name"
+},
+"pri_contact_address1": {
+"type": "string",
+"description": "Primary Contact Address Line 1"
+},
+"pri_contact_address2": {
+"type": "string",
+"description": "Primary Contact Address Line 2"
+},
+"pri_contact_city": {
+"type": "string",
+"description": "Primary Contact City"
+},
+"pri_contact_state": {
+"type": "string",
+"description": "Primary Contact State"
+},
+"pri_contact_zip": {
+"type": "string",
+"description": "Primary Contact ZIP Code"
+},
+"contractor_name": {
+"type": "string",
+"description": "Primary Contractor Name"
+},
+"contractor_address1": {
+"type": "string",
+"description": "Primary Contractor Address Line 1"
+},
+"contractor_address2": {
+"type": "string",
+"description": "Primary Contractor Address Line 2"
+},
+"contractor_city": {
+"type": "string",
+"description": "Primary Contractor City"
+},
+"contractor_state": {
+"type": "string",
+"description": "Primary Contractor State"
+},
+"contractor_zip": {
+"type": "string",
+"description": "Primary Contractor ZIP Code"
+},
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Permit Contractors": {
+"properties": {
+"permitcontractors.contact_name": {
+"type": "string",
+"description": "Contractor Name"
+},
+"permitcontractors.contact_address1": {
+"type": "string",
+"description": "Contractor Address 1"
+},
+"permitcontractors.contact_address2": {
+"type": "string",
+"description": "Contractor Address 2"
+},
+"permitcontractors.contact_city": {
+"type": "string",
+"description": "Contractor City"
+},
+"permitcontractors.contact_state": {
+"type": "string",
+"description": "Contractor State"
+},
+"permitcontractors.contact_zip": {
+"type": "string",
+"description": "Contractor Zip"
+},
+"permitcontractors.permit_number": {
+"type": "string",
+"description": "Permit Number"
+}
+}
+},
+"License": {
+"properties": {
+"license_number": {
+"type": "string",
+"description": "License Number"
+},
+"license_type_code": {
+"type": "string",
+"description": "License Type Code"
+},
+"license_type_description": {
+"type": "string",
+"description": "License Type Description"
+},
+"issued_datetime": {
+"type": "string",
+"description": "Issue Date"
+},
+"expires_month": {
+"type": "string",
+"description": "Expiration Month"
+},
+"expires_year": {
+"type": "string",
+"description": "Expiration Year"
+},
+"inactive_datetime": {
+"type": "string",
+"description": "Inactive Date"
+},
+"status": {
+"type": "string",
+"description": "Status"
+},
+"pri_contact_type": {
+"type": "string",
+"description": "Primary Contact Type"
+},
+"pri_contact_company_name": {
+"type": "string",
+"description": "Primary Company Name"
+},
+"pri_contact_last_name": {
+"type": "string",
+"description": "Primary Contact Last Name"
+},
+"pri_contact_first_name": {
+"type": "string",
+"description": "Primary Contact First Name"
+},
+"pri_contact_address1": {
+"type": "string",
+"description": "Primary Contact Address 1"
+},
+"pri_contact_address2": {
+"type": "string",
+"description": "Primary Contact Address 2"
+},
+"pri_contact_city": {
+"type": "string",
+"description": "Primary Contact City"
+},
+"pri_contact_state": {
+"type": "string",
+"description": "Primary Contact State"
+},
+"pri_contact_zip": {
+"type": "string",
+"description": "Primary Contact Zip"
+},
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Licensed Contractor": {
+"properties": {
+"licensed_contractor_id": {
+"type": "string",
+"description": "Contractor License Number"
+},
+"contact_name": {
+"type": "string",
+"description": "Contact Name"
+},
+"contact_address": {
+"type": "string",
+"description": "Contact Address"
+},
+"contact_city": {
+"type": "string",
+"description": "Contact City"
+},
+"contact_state": {
+"type": "string",
+"description": "Contact State"
+},
+"contact_zip": {
+"type": "string",
+"description": "Contact Zip"
+},
+"license_type_code": {
+"type": "string",
+"description": "License Code"
+}
+}
+},
+"Case": {
+"properties": {
+"case_number": {
+"type": "string",
+"description": "Case Number"
+},
+"case_type": {
+"type": "string",
+"description": "Case Type"
+},
+"case_location": {
+"type": "string",
+"description": "Case Location"
+},
+"added_datetime": {
+"type": "string",
+"description": "Date Added"
+},
+"updated_datetime": {
+"type": "string",
+"description": "Date Last Modified"
+},
+"resolution": {
+"type": "string",
+"description": "Resolution"
+},
+"resolution_datetime": {
+"type": "string",
+"description": "Resolution Date"
+},
+"priority": {
+"type": "string",
+"description": "Priority"
+},
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Violation Detail": {
+"properties": {
+"violation_details_id": {
+"type": "integer",
+"description": "Violation ID"
+},
+"violation_code": {
+"type": "string",
+"description": "Violation Code"
+},
+"violation_description": {
+"type": "string",
+"description": "Violation Description"
+},
+"violation_datetime": {
+"type": "string",
+"description": "Violation Date"
+},
+"violation_status": {
+"type": "string",
+"description": "Violation Status"
+},
+"violation_location": {
+"type": "string",
+"description": "Violation Location"
+},
+"case_number": {
+"type": "string",
+"description": "Case Number"
+},
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Zoning Board Appeals": {
+"properties": {
+"zoningboardappeals.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+},
+"zoningboardappeals.appeal_number": {
+"type": "string",
+"description": "Appeal Number"
+},
+"zoningboardappeals.application_type": {
+"type": "string",
+"description": "Application Type"
+},
+"zoningboardappeals.capacity": {
+"type": "string",
+"description": "Capacity"
+},
+"zoningboardappeals.grounds": {
+"type": "string",
+"description": "Grounds"
+},
+"zoningboardappeals.primary_applicant": {
+"type": "string",
+"description": "Primary Applicant Name"
+},
+"zoningboardappeals.permit_number": {
+"type": "string",
+"description": "Permit Number"
+},
+"zoningboardappeals.location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Zoning Board Appeal Hearing Decisions": {
+"properties": {
+"zbahearingdecisions.hearing_decision_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"zbahearingdecisions.decision": {
+"type": "string",
+"description": "Decision"
+},
+"zbahearingdecisions.decision_datetime": {
+"type": "string",
+"description": "Decision Date"
+},
+"zbahearingdecisions.proviso": {
+"type": "string",
+"description": "Proviso"
+},
+"zbahearingdecisions.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Zoning Board Court Details": {
+"properties": {
+"zbacourtdetails.court_details_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"zbacourtdetails.court": {
+"type": "string",
+"description": "Court"
+},
+"zbacourtdetails.court_action_datetime": {
+"type": "string",
+"description": "Court Action Date"
+},
+"zbacourtdetails.court_case_number": {
+"type": "string",
+"description": "Court Case Number"
+},
+"zbacourtdetails.court_action": {
+"type": "string",
+"description": "Court Action"
+},
+"zbacourtdetails.court_result": {
+"type": "string",
+"description": "Court Result"
+},
+"zbacourtdetails.court_proviso": {
+"type": "string",
+"description": "Court Proviso"
+},
+"zbacourtdetails.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Zoning Board Appeal Types": {
+"properties": {
+"zbaappealtypes.appeal_type": {
+"type": "string",
+"description": "Appeal Type"
+},
+"zbaappealtypes.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Zoning Board Appeal Activities": {
+"properties": {
+"zbaappealactivities.appeal_activity_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"zbaappealactivities.board_type": {
+"type": "string",
+"description": "Board Type"
+},
+"zbaappealactivities.hearing_datetime": {
+"type": "string",
+"description": "Hearing Date"
+},
+"zbaappealactivities.review_description": {
+"type": "string",
+"description": "Review Description"
+},
+"zbaappealactivities.review_scheduled_datetime": {
+"type": "string",
+"description": "Review Scheduled Date"
+},
+"zbaappealactivities.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"L&I Review Board Appeals": {
+"properties": {
+"lireviewboardappeals.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+},
+"lireviewboardappeals.appeal_number": {
+"type": "string",
+"description": "Appeal Number"
+},
+"lireviewboardappeals.application_type": {
+"type": "string",
+"description": "Application Type"
+},
+"lireviewboardappeals.capacity": {
+"type": "string",
+"description": "Capacity"
+},
+"lireviewboardappeals.grounds": {
+"type": "string",
+"description": "Grounds"
+},
+"lireviewboardappeals.primary_applicant": {
+"type": "string",
+"description": "Primary Applicant Name"
+},
+"lireviewboardappeals.permit_number": {
+"type": "string",
+"description": "Permit Number"
+},
+"lireviewboardappeals.location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"L&I Review Board Hearing Decisions": {
+"properties": {
+"lirbhearingdecisions.hearing_decision_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"lirbhearingdecisions.decision": {
+"type": "string",
+"description": "Decision"
+},
+"lirbhearingdecisions.decision_datetime": {
+"type": "string",
+"description": "Decision Date"
+},
+"lirbhearingdecisions.proviso": {
+"type": "string",
+"description": "Proviso"
+},
+"lirbhearingdecisions.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"L&I Review Board Court Details": {
+"properties": {
+"lirbcourtdetails.court_details_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"lirbcourtdetails.court": {
+"type": "string",
+"description": "Court"
+},
+"lirbcourtdetails.court_action_datetime": {
+"type": "string",
+"description": "Court Action Date"
+},
+"lirbcourtdetails.court_case_number": {
+"type": "string",
+"description": "Court Case Number"
+},
+"lirbcourtdetails.court_action": {
+"type": "string",
+"description": "Court Action"
+},
+"lirbcourtdetails.court_result": {
+"type": "string",
+"description": "Court Result"
+},
+"lirbcourtdetails.court_proviso": {
+"type": "string",
+"description": "Court Proviso"
+},
+"lirbcourtdetails.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"L&I Review Board Appeal Types": {
+"properties": {
+"lirbappealtypes.appeal_type": {
+"type": "string",
+"description": "Appeal Type"
+},
+"lirbappealtypes.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"L&I Review Board Appeal Activities": {
+"properties": {
+"lirbappealactivities.appeal_activity_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"lirbappealactivities.board_type": {
+"type": "string",
+"description": "Board Type"
+},
+"lirbappealactivities.hearing_datetime": {
+"type": "string",
+"description": "Hearing Date"
+},
+"lirbappealactivities.review_description": {
+"type": "string",
+"description": "Review Description"
+},
+"lirbappealactivities.review_scheduled_datetime": {
+"type": "string",
+"description": "Review Scheduled Date"
+},
+"lirbappealactivities.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Board of Building Standards Appeals": {
+"properties": {
+"buildingboardappeals.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+},
+"buildingboardappeals.appeal_number": {
+"type": "string",
+"description": "Appeal Number"
+},
+"buildingboardappeals.application_type": {
+"type": "string",
+"description": "Application Type"
+},
+"buildingboardappeals.capacity": {
+"type": "string",
+"description": "Capacity"
+},
+"buildingboardappeals.grounds": {
+"type": "string",
+"description": "Grounds"
+},
+"buildingboardappeals.primary_applicant": {
+"type": "string",
+"description": "Primary Applicant Name"
+},
+"buildingboardappeals.permit_number": {
+"type": "string",
+"description": "Permit Number"
+},
+"buildingboardappeals.location_id": {
+"type": "integer",
+"description": "Address"
+}
+}
+},
+"Board of Building Standards Hearing Decisions": {
+"properties": {
+"bbshearingdecisions.hearing_decision_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"bbshearingdecisions.decision": {
+"type": "string",
+"description": "Decision"
+},
+"bbshearingdecisions.decision_datetime": {
+"type": "string",
+"description": "Decision Date"
+},
+"bbshearingdecisions.proviso": {
+"type": "string",
+"description": "Proviso"
+},
+"bbshearingdecisions.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Board of Building Standards Court Details": {
+"properties": {
+"bbscourtdetails.court_details_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"bbscourtdetails.court": {
+"type": "string",
+"description": "Court"
+},
+"bbscourtdetails.court_action_datetime": {
+"type": "string",
+"description": "Court Action Date"
+},
+"bbscourtdetails.court_case_number": {
+"type": "string",
+"description": "Court Case Number"
+},
+"bbscourtdetails.court_action": {
+"type": "string",
+"description": "Court Action"
+},
+"bbscourtdetails.court_result": {
+"type": "string",
+"description": "Court Result"
+},
+"bbscourtdetails.court_proviso": {
+"type": "string",
+"description": "Court Proviso"
+},
+"bbscourtdetails.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Board of Building Standards Appeal Types": {
+"properties": {
+"bbsappealtypes.appeak_type_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"bbsappealtypes.appeal_type": {
+"type": "string",
+"description": "Appeal Type"
+},
+"bbsappealtypes.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Board of Building Standards Appeal Activities": {
+"properties": {
+"bbsappealactivities.appeal_activity_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"bbsappealactivities.board_type": {
+"type": "string",
+"description": "Board Type"
+},
+"bbsappealactivities.hearing_datetime": {
+"type": "string",
+"description": "Hearing Date"
+},
+"bbsappealactivities.review_description": {
+"type": "string",
+"description": "Review Description"
+},
+"bbsappealactivities.review_scheduled_datetime": {
+"type": "string",
+"description": "Review Scheduled Date"
+},
+"bbsappealactivities.appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+}
+}
+},
+"Hearing Dates": {
+"properties": {
+"hearing_id": {
+"type": "string",
+"description": "Entity Primary Key"
+},
+"scheduled_datetime": {
+"type": "string",
+"description": "Appeal Scheduled Date"
+},
+"board_type": {
+"type": "string",
+"description": "Appeal Type"
+}
+}
+},
+"Location History": {
+"properties": {
+"locationhistories.entity_id": {
+"type": "string",
+"description": "Related Entity ID"
+},
+"locationhistories.entity_name": {
+"type": "string",
+"description": "Hardcoded Entity Name"
+},
+"locationhistories.entity_type": {
+"type": "string",
+"description": "Hardcoded Entity Type"
+},
+"locationhistories.entity_category": {
+"type": "string",
+"description": "Hardcoded Entity Category"
+},
+"locationhistories.location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"Appeal Hearings": {
+"properties": {
+"appeal_hearing_id": {
+"type": "integer",
+"description": "Auto-generated Primary Key"
+},
+"appeal_id": {
+"type": "integer",
+"description": "Appeal Key"
+},
+"application_type": {
+"type": "string",
+"description": "Application Type"
+},
+"capacity": {
+"type": "string",
+"description": "Primary Applicant Capacity"
+},
+"grounds": {
+"type": "string",
+"description": "Appeal Grounds"
+},
+"primary_applicant": {
+"type": "string",
+"description": "Primary Applicant"
+},
+"scheduled_datetime": {
+"type": "string",
+"description": "Hearing Date Time"
+},
+"location_id": {
+"type": "integer",
+"description": "Address Key"
+}
+}
+},
+"errorModel": {
+"required": [
+"code",
+"message"
+],
+"properties": {
+"code": {
+"type": "integer",
+"format": "int32"
+},
+"message": {
+"type": "string"
+}
+}
+}
+}
+}

@@ -1,0 +1,23 @@
+The /owner endpoint handles a variety of search typesis a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
+* Request properties owned by anyone whose first or last name contains "Poe" - http://api.phila.gov/ais/v1/owner/Poe
+* Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
+---
+tags:
+  - owner
+parameters:
+  - name: query
+    in: path
+    description: The querystring
+    type: string
+    default: 'Phil Lee'
+    required: true
+responses:
+  200:
+    description: A single user item
+    schema:
+      id: return_test
+      properties:
+        result:
+          type: string
+          description: The test
+          default: 'test'

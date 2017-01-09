@@ -1,0 +1,23 @@
+A simple test API
+This endpoint does nothing
+Only returns "test"
+---
+tags:
+  - OPA account num
+parameters:
+  - name: number
+    in: path
+    description: The querystring
+    type: string
+    default: '1234 market St'
+    required: true
+responses:
+  200:
+    description: A single user item
+    schema:
+      id: return_test
+      properties:
+        result:
+          type: string
+          description: The test
+          default: 'test'

@@ -1,0 +1,229 @@
+Searches AIS for addresses relating to the query.
+The /search endpoint handles a variety of search types, including:
+
+
+  * **address** - Represents a particular address -
+  [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+
+
+  * **address range** - Represents all addresses within a particular address range; inputted as a range of addresses followed by street name (with predirection). This search type is currently under development.
+   [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
+
+
+   * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) -
+    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St)
+
+
+   * **intersection** - Inputted as 'n street 1 and street 2', including predirections, i.e.
+    [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
+
+
+   * **OPA account number** - Office of Property Assessment Account Number -
+    http://api.phila.gov/ais/v1/search/883309050
+
+
+   * **Regmap ID** - This is the Department of Records Registry Map ID -
+    http://api.phila.gov/ais/v1/search/001S07-0144
+---
+tags:
+  - search
+parameters:
+  - name: query
+    in: path
+    description: The querystring
+    type: string
+    default: '1234 market St'
+    required: true
+  - name: srid
+    in: query
+    description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+    type: string
+    default: '32618'
+    required: false
+  - name: include_units
+    in: query
+    description: Requests that units contained within a given property be returned along with the top-level property.
+    type: boolean
+    default: false
+    required: false
+  - name: opa_only
+    in: query
+    description: Filters results to contain only addresses that have OPA account numbers.
+    type: boolean
+    default: false
+    required: false
+  - name: on_curb
+    in: query
+    description: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel.
+    type: boolean
+    default: false
+    required: false
+  - name: on_street
+    in: query
+    description: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel.
+    type: boolean
+    default: false
+    required: false
+#  - name: parcel_geocode_location
+#    in: query
+#    description: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned.
+#    type: boolean
+#    default: false
+#    required: false
+responses:
+  200:
+    description: A single user item
+    schema:
+      id: return_test
+      properties:
+        result:
+          type: object
+    properties:
+      type:
+        type: string
+      ais_feature_type:
+        type: string
+      match_type:
+        type: string
+      properties:
+        type: object
+        properties:
+          street_address:
+            type: string
+          address_low:
+            type: integer
+          address_low_suffix:
+            type: string
+          address_low_frac:
+            type: string
+          address_high:
+            type: integer
+          street_predir:
+            type: string
+          street_name:
+            type: string
+          street_suffix:
+            type: string
+          street_postdir:
+            type: string
+          unit_type:
+            type: string
+          unit_num:
+            type: string
+          street_full:
+            type: string
+          street_code:
+            type: integer
+          seg_id:
+            type: integer
+          zip_code:
+            type: string
+          zip_4:
+            type: string
+          usps_bldgfirm:
+            type: string
+          usps_type:
+            type: string
+          election_block_id:
+            type: string
+          election_precinct:
+            type: string
+          pwd_parcel_id:
+            type: string
+          dor_parcel_id:
+            type: string
+          li_address_key:
+            type: string
+          pwd_account_nums:
+            type: array
+            items:
+              type: string
+          opa_account_num:
+            type: string
+          opa_owners:
+            type: array
+            items:
+              type: string
+          opa_address:
+            type: string
+          center_city_district:
+            type: string
+          cua_zone:
+            type: string
+          li_district:
+            type: string
+          philly_rising_area:
+            type: string
+          census_tract_2010:
+            type: string
+          census_block_group_2010:
+            type: string
+          census_block_2010:
+            type: string
+          council_district_2016:
+            type: string
+          political_ward:
+            type: string
+          political_division:
+            type: string
+          planning_district:
+            type: string
+          elementary_school:
+            type: string
+          middle_school:
+            type: string
+          high_school:
+            type: string
+          zoning:
+            type: string
+          poice_division:
+            type: string
+          police_district:
+            type: string
+          police_service_area:
+            type: string
+          rubbish_recycle_day:
+            type: string
+          recycling_diversion_rate:
+            type: string
+          leaf_collection_area:
+            type: string
+          sanitation_area:
+            type: string
+          sanitation_district:
+            type: string
+          historic_street:
+            type: string
+          highway_district:
+            type: string
+          highway_section:
+            type: string
+          highway_subsection:
+            type: string
+          traffic_district:
+            type: string
+          traffic_pm_district:
+            type: string
+          street_light_route:
+            type: string
+          pwd_maint_district:
+            type: string
+          pwd_pressure_district:
+            type: string
+          pwd_treatment_plant:
+            type: string
+          pwd_water_plate:
+            type: string
+          pwd_center_city_district:
+            type: string
+      geometry:
+        type: object
+        properties:
+          geocode_type:
+            type: string
+          type:
+            type: string
+          coordinates:
+            type: array
+            items:
+              type: string
