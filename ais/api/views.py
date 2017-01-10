@@ -33,13 +33,14 @@ Swagger.DEFAULT_CONFIG['static_url_path'] = ""
 app.config['SWAGGER'] = {
     "swagger_version": "2.0",
     "title": "AIS",
+    "specs_route": "/specs",
     "specs": [
         {
-            "version": "1.0.0",
+            "version": "1.0",
             "title": "AIS API v1",
             "endpoint": 'spec',
             "description": 'Address Information Systems API Version 1.0',
-            "route": '/spec',
+            "route": '/spec'
             # # for versions, use rule_filter to assign endpoints to versions
             # rule_filter is optional
             # it is a callable to filter the views to extract
@@ -48,7 +49,7 @@ app.config['SWAGGER'] = {
             # )
         }
     ],
-    "static_url_path": ""
+    "static_url_path": "",
 }
 Swagger(app, sanitizer=MK_SANITIZER)
 
