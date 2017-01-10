@@ -4,52 +4,21 @@ Does three primary things:
 * Standardizing addresses
 * Providing identifiers for other systems
 """
-
-from ais import app
-from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection, StreetSegment, \
-    AddressStreet, ServiceAreaLayer
+from collections import OrderedDict
+from itertools import chain
 from flask import Response, request, redirect
 from flask_cachecontrol import cache_for
+from flasgger.utils import swag_from
+from geoalchemy2.shape import to_shape
 from passyunk.parser import PassyunkParser
-
+from ais import app, util, app_db as db
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment
+from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer#, CascadedSegJsonSerializer
-from ..util import NotNoneDict
-from collections import OrderedDict
-from ais import util
-from geoalchemy2.shape import to_shape
-from ais import app_db as db
-from itertools import chain
-from flasgger import Swagger, MK_SANITIZER
-from flasgger.utils import swag_from
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer
 
 config = app.config
-default_srid = 4326
-
-app.config['SWAGGER'] = {
-    "swagger_version": "2.0",
-    "title": "AIS",
-    "specs_route": "/specs",
-    "specs": [
-        {
-            "version": "1.0",
-            "title": "AIS API v1",
-            "endpoint": 'spec',
-            "description": 'Address Information Systems API Version 1.0',
-            "route": '/spec'
-            # # for versions, use rule_filter to assign endpoints to versions
-            # rule_filter is optional
-            # it is a callable to filter the views to extract
-            # "rule_filter": lambda rule: rule.endpoint.startswith(
-            #     'should_be_v1_only'
-            # )
-        }
-    ],
-    "static_url_path": "",
-}
-Swagger(app, sanitizer=MK_SANITIZER)
-
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -423,7 +392,7 @@ def addresses_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs},
         pagination=paginator.get_page_info(page_num),
-        srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
+        srid=requestargs.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
         normalized_address=normalized_address,
         base_address=base_address,
     )
@@ -499,7 +468,7 @@ def block_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     )
     result = serializer.serialize_many(block_page)
     #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
@@ -540,7 +509,7 @@ def owner(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     )
     result = serializer.serialize_many(page)
     #result = serializer.serialize_many(page) if addresses_count > 1 else serializer.serialize(next(page))
@@ -586,7 +555,7 @@ def account_number_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -626,7 +595,7 @@ def pwd_parcel(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -670,7 +639,7 @@ def dor_parcel(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -732,7 +701,7 @@ def intersection(query):
     serializer = IntersectionJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid)
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'])
 
     result = serializer.serialize_many(intersections_page)
     #result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))

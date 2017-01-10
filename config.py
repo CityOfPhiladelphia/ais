@@ -21,6 +21,7 @@ PROFILE = (os.environ.get('PROFILE', 'False').title() == 'True')
 SENTRY_DSN = os.environ.get('SENTRY_DSN', None)
 
 ENGINE_SRID = 2272
+DEFAULT_API_SRID = 4326
 
 BASE_DATA_SOURCES = {
     'streets': {
@@ -1092,4 +1093,26 @@ ADDRESS_SUMMARY = {
             'type':                 'text',
         },
     ],
+}
+
+SWAGGER = {
+    "swagger_version": "2.0",
+    "title": "AIS",
+    "specs_route": "/specs",
+    "specs": [
+        {
+            "version": "1.0",
+            "title": "AIS API v1",
+            "endpoint": 'spec',
+            "description": 'Address Information Systems API Version 1.0',
+            "route": '/spec'
+            # # for versions, use rule_filter to assign endpoints to versions
+            # rule_filter is optional
+            # it is a callable to filter the views to extract
+            # "rule_filter": lambda rule: rule.endpoint.startswith(
+            #     'should_be_v1_only'
+            # )
+        }
+    ],
+    "static_url_path": "",
 }

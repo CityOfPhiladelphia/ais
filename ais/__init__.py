@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+from flasgger import Swagger, MK_SANITIZER
 
 
 # Create app instance
@@ -43,3 +44,6 @@ manager.add_command('engine', engine_manager)
 
 # Init migration extension
 migrate = Migrate(app, app_db)
+
+# Swaggerify App
+Swagger(app, sanitizer=MK_SANITIZER)
