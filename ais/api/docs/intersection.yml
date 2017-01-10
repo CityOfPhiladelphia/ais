@@ -16,9 +16,40 @@ responses:
   200:
     description: An AIS intersection
     schema:
-      id: intersection
+      id: response
       properties:
-        result:
+        type:
+          type: string
+        ais_feature_type:
+          type: string
+        match_type:
+          type: string
+        properties:
           type: object
-          description: the response
-          default: ''
+          properties:
+            street_1:
+              type: object
+              properties:
+                street_code:
+                  type: string
+                street_full:
+                  type: string
+                street_name:
+                  type: string
+                street_postdir:
+                  type: string
+                street_suffix:
+                  type: string
+            street_2:
+              type: object
+              properties:
+                street_code:
+                  type: string
+                street_full:
+                  type: string
+                street_name:
+                  type: string
+                street_postdir:
+                  type: string
+                street_suffix:
+                  type: string

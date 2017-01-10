@@ -15,9 +15,152 @@ responses:
   200:
     description: AIS address(es) having the query PWD parcel ID
     schema:
-      id: address
       properties:
-        result:
+        type:
+          type: string
+        ais_feature_type:
+          type: string
+        match_type:
+          type: string
+        properties:
           type: object
-          description: The response
-          default: 'test'
+          properties:
+            street_address:
+              type: string
+            address_low:
+              type: integer
+            address_low_suffix:
+              type: string
+            address_low_frac:
+              type: string
+            address_high:
+              type: integer
+            street_predir:
+              type: string
+            street_name:
+              type: string
+            street_suffix:
+              type: string
+            street_postdir:
+              type: string
+            unit_type:
+              type: string
+            unit_num:
+              type: string
+            street_full:
+              type: string
+            street_code:
+              type: integer
+            seg_id:
+              type: integer
+            zip_code:
+              type: string
+            zip_4:
+              type: string
+            usps_bldgfirm:
+              type: string
+            usps_type:
+              type: string
+            election_block_id:
+              type: string
+            election_precinct:
+              type: string
+            pwd_parcel_id:
+              type: string
+            dor_parcel_id:
+              type: string
+            li_address_key:
+              type: string
+            pwd_account_nums:
+              type: array
+              items:
+                type: string
+            opa_account_num:
+              type: string
+            opa_owners:
+              type: array
+              items:
+                type: string
+            opa_address:
+              type: string
+            center_city_district:
+              type: string
+            cua_zone:
+              type: string
+            li_district:
+              type: string
+            philly_rising_area:
+              type: string
+            census_tract_2010:
+              type: string
+            census_block_group_2010:
+              type: string
+            census_block_2010:
+              type: string
+            council_district_2016:
+              type: string
+            political_ward:
+              type: string
+            political_division:
+              type: string
+            planning_district:
+              type: string
+            elementary_school:
+              type: string
+            middle_school:
+              type: string
+            high_school:
+              type: string
+            zoning:
+              type: string
+            poice_division:
+              type: string
+            police_district:
+              type: string
+            police_service_area:
+              type: string
+            rubbish_recycle_day:
+              type: string
+            recycling_diversion_rate:
+              type: string
+            leaf_collection_area:
+              type: string
+            sanitation_area:
+              type: string
+            sanitation_district:
+              type: string
+            historic_street:
+              type: string
+            highway_district:
+              type: string
+            highway_section:
+              type: string
+            highway_subsection:
+              type: string
+            traffic_district:
+              type: string
+            traffic_pm_district:
+              type: string
+            street_light_route:
+              type: string
+            pwd_maint_district:
+              type: string
+            pwd_pressure_district:
+              type: string
+            pwd_treatment_plant:
+              type: string
+            pwd_water_plate:
+              type: string
+            pwd_center_city_district:
+              type: string
+        geometry:
+          type: object
+          properties:
+            geocode_type:
+              type: string
+            type:
+              type: string
+            coordinates:
+              type: array
+              items:
+                type: string
