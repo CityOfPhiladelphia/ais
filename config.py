@@ -1104,7 +1104,7 @@ SWAGGER = {
             "version": "1.0",
             "title": "AIS API v1",
             "endpoint": 'spec',
-            "description": 'Address Information Systems API Version 1.0',
+            "description": 'Address Information System API Version 1.0',
             "route": '/spec'
             # # for versions, use rule_filter to assign endpoints to versions
             # rule_filter is optional

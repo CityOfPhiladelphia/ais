@@ -1,0 +1,6 @@
+Unstaged changes after reset:
+D	ais/api/docs/OPA_account_number.yml
+M	ais/api/docs/account.yml
+M	ais/api/docs/addresses.yml
+M	ais/engine/manage.py
+M	config.py

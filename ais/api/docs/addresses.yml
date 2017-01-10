@@ -4,7 +4,7 @@ This is the original AIS endpoint designed to work with [Property Search.](http:
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
 ---
 tags:
-  - address
+  - addresses
 parameters:
   - name: query
     in: path
@@ -177,4 +177,5 @@ responses:
             coordinates:
               type: array
               items:
-                type: string
+                type: float
+              default: [-76.2435, 39.234]
