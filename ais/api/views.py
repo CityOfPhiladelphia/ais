@@ -519,7 +519,7 @@ def owner(query):
 
 @app.route('/account/<query>')
 @cache_for(hours=1)
-@swag_from('docs/OPA_account_number.yml')
+@swag_from('docs/account.yml')
 def account_number_view(query):
     """
     Looks up information about the property with the given OPA account number.
@@ -699,7 +699,7 @@ def intersection(query):
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
     serializer = IntersectionJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': street_1_full + ' & ' + street_2_full, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'])
 

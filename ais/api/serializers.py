@@ -341,7 +341,7 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
 
             cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated[
                 'cascade_geocode_type'] else None
-            geom_type = {'geocode_type': 'choose one point of intersection'}
+            geom_type = {'geocode_type': 'intersection'}
             geom_data.update(geom_type)
             match_type = 'exact'
         else:
