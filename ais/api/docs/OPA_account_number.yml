@@ -3,9 +3,9 @@ Query format requires a 9 digit numeric OPA account number:
 * [http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
 ---
 tags:
-  - OPA account number
+  - opa account number
 parameters:
-  - name: number
+  - name: query
     in: path
     description: An OPA account number
     type: string

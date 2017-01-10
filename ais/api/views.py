@@ -26,10 +26,32 @@ from flasgger.utils import swag_from
 
 config = app.config
 default_srid = 4326
-
+#
 Swagger.DEFAULT_CONFIG['specs'][0]['title'] = 'AIS API'
+Swagger.DEFAULT_CONFIG['specs'][0]['version'] = '1.0.0'
 Swagger.DEFAULT_CONFIG['static_url_path'] = ""
+app.config['SWAGGER'] = {
+    "swagger_version": "2.0",
+    "title": "AIS",
+    "specs": [
+        {
+            "version": "1.0.0",
+            "title": "AIS API v1",
+            "endpoint": 'spec',
+            "description": 'Address Information Systems API Version 1.0',
+            "route": '/spec',
+            # # for versions, use rule_filter to assign endpoints to versions
+            # rule_filter is optional
+            # it is a callable to filter the views to extract
+            # "rule_filter": lambda rule: rule.endpoint.startswith(
+            #     'should_be_v1_only'
+            # )
+        }
+    ],
+    "static_url_path": ""
+}
 Swagger(app, sanitizer=MK_SANITIZER)
+
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -528,21 +550,21 @@ def owner(query):
     return json_response(response=result, status=200)
 
 
-@app.route('/account/<number>')
+@app.route('/account/<query>')
 @cache_for(hours=1)
 @swag_from('docs/OPA_account_number.yml')
-def account_number_view(number):
+def account_number_view(query):
     """
     Looks up information about the property with the given OPA account number.
     Returns all addresses with opa_account_num matching query.
     """
-    query = number.strip('/')
+    query = query.strip('/')
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
 
     addresses = AddressSummary.query\
-        .filter(AddressSummary.opa_account_num==number)\
+        .filter(AddressSummary.opa_account_num==query)\
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
@@ -553,7 +575,7 @@ def account_number_view(number):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': number})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -564,7 +586,7 @@ def account_number_view(number):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -574,15 +596,15 @@ def account_number_view(number):
     return json_response(response=result, status=200)
 
 
-@app.route('/pwd_parcel/<id>')
+@app.route('/pwd_parcel/<query>')
 @cache_for(hours=1)
 @swag_from('docs/pwd_parcel.yml')
-def pwd_parcel(id):
+def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
     """
     addresses = AddressSummary.query\
-        .filter(AddressSummary.pwd_parcel_id==id) \
+        .filter(AddressSummary.pwd_parcel_id==query) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
@@ -593,7 +615,7 @@ def pwd_parcel(id):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': id})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -604,7 +626,7 @@ def pwd_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': 'pwd_parcel_id', 'query': id, 'normalized': id, 'search_params': request.args},
+        metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -613,14 +635,14 @@ def pwd_parcel(id):
     return json_response(response=result, status=200)
 
 
-@app.route('/dor_parcel/<id>')
+@app.route('/dor_parcel/<query>')
 @cache_for(hours=1)
 @swag_from('docs/mapreg.yml')
-def dor_parcel(id):
+def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
     """
-    parsed = PassyunkParser().parse(id)
+    parsed = PassyunkParser().parse(query)
     #normalized_id = id.replace('-', '') if '-' in id and id.index('-') == 6 else id # This is now handled by Passyunk
     normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
@@ -637,7 +659,7 @@ def dor_parcel(id):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': id})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -648,7 +670,7 @@ def dor_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else default_srid,
     )
@@ -816,19 +838,6 @@ def search_view(query):
                                {'query': query})
             return json_response(response=error, status=404)
 
-
-# @app.route("/search/")
-# def search_landing():
-#     return redirect("/index.html#!/search/get_search_query", code=302)
-#     # return """
-#     #   <h1> Welcome to AIS API</h1>
-#     #   <h2> Search endpoint </h2>
-#     # <p>
-#     #   For documentation and testing, go
-#     #   <a href="\index.html#!/search/get_search_query">here</a>
-#     #  </p>
-#     #
-#     # """
 
 @app.route("/")
 def base_landing():

@@ -33,7 +33,7 @@ parameters:
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: '32618'
+    default: ''
     required: false
   - name: include_units
     in: query

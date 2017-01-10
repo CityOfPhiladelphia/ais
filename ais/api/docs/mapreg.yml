@@ -4,9 +4,9 @@ Query format requires a ten digit alpha numberic DOR Parcel/Registration Map ID 
 * [http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais/v1/dor_parcel/001S07-0144)
 ---
 tags:
-  - dor_parcel/regmap
+  - dor_parcel
 parameters:
-  - name: id
+  - name: query
     in: path
     description: A DOR Parcel/Registry Map ID
     type: string

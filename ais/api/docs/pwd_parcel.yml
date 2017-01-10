@@ -5,11 +5,11 @@ Query format requires a numeric PWD parcel ID:
 tags:
   - pwd_parcel
 parameters:
-  - name: id
+  - name: query
     in: path
     description: A PWD parcel ID
     type: string
-    default: '5356001234001'
+    default: '542611'
     required: true
 responses:
   200:
