@@ -3,7 +3,7 @@ Query format requires a numeric PWD parcel ID:
 * [http://api.phila.gov/ais/v1/pwd_parcel/5356001234001](http://api.phila.gov/ais/v1/pwd_parcel/5356001234001)
 ---
 tags:
-  - pwd_parcel
+  - pwd parcel
 parameters:
   - name: query
     in: path
