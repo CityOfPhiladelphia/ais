@@ -895,7 +895,7 @@ class AddressSummaryQuery(BaseQuery):
         # If request arg "on_curb" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_on_street is selected
         if self.first() and on_curb and request.args['on_curb'].lower() != 'false':
-
+            
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
 
@@ -923,7 +923,7 @@ class AddressSummaryQuery(BaseQuery):
                 parcel_geocode_location = request.args.get('parcel_geocode_location')
                 return self.get_parcel_geocode_location(parcel_geocode_location=parcel_geocode_location, srid=srid, request=request)
 
-            elif 'on_street' in request.args and i==0:
+            elif 'on_street' in request.args and request.args['on_street'].lower() != 'false' and i==0:
                 return self.get_parcel_geocode_on_street(on_street=True, srid=srid, request=request)
 
             elif 'on_curb' in request.args and request.args['on_curb'].lower() != 'false' and i==0:
