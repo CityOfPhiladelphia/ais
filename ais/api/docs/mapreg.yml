@@ -12,11 +12,47 @@ parameters:
     type: string
     default: '001S07-0144'
     required: true
+  - name: srid
+    in: query
+    description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+    type: string
+    default: ''
+    required: false
+  - name: include_units
+    in: query
+    description: Requests that units contained within a given property be returned along with the top-level property.
+    type: boolean
+    default: false
+    required: false
+  - name: opa_only
+    in: query
+    description: Filters results to contain only addresses that have OPA account numbers.
+    type: boolean
+    default: false
+    required: false
+  - name: on_curb
+    in: query
+    description: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel.
+    type: boolean
+    default: false
+    required: false
+  - name: on_street
+    in: query
+    description: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel.
+    type: boolean
+    default: false
+    required: false
+#  - name: parcel_geocode_location
+#    in: query
+#    description: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned.
+#    type: boolean
+#    default: false
+#    required: false
 responses:
   200:
     description: AIS address(es) having the query Registry Map ID
     schema:
-      id: response
+      id: the response
       properties:
         type:
           type: string
@@ -30,13 +66,15 @@ responses:
             street_address:
               type: string
             address_low:
-              type: integer
+              type: string
+              default: "integer"
             address_low_suffix:
               type: string
             address_low_frac:
               type: string
             address_high:
-              type: integer
+              type: string
+              default: "integer"
             street_predir:
               type: string
             street_name:
@@ -52,9 +90,11 @@ responses:
             street_full:
               type: string
             street_code:
-              type: integer
+              type: string
+              default: "integer"
             seg_id:
-              type: integer
+              type: string
+              default: "integer"
             zip_code:
               type: string
             zip_4:
@@ -125,6 +165,7 @@ responses:
               type: string
             recycling_diversion_rate:
               type: string
+              default: "float"
             leaf_collection_area:
               type: string
             sanitation_area:
@@ -166,3 +207,4 @@ responses:
               type: array
               items:
                 type: string
+              default: ["float", "float"]

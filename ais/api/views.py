@@ -277,7 +277,7 @@ def unknown_cascade_view(**kwargs):
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
 @swag_from('docs/addresses.yml')
-def addresses_view(query):
+def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
     object with the information for the matching address. The object includes:
@@ -405,7 +405,7 @@ def addresses_view(query):
 @app.route('/block/<path:query>')
 @cache_for(hours=1)
 @swag_from('docs/block.yml')
-def block_view(query):
+def block(query):
     """
     Looks up information about the 100-range that the given address falls
     within.
@@ -520,7 +520,7 @@ def owner(query):
 @app.route('/account/<query>')
 @cache_for(hours=1)
 @swag_from('docs/account.yml')
-def account_number_view(query):
+def account(query):
     """
     Looks up information about the property with the given OPA account number.
     Returns all addresses with opa_account_num matching query.
@@ -745,9 +745,7 @@ def intersection(query):
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
 @swag_from('docs/search.yml')
-def search_view(query):
-    from copy import deepcopy
-
+def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)
     """
@@ -772,11 +770,11 @@ def search_view(query):
     query = query[:query.index(';')] if ';' in query else query
 
     parser_search_type_map = {
-        'address': addresses_view,
+        'address': addresses,
         'intersection_addr': intersection,
-        'opa_account': account_number_view,
+        'opa_account': account,
         'mapreg': dor_parcel,
-        'block': block_view,
+        'block': block,
     }
 
     parsed = PassyunkParser().parse(query)
