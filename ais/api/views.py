@@ -26,10 +26,7 @@ from flasgger.utils import swag_from
 
 config = app.config
 default_srid = 4326
-#
-Swagger.DEFAULT_CONFIG['specs'][0]['title'] = 'AIS API'
-Swagger.DEFAULT_CONFIG['specs'][0]['version'] = '1.0.0'
-Swagger.DEFAULT_CONFIG['static_url_path'] = ""
+
 app.config['SWAGGER'] = {
     "swagger_version": "2.0",
     "title": "AIS",
