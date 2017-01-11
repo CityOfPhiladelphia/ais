@@ -188,14 +188,14 @@ The root of the `FeatureCollection` contains:
      * `exact`: Exact match
      * `unmatched`: Intersection cannot be matched. Location is estimated from query components.
 * The following list of `properties`:
-     * 'street_1': properties for street_1 are:
+     * `street_1`: properties for street_1 are:
         * `street_code`: 5 digit numeric unique code associated with each unique street name
         * `street_full`: full street (includeing predir, postdir and suffix)
         * `street_name`:  street name
         * `street_predir`: street cardinal pre-direction
         * `street_postdir`: street post-direction
         * `street_suffix`: street suffix 
-     * 'street_2': properties for street_2 are:
+     * `street_2`: properties for street_2 are:
         * `street_code`: 5 digit numeric unique code associated with each unique street name
         * `street_full`: full street (includeing predir, postdir and suffix)
         * `street_name`:  street name
