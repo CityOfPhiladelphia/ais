@@ -102,7 +102,7 @@ The root of the `FeatureCollection` contains:
      * `unit_child`: Unit address match for base address query
      * `range-parent`: Ranged_address match for range_child query
      * `range_child`: Range_child match for ranged_address query
-     * `unmatched`: Address cannot be matched. Location is estimated from query compoenents. Overlaying service areas are found for estimated location. 
+     * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
   * `address_low`
@@ -175,3 +175,26 @@ The root of the `FeatureCollection` contains:
   * `pwd_treatment_plant`
   * `pwd_water_plate`
   * `pwd_center_city_district`
+
+<a name="Intersection"></a>Intersection feature objects contain:
+* The following list of feature metatdata:
+  * `type`: "Feature"
+  * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
+  * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
+     * `exact`: Exact match
+     * `unmatched`: Intersection cannot be matched. Location is estimated from query components.
+* The following list of `properties`:
+     * 'street_1': properties for street_1 are:
+        * `street_code`: 5 digit numeric unique code associated with each unique street name
+        * `street_full`: full street (includeing predir, postdir and suffix)
+        * `street_name`:  street name
+        * `street_predir`: street cardinal pre-direction
+        * `street_postdir`: street post-direction
+        * `street_suffix`: street suffix 
+     * 'street_2': properties for street_2 are:
+        * `street_code`: 5 digit numeric unique code associated with each unique street name
+        * `street_full`: full street (includeing predir, postdir and suffix)
+        * `street_name`:  street name
+        * `street_predir`: street cardinal pre-direction
+        * `street_postdir`: street post-direction
+        * `street_suffix`: street suffix 
