@@ -6,11 +6,11 @@
 
 [Response Structure & Metadata](#Response Structure & Metadata)
 
-## <a name="Authentication"></a>Authentication
+# <a name="Authentication"></a>Authentication
 
 Currently AIS is only designated for internal use.  Internal users must request an API key.
 
-## <a name="Queries"></a>Queries
+# <a name="Queries"></a>Queries
 
 **Endpoints**
 
@@ -70,12 +70,12 @@ Additional query instructions can be sent via querystring parameters, or flags:
 
 
 
-## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
+# <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
 There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
-### <a name="The Envelope"></a>The Envelope
+## <a name="The Envelope"></a>The Envelope
 
 The root of the `FeatureCollection` contains:
 * **Metadata** information.
@@ -93,9 +93,9 @@ The root of the `FeatureCollection` contains:
 * Matched addresses (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
   objects. 
 
-### <a name="AIS Feature Types"></a>AIS Feature Types
+## <a name="AIS Feature Types"></a>AIS Feature Types
 
-<a name="Address"></a>**Address** feature objects contain:
+### <a name="Address"></a>**Address**
 * The following list of feature metatdata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
@@ -180,7 +180,7 @@ The root of the `FeatureCollection` contains:
   * `pwd_water_plate`
   * `pwd_center_city_district`
 
-<a name="Intersection"></a>**Intersection** feature objects contain:
+### <a name="Intersection"></a>**Intersection**
 * The following list of feature metatdata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
