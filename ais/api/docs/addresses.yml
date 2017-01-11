@@ -1,7 +1,11 @@
 Search by address
 This endpoint handles address searches. It is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/).
-See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
+
+Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
   - addresses

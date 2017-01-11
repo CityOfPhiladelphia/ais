@@ -7,6 +7,9 @@ Search types currently supported are:
   * dor parcel
   * account
 
+Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address or intersection feature(s).
+
 See documentation for an individual endpoint for more information about that search type.
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.

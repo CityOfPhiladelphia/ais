@@ -1,5 +1,6 @@
 Search by Office of Property Assessment (OPA) account number
-This endpoint handles OPA account number searches.
+This endpoint handles OPA account number searches. Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
 
 Query format requires a 9 digit numeric OPA account number:
 * [http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)

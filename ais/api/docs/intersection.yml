@@ -1,5 +1,6 @@
 Search by street intersection
-This endpoint handles street intersection searches.
+This endpoint handles street intersection searches. Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of intersection feature(s).
 
 Query format requires 2 street names, including predirections and suffixes, separated by 'and' or '&':
 * [http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais/v1/intersection/N%2012th%20st%20and%20market%20st)

@@ -1,7 +1,8 @@
 Search by Department of Records (DOR) Registry Map ID
-This endpoint handles DOR Registry Map ID searches.
+This endpoint handles DOR Registry Map ID searches. Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
 
-Query format requires a ten digit alpha numberic DOR Parcel/Registry Map ID (optionally separating digits 6 & 7 with a hyphen)
+Query format requires a ten digit alpha numberic DOR Parcel/Registry Map ID (optionally separating digits 6 & 7 with a hyphen):
 * [http://api.phila.gov/ais/v1/dor_parcel/001S070144](http://api.phila.gov/ais/v1/dor_parcel/001S070144)
 * [http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais/v1/dor_parcel/001S07-0144)
 

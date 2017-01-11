@@ -1,5 +1,6 @@
 Search by Philadelphia Water Department (PWD) parcel ID
-This endpoint handles PWD parcel ID searches.
+This endpoint handles PWD parcel ID searches. Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
 
 Query format requires a numeric PWD parcel ID:
 * [http://api.phila.gov/ais/v1/pwd_parcel/5356001234001](http://api.phila.gov/ais/v1/pwd_parcel/5356001234001)
