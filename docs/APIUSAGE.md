@@ -75,14 +75,16 @@ Additional query instructions can be sent via querystring parameters, or flags:
 There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
+### <a name="The Envelope"></a>The Envelope
+
 The root of the `FeatureCollection` contains:
-* Metadata information.
+* **Metadata** information.
   * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
   * `search_params`: The querystring parameters or flags and their values included in query
   * `query`: The querystring
   * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
   * `type`: "FeatureCollection"
-* Pagination information.
+* **Pagination** information.
   * `page`: The current page of data
   * `page_count`: The total number of pages of data for the current query
   * `page_size`: The number of results on the current page
@@ -91,7 +93,9 @@ The root of the `FeatureCollection` contains:
 * Matched addresses (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
   objects. 
 
-<a name="Address"></a>Address feature objects contain:
+### <a name="AIS Feature Types"></a>AIS Feature Types
+
+<a name="Address"></a>**Address** feature objects contain:
 * The following list of feature metatdata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
@@ -176,7 +180,7 @@ The root of the `FeatureCollection` contains:
   * `pwd_water_plate`
   * `pwd_center_city_district`
 
-<a name="Intersection"></a>Intersection feature objects contain:
+<a name="Intersection"></a>**Intersection** feature objects contain:
 * The following list of feature metatdata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
