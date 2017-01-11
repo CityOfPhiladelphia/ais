@@ -72,7 +72,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
 
 ## <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
-There are currently two distinct json response formats representing address and intersection response objects. Responses for all endpoints are returned in a paginated
+There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
 The root of the `FeatureCollection` contains:
@@ -91,7 +91,7 @@ The root of the `FeatureCollection` contains:
 * Matched addresses (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
   objects. 
 
-Address `Feature` objects contain:
+<a name="Address"></a>Address feature objects contain:
 * The following list of feature metatdata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
