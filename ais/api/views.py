@@ -804,14 +804,16 @@ def search(query):
             return json_response(response=error, status=404)
 
 
-@app.route('/apidocs')
-def apidocs():
-    return '''
-    '''
+# @app.route('/apidocs')
+# def apidocs():
+#     return '''
+#     '''
+
 
 @app.route("/")
 def base_landing():
-    url = url_for('apidocs', _external=True) + '/index.html'
+    # url = url_for('apidocs', _external=True) + '/index.html'
+    url = url_for('base_landing', _external=True) + 'index.html'
     print(url)
     #return redirect(url_for(base_landing, _external=True) + '//apidocs/index.html')
     return redirect(url, code=302)

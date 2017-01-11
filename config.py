@@ -1114,5 +1114,5 @@ SWAGGER = {
             # )
         }
     ],
-    #"static_url_path": "/",
+    "static_url_path": "api.phila.gov/ais/v1",
 }
