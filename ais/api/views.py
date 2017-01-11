@@ -806,7 +806,7 @@ def search(query):
 
 @app.route("/")
 def base_landing():
-    return redirect("/index.html", code=302)
+    return redirect("/apidocs/index.html", code=302)
     # return """
     #   <h1> Welcome to AIS API</h1>
     #   <ul>

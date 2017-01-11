@@ -1114,5 +1114,5 @@ SWAGGER = {
             # )
         }
     ],
-    "static_url_path": "/ais/v1",
+    #"static_url_path": "/",
 }
