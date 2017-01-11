@@ -162,13 +162,11 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type=None, geom_source=None, in_street=False, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, **kwargs):
+    def __init__(self, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
         self.geom_source = geom_source
-        #self.in_street = True if kwargs.get('in_street') == True else False
-        self.in_street = in_street
         #self.normalized_address = kwargs.get('normalized_address') if 'normalized_address' in kwargs else None
         self.normalized_address = normalized_address
         #self.base_address = kwargs.get('base_address') if 'base_address' in kwargs else None
@@ -343,7 +341,7 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
 
             cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated[
                 'cascade_geocode_type'] else None
-            geom_type = {'geocode_type': 'choose one point of intersection'}
+            geom_type = {'geocode_type': 'intersection'}
             geom_data.update(geom_type)
             match_type = 'exact'
         else:

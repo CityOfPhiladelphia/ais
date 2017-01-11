@@ -4,27 +4,21 @@ Does three primary things:
 * Standardizing addresses
 * Providing identifiers for other systems
 """
-
-from ais import app
-from ais.models import Address, AddressProperty, AddressSummary, AddressLink, StreetIntersection, StreetSegment, \
-    AddressStreet, ServiceAreaLayer
-from flask import Response, request
+from collections import OrderedDict
+from itertools import chain
+from flask import Response, request, redirect
 from flask_cachecontrol import cache_for
+from flasgger.utils import swag_from
+from geoalchemy2.shape import to_shape
 from passyunk.parser import PassyunkParser
-
+from ais import app, util, app_db as db
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment
+from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer#, CascadedSegJsonSerializer
-from ..util import NotNoneDict
-from collections import OrderedDict
-from ais import util
-from geoalchemy2.shape import to_shape
-from ais import app_db as db
-from itertools import chain
-import re
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer
 
 config = app.config
-default_srid = 4326
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -282,7 +276,8 @@ def unknown_cascade_view(**kwargs):
 
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
-def addresses_view(query):
+@swag_from('docs/addresses.yml')
+def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
     object with the information for the matching address. The object includes:
@@ -370,11 +365,11 @@ def addresses_view(query):
         .filter_by(**filters) \
         .filter_by_unit_type(unit_type) \
         .include_child_units(
-            'include_units' in request.args,
+            'include_units' in request.args and request.args['include_units'].lower() != 'false',
             is_range=high_num is not None,
             is_unit=unit_type is not None,
             request=request) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
@@ -397,7 +392,7 @@ def addresses_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs},
         pagination=paginator.get_page_info(page_num),
-        srid=requestargs.get('srid') if 'srid' in request.args else default_srid,
+        srid=requestargs.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
         normalized_address=normalized_address,
         base_address=base_address,
     )
@@ -409,7 +404,8 @@ def addresses_view(query):
 
 @app.route('/block/<path:query>')
 @cache_for(hours=1)
-def block_view(query):
+@swag_from('docs/block.yml')
+def block(query):
     """
     Looks up information about the 100-range that the given address falls
     within.
@@ -447,7 +443,7 @@ def block_view(query):
         .filter(AddressSummary.address_low >= block_num)\
         .filter(AddressSummary.address_low < block_num + 100)\
         .exclude_children()\
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
@@ -472,8 +468,7 @@ def block_view(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     )
     result = serializer.serialize_many(block_page)
     #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
@@ -482,6 +477,7 @@ def block_view(query):
 
 @app.route('/owner/<query>')
 @cache_for(hours=1)
+@swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
 
@@ -490,7 +486,7 @@ def owner(query):
     # Match a set of addresses
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts)\
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -513,8 +509,7 @@ def owner(query):
     serializer = AddressJsonSerializer(
         metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
-        in_street='in_street' in request.args
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     )
     result = serializer.serialize_many(page)
     #result = serializer.serialize_many(page) if addresses_count > 1 else serializer.serialize(next(page))
@@ -522,21 +517,22 @@ def owner(query):
     return json_response(response=result, status=200)
 
 
-@app.route('/account/<number>')
+@app.route('/account/<query>')
 @cache_for(hours=1)
-def account_number_view(number):
+@swag_from('docs/account.yml')
+def account(query):
     """
     Looks up information about the property with the given OPA account number.
     Returns all addresses with opa_account_num matching query.
     """
-    query = number.strip('/')
+    query = query.strip('/')
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
 
     addresses = AddressSummary.query\
-        .filter(AddressSummary.opa_account_num==number)\
-        .exclude_non_opa('opa_only' in request.args) \
+        .filter(AddressSummary.opa_account_num==query)\
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -546,7 +542,7 @@ def account_number_view(number):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': number})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -557,9 +553,9 @@ def account_number_view(number):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': number, 'normalized': normalized, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -567,15 +563,16 @@ def account_number_view(number):
     return json_response(response=result, status=200)
 
 
-@app.route('/pwd_parcel/<id>')
+@app.route('/pwd_parcel/<query>')
 @cache_for(hours=1)
-def pwd_parcel(id):
+@swag_from('docs/pwd_parcel.yml')
+def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
     """
     addresses = AddressSummary.query\
-        .filter(AddressSummary.pwd_parcel_id==id) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .filter(AddressSummary.pwd_parcel_id==query) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -585,7 +582,7 @@ def pwd_parcel(id):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': id})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -596,29 +593,30 @@ def pwd_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': 'pwd_parcel_id', 'query': id, 'normalized': id, 'search_params': request.args},
+        metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
     return json_response(response=result, status=200)
 
 
-@app.route('/dor_parcel/<id>')
+@app.route('/dor_parcel/<query>')
 @cache_for(hours=1)
-def dor_parcel(id):
+@swag_from('docs/mapreg.yml')
+def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
     """
-    parsed = PassyunkParser().parse(id)
+    parsed = PassyunkParser().parse(query)
     #normalized_id = id.replace('-', '') if '-' in id and id.index('-') == 6 else id # This is now handled by Passyunk
     normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
 
     addresses = AddressSummary.query\
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
-        .exclude_non_opa('opa_only' in request.args) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_address()
 
@@ -628,7 +626,7 @@ def dor_parcel(id):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
-                           {'query': id})
+                           {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -639,9 +637,9 @@ def dor_parcel(id):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': id, 'normalized': normalized_id, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid,
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -650,6 +648,7 @@ def dor_parcel(id):
 
 @app.route('/intersection/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/intersection.yml')
 def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
@@ -700,9 +699,9 @@ def intersection(query):
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
     serializer = IntersectionJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': [street_1_full + ' & ' + street_2_full, ], 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': street_1_full + ' & ' + street_2_full, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else default_srid)
+        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'])
 
     result = serializer.serialize_many(intersections_page)
     #result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
@@ -745,11 +744,10 @@ def intersection(query):
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
-def search_view(query):
-
+@swag_from('docs/search.yml')
+def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)
-    TODO: Implement batch geocoding endpoint
     """
     #query_original = query
     query = query.strip('/')
@@ -772,18 +770,26 @@ def search_view(query):
     query = query[:query.index(';')] if ';' in query else query
 
     parser_search_type_map = {
-        'address': addresses_view,
+        'address': addresses,
         'intersection_addr': intersection,
-        'opa_account': account_number_view,
+        'opa_account': account,
         'mapreg': dor_parcel,
-        'block': block_view,
+        'block': block,
     }
 
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     if search_type != 'none':
+
         # get the corresponding view function
         view = parser_search_type_map[search_type]
+
+        # # remove args with 'false' value
+        # requestargs = dict(request.args)
+        # for arg in request.args:
+        #     if (requestargs[arg][0]).lower() == 'false':
+        #         del requestargs[arg]
+        # print(requestargs)
         # call it
         return view(query)
 
@@ -796,3 +802,22 @@ def search_view(query):
             error = json_error(404, 'Query not recognized.',
                                {'query': query})
             return json_response(response=error, status=404)
+
+
+@app.route("/")
+def base_landing():
+    return redirect("/index.html", code=302)
+    # return """
+    #   <h1> Welcome to AIS API</h1>
+    #   <ul>
+    #      <li><a href="/addresses/">Addresses</a></li>
+    #      <li><a href="/block/">Block</a></li>
+    #      <li><a href="/intersection/">Intersection</a></li>
+    #      <li><a href="/account/">OPA Account Number</a></li>
+    #      <li><a href="/mapreg/">MapReg</a></li>
+    #      <li><a href="/pwd_parcel/">PWD Parcel ID</a></li>
+    #      <li><a href="/owner/">Owner</a></li>
+    #      <li><a href="/search/">Search</a></li>
+    #
+    #   </ul>
+    # """
