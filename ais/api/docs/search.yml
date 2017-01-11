@@ -1,7 +1,15 @@
 Search by address, block, intersection, DOR parcel / registration map ID or OPA account number
+This endpoint handles a variety of search types by classifying the query and routing the request to the appropriate endpoint.
+Search types currently supported are:
+  * addresses
+  * block
+  * intersection
+  * dor parcel
+  * account
 
-Handles a variety of search types by classifying the query and routing the request to the appropriate endpoint.
 See documentation for an individual endpoint for more information about that search type.
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
   - search

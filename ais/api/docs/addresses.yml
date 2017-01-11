@@ -1,6 +1,6 @@
 Search by address
-This is the original AIS endpoint designed to work with [Property Search.](http://property.phila.gov/)
-[This endpoint](http://api.phila.gov/ais/v1/addresses/) is being depreciated and replaced by the [search endpoint](http://api.phila.gov/ais/v1/search)
+This endpoint handles address searches. It is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/).
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
 ---
 tags:

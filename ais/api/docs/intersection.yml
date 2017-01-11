@@ -1,7 +1,11 @@
 Search by street intersection
+This endpoint handles street intersection searches.
+
 Query format requires 2 street names, including predirections and suffixes, separated by 'and' or '&':
 * [http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais/v1/intersection/N%2012th%20st%20and%20market%20st)
 * [http://api.phila.gov/ais/v1/intersection/n 12th st & market st](http://api.phila.gov/ais/v1/interection/n%2012th%20st%20%26%20market%20st)
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
   - intersection

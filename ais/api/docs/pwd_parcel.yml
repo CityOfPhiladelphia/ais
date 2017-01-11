@@ -1,6 +1,10 @@
 Search by Philadelphia Water Department (PWD) parcel ID
+This endpoint handles PWD parcel ID searches.
+
 Query format requires a numeric PWD parcel ID:
 * [http://api.phila.gov/ais/v1/pwd_parcel/5356001234001](http://api.phila.gov/ais/v1/pwd_parcel/5356001234001)
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
   - pwd parcel

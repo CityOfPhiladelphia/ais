@@ -1,7 +1,11 @@
 Search by block
+
+This endpoint handles block searches.
 Query format requires full block address range or include the signifier 'block'.
 * [1200-1299 market st](http://api.phila.gov/ais/v1/block/1200-1299%20market%20st)
 * [1200 block of market st](http://api.phila.gov/ais/v1/block/1200%20block%20of%20market%20st)
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
   - block
