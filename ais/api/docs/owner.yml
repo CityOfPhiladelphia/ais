@@ -1,9 +1,9 @@
 Search by owner
 This endpoint handles owner searches. Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s)
 
 Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
-* Request properties owned by anyone whose first or last name contains "Poe" - http://api.phila.gov/ais/v1/owner/Poe
+* Request properties owned by anyone whose first or last name contains "Lee" - http://api.phila.gov/ais/v1/owner/Lee
 * Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
@@ -15,13 +15,13 @@ parameters:
     in: path
     description: The querystring
     type: string
-    default: 'Phil Lee'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query

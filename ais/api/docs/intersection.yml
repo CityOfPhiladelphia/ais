@@ -1,10 +1,12 @@
 Search by street intersection
 This endpoint handles street intersection searches. Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of intersection feature(s).
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [intersection](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#intersection) feature(s).
 
-Query format requires 2 street names, including predirections and suffixes, separated by 'and' or '&':
-* [http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais/v1/intersection/N%2012th%20st%20and%20market%20st)
-* [http://api.phila.gov/ais/v1/intersection/n 12th st & market st](http://api.phila.gov/ais/v1/interection/n%2012th%20st%20%26%20market%20st)
+Query format requires 2 street names, including predirections and suffixes, separated by either
+* 'and':
+[http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais/v1/intersection/N%2012th%20st%20and%20market%20st), or
+* '&':
+[http://api.phila.gov/ais/v1/intersection/n 12th st & market st](http://api.phila.gov/ais/v1/interection/n%2012th%20st%20%26%20market%20st)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
@@ -15,13 +17,13 @@ parameters:
     in: path
     description: A querystring
     type: string
-    default: 'N 3rd and Market St'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query

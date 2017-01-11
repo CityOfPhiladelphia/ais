@@ -8,7 +8,7 @@ Search types currently supported are:
   * account
 
 Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address or intersection feature(s).
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) or [intersection](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#intersection)  feature(s).
 
 See documentation for an individual endpoint for more information about that search type.
 
@@ -21,13 +21,13 @@ parameters:
     in: path
     description: The querystring
     type: string
-    default: '1234 market St'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query

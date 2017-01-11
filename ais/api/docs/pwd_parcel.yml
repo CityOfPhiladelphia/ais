@@ -1,9 +1,9 @@
 Search by Philadelphia Water Department (PWD) parcel ID
 This endpoint handles PWD parcel ID searches. Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address)  feature(s).
 
-Query format requires a numeric PWD parcel ID:
-* [http://api.phila.gov/ais/v1/pwd_parcel/5356001234001](http://api.phila.gov/ais/v1/pwd_parcel/5356001234001)
+* Query format requires a numeric PWD parcel ID:
+[http://api.phila.gov/ais/v1/pwd_parcel/542611](http://api.phila.gov/ais/v1/pwd_parcel/542611)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
@@ -14,13 +14,13 @@ parameters:
     in: path
     description: A PWD parcel ID
     type: string
-    default: '542611'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query

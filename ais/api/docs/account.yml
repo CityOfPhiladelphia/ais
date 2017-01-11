@@ -1,9 +1,11 @@
 Search by Office of Property Assessment (OPA) account number
-This endpoint handles OPA account number searches. Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
+This endpoint handles OPA account number searches.
 
-Query format requires a 9 digit numeric OPA account number:
-* [http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
+Successful requests return a paginated
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
+
+* Query format requires a 9 digit numeric OPA account number:
+[http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
@@ -14,13 +16,13 @@ parameters:
     in: path
     description: An OPA account number
     type: string
-    default: '875100760'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query

@@ -2,8 +2,8 @@ Search by address
 This endpoint handles address searches. It is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/).
 
 Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of address feature(s).
-* [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
+* Query format requires an address low number followed by a full street name: [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
@@ -14,13 +14,13 @@ parameters:
     in: path
     description: The querystring
     type: string
-    default: '1234 market St'
+    default: ''
     required: true
   - name: srid
     in: query
     description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
     type: string
-    default: ''
+    default: '4326'
     required: false
   - name: include_units
     in: query
