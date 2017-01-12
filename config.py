@@ -193,7 +193,8 @@ ADDRESSES = {
         },
         {
             'name':                 'info_commercial',
-            'table':                'gis_gsg.infogroup_commercial',
+            #'table':                'gis_gsg.infogroup_commercial',
+            'table':                'gis_ais_sources.infogroup_commercial_2016_12',
             'db':                   'gis',
             'address_fields':       {
                 'street_address':       'primary_address',
@@ -207,15 +208,18 @@ ADDRESSES = {
         },
         {
             'name':                 'info_residents',
-            'table':                'gis_gsg.infogroup_residential',
+            #'table':                'gis_gsg.infogroup_residential',
+            'table':                'gis_ais_sources.infogroup_residential_2016_12',
             'db':                   'gis',
             'address_fields':       {
-                'street_address':       'caddr',
+                #'street_address':       'caddr',
+                'street_address':       'address',
             },
             'tag_fields': [
                 {
                     'key':              'info_resident',
-                    'source_field':     'name',
+                    # 'source_field':     'name',
+                    'source_field':     'contact_name',
                 },
             ],
         },
