@@ -46,5 +46,4 @@ manager.add_command('engine', engine_manager)
 migrate = Migrate(app, app_db)
 
 # Swaggerify App
-Swagger.DEFAULT_CONFIG['static_url_path'] = ""
 Swagger(app, sanitizer=MK_SANITIZER)

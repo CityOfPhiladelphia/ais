@@ -1098,7 +1098,7 @@ ADDRESS_SUMMARY = {
 SWAGGER = {
     "swagger_version": "2.0",
     "title": "AIS",
-    "basePath": 'api.phila.gov/ais/v1',
+    #"basePath": 'api.phila.gov/ais/v1',
     "specs_route": "/specs",
     "specs": [
         {
