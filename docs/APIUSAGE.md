@@ -94,7 +94,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
 
 **Pagination**
 
- Addresses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The metadata in the [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter 'page=#' to specify a particular page of features to be returned in the response.  
+ Addresses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter 'page=#' to specify a particular page of features to be returned in the response.  
 
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
