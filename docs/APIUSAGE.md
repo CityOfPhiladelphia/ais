@@ -75,8 +75,8 @@ Additional query instructions can be sent via querystring parameters, or flags:
     
 * **include_units**: Requests that units contained within a given property be returned along with the top-level property.
     
-* **srid=####**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
-     where ####  is the numeric projection SRID/EPSG. (i.e. http://spatialreference.org/ref/)
+* **srid=#**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
+     where #  is the numeric projection [SRID/EPSG](http://spatialreference.org/ref/)
         
 * **on_curb**: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel
     
