@@ -27,11 +27,11 @@ Currently AIS is only designated for internal use.  Please request an API key so
  
 ### To use a key:
  * Add the querystring parameter ```gatekeeperKey=#```, where # is the api key:
- https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456
+ https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf
  
  * Alternatively, an `Authorization` header can be used with `curl`:
  
-```curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"```
+```curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" -H "Authorization: Gatekeeper-Key 6ba4de64d6ca99aa4db3b9194e37adbf"```
   
 # <a name="Queries"></a>Queries
 
