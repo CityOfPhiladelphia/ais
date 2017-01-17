@@ -36,7 +36,13 @@ Currently AIS is only designated for internal use.  Please request an API key so
  
 # <a name="Queries"></a>Queries
 
-## Endpoints
+[Endpoints](#Endpoints)
+
+[Query Flags](#Query Flags)
+
+[Pagination](#Pagination)
+
+## <a name="Endpoints"></a>Endpoints
 
 The API endpoints are:
 * [Search](#Search) - http://api.phila.gov/ais/v1/search
@@ -78,7 +84,7 @@ The API endpoints are:
     
 
 
-## Query Flags
+## <a name="Query Flags"></a>Query Flags
 
 Additional query instructions can be sent via querystring parameters, or flags:
 
@@ -95,9 +101,9 @@ Additional query instructions can be sent via querystring parameters, or flags:
    
 * **parcel_geocode_location**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
 
-## Pagination
+## <a name="Pagination"></a>Pagination
 
- Addresses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response.  
+ Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response.  
 
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
