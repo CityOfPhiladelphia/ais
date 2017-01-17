@@ -64,7 +64,8 @@ The API endpoints are:
 
 
 ### <a name="Addresses"></a>__**Addresses**__ 
-`\addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/):  [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+`\addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/): 
+* [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 
 
