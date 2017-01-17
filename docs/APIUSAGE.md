@@ -7,7 +7,7 @@ Welcome to the documentation for AIS API Version 1.0. This document explains how
 
 # <a name="Authentication"></a>Authentication
 
-Currently AIS is only designated for internal use.  Please request an API key so we can monitor your app's API usage to make sure your needs are being met.
+Currently AIS is only designated for internal use.  Please request an API key so we can monitor your application's API usage to make sure your needs are being met.
 
 ### To obtain a key: 
  1.  Send a request-ticket to the IT help desk
