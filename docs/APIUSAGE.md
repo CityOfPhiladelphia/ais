@@ -92,12 +92,15 @@ Additional query instructions can be sent via querystring parameters, or flags:
    
 * **parcel_geocode_location**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
 
+**Pagination**
+
+ Addresses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The metadata in the [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter 'page=#' to specify a particular page of features to be returned in the response.  
 
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
-There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
+ There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
+ [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
 
 ## <a name="The Envelope"></a>The Envelope
 
