@@ -1,10 +1,16 @@
 # API Usage
 
+[Overview](#Overview)
+
 [Authentication](#Authentication)
 
 [Queries](#Queries)
 
 [Response Structure & Metadata](#Response Structure & Metadata)
+
+# <a name="Overview"></a>Overview
+
+
 
 # <a name="Authentication"></a>Authentication
 
