@@ -71,18 +71,26 @@ The API endpoints are:
 
 Additional query instructions can be sent via querystring parameters, or flags:
 
-* **opa_only**: Filters results to contain only addresses that have OPA account numbers.
+* `opa_only`: Filters results to contain only addresses that have OPA account numbers:
+ *  [http://api.phila.gov/ais/v1/search/1234 Market St?opa_only](http://api.phila.gov/ais/v1/search/1234%20Market%20St?opa_only)
     
-* **include_units**: Requests that units contained within a given property be returned along with the top-level property.
-    
-* **srid=#**: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
-     where #  is the numeric projection [SRID/EPSG](http://spatialreference.org/ref/)
+* `include_units`: Requests that units contained within a given property be returned along with the top-level property:
+ *  [http://api.phila.gov/ais/v1/search/1234 Market St?include_units](http://api.phila.gov/ais/v1/search/1234%20Market%20St?include_units)
+ 
+* `srid=#`: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
+     where #  is the numeric projection [SRID/EPSG](http://spatialreference.org/ref/): 
+ * Responses without the `srid` flag in the request default to WGS84 coordinates (SRID=4326)
+ * State Plane: [http://api.phila.gov/ais/v1/search/1234 Market St?srid=2272](http://api.phila.gov/ais/v1/search/1234%20Market%20St?srid=2272)
         
-* **on_curb**: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel
-    
-* **on_street**: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel
+* `on_curb`: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel:
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?on_curb](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_curb)    
    
-* **parcel_geocode_location**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
+* `on_street`: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel:
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?on_street](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_street)   
+ 
+* `parcel_geocode_location`: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned:
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?parcel_geocode_location](http://api.phila.gov/ais/v1/search/1234%20Market%20St?parcel_geocode_location)   
+
 
 ## <a name="Pagination"></a>Pagination
 
