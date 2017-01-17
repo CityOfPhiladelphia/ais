@@ -45,7 +45,7 @@ The API endpoints are:
 
 
 ### <a name="Search"></a>**Search**
-```is a resource which handles a variety of query types, including: ```
+```\search is a resource which handles a variety of query types, including: ```
 
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
@@ -67,18 +67,18 @@ The API endpoints are:
 
 
 ### <a name="Owner"></a>__**Owner**__ 
-```is a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:```
+```\owner is a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:```
 
 * Request properties owned by anyone whose first or last name contains "Poe" - http://api.phila.gov/ais/v1/owner/Poe
 * Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
 
 
 ### <a name="Addresses"></a>__**Addresses**__ 
-```is the original AIS endpoint designed to work with ```[Property Search.](http://property.phila.gov/) ```This endpoint is being depreciated and replaced by the search endpoint.``` [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+```\addresses is the original AIS endpoint designed to work with ```[Property Search.](http://property.phila.gov/) ```This endpoint is being depreciated and replaced by the search endpoint.``` [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
     
 
 
-**Query Flags**
+## Query Flags
 
 Additional query instructions can be sent via querystring parameters, or flags:
 
@@ -95,7 +95,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
    
 * **parcel_geocode_location**: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned. 
 
-**Pagination**
+## Pagination
 
  Addresses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. The [response envelope](#The Envelope) contains information about the pagination. Use the querystring paramter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response.  
 
