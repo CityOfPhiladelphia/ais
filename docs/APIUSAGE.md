@@ -10,10 +10,10 @@ Welcome to the documentation for AIS API Version 1.0. This document explains how
 Currently AIS is only designated for internal use.  Please request an API key so we can monitor your app's API usage to make sure your needs are being met.
 
 ### To obtain a key: 
- * send a request-ticket to the IT help desk
- * cc: maps.phia.gov
- * request that the help desk 'please route to GSG'
- * describe which application the key is for
+ 1.  Send a request-ticket to the IT help desk
+ 2.  cc: maps.phia.gov
+ 3.  Request that the help desk 'please route to GSG'
+ 4.  Describe the application and provide a url if possible
  
 ### To use a key:
  * Add the querystring parameter ```gatekeeperKey=#```, where # is the api key:
