@@ -8,7 +8,11 @@
 
 # <a name="Authentication"></a>Authentication
 
-Currently AIS is only designated for internal use.  Internal users must request an API key.
+Currently AIS is only designated for internal use.  Please request an API key so we can monitor your app's API usage to make sure your needs are being met. To get a key: 
+ * send a request-ticket to the IT help desk
+ * cc: maps.phia.gov
+ * request that the help desk 'please route to GSG'
+ * describe which application the key is for
 
 # <a name="Queries"></a>Queries
 
