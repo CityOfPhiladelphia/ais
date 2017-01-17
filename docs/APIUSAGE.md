@@ -17,12 +17,23 @@ Welcome to the documentation for AIS API Version 1.0. This document explains how
 
 # <a name="Authentication"></a>Authentication
 
-Currently AIS is only designated for internal use.  Please request an API key so we can monitor your app's API usage to make sure your needs are being met. To get a key: 
+Currently AIS is only designated for internal use.  Please request an API key so we can monitor your app's API usage to make sure your needs are being met.
+
+### To obtain a key: 
  * send a request-ticket to the IT help desk
  * cc: maps.phia.gov
  * request that the help desk 'please route to GSG'
  * describe which application the key is for
+ 
+### To use a key:
+ * use an `Authorization` header:
+ 
+ ```curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" -H "Authorization: Gatekeeper-Key abcd1234efab5678cdef9012abcd3456"```
+ 
+ * use a querystring parameter:
 
+ ```curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St?gatekeeperKey=abcd1234efab5678cdef9012abcd3456"```
+ 
 # <a name="Queries"></a>Queries
 
 **Endpoints**
