@@ -1,15 +1,5 @@
 # API Usage
 
-[Overview](#Overview)
-
-[Authentication](#Authentication)
-
-[Queries](#Queries)
-
-[Response Structure & Metadata](#Response Structure & Metadata)
-
-# <a name="Overview"></a>Overview
-
 Welcome to the documentation for AIS API Version 1.0. This document explains how to use version 1.0 of the API. 
 * In general, applications supporting user-defined input and interactive maps should use the [/search](#Search) endpoint, which handles a variety of query types by identifying the type and routing to the appropriate endpoint. 
 * The [/owner](#Owner) endpoint can be used to search for addresses by owner name.
@@ -34,12 +24,6 @@ Currently AIS is only designated for internal use.  Please request an API key so
 ```curl "https://api.phila.gov/ais/v1/search/1234%20Market%20St" -H "Authorization: Gatekeeper-Key 6ba4de64d6ca99aa4db3b9194e37adbf"```
   
 # <a name="Queries"></a>Queries
-
-[Endpoints](#Endpoints)
-
-[Query Flags](#Query Flags)
-
-[Pagination](#Pagination)
 
 ## <a name="Endpoints"></a>Endpoints
 
