@@ -381,12 +381,14 @@ def test_intersection_query(client):
 
 def test_intersection_query_no_predir(client):
     # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
+    # ^^ Done
     response = client.get('/search/12th and chestnut')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
     match_type = feature['match_type']
-    assert match_type == 'parsed'
+    # assert match_type == 'parsed'
+    assert match_type == 'exact'
 
 def test_cascade_to_true_range(client):
     response = client.get('/search/1050 filbert st')
