@@ -87,11 +87,12 @@ class StreetAlias(db.Model):
 class StreetIntersectionQuery(BaseQuery):
 
     def choose_one(self):
-        query = self.order_by(StreetIntersection.geom)
-        return query.limit(1)
+        return self.limit(1)
 
     def order_by_intersection(self):
-        return self.order_by(StreetIntersection.geom)
+        return self.order_by(StreetIntersection.street_1_predir,\
+                             StreetIntersection.street_2_predir, \
+                             StreetIntersection.geom)
 
 class StreetIntersection(db.Model):
     """An intersection of street centerlines."""

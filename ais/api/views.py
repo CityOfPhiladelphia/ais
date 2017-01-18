@@ -663,26 +663,82 @@ def intersection(query):
 
     street_1_full = parsed['components']['street']['full']
     street_1_name = parsed['components']['street']['name']
+    street_1_predir = parsed['components']['street']['predir']
+    street_1_postdir = parsed['components']['street']['postdir']
+    street_1_suffix = parsed['components']['street']['suffix']
     street_1_code = parsed['components']['street']['street_code']
     street_2_full = parsed['components']['street_2']['full']
     street_2_name = parsed['components']['street_2']['name']
+    street_2_predir = parsed['components']['street_2']['predir']
+    street_2_postdir = parsed['components']['street_2']['postdir']
+    street_2_suffix = parsed['components']['street_2']['suffix']
     street_2_code = parsed['components']['street_2']['street_code']
-    street_code_min = str(min(int(street_1_code), int(street_2_code))) if street_1_code and street_2_code else ''
-    street_code_max = str(max(int(street_1_code), int(street_2_code))) if street_1_code and street_2_code else ''
+    street_code_min = str(min(int(street_1_code), int(street_2_code))) if street_1_code and street_2_code else None
+    street_code_max = str(max(int(street_1_code), int(street_2_code))) if street_1_code and street_2_code else None
 
-    strict_filters = dict(
-        street_1_code=street_code_min,
-        street_2_code=street_code_max,
-    )
-    filters = strict_filters.copy()
-    intersections = StreetIntersection.query \
-        .filter_by(**filters) \
-        .order_by_intersection() \
-        .choose_one()
+    if street_code_min and street_code_max:
+        strict_filters = dict(
+            street_1_code=street_code_min,
+            street_2_code=street_code_max,
+        )
+        filters = strict_filters.copy()
+        intersections = StreetIntersection.query \
+            .filter_by(**filters) \
+            .order_by_intersection()  # \
+            #.choose_one()
+    else:
+        loose_filters = NotNoneDict(
+            street_1_code=street_code_min,
+            street_2_code=street_code_max,
+            street_1_name=street_1_name,
+            street_1_predir=street_1_predir,
+            street_1_postdir=street_1_postdir,
+            street_1_suffix=street_1_suffix,
+            street_2_name=street_2_name,
+            street_2_predir=street_2_predir,
+            street_2_postdir=street_2_postdir,
+            street_2_suffix=street_2_suffix,
+        )
+        strict_filters = dict(
+            street_1_name=street_1_name,
+            street_2_name=street_2_name,
+        )
+        filters = strict_filters.copy()
+        filters.update(loose_filters)
+        intersections = StreetIntersection.query \
+            .filter_by(**filters)
+
+        # if no intersections matched, try reversing street_1 and street_2 attributes
+        # (note - at this point there can only 1 matching street code)
+        if not intersections.first():
+            loose_filters = NotNoneDict(
+                street_2_code=street_code_min,
+                street_1_code=street_code_max,
+                street_1_name=street_2_name,
+                street_1_predir=street_2_predir,
+                street_1_postdir=street_2_postdir,
+                street_1_suffix=street_2_suffix,
+                street_2_name=street_1_name,
+                street_2_predir=street_1_predir,
+                street_2_postdir=street_1_postdir,
+                street_2_suffix=street_1_suffix,
+            )
+            strict_filters = dict(
+                street_1_name=street_2_name,
+                street_2_name=street_1_name,
+            )
+            filters = strict_filters.copy()
+            filters.update(loose_filters)
+            intersections = StreetIntersection.query \
+                .filter_by(**filters) \
+
+    intersections = intersections.order_by_intersection()
+    intersections = intersections.distinct(StreetIntersection.street_1_predir, StreetIntersection.street_2_predir)
 
     paginator = QueryPaginator(intersections)
     intersections_count = paginator.collection_size
 
+    # If no match, route to unmatched response (is this necessary?):
     if intersections_count == 0:
         # error = json_error(404, 'Could not find intersection matching query.',
         #                    {'query': query_original, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
@@ -692,7 +748,6 @@ def intersection(query):
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
-
     if error:
         return json_response(response=error, status=error['status'])
 
