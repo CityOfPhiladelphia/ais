@@ -90,8 +90,8 @@ class StreetIntersectionQuery(BaseQuery):
         return self.limit(1)
 
     def order_by_intersection(self):
-        return self.order_by(StreetIntersection.street_1_predir,\
-                             StreetIntersection.street_2_predir, \
+        return self.order_by(StreetIntersection.street_1_full,\
+                             StreetIntersection.street_2_full, \
                              StreetIntersection.geom)
 
 class StreetIntersection(db.Model):
