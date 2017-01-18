@@ -122,8 +122,8 @@ The root of the `FeatureCollection` contains:
   * `page_size`: The number of results on the current page
   * `total_size`: The total number of results across all pages for the current
                   query
-* Matched addresses (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
-  objects. 
+* Matched address or intersection (`Features`) as a list of [Feature](http://geojson.org/geojson-spec.html#feature-objects)
+  objects. Please note, more than one feature may be returned as an `exact` match (see below).
 
 ## <a name="AIS Feature Types"></a>AIS Feature Types
 
