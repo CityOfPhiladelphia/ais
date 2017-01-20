@@ -137,7 +137,15 @@ for source in sources:
     address_fields = source['address_fields']
     source_fields = list(address_fields.values())
     if 'tag_fields' in source:
-        source_fields += [x['source_field'] for x in source['tag_fields']]
+        #source_fields += [x['source_field'] for x in source['tag_fields']]
+        for tag_field in source['tag_fields']:
+            tag_source_fields = tag_field['source_fields']
+            preprocessor = tag_field.get('preprocessor')
+            if len(tag_source_fields) > 1 and preprocessor is None:
+                raise ValueError("Multiple tag source fields require a preprocessor.")
+            source_fields += tag_source_fields
+    # Make source_fields unique:
+    source_fields = list(set(source_fields))
     source_db_name = source['db']
     source_db = datum.connect(config['DATABASES'][source_db_name])
     source_table = source_db[source['table']]
@@ -252,8 +260,17 @@ for source in sources:
 
             # Make address tags
             for tag_field in source.get('tag_fields', []):
-                source_field = tag_field['source_field']
-                value = source_row[source_field]
+
+                tag_preprocessor = tag_field.get('preprocessor')
+                source_fields = tag_field['source_fields']
+                if tag_preprocessor:
+                    value = tag_preprocessor(source_row)
+                else:
+                    source_field = source_fields[0]
+                    value = source_row[source_field]
+
+                # source_field = tag_field['source_field']
+                # value = source_row[source_field]
 
                 # Skip empty tags
                 if value is None or len(str(value).strip()) == 0:
@@ -264,7 +281,7 @@ for source in sources:
                     value = value.upper()
 
                 key = tag_field['key']
-                value = source_row[source_field]
+                #value = source_row[source_field]
 
                 # Make address tag string to check if we already added this tag
                 address_tag_string_vals = [
@@ -278,8 +295,10 @@ for source in sources:
                 if not address_tag_string in address_tag_strings:
                     address_tag = {
                         'street_address':   street_address,
-                        'key':              tag_field['key'],
-                        'value':            source_row[source_field]
+                        # 'key':              tag_field['key'],
+                        'key':              key,
+                        # 'value':            source_row[source_field]
+                        'value':            value
                     }
                     address_tags.append(address_tag)
                     address_tag_strings.add(address_tag_string)
