@@ -154,6 +154,22 @@ def make_pwd_account_address(comps):
     a = re.sub('-R(EAR)?(?= )', 'R', a)
     return a
 
+def make_voter_address(comps):
+    low_num = comps['address_low']
+    street_name = comps['street_name']
+    unit_num = comps['unit_num']
+    address_low_suffix = comps['address_low_suffix']
+    street_address = (low_num, address_low_suffix, street_name)
+    street_address = " ".join(filter(None, street_address)) # confirm whether there should be a space between low_num & suffix
+    return street_address + '# ' + unit_num if unit_num else street_address
+
+def make_voter_name(comps):
+    first_name = comps['first_name']
+    middle_name = comps['middle_name']
+    last_name = comps['last_name']
+    name = (first_name, middle_name, last_name)
+    return " ".join(filter(None, name))
+
 
 ADDRESSES = {
     'parser_tags': {
@@ -202,7 +218,7 @@ ADDRESSES = {
             'tag_fields': [
                 {
                     'key':              'info_company',
-                    'source_field':     'company_name',
+                    'source_fields':     ['company_name'],
                 },
             ],
         },
@@ -219,7 +235,7 @@ ADDRESSES = {
                 {
                     'key':              'info_resident',
                     # 'source_field':     'name',
-                    'source_field':     'contact_name',
+                    'source_fields':     ['contact_name'],
                 },
             ],
         },
@@ -261,21 +277,40 @@ ADDRESSES = {
             'tag_fields': [
                 {
                     'key':              'li_address_key',
-                    'source_field':     'addrkey',
+                    'source_fields':     ['addrkey'],
                 },
             ],
         },
+        # {
+        #     'name':                 'voters',
+        #     'table':                'voters',
+        #     'db':                   'gis',
+        #     'address_fields':       {
+        #             'street_address':   'street_address',
+        #     },
+        #     'tag_fields': [
+        #         {
+        #             'key':          'voter_name',
+        #             'source_field': 'full_name',
+        #         },
+        #     ],
+        # },
         {
             'name':                 'voters',
-            'table':                'voters',
+            'table':                'gis_elections.voters_2017_01',
             'db':                   'gis',
             'address_fields':       {
-                    'street_address':   'street_address',
+                'address_low':          'house__',
+                'address_low_suffix':   'housenosuffix',
+                'street_name':          'streetnamecomplete',
+                'unit_num':             'apt__',
             },
+            'preprocessor':         make_voter_address,
             'tag_fields': [
                 {
                     'key':          'voter_name',
-                    'source_field': 'full_name',
+                    'source_fields': ["first_name", "middle_name", "last_name"],
+                    'preprocessor': make_voter_name,
                 },
             ],
         },
@@ -290,7 +325,8 @@ ADDRESSES = {
             'tag_fields': [
                 {
                     'key':          'pwd_account_num',
-                    'source_field': 'water1_acc_no',
+                    # 'source_field': 'water1_acc_no',
+                    'source_fields': ['water1_acc_no'],
                 },
             ],
         },
