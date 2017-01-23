@@ -706,27 +706,27 @@ def intersection(query):
         intersections = StreetIntersection.query \
             .filter_by(**filters)
 
-        # if no intersections matched, try reversing street_1 and street_2 attributes
-        # (note - at this point there can only 1 matching street code)
-        if not intersections.first():
-            loose_filters = NotNoneDict(
-                street_2_code=street_code_min,
-                street_1_code=street_code_max,
-                street_1_predir=street_2_predir,
-                street_1_postdir=street_2_postdir,
-                street_1_suffix=street_2_suffix,
-                street_2_predir=street_1_predir,
-                street_2_postdir=street_1_postdir,
-                street_2_suffix=street_1_suffix,
-            )
-            strict_filters = dict(
-                street_1_name=street_2_name,
-                street_2_name=street_1_name,
-            )
-            filters = strict_filters.copy()
-            filters.update(loose_filters)
-            intersections = StreetIntersection.query \
-                .filter_by(**filters)
+    # if no intersections matched, try reversing street_1 and street_2 attributes
+    # (note - at this point there can only be 1 matching street code)
+    if not intersections.first():
+        loose_filters = NotNoneDict(
+            street_2_code=street_code_min,
+            street_1_code=street_code_max,
+            street_1_predir=street_2_predir,
+            street_1_postdir=street_2_postdir,
+            street_1_suffix=street_2_suffix,
+            street_2_predir=street_1_predir,
+            street_2_postdir=street_1_postdir,
+            street_2_suffix=street_1_suffix,
+        )
+        strict_filters = dict(
+            street_1_name=street_2_name,
+            street_2_name=street_1_name,
+        )
+        filters = strict_filters.copy()
+        filters.update(loose_filters)
+        intersections = StreetIntersection.query \
+            .filter_by(**filters)
 
     intersections = intersections.order_by_intersection()
     # intersections = intersections.distinct(StreetIntersection.street_1_predir, StreetIntersection.street_2_predir)
@@ -735,48 +735,49 @@ def intersection(query):
     paginator = QueryPaginator(intersections)
     intersections_count = paginator.collection_size
 
-    if intersections_count == 0:
-        loose_filters = NotNoneDict(
-            street_1_code=street_1_code or street_2_code,
-            street_1_name=street_1_name or street_2_name,
-            street_1_predir=street_1_predir or street_2_predir,
-            street_1_postdir=street_1_postdir or street_2_postdir,
-            street_1_suffix=street_1_suffix or street_2_suffix,
-        )
-        strict_filters = dict(
-        )
-        filters = strict_filters.copy()
-        filters.update(loose_filters)
-        intersections = StreetIntersection.query \
-            .filter_by(**filters)
-        if not intersections.first():
-            loose_filters = NotNoneDict(
-                street_2_code=street_1_code or street_2_code,
-                street_2_name=street_1_name or street_2_name,
-                street_2_predir=street_1_predir or street_2_predir,
-                street_2_postdir=street_1_postdir or street_2_postdir,
-                street_2_suffix=street_1_suffix or street_2_suffix,
-            )
-            strict_filters = dict(
-            )
-            filters = strict_filters.copy()
-            filters.update(loose_filters)
-            intersections = StreetIntersection.query \
-                .filter_by(**filters)
+    # if intersections_count == 0:
+    #     loose_filters = NotNoneDict(
+    #         street_1_code=street_1_code or street_2_code,
+    #         street_1_name=street_1_name or street_2_name,
+    #         street_1_predir=street_1_predir or street_2_predir,
+    #         street_1_postdir=street_1_postdir or street_2_postdir,
+    #         street_1_suffix=street_1_suffix or street_2_suffix,
+    #     )
+    #     strict_filters = dict(
+    #     )
+    #     filters = strict_filters.copy()
+    #     filters.update(loose_filters)
+    #     intersections = StreetIntersection.query \
+    #         .filter_by(**filters)
+    #     if not intersections.first():
+    #         loose_filters = NotNoneDict(
+    #             street_2_code=street_1_code or street_2_code,
+    #             street_2_name=street_1_name or street_2_name,
+    #             street_2_predir=street_1_predir or street_2_predir,
+    #             street_2_postdir=street_1_postdir or street_2_postdir,
+    #             street_2_suffix=street_1_suffix or street_2_suffix,
+    #         )
+    #         strict_filters = dict(
+    #         )
+    #         filters = strict_filters.copy()
+    #         filters.update(loose_filters)
+    #         intersections = StreetIntersection.query \
+    #             .filter_by(**filters)
+    #
+    #     intersections = intersections.order_by_intersection()
+    #     intersections = intersections.distinct(StreetIntersection.street_1_full, StreetIntersection.street_2_full)
+    #     paginator = QueryPaginator(intersections)
+    #     intersections_count = paginator.collection_size
 
-        intersections = intersections.order_by_intersection()
-        intersections = intersections.distinct(StreetIntersection.street_1_full, StreetIntersection.street_2_full)
-        paginator = QueryPaginator(intersections)
-        intersections_count = paginator.collection_size
         # If still no match, route to unmatched response (is this necessary?):
-        if intersections_count == 0:
-            # error = json_error(404, 'Could not find intersection matching query.',
-            #                    {'query': query_original, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
-            # return json_response(response=error, status=404)
-            return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
-                                      search_type=search_type)
-        else:
-            match_type = 'unmatched'
+    if intersections_count == 0:
+        # error = json_error(404, 'Could not find intersection matching query.',
+        #                    {'query': query_original, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
+        # return json_response(response=error, status=404)
+        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
+                                  search_type=search_type)
+    # else:
+    #     match_type = 'unmatched'
     else:
         match_type = 'exact'
 
