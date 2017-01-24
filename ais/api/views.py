@@ -355,7 +355,7 @@ def addresses(query):
         address_high=high_num,
         # unit_num=unit_num if unit_num or not unit_type else '',
         unit_num=unit_num or '',
-        # unit_type=unit_type or '',
+        unit_type=unit_type or '',
     )
 
     filters = strict_filters.copy()
