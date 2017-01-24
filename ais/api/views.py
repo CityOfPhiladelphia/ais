@@ -119,6 +119,11 @@ def unmatched_response(**kwargs):
         # return json_response(response=error, status=error['status'])
         return json_response(response=error, status=404)
 
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Render the response
     addresses_page = paginator.get_page(page_num)
 
