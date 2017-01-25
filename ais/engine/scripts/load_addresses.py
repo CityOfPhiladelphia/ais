@@ -140,8 +140,8 @@ for source in sources:
         #source_fields += [x['source_field'] for x in source['tag_fields']]
         for tag_field in source['tag_fields']:
             tag_source_fields = tag_field['source_fields']
-            preprocessor = tag_field.get('preprocessor')
-            if len(tag_source_fields) > 1 and preprocessor is None:
+            tag_preprocessor = tag_field.get('preprocessor')
+            if len(tag_source_fields) > 1 and tag_preprocessor is None:
                 raise ValueError("Multiple tag source fields require a preprocessor.")
             source_fields += tag_source_fields
     # Make source_fields unique:
