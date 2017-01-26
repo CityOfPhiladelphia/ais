@@ -84,7 +84,7 @@ def test_range_parity_is_respected(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert(match_type == 'estimated')
+    assert(match_type == 'unmatched')
 
 def test_base_address_has_units_with_base_first(client):
     response = client.get('/addresses/600 S 48th St?include_units')
@@ -233,7 +233,7 @@ def test_nonsynonymous_unit_types_not_used(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert (match_type == 'estimated')
+    assert (match_type == 'unmatched')
 
 def test_filter_for_only_opa_addresses(client):
     response = client.get('/addresses/1234 Market St?opa_only&include_units')
@@ -394,7 +394,7 @@ def test_cascade_to_true_range(client):
     assert_status(response, 200)
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true range'
-    assert feature['match_type'] == 'estimated'
+    assert feature['match_type'] == 'unmatched'
 
 def test_cascade_to_full_range(client):
     #response = client.get('/search/3551 ashfield lane')
@@ -402,7 +402,7 @@ def test_cascade_to_full_range(client):
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'full range'
-    assert feature['match_type'] == 'estimated'
+    assert feature['match_type'] == 'unmatched'
     assert_status(response, 200)
 
 def test_query_character_limit(client):
