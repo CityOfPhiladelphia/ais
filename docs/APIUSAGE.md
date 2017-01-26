@@ -252,4 +252,4 @@ All successful API calls have a `200 status`, and as described above, return an 
             "query": "50000 market st"
         }
     }
-    ```
+```
