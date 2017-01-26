@@ -234,3 +234,22 @@ The root of the `FeatureCollection` contains:
         * `street_predir`: street cardinal pre-direction
         * `street_postdir`: street post-direction
         * `street_suffix`: street suffix 
+
+## <a name="Status Codes"></a>Status Codes
+All successful API calls have a `200 status`, and as described above, return an envelope wrapping around a feature collection with either address or intersection feature type(s). The 200 status is understood and a status key is not contained in the response. A `404 status` is returned when we are able to identify an issue with the query itself, or with its relationship to a real address. For instance, a 404 status is returned when: 
+ 
+ * the query exceeds the query character limit 
+ * the street number is out-of-range of address number ranges for an existing street which matches the entered street name
+
+404 status messages are returned in the following json format:
+
+```json
+    {
+        "status": 404,
+        "error": "Not Found",
+        "message": "Address number is out of range.",
+        "details": {
+            "query": "50000 market st"
+        }
+    }
+```
