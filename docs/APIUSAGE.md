@@ -241,7 +241,7 @@ All successful API calls have a `200 status`, and as described above, return an 
  * the query exceeds the query character limit 
  * the street number is out-of-range of address number ranges for an existing street which matches the entered street name
 
-404 status messages are returned in the following format:
+404 status messages are returned in the following json format:
 
 ```json
     {
