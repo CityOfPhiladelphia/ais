@@ -30,7 +30,7 @@ def validate_page_param(request, paginator):
     try:
         page_num = paginator.validate_page_num(page_str)
     except QueryPaginator.ValidationError as e:
-        error = json_error(400, e.message, e.data)
+        error = json_error(404, e.message, e.data)
         return None, error
 
     return page_num, None
@@ -192,9 +192,9 @@ def unknown_cascade_view(**kwargs):
     # Check if address low num is within centerline seg full address range with parity:
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
     if not from_num <= address.address_low <= to_num:
-        error = json_error(400, 'Address number is out of range.',
+        error = json_error(404, 'Address number is out of range.',
                            {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=400)
+        return json_response(response=error, status=404)
 
     # Get geom from true_range view item with same seg_id
     true_range_stmt = '''
