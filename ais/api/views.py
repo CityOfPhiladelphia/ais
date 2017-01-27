@@ -75,11 +75,16 @@ def unmatched_response(**kwargs):
         if error:
             return json_response(response=error, status=error['status'])
 
+        srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+        # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+        crs = {'type': 'link',
+               'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
         # Serialize the response:
         intersections_page = paginator.get_page(page_num)
         serializer = IntersectionJsonSerializer(
             metadata={'search_type': search_type, 'query': query,
-                      'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args},
+                      'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args, 'crs': crs},
             pagination=paginator.get_page_info(page_num),
             #estimated={'cascade_geocode_type': 'parsed'}
             match_type='parsed'
@@ -115,13 +120,18 @@ def unmatched_response(**kwargs):
         # return json_response(response=error, status=error['status'])
         return json_response(response=error, status=404)
 
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Render the response
     addresses_page = paginator.get_page(page_num)
 
     # Use AddressJsonSerializer
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address,
-                  'search_params': request.args},
+                  'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         estimated={'cascade_geocode_type': 'parsed'}
     )
@@ -255,14 +265,19 @@ def unknown_cascade_view(**kwargs):
         # return json_response(response=error, status=error['status'])
         return json_response(response=error, status=404)
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Render the response
     addresses_page = paginator.get_page(page_num)
 
     # Use AddressJsonSerializer
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else 4326,
+        srid=srid,
         normalized_address=normalized_address,
         base_address=base_address,
         estimated={'cascade_geocode_type': cascade_geocode_type},
@@ -391,12 +406,17 @@ def addresses(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = requestargs.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=requestargs.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
+        srid=srid,
         normalized_address=normalized_address,
         base_address=base_address,
     )
@@ -467,12 +487,17 @@ def block(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+        srid=srid
     )
     result = serializer.serialize_many(block_page)
     #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
@@ -508,12 +533,17 @@ def owner(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args},
+        metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+        srid=srid
     )
     result = serializer.serialize_many(page)
     #result = serializer.serialize_many(page) if addresses_count > 1 else serializer.serialize(next(page))
@@ -554,12 +584,17 @@ def account(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
+        srid=srid,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -594,12 +629,17 @@ def pwd_parcel(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args},
+        metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
+        srid=srid,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -638,12 +678,17 @@ def dor_parcel(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
+        srid=srid,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -789,14 +834,18 @@ def intersection(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    # Form crs object
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
     normalized = street_1_full + ' & ' + street_2_full
     serializer = IntersectionJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args},
+        metadata={'search_type': search_type, 'query': query, 'normalized': street_1_full + ' & ' + street_2_full, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'],
-        match_type=match_type)
+        srid=srid)
 
     result = serializer.serialize_many(intersections_page)
     #result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
