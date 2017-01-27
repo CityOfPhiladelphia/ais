@@ -87,3 +87,4 @@ instance/config.py
 *build_log*
 *build_errors*
 ais/engine/log/
+tmp/
