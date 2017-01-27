@@ -422,13 +422,13 @@ def test_match_type_for_address_not_having_address_link(client):
     assert match_type == 'exact'
 
 def test_unit_type_siblings_match_exact(client):
-    response = client.get('/search/337 s camac st apt 2r')
+    response = client.get('/search/337 s camac st apt 3')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
     match_type = feature['match_type']
     assert match_type == 'exact'
-    response = client.get('/search/337 s camac st unit 2r')
+    response = client.get('/search/337 s camac st unit 3')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]

@@ -131,7 +131,7 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		if sa_rows is None:
 			# Get intersecting service areas
 			where = 'ST_Intersects(geom, ST_SetSrid(ST_Point({}, {}), 2272))'.format(x, y)
-			sa_rows = poly_table.read(fields=['layer_id', 'value'], where=where)
+			sa_rows = poly_table.read(fields=['layer_id', 'value'], where=where, return_geom=False)
 
 			# Add to map
 			# x_map = xy_map[x] = {}
