@@ -237,7 +237,7 @@ The root of the `FeatureCollection` contains:
         * `street_suffix`: street suffix 
 
 ## <a name="Status Codes"></a>Status Codes
-API calls having an identifiable search type return a response with a `200 status`, structured as an envelope wrapping a feature collection of either address or intersection feature type(s), as described above. The 200 status is understood and a status key is not contained in the response. Please note, a 200 response does not validate an address; the returned match_type signifies the relationship of the query to the response.
+API calls having an identifiable search type return a response with a `200 status`, structured as an envelope wrapping a feature collection of either address or intersection feature type(s), as described above. The 200 status is understood and a status key is not contained in the response. Please note, a 200 response does not validate an address; the returned [match_type](#ais-feature-types) signifies the relationship of the query to the response.
 
 A `404 status` is returned when:
 
