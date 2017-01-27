@@ -252,7 +252,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 # # Version with match_type and related_addresses
             #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
                 # # Version without related_addresses
-            match_type = self.get_address_link_relationships(address=address, base_address=self.base_address) if not self.estimated else 'estimated'
+            match_type = self.get_address_link_relationships(address=address, base_address=self.base_address) if not self.estimated else 'unmatched'
 
             # Hack to get a match_type if address isn't in address_link table:
             match_type = 'exact' if not match_type else match_type
@@ -309,10 +309,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
 class IntersectionJsonSerializer (GeoJSONSerializer):
 
-    def __init__(self, geom_type='centroid', geom_source=None, estimated=None, **kwargs):
+    def __init__(self, geom_type='centroid', geom_source=None, match_type=None, **kwargs):
         #self.geom_type = 'Point'
         #self.geom_source = geom_source
-        self.estimated = estimated
+        self.match_type = match_type
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -338,26 +338,21 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             shape = to_shape(intersection.geom)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
-
-            cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated[
-                'cascade_geocode_type'] else None
             geom_type = {'geocode_type': 'intersection'}
             geom_data.update(geom_type)
-            match_type = 'exact'
         else:
             geom_data = OrderedDict([
                 ('geocode_type', None),
                 ('type', None),
                 ('coordinates', None)
             ])
-            match_type = self.estimated['cascade_geocode_type']
 
         # Build the intersection feature, then attach properties
         #num_ints = intersection.int_ids.count('|') + 1
         data = OrderedDict([
             ('type', 'Feature'),
             ('ais_feature_type', 'intersection'),
-            ('match_type', match_type),
+            ('match_type', self.match_type),
             ('properties', OrderedDict([
                 #('intersection_ids', intersection.int_ids),
                 #('number of intersection points', num_ints),

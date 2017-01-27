@@ -159,9 +159,11 @@ def make_voter_address(comps):
     street_name = comps['street_name']
     unit_num = comps['unit_num']
     address_low_suffix = comps['address_low_suffix']
-    street_address = (low_num, address_low_suffix, street_name)
-    street_address = " ".join(filter(None, street_address)) # confirm whether there should be a space between low_num & suffix
-    return street_address + '# ' + unit_num if unit_num else street_address
+    low_num_full = low_num + address_low_suffix if address_low_suffix else low_num
+    low_num_full = low_num_full.replace(" ", "") if low_num_full else low_num_full
+    street_address = (low_num_full, street_name)
+    street_address = " ".join(filter(None, street_address))
+    return street_address + ' # ' + unit_num if unit_num else street_address
 
 def make_voter_name(comps):
     first_name = comps['first_name']

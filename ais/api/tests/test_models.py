@@ -3,6 +3,7 @@ import pytest
 from ais import app, app_db, models
 from operator import eq, gt
 
+@pytest.mark.skip(reason="Ofc feature doesn't return with new version - find another example")
 def test_no_unit_sorted_first():
     """
     e.g., 2401 Pennsylvania Ave Ofc should never precede 2401 Pennsylvania Ave.

@@ -84,7 +84,7 @@ def test_range_parity_is_respected(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert(match_type == 'estimated')
+    assert(match_type == 'unmatched')
 
 def test_base_address_has_units_with_base_first(client):
     response = client.get('/addresses/600 S 48th St?include_units')
@@ -233,7 +233,7 @@ def test_nonsynonymous_unit_types_not_used(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert (match_type == 'estimated')
+    assert (match_type == 'unmatched')
 
 def test_filter_for_only_opa_addresses(client):
     response = client.get('/addresses/1234 Market St?opa_only&include_units')
@@ -381,12 +381,14 @@ def test_intersection_query(client):
 
 def test_intersection_query_no_predir(client):
     # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
+    # ^^ Done
     response = client.get('/search/12th and chestnut')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
     match_type = feature['match_type']
-    assert match_type == 'parsed'
+    # assert match_type == 'parsed'
+    assert match_type == 'exact'
 
 def test_cascade_to_true_range(client):
     response = client.get('/search/1050 filbert st')
@@ -394,7 +396,7 @@ def test_cascade_to_true_range(client):
     assert_status(response, 200)
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true range'
-    assert feature['match_type'] == 'estimated'
+    assert feature['match_type'] == 'unmatched'
 
 def test_cascade_to_full_range(client):
     #response = client.get('/search/3551 ashfield lane')
@@ -402,7 +404,7 @@ def test_cascade_to_full_range(client):
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'full range'
-    assert feature['match_type'] == 'estimated'
+    assert feature['match_type'] == 'unmatched'
     assert_status(response, 200)
 
 def test_query_character_limit(client):
@@ -422,13 +424,13 @@ def test_match_type_for_address_not_having_address_link(client):
     assert match_type == 'exact'
 
 def test_unit_type_siblings_match_exact(client):
-    response = client.get('/search/337 s camac st apt 2r')
+    response = client.get('/search/337 s camac st apt 3')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
     match_type = feature['match_type']
     assert match_type == 'exact'
-    response = client.get('/search/337 s camac st unit 2r')
+    response = client.get('/search/337 s camac st unit 3')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]

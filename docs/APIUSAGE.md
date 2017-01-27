@@ -139,6 +139,7 @@ The root of the `FeatureCollection` contains:
      * `range-parent`: Ranged_address match for range_child query
      * `range_child`: Range_child match for ranged_address query
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
+     * `parsed`: Address cannot be matched and location cannot be estimated. Response includes parsed street components and null geometry.
 * The following list of `properties`:
   * `street_address` (Full address)
   * `address_low`
@@ -218,7 +219,7 @@ The root of the `FeatureCollection` contains:
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
-     * `unmatched`: Intersection cannot be matched. Location is estimated from query components.
+     * `parsed`: Intersection cannot be matched and location cannot be estimated. Response includes parsed street components and null geometry.
 * The following list of `properties`:
      * `street_1`: properties for street_1 are:
         * `street_code`: 5 digit numeric unique code associated with each unique street name
@@ -234,3 +235,45 @@ The root of the `FeatureCollection` contains:
         * `street_predir`: street cardinal pre-direction
         * `street_postdir`: street post-direction
         * `street_suffix`: street suffix 
+
+## <a name="Status Codes"></a>Status Codes
+API calls having an identifiable search type return a response with a `200 status`, structured as an envelope wrapping a feature collection of either address or intersection feature type(s), as described above. The 200 status is understood and a status key is not contained in the response. Please note, a 200 response does not validate an address; the returned [match_type](#ais-feature-types) signifies the relationship of the query to the response.
+
+A `404 status` is returned when:
+
+ * the search type is not recognized, 
+ ```json
+    {
+       "status": 404,
+       "error": "Not Found",
+       "message": "Query not recognized.",
+       "details": {
+       "query": "a b c d"
+       }
+    }
+```
+
+ * there query is too long, or 
+ ```json
+    {
+       "status": 404,
+       "error": "Not Found",
+       "message": "Query exceeds character limit.",
+       "details": {
+           "query": "1234 market stttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+       }
+    }
+```
+
+ * there is a known issue with its relationship to a real address
+
+```json
+    {
+        "status": 404,
+        "error": "Not Found",
+        "message": "Address number is out of range.",
+        "details": {
+            "query": "50000 market st"
+        }
+    }
+```
