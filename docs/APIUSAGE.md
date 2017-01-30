@@ -115,6 +115,17 @@ The root of the `FeatureCollection` contains:
   * `search_params`: The querystring parameters or flags and their values included in query
   * `query`: The querystring
   * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
+  * `crs`: coordinate reference system metadata
+  ```json
+     {
+        "properties": {
+           "href": "link to metadata about the spatial reference system used in the response",
+           "type": "proj4",
+         },
+         "type": "link",
+    }
+  ```
+  } 
   * `type`: "FeatureCollection"
 * **Pagination** information.
   * `page`: The current page of data
