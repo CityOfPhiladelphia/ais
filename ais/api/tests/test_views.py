@@ -443,6 +443,13 @@ def test_unit_type_siblings_match_exact(client):
     match_type = feature['match_type']
     assert match_type == 'exact'
 
+def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
+    response = client.get('/search/2100 KITTY HAWK AVE')
+    data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
+    feature = data['features'][0]
+    assert feature['geometry']['geocode_type'] == 'true_range'
+
 
 
 

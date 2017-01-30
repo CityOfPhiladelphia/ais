@@ -156,11 +156,10 @@ curb_rows = curb_table.read(return_geom=False, geom_field='geom', to_srid=2272)
 curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
-parcel_curb_map = {}  # parcel_id => curb_id
+parcel_curb_map = {}  # parcel_source => parcel_id => curb_id
 parcel_curb_rows = parcel_curb_table.read()
-# parcel_curb_map = {x['parcel_row_id']: x['curb_id'] for x in parcel_curb_rows}
-pwd_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'pwd'}
 dor_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'dor'}
+pwd_parcel_curb_map = {str(x['parcel_row_id']): x['curb_id'] for x in parcel_curb_rows if x['parcel_source'] == 'pwd'}
 parcel_curb_map['dor'] = dor_parcel_curb_map
 parcel_curb_map['pwd'] = pwd_parcel_curb_map
 
@@ -347,8 +346,10 @@ for i, address_row in enumerate(address_rows):
 
 		for parcel_layer_name, parcel_layer in parcel_layers.items():
 			source_table = parcel_layer_name + '_parcel'
-			#print(parcel_layer_name)
-			
+			#set these to None to avoid next address inheritance
+			parcel_ids = None
+			parcel_id = None
+			parcel_xy = None
 			try:
 				parcel_ids = addr_parcel_map[street_address][parcel_layer_name]
 			except KeyError as e:
@@ -367,7 +368,7 @@ for i, address_row in enumerate(address_rows):
 						'street_address':	street_address,
 						'geocode_type': 	geocode_priority_map[source_table],
 						# 'estimated': 		'0',
-						'geom':			dumps(parcel_xy)
+						'geom':				dumps(parcel_xy)
 					})
 
 				# Multiple parcel matches
@@ -433,8 +434,7 @@ for i, address_row in enumerate(address_rows):
 			CURBSIDE & IN_STREET (MIDPOINT B/T CURB & CENTERLINE)
 			'''
 
-
-			if seg_id and parcel_id:
+			if seg_id and parcel_id and parcel_xy:
 				# TODO: use pwd parcel if matched spatially
 				parcel_id = str(parcel_id)
 				if parcel_id in parcel_curb_map[parcel_layer_name] and seg_shp is not None:
@@ -442,35 +442,35 @@ for i, address_row in enumerate(address_rows):
 					curb_shp = curb_map[curb_id]
 
 					# Project parcel centroid to centerline
-					if parcel_xy:
-						proj_dist = seg_shp.project(parcel_xy)
-						proj_xy = seg_shp.interpolate(proj_dist)
-						proj_shp = LineString([parcel_xy, proj_xy])
+					#if parcel_xy:
+					proj_dist = seg_shp.project(parcel_xy)
+					proj_xy = seg_shp.interpolate(proj_dist)
+					proj_shp = LineString([parcel_xy, proj_xy])
 
-						# Get point of intersection and add
-						xsect_line_shp = curb_shp.intersection(proj_shp)
-						xsect_pt = None
-						if isinstance(xsect_line_shp, LineString):
-							xsect_pt = xsect_line_shp.coords[1]
-						elif isinstance(xsect_line_shp, MultiLineString):
-							xsect_pt = xsect_line_shp[-1:][0].coords[1]
-						if xsect_pt:
-							xsect_pt_shp = Point(xsect_pt)
-							curb_geocode_row = {
-								'street_address': street_address,
-								'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
-								'geom': dumps(xsect_pt_shp)
-							}
-							# Get midpoint between proj_xy and xsect_pt
-							xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
-							xy_in_st_shape = Point(xy_in_street)
-							in_st_geocode_row = {
-								'street_address': street_address,
-								'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
-								'geom': dumps(xy_in_st_shape)
-							}
-							geocode_rows.append(curb_geocode_row)
-							geocode_rows.append(in_st_geocode_row)
+					# Get point of intersection and add
+					xsect_line_shp = curb_shp.intersection(proj_shp)
+					xsect_pt = None
+					if isinstance(xsect_line_shp, LineString):
+						xsect_pt = xsect_line_shp.coords[1]
+					elif isinstance(xsect_line_shp, MultiLineString):
+						xsect_pt = xsect_line_shp[-1:][0].coords[1]
+					if xsect_pt:
+						xsect_pt_shp = Point(xsect_pt)
+						curb_geocode_row = {
+							'street_address': street_address,
+							'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
+							'geom': dumps(xsect_pt_shp)
+						}
+						# Get midpoint between proj_xy and xsect_pt
+						xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
+						xy_in_st_shape = Point(xy_in_street)
+						in_st_geocode_row = {
+							'street_address': street_address,
+							'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
+							'geom': dumps(xy_in_st_shape)
+						}
+						geocode_rows.append(curb_geocode_row)
+						geocode_rows.append(in_st_geocode_row)
 
 
 	except ValueError as e:
