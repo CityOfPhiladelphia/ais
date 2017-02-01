@@ -142,8 +142,6 @@ def unmatched_response(**kwargs):
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
 
-    # TODO: IMPLEMENT ATTEMPT TO CASCADE TO BASE ADDRESS BEFORE CASCADE TO STREET SEGMENT
-
     query = kwargs.get('query')
     normalized_address = kwargs.get('normalized_address')
     search_type = kwargs.get('search_type')
@@ -182,14 +180,8 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
+        # TODO: raise 404 instead of returning parsed response
         # error = json_error(404, 'Could not find addresses matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
-        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                  search_type=search_type, address=address)
-
-    if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
-        # error = json_error(404, 'Could not find any opa addresses matching query.',
         #                    {'query': query, 'normalized': normalized_address})
         # return json_response(response=error, status=404)
         return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
@@ -393,10 +385,16 @@ def addresses(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
+    print(addresses_count)
     # Handle unmatched addresses
     if addresses_count == 0:
-        # # Try to cascade to street centerline segment
-        return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+        if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+            error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                    {'query': query, 'normalized': normalized_address})
+            return json_response(response=error, status=404)
+        else:
+            # # Try to cascade to street centerline segment
+            return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -472,11 +470,16 @@ def block(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
+        if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+            error = json_error(404, 'Could not find any opa addresses matching query.',
+                                    {'query': query, 'normalized': normalized_address})
+            return json_response(response=error, status=404)
+        else:
         # error = json_error(404, 'Could not find any address on a block matching query.',
         #                    {'query': query, 'normalized': normalized_address})
         # return json_response(response=error, status=404)
-        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                  search_type=search_type)
+            return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+                                      search_type=search_type)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
