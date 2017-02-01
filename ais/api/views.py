@@ -188,7 +188,7 @@ def unknown_cascade_view(**kwargs):
         return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
                                   search_type=search_type, address=address)
 
-    if 'opa_only' in request.args:
+    if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
         # error = json_error(404, 'Could not find any opa addresses matching query.',
         #                    {'query': query, 'normalized': normalized_address})
         # return json_response(response=error, status=404)
