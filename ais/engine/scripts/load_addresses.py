@@ -63,7 +63,7 @@ address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '1234 MARKET ST'
+DEV_ADDRESS = '3700-90 SEPVIVA ST'
 DEV_ADDRESS_COMPS = {
     'address_low':      '1234',
     'address_high':     '',
@@ -206,12 +206,12 @@ for source in sources:
         # Must be a single field
         else:
             source_address = source_row['street_address']
-        
+
         if source_address is None:
             # TODO: it might be helpful to log this, but right now we aren't
             # logging object IDs so there would be no way to identify the 
             # null address in the source dataset. Just skipping for now.
-            continue 
+            continue
 
         source_map.setdefault(source_address, []).append(source_name)
 
@@ -310,7 +310,7 @@ for source in sources:
                 if not base_address in street_addresses_seen:
                     # Reparse. 
                     base_address_obj = Address(base_address)
-                    
+
                     # TEMP: a small handful of addresses aren't reparsable,
                     # meaning they give different results on the second round
                     # of parsing.
@@ -318,10 +318,10 @@ for source in sources:
                     # TODO: write a parser test for this.
                     if base_address != base_address_obj.street_address:
                         raise ValueError('Base address is not reparsable')
-                    
+
                     addresses.append(base_address_obj)
                     street_addresses_seen.add(base_address)
-                    
+
                     # Add to source address map
                     _source_addresses = source_address_map.setdefault(base_address, [])
                     if not source_address in _source_addresses:
@@ -480,6 +480,7 @@ for i, address in enumerate(addresses):
                     links.append(parent_unit_link)
 
     # Child link
+
     elif address.address_high is None:
         address_low = address.address_low
         address_suffix = address.address_low_suffix
@@ -499,6 +500,42 @@ for i, address in enumerate(addresses):
                 links.append(child_link)
                 break
 
+    # New method: create links for all possible address in range of every ranged address
+    if address.address_high:
+        address_low = address.address_low
+        address_high = address.address_high
+        address_suffix = address.address_low_suffix
+        street_predir = address.street_predir
+        street_full = address.street_full
+        street_address = address.street_address
+        parity = address.parity
+
+        for x in range(address_low, address_high + 1, 2):
+            child_address_comps = (str(x), street_predir, street_full)
+            child_address = " ".join(filter(None, child_address_comps))
+            child_link = {
+                'address_1': child_address,
+                'relationship': 'in range',
+                'address_2': address.street_address,
+            }
+            links.append(child_link)
+
+        # Overlap link
+        if street_full in street_range_map:
+            ranges_on_street = street_range_map[street_full]
+            for range_on_street in ranges_on_street:
+                if street_address != range_on_street.street_address and (range_on_street.address_low <= address_low <= range_on_street.address_high \
+                    and range_on_street.address_high < address_high) or (range_on_street.address_low <= address_high <= range_on_street.address_high \
+                    and range_on_street.address_low > address_low):
+                    child_link = {
+                        'address_1': street_address,
+                        'relationship': 'overlaps',
+                        'address_2': range_on_street.street_address,
+                    }
+                    links.append(child_link)
+
+# Remove any duplicates in link list
+links = [dict(t) for t in set([tuple(d.items()) for d in links])]
 print('Writing address links...')
 if WRITE_OUT:
     address_link_table.write(links, chunk_size=150000)
@@ -588,7 +625,7 @@ for address in addresses:
             seg_id = match['seg_id']
             seg_side = match['seg_side']
             had_alias = match['had_alias']
-            
+
             # If there were warnings, raise them again
             for warning in street_warning_map.get(base_address, []):
                 had_street_warning(
@@ -641,7 +678,7 @@ for address in addresses:
                     matching_side = 'R'
                 else:
                     continue
-                
+
                 # SINGLE ADDRESS
                 if address_high is None:
                     if check_from <= address_low <= check_to:
@@ -818,7 +855,7 @@ for parcel_layer in parcel_layers:
         address_low = parcel_address.address_low
         address_low_suffix = parcel_address.address_low_suffix
         address_high = parcel_address.address_high
-        
+
         parcel_map.setdefault(street_address, [])
         parcel_map[street_address].append(row_id)
 
@@ -862,10 +899,10 @@ for parcel_layer in parcel_layers:
                             matches.append({
                                 'parcel_row_id':    row_id,
                                 'match_type':       match_type,
-                            })                  
+                            })
                             match_counts[match_type] += 1
                             raise ContinueIteration
-                
+
             except ContinueIteration:
                 pass
 
@@ -880,7 +917,7 @@ for parcel_layer in parcel_layers:
                 if street_full in block_map:
                     street_map = block_map[street_full]
                     parcels_on_block = street_map.get(hundred_block, [])
-                    
+
                     for parcel_row in parcels_on_block:
                         # Check low/high, suffix
                         parcel_low = parcel_row['address_low']
@@ -905,7 +942,7 @@ for parcel_layer in parcel_layers:
                             check_low = parcel_low
                             check_mid = address_low
                             check_high = parcel_high
-                            
+
                             parcel_parity = \
                                 parity_for_range(parcel_low, parcel_high)
 
@@ -931,7 +968,7 @@ for parcel_layer in parcel_layers:
                             match_counts[match_type] += 1
                             matches.append({
                                 'parcel_row_id':        row_id,
-                                'match_type':           match_type, 
+                                'match_type':           match_type,
                             })
 
         # Handle matches

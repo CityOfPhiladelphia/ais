@@ -348,8 +348,7 @@ def addresses(query):
             error = json_error(404, 'Could not find any opa addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address})
             return json_response(response=error, status=404)
-        else:
-            # # Try to cascade to street centerline segment
+        else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
     # Validate the pagination

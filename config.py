@@ -241,33 +241,6 @@ ADDRESSES = {
                 },
             ],
         },
-        # HANSEN DIRECT
-        # {
-        #     'name':                 'li_address_keys',
-        #     'table':                'imsv7.address',
-        #     'db':                   'lidb',
-        #     'address_fields':       {
-        #         'address_low':          'stno',
-        #         'address_low_suffix':   'postdir',
-        #         'address_high':         'hseextn',
-        #         'street_predir':        'predir',
-        #         'street_name':          'stname',
-        #         'street_suffix':        'suffix',
-        #         # 'street_postdir':       'postdir',
-        #         'unit_num':             'condnum',
-        #     },
-        #     'preprocessor':          make_li_address,
-        #     'tag_fields': [
-        #         {
-        #             'key':              'li_address_key',
-        #             'source_field':     'addrkey',
-        #         },
-        #     ],
-        #     # 'where':                '''
-        #         # expdate is null and
-        #         # addby in ('INTERFACE', 'ADDRESS_MODULE', 'MAN_UNEXPIRED')
-        #     # ''',
-        # },
         # NICK'S DB
         {
             'name':                 'li_address_keys',
@@ -283,20 +256,6 @@ ADDRESSES = {
                 },
             ],
         },
-        # {
-        #     'name':                 'voters',
-        #     'table':                'voters',
-        #     'db':                   'gis',
-        #     'address_fields':       {
-        #             'street_address':   'street_address',
-        #     },
-        #     'tag_fields': [
-        #         {
-        #             'key':          'voter_name',
-        #             'source_field': 'full_name',
-        #         },
-        #     ],
-        # },
         {
             'name':                 'voters',
             'table':                'gis_elections.voters_2017_02',
