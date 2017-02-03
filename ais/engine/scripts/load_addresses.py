@@ -505,13 +505,13 @@ for i, address in enumerate(addresses):
         address_low = address.address_low
         address_high = address.address_high
         address_suffix = address.address_low_suffix
-        street_predir = address.street_predir
+        #street_predir = address.street_predir
         street_full = address.street_full
         street_address = address.street_address
         parity = address.parity
 
         for x in range(address_low, address_high + 1, 2):
-            child_address_comps = (str(x), street_predir, street_full)
+            child_address_comps = (str(x), street_full)
             child_address = " ".join(filter(None, child_address_comps))
             child_link = {
                 'address_1': child_address,
