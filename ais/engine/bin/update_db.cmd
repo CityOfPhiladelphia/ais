@@ -52,7 +52,7 @@ psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE SCHEMA public;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
 psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION postgis;"
-REM psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION pgtrgm;"
+psql -U ais_engine -h %DB_URI% -d ais_engine -c "CREATE EXTENSION pg_trgm;"
 pg_restore -h %DB_URI% -d ais_engine -U ais_engine -c %db_dump_file_loc%
 
 REM------------------------------------------------------------------
