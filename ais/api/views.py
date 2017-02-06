@@ -385,7 +385,7 @@ def addresses(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
-    print(addresses_count)
+    #print(addresses_count)
     # Handle unmatched addresses
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
