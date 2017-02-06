@@ -167,11 +167,11 @@ def unknown_cascade_view(**kwargs):
     address.pwd_account_nums = None
 
     if not seg_id:
-        # error = json_error(404, 'Could not find addresses matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
-        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                  search_type=search_type, address=address)
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+        #                           search_type=search_type, address=address)
 
     # CASCADE TO STREET SEGMENT
     cascadedseg = StreetSegment.query \
@@ -180,12 +180,12 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
-        # TODO: raise 404 instead of returning parsed response
-        # error = json_error(404, 'Could not find addresses matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
-        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                  search_type=search_type, address=address)
+        # TODO: raise 404 instead of returning parsed response - DONE
+        error = json_error(404, 'Could not find addresses matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+        #                           search_type=search_type, address=address)
 
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
