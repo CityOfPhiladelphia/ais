@@ -267,11 +267,11 @@ def test_fractional_addresses_are_ok(client):
 
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
-    data = json.loads(response.get_data().decode())
-    feature = data['features'][0]
-    assert_status(response, 200)
-    assert feature['match_type'] == 'parsed'
+    # data = json.loads(response.get_data().decode())
+    # feature = data['features'][0]
     # assert_status(response, 200)
+    # assert feature['match_type'] == 'parsed'
+    assert_status(response, 404)
 
 def test_allows_0_as_block_low_num(client):
     response = client.get('/block/0 N Front St')
@@ -449,6 +449,12 @@ def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
     assert_status(response, 200)
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true_range'
+
+def test_address_without_seg_match_returns_404(client):
+    response = client.get('/search/2100 SITTY TAWK AVE')
+    assert_status(response, 404)
+
+
 
 
 
