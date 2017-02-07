@@ -987,10 +987,14 @@ print('Indexing range properties...')
 range_rows = [x for x in prop_rows if x['address_high'] is not None]
 range_map = {}  # street_full => [range props]
 for range_row in range_rows:
-    street_address = range_row['street_address']
-    street_full = Address(street_address).street_full
-    prop_list = range_map.setdefault(street_full, [])
-    prop_list.append(range_row)
+    try:
+        street_address = range_row['street_address']
+        street_full = Address(street_address).street_full
+        prop_list = range_map.setdefault(street_full, [])
+        prop_list.append(range_row)
+    except ValueError:
+        print('Unrecognized format for range address: {}'.format(street_address))
+        continue
 
 address_props = []
 

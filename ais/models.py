@@ -294,7 +294,8 @@ class Address(db.Model):
         # TEMP: Passyunk doesn't raise an error if the address high is
         # lower than the address low.
         high_num_full = c['address']['high_num_full']
-        if high_num_full and high_num_full < c['address']['low_num']:
+        low_num = c['address']['low_num']
+        if high_num_full and low_num and high_num_full < low_num:
             raise ValueError('Invalid range address')
 
         kwargs = {
