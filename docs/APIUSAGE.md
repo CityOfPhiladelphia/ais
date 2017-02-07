@@ -150,7 +150,6 @@ The root of the `FeatureCollection` contains:
      * `range-parent`: Ranged_address match for range_child query
      * `range_child`: Range_child match for ranged_address query
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
-     * `parsed`: Address cannot be matched and location cannot be estimated. Response includes parsed street components and null geometry.
 * The following list of `properties`:
   * `street_address` (Full address)
   * `address_low`
