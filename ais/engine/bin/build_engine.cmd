@@ -37,8 +37,8 @@ ais engine run load_curbs
 echo. && echo "Loading Addresses"
 ais engine run load_addresses
 
-echo. && echo "Loading Zip Ranges"
-ais engine run load_zip_ranges
+rem echo. && echo "Loading Zip Ranges"
+rem ais engine run load_zip_ranges
 
 echo. && echo "Geocoding Addresses"
 ais engine run geocode_addresses
