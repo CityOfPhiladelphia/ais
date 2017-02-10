@@ -299,7 +299,7 @@ ADDRESSES = {
         # },
         {
             'name':                 'voters',
-            'table':                'gis_elections.voters_2017_01',
+            'table':                'gis_elections.voters_2017_02',
             'db':                   'gis',
             'address_fields':       {
                 'address_low':          'house__',
