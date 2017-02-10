@@ -913,17 +913,9 @@ def search(query):
 
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
-    if search_type != 'none':
-
+    if search_type != 'none' and search_type !='street':
         # get the corresponding view function
         view = parser_search_type_map[search_type]
-
-        # # remove args with 'false' value
-        # requestargs = dict(request.args)
-        # for arg in request.args:
-        #     if (requestargs[arg][0]).lower() == 'false':
-        #         del requestargs[arg]
-        # print(requestargs)
         # call it
         return view(query)
 
@@ -932,6 +924,12 @@ def search(query):
             # Handle queries of pwd_parcel ids
         if query.isdigit() and len(query) < 8:
             return pwd_parcel(query)
+        elif search_type == 'street':
+            error = json_error(404, 'Could not find any addresses matching query.',
+                               {'query': query})
+            return json_response(response=error, status=404)
+
+
         else:
             error = json_error(404, 'Query not recognized.',
                                {'query': query})
