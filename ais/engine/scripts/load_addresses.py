@@ -527,7 +527,8 @@ for i, address in enumerate(addresses):
             for range_on_street in ranges_on_street:
                 if street_address != range_on_street.street_address and (range_on_street.address_low <= address_low <= range_on_street.address_high \
                     and range_on_street.address_high < address_high) or (range_on_street.address_low <= address_high <= range_on_street.address_high \
-                    and range_on_street.address_low > address_low):
+                    and range_on_street.address_low > address_low) \
+                    and range_on_street.parity == parity:
                     child_link = {
                         'address_1': street_address,
                         'relationship': 'overlaps',
