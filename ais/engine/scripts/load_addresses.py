@@ -480,7 +480,6 @@ for i, address in enumerate(addresses):
                     links.append(parent_unit_link)
 
     # Child link
-
     elif address.address_high is None:
         address_low = address.address_low
         address_suffix = address.address_low_suffix
@@ -501,7 +500,9 @@ for i, address in enumerate(addresses):
                 break
 
     # New method: create links for all possible address in range of every ranged address
+    new_addresses = []
     if address.address_high:
+        new_addresses = []
         address_low = address.address_low
         address_high = address.address_high
         address_suffix = address.address_low_suffix
@@ -520,6 +521,17 @@ for i, address in enumerate(addresses):
                 'address_2': address.street_address,
             }
             links.append(child_link)
+            try:
+                address = Address(child_address)
+                # Check for zero address
+                if address.address_low == 0:
+                    raise ValueError('Low number is zero')
+                if not street_address in street_addresses_seen:
+                    new_addresses.append(address)
+                    street_addresses_seen.add(street_address)
+            except ValueError:
+                print('Could not parse new address: {}'.format(child_address))
+                continue
 
         # Overlap link
         if street_full in street_range_map:
@@ -535,16 +547,30 @@ for i, address in enumerate(addresses):
                         'address_2': range_on_street.street_address,
                     }
                     links.append(child_link)
+                try:
+                    address = Address(child_address)
+                    # Check for zero address
+                    if address.address_low == 0:
+                        raise ValueError('Low number is zero')
+                    if not street_address in street_addresses_seen:
+                        new_addresses.append(address)
+                        street_addresses_seen.add(street_address)
+                except ValueError:
+                    print('Could not parse new address: {}'.format(child_address))
+                    continue
 
 # Remove any duplicates in link list
 links = [dict(t) for t in set([tuple(d.items()) for d in links])]
+
 print('Writing address links...')
 if WRITE_OUT:
     address_link_table.write(links, chunk_size=150000)
     print('Created {} address links'.format(len(links)))
 del links
-
-
+print('Writing {} new addresses...'.format(len(new_addresses)))
+insert_rows = [dict(x) for x in new_addresses]
+address_table.write(insert_rows, chunk_size=150000)
+del insert_rows
 ###############################################################################
 # ADDRESS-STREETS
 ###############################################################################
