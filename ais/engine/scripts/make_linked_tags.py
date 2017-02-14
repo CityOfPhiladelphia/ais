@@ -1,12 +1,6 @@
-#import sys
-#import os
 from datetime import datetime
 import datum
 from ais import app
-#from ais.models import Address
-# DEV
-#import traceback
-#from pprint import pprint
 
 WRITE_OUT = True
 
@@ -33,6 +27,9 @@ for link_row in link_rows:
         link_map[address_1] = []
     link_map[address_1].append(link_row)
 
+# define traversal order
+traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
+
 print('Reading address tags...')
 tag_map = {}
 tag_rows = address_tag_table.read()
@@ -55,47 +52,52 @@ for address_row in address_rows:
     street_address = address_row['street_address']
     # get address tags associated with street address
     mapped_tags = tag_map.get(street_address)
+    links = link_map.get(street_address)
+    # sort links by traversal order
+    sorted_links = []
+    # sorted_links = [sorted_links.append(x) for x in links if x['relationship'] == rel for rel in traversal_order]
+    if links:
+        for rel in traversal_order:
+            for link in links:
+                if link['relationship'] == rel:
+                    sorted_links.append(link)
+                    links.remove(link)
+        print("Sorted links: ", street_address, sorted_links)
+    else:
+        print('************** ', street_address, " has no links to search.")
+
+
     # loop through tag fields in config
     for tag_field in tag_fields:
         # Skip tag_fields where 'traverse_links' value is false
         if tag_field['traverse_links'] != 'true':
             continue
-        try:
+        search_tag_report = None
+        found_tag_report = None
+        #try:
         #-------------------------------------------------------
-            # Look for tag in tag_map for street_address
-            tag_key = tag_field['tag_key']
-            tag_value = None
-            if mapped_tags:
-                for tag in mapped_tags:
-                    tag_value = tag['value'] if tag and tag.get('key') == tag_key else None
-                    # if street address has this tag already, continue to next tag_field
-                    if tag_value and tag_value != '':
-                        # move on to next tag field
-                        #print(street_address, tag_key, tag_value)
-                        break
-            #--------------------------------------------------------
-            # Otherwise, look for tag in address links
-            links = link_map.get(street_address)
-            if not links:
-                # Do something if tag can't be found by traversing links so API doesn't look for it
-                print(street_address, " has no links.")
-                continue
-
-            # define traversal order
-            traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
-            # sort links by traversal order
-            sorted_links = []
-            # sorted_links = [sorted_links.append(x) for x in links if x['relationship'] == rel for rel in traversal_order]
-            for rel in traversal_order:
-                for link in links:
-                    if link['relationship'] == rel:
-                        sorted_links.append(link)
-                        links.remove(link)
-
-            #print(street_address, sorted_links)
-
-            # loop through links
-            for link in sorted_links:
+        # Look for tag in tag_map for street_address
+        tag_key = tag_field['tag_key']
+        tag_value = None
+        if mapped_tags:
+            for tag in mapped_tags:
+                tag_value = tag['value'] if tag and tag.get('key') == tag_key else None
+                # if street address has this tag already, continue to next tag_field
+                if tag_value and tag_value != '':
+                    # move on to next tag field
+                    #print(street_address, tag_key, tag_value)
+                    break
+        #--------------------------------------------------------
+        # Otherwise, look for tag in address links
+        #print("Searching links for tag: ", street_address, tag_key)
+        if not links:
+            # Do something if tag can't be found by traversing links so API doesn't look for it
+            #print(street_address, " has no links.")
+            continue
+        # loop through links
+        found = False
+        for link in sorted_links:
+            if found == False:
                 #print(link)
                 link_address = link.get('address_2')
                 # get tags for current link
@@ -106,23 +108,30 @@ for address_row in address_rows:
                         #print(tag)
                         # if found, get value, linked address and linked path
                         if tag['key'] == tag_key:
+                            print(street_address, " found tag for ", tag_key, "from ", link_address)
                             #tag_id = tag['id']
                             tag_value = tag['value']
                             if tag_value and tag_value != '':
                                 linked_path = link['relationship']
                                 add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value, 'linked_address': link_address, 'linked_path': linked_path}
                                 linked_tags_map.append(add_tag_dict)
-                                raise
-                            # Do something if tag can't be found by traversing links so API doesn't look for it
-        except:
-            #print(street_address)
-            continue
+                                found_tag_report = [{key: value} for key, value in add_tag_dict.items()]
+                                print(found_tag_report)
+                                found = True
+                                break
+                            #raise
+                        # Do something if tag can't be found by traversing links so API doesn't look for it
+        # except:
+        #     print(street_address)
+        #     print(search_tag_report)
+        #     print(found_tag_report)
+        #     continue
 
 
 """WRITE OUT"""
 
 if WRITE_OUT:
-    print('Writing linked tags to address_tag table...')
+    print('Writing ', len(linked_tags_map), ' linked tags to address_tag table...')
     address_tag_table.write(linked_tags_map, chunk_size=150000)
 
     # for id, linked_vals in linked_tags_map.items():
