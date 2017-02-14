@@ -192,6 +192,12 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'opa_account_num',
+                    'source_fields':     ['account_num'],
+                },
+            ],
         },
         {
             'name':                 'pwd_parcels',
@@ -200,6 +206,12 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'pwd_parcel_id',
+                    'source_fields':     ['parcel_id'],
+                },
+            ],
         },
         {
             'name':                 'dor_parcels',
@@ -208,6 +220,12 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'dor_parcel_id',
+                    'source_fields':     ['parcel_id'],
+                },
+            ],
         },
         {
             'name':                 'info_commercial',
