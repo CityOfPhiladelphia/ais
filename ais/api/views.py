@@ -51,48 +51,48 @@ def unmatched_response(**kwargs):
     normalized_address = kwargs.get('normalized_address')
     address = kwargs.get('address')
 
-    if search_type == 'intersection':
-        intersection = StreetIntersection()
-        intersection.street_1_full = parsed['components']['street']['full']
-        intersection.street_1_name = parsed['components']['street']['name']
-        intersection.street_1_code = parsed['components']['street']['street_code']
-        intersection.street_1_predir = parsed['components']['street']['predir']
-        intersection.street_1_postdir = parsed['components']['street']['postdir']
-        intersection.street_1_suffix = parsed['components']['street']['suffix']
-        intersection.street_2_full = parsed['components']['street_2']['full']
-        intersection.street_2_name = parsed['components']['street_2']['name']
-        intersection.street_2_code = parsed['components']['street_2']['street_code']
-        intersection.street_2_predir = parsed['components']['street_2']['predir']
-        intersection.street_2_postdir = parsed['components']['street_2']['postdir']
-        intersection.street_2_suffix = parsed['components']['street_2']['suffix']
-
-        intersection_page = (intersection,)
-        paginator = Paginator(intersection_page)
-
-        # Validate the pagination
-        page_num, error = validate_page_param(request, paginator)
-
-        if error:
-            return json_response(response=error, status=error['status'])
-
-        srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-        # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
-        crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
-
-        # Serialize the response:
-        intersections_page = paginator.get_page(page_num)
-        serializer = IntersectionJsonSerializer(
-            metadata={'search_type': search_type, 'query': query,
-                       'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args, 'crs': crs},
-            pagination=paginator.get_page_info(page_num),
-            #estimated={'cascade_geocode_type': 'parsed'}
-            match_type='parsed'
-        )
-
-        result = serializer.serialize_many(intersections_page)
-        # result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
-
-        return json_response(response=result, status=200)
+    # if search_type == 'intersection':
+    #     intersection = StreetIntersection()
+    #     intersection.street_1_full = parsed['components']['street']['full']
+    #     intersection.street_1_name = parsed['components']['street']['name']
+    #     intersection.street_1_code = parsed['components']['street']['street_code']
+    #     intersection.street_1_predir = parsed['components']['street']['predir']
+    #     intersection.street_1_postdir = parsed['components']['street']['postdir']
+    #     intersection.street_1_suffix = parsed['components']['street']['suffix']
+    #     intersection.street_2_full = parsed['components']['street_2']['full']
+    #     intersection.street_2_name = parsed['components']['street_2']['name']
+    #     intersection.street_2_code = parsed['components']['street_2']['street_code']
+    #     intersection.street_2_predir = parsed['components']['street_2']['predir']
+    #     intersection.street_2_postdir = parsed['components']['street_2']['postdir']
+    #     intersection.street_2_suffix = parsed['components']['street_2']['suffix']
+    #
+    #     intersection_page = (intersection,)
+    #     paginator = Paginator(intersection_page)
+    #
+    #     # Validate the pagination
+    #     page_num, error = validate_page_param(request, paginator)
+    #
+    #     if error:
+    #         return json_response(response=error, status=error['status'])
+    #
+    #     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    #     # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+    #     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    #
+    #     # Serialize the response:
+    #     intersections_page = paginator.get_page(page_num)
+    #     serializer = IntersectionJsonSerializer(
+    #         metadata={'search_type': search_type, 'query': query,
+    #                    'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args, 'crs': crs},
+    #         pagination=paginator.get_page_info(page_num),
+    #         #estimated={'cascade_geocode_type': 'parsed'}
+    #         match_type='parsed'
+    #     )
+    #
+    #     result = serializer.serialize_many(intersections_page)
+    #     # result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
+    #
+    #     return json_response(response=result, status=200)
 
     if not address:
         # Fake 'type' as 'address' in order to create Address object for AddressJsonSerializer response
@@ -180,7 +180,6 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
-        # TODO: raise 404 instead of returning parsed response - DONE
         error = json_error(404, 'Could not find addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
@@ -773,47 +772,12 @@ def intersection(query):
     paginator = QueryPaginator(intersections)
     intersections_count = paginator.collection_size
 
-    # if intersections_count == 0:
-    #     loose_filters = NotNoneDict(
-    #         street_1_code=street_1_code or street_2_code,
-    #         street_1_name=street_1_name or street_2_name,
-    #         street_1_predir=street_1_predir or street_2_predir,
-    #         street_1_postdir=street_1_postdir or street_2_postdir,
-    #         street_1_suffix=street_1_suffix or street_2_suffix,
-    #     )
-    #     strict_filters = dict(
-    #     )
-    #     filters = strict_filters.copy()
-    #     filters.update(loose_filters)
-    #     intersections = StreetIntersection.query \
-    #         .filter_by(**filters)
-    #     if not intersections.first():
-    #         loose_filters = NotNoneDict(
-    #             street_2_code=street_1_code or street_2_code,
-    #             street_2_name=street_1_name or street_2_name,
-    #             street_2_predir=street_1_predir or street_2_predir,
-    #             street_2_postdir=street_1_postdir or street_2_postdir,
-    #             street_2_suffix=street_1_suffix or street_2_suffix,
-    #         )
-    #         strict_filters = dict(
-    #         )
-    #         filters = strict_filters.copy()
-    #         filters.update(loose_filters)
-    #         intersections = StreetIntersection.query \
-    #             .filter_by(**filters)
-    #
-    #     intersections = intersections.order_by_intersection()
-    #     intersections = intersections.distinct(StreetIntersection.street_1_full, StreetIntersection.street_2_full)
-    #     paginator = QueryPaginator(intersections)
-    #     intersections_count = paginator.collection_size
-
-        # If still no match, route to unmatched response (is this necessary?):
     if intersections_count == 0:
-        # error = json_error(404, 'Could not find intersection matching query.',
-        #                    {'query': query_original, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
-        # return json_response(response=error, status=404)
-        return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
-                                  search_type=search_type)
+        error = json_error(404, 'Could not find intersection matching query.',
+                           {'query': query, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
+        return json_response(response=error, status=404)
+        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
+        #                           search_type=search_type)
     # else:
     #     match_type = 'unmatched'
     else:
@@ -830,7 +794,7 @@ def intersection(query):
 
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
-    normalized = intersections.first().street_1_full + ' & ' + intersections.first().street_2_full
+    normalized = intersections.first().street_1_full + ' & ' + intersections.first().street_2_full if intersections_count == 1 else street_1_full + ' & ' + street_2_full
     serializer = IntersectionJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
