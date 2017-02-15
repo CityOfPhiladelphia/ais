@@ -697,7 +697,7 @@ def intersection(query):
 
     parsed = PassyunkParser().parse(query)
     search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
-    normalized = parsed['components']['output_address']
+    #normalized = parsed['components']['output_address']
 
     street_1_full = parsed['components']['street']['full']
     street_1_name = parsed['components']['street']['name']
@@ -830,9 +830,9 @@ def intersection(query):
 
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
-    normalized = street_1_full + ' & ' + street_2_full
+    normalized = intersections.first().street_1_full + ' & ' + intersections.first().street_2_full
     serializer = IntersectionJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': street_1_full + ' & ' + street_2_full, 'search_params': request.args, 'crs': crs},
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid,
         match_type=match_type)
