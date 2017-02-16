@@ -762,8 +762,10 @@ def intersection(query):
 
     return json_response(response=result, status=200)
 
+
 @app.route('/reverse_geocode/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/reverse_geocode.yml')
 def reverse_geocode(query):
 
     query = query.strip('/')
