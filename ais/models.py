@@ -209,6 +209,7 @@ class AddressQuery(BaseQuery):
                              Address.street_predir,
                              Address.street_postdir,
                              Address.address_low,
+                             Address.address_low_suffix.nullsfirst(),
                              Address.address_high,
                              Address.unit_type.nullsfirst(),
                              Address.unit_num.nullsfirst())
