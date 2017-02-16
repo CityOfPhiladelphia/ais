@@ -4,8 +4,8 @@ This endpoint handles coordinate searches by finding the nearest address to quer
 Successful requests return a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of the nearest [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
 To search by coordintes, please enter in x, y format, either as:
- * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/search/-75.16097658476633,39.951661655671955), or
- * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/search/2694253.78730206, 235887.921013063)
+ * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955), or
+ * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
@@ -18,42 +18,6 @@ parameters:
     type: string
     default: ''
     required: true
-#  - name: srid
-#    in: query
-#    description: Specifies that the geometry of the address object be returned as coordinates of a particular projection, represented by a numeric SRID/EPSG. (i.e. http://spatialreference.org/ref/)
-#    type: string
-#    default: '4326'
-#    required: false
-#  - name: include_units
-#    in: query
-#    description: Requests that units contained within a given property be returned along with the top-level property.
-#    type: boolean
-#    default: false
-#    required: false
-#  - name: opa_only
-#    in: query
-#    description: Filters results to contain only addresses that have OPA account numbers.
-#    type: boolean
-#    default: false
-#    required: false
-#  - name: on_curb
-#    in: query
-#    description: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel.
-#    type: boolean
-#    default: false
-#    required: false
-#  - name: on_street
-#    in: query
-#    description: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel.
-#    type: boolean
-#    default: false
-#    required: false
-#  - name: parcel_geocode_location
-#    in: query
-#    description: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned.
-#    type: boolean
-#    default: false
-#    required: false
 responses:
   200:
     description: An AIS response
