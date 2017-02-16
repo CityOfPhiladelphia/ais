@@ -379,3 +379,54 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
         ])
 
         return data
+
+
+class ServiceAreaSerializer ():
+
+    def __init__(self, coordinates=None, sa_data=None, metadata=None, **kwargs):
+        #self.geom_type = 'Point'
+        #self.geom_source = geom_source
+        #self.match_type = match_type
+        self.coordinates = coordinates
+        self.sa_data = sa_data
+        self.metadata = metadata
+        super().__init__()
+
+    def model_to_data(self):
+        #sa_data = self.transform_exceptions(sa_data)
+        data = {}
+        sa_data_obj = {'service area data': self.sa_data}
+        data.update(self.metadata)
+        data.update(sa_data_obj)
+        return data
+
+    def render(self, data):
+        final_data = []
+        if self.metadata:
+            final_data += sorted(self.metadata.items(),reverse=True)
+
+        # Render as a feature collection if in a list
+        if isinstance(data, list):
+            # if self.pagination:
+            #     final_data += self.pagination.items()
+            final_data += [
+                ('type', 'FeatureCollection'),
+                ('features', data),
+            ]
+
+        # Render as a feature otherwise
+        else:
+            final_data += data.items()
+
+        final_data = OrderedDict(final_data)
+        geom_data = OrderedDict([
+            ('geocode_type', 'input'),
+            ('type', 'Point'),
+            ('coordinates', self.coordinates)
+        ])
+        final_data.update({'geometry': geom_data})
+        return json.dumps(final_data)
+
+    def serialize(self):
+        data = self.model_to_data()
+        return self.render(data)
