@@ -99,7 +99,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
  Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. Use the querystring parameter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response:
  * [http://api.phila.gov/ais/v1/search/2401 pennsylvania ave?include_units&opa_only&page=2](http://api.phila.gov/ais/v1/search/2401%20pennsylvania%20ave?include_units&opa_only&page=2)
  
-A pagination object is returened in the [response envelope](#The Envelope) detailing the ```page``` number of the response.
+A pagination object is returned in the [response envelope](#The Envelope) detailing the ```page``` number of the response.
 
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
