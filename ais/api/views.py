@@ -784,7 +784,9 @@ def reverse_geocode(query):
         from geocode
         where geocode_type IN ({pwd_curb}, {dor_curb}, {true_range}) AND
         ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
-        order by geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid})
+        ORDER BY
+            geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
+            length(street_address) asc
         LIMIT 1
         '''.format(x=x, y=y, srid=srid, engine_srid=engine_srid, pwd_curb=7, dor_curb=8, true_range=5, centerline=6)
 
