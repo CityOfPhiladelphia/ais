@@ -1,16 +1,17 @@
 Search by address, block, intersection, DOR parcel / registration map ID or OPA account number
 This endpoint handles a variety of search types by classifying the query and routing the request to the appropriate endpoint.
 Search types currently supported are:
+  * account
   * addresses
   * block
-  * intersection
+  * coordinates
   * dor parcel
-  * account
+  * intersection
 
 Successful requests return a paginated
-[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) or [intersection](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#intersection)  feature(s).
+[GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) or [intersection](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#intersection) feature(s).
 
-See documentation for an individual endpoint for more information about that search type.
+See documentation for an individual endpoint for more information about that search type. Please note the search endpoint routes coordinates to the /reverse_geocode endpoint.
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
