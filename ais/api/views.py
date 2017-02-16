@@ -769,6 +769,7 @@ def reverse_geocode(query):
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
+    search_type_out = 'coordinates'
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     srid = str(srid_map[search_type])
@@ -850,7 +851,7 @@ def reverse_geocode(query):
     # Handle unmatched addresses
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'search_type': search_type, 'query': query, 'normalized': normalized})
+                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -858,15 +859,17 @@ def reverse_geocode(query):
     if error:
         return json_response(response=error, status=error['status'])
 
+    match_type = 'nearest'
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized,
+        metadata={'search_type': search_type_out, 'query': query, 'normalized': normalized,
                   'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid,
         normalized_address=normalized_address,
         base_address=base_address,
+        match_type=match_type,
     )
     result = serializer.serialize_many(addresses_page)
     # result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -889,6 +892,7 @@ def service_areas(query):
     x, y = normalized.split(",", 1)
     coords = [float(x), float(y)]
     sa_data = OrderedDict()
+    search_type_out = 'coordinates'
 
     sa_stmt = '''
                 with foo as
@@ -908,12 +912,12 @@ def service_areas(query):
 
     if not sa_data:
         error = json_error(404, 'There are no intersecting service areas.',
-                           {'query': query, 'normalized': normalized})
+                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
     # Use ServiceAreaSerializer
     serializer = ServiceAreaSerializer(
-        metadata={'search_type': 'coordinates', 'query': query,
+        metadata={'search_type': search_type_out, 'query': query,
                   'search_params': request.args, 'normalized': normalized, 'crs': crs},
         #shape=search_shape,
         sa_data=sa_data, coordinates=coords
