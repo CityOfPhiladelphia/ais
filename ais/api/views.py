@@ -10,19 +10,20 @@ from flask import Response, request, redirect, url_for
 from flask_cachecontrol import cache_for
 from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
+from geoalchemy2.functions import ST_Transform
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer
+from ais.models import ENGINE_SRID
 
 config = app.config
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
-
 
 def validate_page_param(request, paginator):
     page_str = request.args.get('page', '1')
@@ -50,49 +51,6 @@ def unmatched_response(**kwargs):
     search_type = kwargs.get('search_type')
     normalized_address = kwargs.get('normalized_address')
     address = kwargs.get('address')
-
-    # if search_type == 'intersection':
-    #     intersection = StreetIntersection()
-    #     intersection.street_1_full = parsed['components']['street']['full']
-    #     intersection.street_1_name = parsed['components']['street']['name']
-    #     intersection.street_1_code = parsed['components']['street']['street_code']
-    #     intersection.street_1_predir = parsed['components']['street']['predir']
-    #     intersection.street_1_postdir = parsed['components']['street']['postdir']
-    #     intersection.street_1_suffix = parsed['components']['street']['suffix']
-    #     intersection.street_2_full = parsed['components']['street_2']['full']
-    #     intersection.street_2_name = parsed['components']['street_2']['name']
-    #     intersection.street_2_code = parsed['components']['street_2']['street_code']
-    #     intersection.street_2_predir = parsed['components']['street_2']['predir']
-    #     intersection.street_2_postdir = parsed['components']['street_2']['postdir']
-    #     intersection.street_2_suffix = parsed['components']['street_2']['suffix']
-    #
-    #     intersection_page = (intersection,)
-    #     paginator = Paginator(intersection_page)
-    #
-    #     # Validate the pagination
-    #     page_num, error = validate_page_param(request, paginator)
-    #
-    #     if error:
-    #         return json_response(response=error, status=error['status'])
-    #
-    #     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-    #     # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
-    #     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
-    #
-    #     # Serialize the response:
-    #     intersections_page = paginator.get_page(page_num)
-    #     serializer = IntersectionJsonSerializer(
-    #         metadata={'search_type': search_type, 'query': query,
-    #                    'normalized': [intersection.street_1_full + ' & ' + intersection.street_2_full, ], 'search_params': request.args, 'crs': crs},
-    #         pagination=paginator.get_page_info(page_num),
-    #         #estimated={'cascade_geocode_type': 'parsed'}
-    #         match_type='parsed'
-    #     )
-    #
-    #     result = serializer.serialize_many(intersections_page)
-    #     # result = serializer.serialize_many(intersections_page) if intersections_count > 1 else serializer.serialize(next(intersections_page))
-    #
-    #     return json_response(response=result, status=200)
 
     if not address:
         # Fake 'type' as 'address' in order to create Address object for AddressJsonSerializer response
@@ -228,7 +186,6 @@ def unknown_cascade_view(**kwargs):
     seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
 
     # GET INTERSECTING SERVICE AREAS
-    from ais.models import ENGINE_SRID
     sa_stmt = '''
                 with foo as (
                     SELECT layer_id, value
@@ -332,7 +289,7 @@ def addresses(query):
 
 
     # Match a set of addresses. Filters will either be loose, where an omission
-    # is ignored, or scrict, where an omission is treated as an explicit NULL.
+    # is ignored, or strict, where an omission is treated as an explicit NULL.
     # For example, if the street_predir is omitted, then we should still match
     # all addresses that match the rest of the information; this is a loose
     # filter. However, if we do not provide an address_high, we should assume
@@ -428,7 +385,7 @@ def block(query):
     within.
 
     TODO: Consider matching the segment ID and finding the low and high. This
-          would be instead of hardcoding a low of 0 and high of 100. Maybe this
+          would be instead of hard-coding a low of 0 and high of 100. Maybe this
           would go at a new route, like `segment` or `block-face`.
     """
     query = query.strip('/')
@@ -744,7 +701,6 @@ def intersection(query):
             .filter_by(**filters)
 
     # if no intersections matched, try reversing street_1 and street_2 attributes
-    # (note - at this point there can only be 1 matching street code)
     if not intersections.first():
         loose_filters = NotNoneDict(
             street_2_code=street_code_min,
@@ -806,39 +762,172 @@ def intersection(query):
 
     return json_response(response=result, status=200)
 
-# @app.route('/reverse_geocode/<path:query>')
-# @cache_for(hours=1)
-# def reverse_geocode(query):
-#     '''
-#     TODO: Call by search endpoint if search_type == "coordinates"
-#     '''
-#     from shapely.geometry import Point
-#     import re
-#
-#     query_original = query
-#     query = query.strip('/')
-#     coords = re.split(',|\s', query)
-#     print(type(coords))
-#     for item in coords: print(1, item, 2)
-#     coords = coords.remove(' ')
-#     print(coords)
-#     long, lat = coords
-#     print(long, lat)
-#     #long, lat = query.split(',')
-#     search_coords = Point(float(long), float(lat))
-#     #print(search_coords)
-#
-#     reverse_geocode_stmt = '''
-#                             SELECT street_address
-#                             from geocode
-#                             order by ST_Transform(geom, 4326) <-> st_geomfromtext('{search_coords}', 4326)
-#                             LIMIT 1
-#                             '''.format(search_coords=search_coords)
-#
-#     result = db.engine.execute(reverse_geocode_stmt)
-#     result = result.first()[0]
-#     print(result)
-#     return search_view(result)
+@app.route('/reverse_geocode/<path:query>')
+@cache_for(hours=1)
+def reverse_geocode(query):
+
+    query = query.strip('/')
+    parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
+    normalized = parsed['components']['output_address']
+    srid_map = {'stateplane': 2272, 'latlon': 4326}
+    srid = str(srid_map[search_type])
+    engine_srid = str(ENGINE_SRID) # check if necessary
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    x, y = normalized.split(",",1)
+
+    # queries the geocode table by coordinates for the record with the nearest coordinates having \
+    # geocode type = pwd_curb, dor_curb, true_range or centerline
+    reverse_geocode_stmt = '''
+        SELECT street_address, geocode_type
+        from geocode
+        where geocode_type IN ({pwd_curb}, {dor_curb}, {true_range}) AND
+        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
+        order by geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid})
+        LIMIT 1
+        '''.format(x=x, y=y, srid=srid, engine_srid=engine_srid, pwd_curb=7, dor_curb=8, true_range=5, centerline=6)
+
+    results = db.engine.execute(reverse_geocode_stmt)
+    result = None
+    for result in results:
+        street_address, geocode_type = result
+        break
+
+    if not result:
+        error = json_error(404, 'Could not find AIS object matching query.',
+                           {'query': query, 'normalized': normalized})
+        return json_response(response=error, status=404)
+
+    parsed = PassyunkParser().parse(street_address)
+    normalized_address = parsed['components']['output_address']
+    unit_type = parsed['components']['address_unit']['unit_type']
+    unit_num = parsed['components']['address_unit']['unit_num']
+    high_num = parsed['components']['address']['high_num_full']
+    low_num = parsed['components']['address']['low_num']
+    seg_id = parsed['components']['cl_seg_id']
+    base_address = parsed['components']['base_address']
+
+    loose_filters = NotNoneDict(
+        street_name=parsed['components']['street']['name'],
+        address_low=low_num if low_num is not None
+        else parsed['components']['address']['full'],
+        address_low_suffix=parsed['components']['address']['addr_suffix'],
+        address_low_frac=parsed['components']['address']['fractional'],
+        street_predir=parsed['components']['street']['predir'],
+        street_postdir=parsed['components']['street']['postdir'],
+        street_suffix=parsed['components']['street']['suffix'],
+    )
+    strict_filters = dict(
+        address_high=high_num,
+        unit_num=unit_num or '',
+    )
+    # if unit num is null, add unit_type to strict filter
+    if unit_num == '':
+        strict_filters.update(dict(unit_type=unit_type or '', ))
+
+    filters = strict_filters.copy()
+    filters.update(loose_filters)
+    addresses = AddressSummary.query \
+        .filter_by(**filters) \
+        .filter_by_unit_type(unit_type) \
+        .include_child_units(
+        'include_units' in request.args and request.args['include_units'].lower() != 'false',
+        is_range=high_num is not None,
+        is_unit=unit_type is not None,
+        request=request) \
+        .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)\
+        .filter(Geocode.geocode_type == geocode_type) \
+        .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid)) \
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false')
+
+    addresses = addresses.order_by_address()
+    paginator = QueryPaginator(addresses)
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
+    # Handle unmatched addresses
+    if addresses_count == 0:
+        error = json_error(404, 'Could not find any addresses matching query.',
+                           {'search_type': search_type, 'query': query, 'normalized': normalized})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=error['status'])
+
+    # Serialize the response
+    addresses_page = paginator.get_page(page_num)
+    serializer = AddressJsonSerializer(
+        metadata={'search_type': search_type, 'query': query, 'normalized': normalized,
+                  'search_params': request.args, 'crs': crs},
+        pagination=paginator.get_page_info(page_num),
+        srid=srid,
+        normalized_address=normalized_address,
+        base_address=base_address,
+    )
+    result = serializer.serialize_many(addresses_page)
+    # result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
+
+    return json_response(response=result, status=200)
+
+
+@app.route('/service_areas/<path:query>')
+@cache_for(hours=1)
+def service_areas(query):
+
+    query = query.strip('/')
+    parsed = PassyunkParser().parse(query)
+    normalized = parsed['components']['output_address']
+    srid_map = {'stateplane': 2272, 'latlon': 4326}
+    srid = str(srid_map[parsed['type']])
+    engine_srid = str(ENGINE_SRID)
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    x, y = normalized.split(",", 1)
+    coords = [float(x), float(y)]
+    sa_data = OrderedDict()
+
+    sa_stmt = '''
+                with foo as
+                (
+                SELECT layer_id, value
+                from service_area_polygon
+                where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}))
+                )
+                SELECT DISTINCT ON (cols.layer_id) cols.layer_id, foo.value
+                from service_area_layer cols
+                left join foo on foo.layer_id = cols.layer_id
+            '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
+
+    result = db.engine.execute(sa_stmt)
+    for item in result.fetchall():
+        sa_data[item[0]] = item[1]
+
+    if not sa_data:
+        error = json_error(404, 'There are no intersecting service areas.',
+                           {'query': query, 'normalized': normalized})
+        return json_response(response=error, status=404)
+
+    # Use ServiceAreaSerializer
+    serializer = ServiceAreaSerializer(
+        metadata={'search_type': 'coordinates', 'query': query,
+                  'search_params': request.args, 'normalized': normalized, 'crs': crs},
+        #shape=search_shape,
+        sa_data=sa_data, coordinates=coords
+    )
+    result = serializer.serialize()
+
+    return json_response(response=result, status=200)
+
+
+#@app.route('/street/<path:query>')
+#@cache_for(hours=1)
+def street(query):
+    error = json_error(404, 'Could not find any addresses matching query.',
+                       {'query': query})
+    return json_response(response=error, status=404)
+
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
@@ -873,37 +962,29 @@ def search(query):
         'opa_account': account,
         'mapreg': dor_parcel,
         'block': block,
+        'latlon': reverse_geocode,
+        'stateplane': reverse_geocode,
+        'street': street,
     }
 
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
-    if search_type != 'none' and search_type !='street':
+    # TODO: Pass search_type (or parsed) to view function to avoid reparsing
+    if search_type != 'none':
         # get the corresponding view function
         view = parser_search_type_map[search_type]
         # call it
         return view(query)
 
+    # Handle search type = 'none:
     else:
-        # Handle search type = 'none:
-            # Handle queries of pwd_parcel ids
+        # Handle queries of pwd_parcel ids:
         if query.isdigit() and len(query) < 8:
             return pwd_parcel(query)
-        elif search_type == 'street':
-            error = json_error(404, 'Could not find any addresses matching query.',
-                               {'query': query})
-            return json_response(response=error, status=404)
-
-
         else:
             error = json_error(404, 'Query not recognized.',
                                {'query': query})
             return json_response(response=error, status=404)
-
-
-# @app.route('/apidocs')
-# def apidocs():
-#     return '''
-#     '''
 
 
 @app.route("/")
