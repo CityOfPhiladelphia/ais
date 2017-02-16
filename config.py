@@ -346,7 +346,7 @@ ADDRESSES = {
 # }
 
 GEOCODE = {
-    'centerline_offset':        8,
+    'centerline_offset':        5,
     'centerline_end_buffer':    17,
 }
 
