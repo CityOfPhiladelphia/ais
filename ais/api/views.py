@@ -881,6 +881,7 @@ def reverse_geocode(query):
 
 @app.route('/service_areas/<path:query>')
 @cache_for(hours=1)
+@swag_from('docs/service_areas.yml')
 def service_areas(query):
 
     query = query.strip('/')

@@ -1,0 +1,112 @@
+Search by coordinates for service areas
+This endpoint accepts coordinate searches by finding service areas that overlay the queried location.
+
+Successful requests return a
+[GeoJSON](http://geojson.org/geojson-spec.html) response of the names and values of the overlaying [service areas](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#service_areas).
+To search by coordinates, please enter in x, y format, either as:
+ * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,39.951661655671955), or
+ * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063)
+
+See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
+---
+tags:
+  - service_areas
+parameters:
+  - name: query
+    in: path
+    description: The querystring
+    type: string
+    default: ''
+    required: true
+responses:
+  200:
+    description: An AIS response
+    schema:
+      id: the response
+      properties:
+        service_areas:
+          type: object
+          properties:
+            center_city_district:
+              type: string
+            cua_zone:
+              type: string
+            li_district:
+              type: string
+            philly_rising_area:
+              type: string
+            census_tract_2010:
+              type: string
+            census_block_group_2010:
+              type: string
+            census_block_2010:
+              type: string
+            council_district_2016:
+              type: string
+            political_ward:
+              type: string
+            political_division:
+              type: string
+            planning_district:
+              type: string
+            elementary_school:
+              type: string
+            middle_school:
+              type: string
+            high_school:
+              type: string
+            zoning:
+              type: string
+            poice_division:
+              type: string
+            police_district:
+              type: string
+            police_service_area:
+              type: string
+            rubbish_recycle_day:
+              type: string
+            recycling_diversion_rate:
+              type: string
+              default: "float"
+            leaf_collection_area:
+              type: string
+            sanitation_area:
+              type: string
+            sanitation_district:
+              type: string
+            historic_street:
+              type: string
+            highway_district:
+              type: string
+            highway_section:
+              type: string
+            highway_subsection:
+              type: string
+            traffic_district:
+              type: string
+            traffic_pm_district:
+              type: string
+            street_light_route:
+              type: string
+            pwd_maint_district:
+              type: string
+            pwd_pressure_district:
+              type: string
+            pwd_treatment_plant:
+              type: string
+            pwd_water_plate:
+              type: string
+            pwd_center_city_district:
+              type: string
+        geometry:
+          type: object
+          properties:
+            geocode_type:
+              type: string
+            type:
+              type: string
+            coordinates:
+              type: array
+              items:
+                type: string
+              default: ["float", "float"]
