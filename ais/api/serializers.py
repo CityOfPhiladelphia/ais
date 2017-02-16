@@ -162,7 +162,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, **kwargs):
+    def __init__(self, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, match_type=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -177,6 +177,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         self.estimated = estimated
         #self.sa_data = kwargs.get('sa_data') if 'sa_data' in kwargs else None
         self.sa_data = sa_data
+        self.match_type = match_type
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -252,10 +253,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 # # Version with match_type and related_addresses
             #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
                 # # Version without related_addresses
+            match_type = None
             match_type = self.get_address_link_relationships(address=address, base_address=self.base_address) if not self.estimated else 'unmatched'
-
             # Hack to get a match_type if address isn't in address_link table:
             match_type = 'exact' if not match_type else match_type
+            match_type = self.match_type if self.match_type else match_type
 
         else:
             match_type = cascade_geocode_type
@@ -392,10 +394,25 @@ class ServiceAreaSerializer ():
         self.metadata = metadata
         super().__init__()
 
+    def transform_exceptions(self, data):
+        """
+        Handle specific exceptions in the formatting of data.
+        """
+
+        # Convert the recycling diversion rate to a percentage with fixed
+        # precision.
+        try:
+            rate = float(data['service_areas']['recycling_diversion_rate'])
+            data['service_areas']['recycling_diversion_rate'] = round(rate/100, 3)
+        except:
+            pass
+
+        return data
+
     def model_to_data(self):
         #sa_data = self.transform_exceptions(sa_data)
         data = {}
-        sa_data_obj = {'service area data': self.sa_data}
+        sa_data_obj = {'service_areas': self.sa_data}
         data.update(self.metadata)
         data.update(sa_data_obj)
         return data
@@ -429,4 +446,5 @@ class ServiceAreaSerializer ():
 
     def serialize(self):
         data = self.model_to_data()
+        data = self.transform_exceptions(data)
         return self.render(data)
