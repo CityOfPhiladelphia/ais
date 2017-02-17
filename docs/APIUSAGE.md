@@ -58,10 +58,9 @@ The API endpoints are:
     * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
    
 ```
-   Coordinate searches are routed to the /reverse_geocode endpoint which handles coordinate searches 
-   by finding the nearest address to queried coordinates based on address geocodes projected on the 
-   curb. True/full range geocodes are also searched against to incorporate addresses not listed in 
-   DOR or PWD parcel records.
+   Coordinate searches are routed to the /reverse_geocode endpoint which finds the nearest address 
+   to queried coordinates based on address geocodes projected on the curb. True/full range geocodes 
+   are also searched against to incorporate addresses not listed in DOR or PWD parcel records.
 ```
 
 
