@@ -3,6 +3,7 @@
 Welcome to the documentation for AIS API Version 1.0. This document explains how to use version 1.0 of the API. 
 * In general, applications supporting user-defined input and interactive maps should use the [/search](#Search) endpoint, which handles a variety of query types by identifying the type and routing to the appropriate endpoint. 
 * The [/owner](#Owner) endpoint can be used to search for addresses by owner name.
+* The [/service_areas](#Service Areas) endpoint can be used for a quick service area lookup by coordinates.
 * Otherwise, individual endpoints may be used to minimize overhead associated with routing. More information about individual endpoints can be obtained by exploring our [swagger at the API root](http://api.phila.gov/ais/v1).    
 
 # <a name="Authentication"></a>Authentication
@@ -31,6 +32,7 @@ The API endpoints are:
 * [Search](#Search) - http://api.phila.gov/ais/v1/search
 * [Owner](#Owner) - http://api.phila.gov/ais/v1/owner
 * [Addresses](#Addresses) - http://api.phila.gov/ais/v1/addresses
+* [Service Areas](#Service Areas) - http://api.phila.gov/ais/v1/service_areas
 
 
 ### <a name="Search"></a>**Search**
@@ -38,21 +40,25 @@ The API endpoints are:
 
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
-    
-   * **address range** - Represents all addresses within a particular address range; inputted as a range of addresses followed by street name (with predirection). This search type is currently under development. 
-   [http://api.phila.gov/ais/v1/search/1200-1234 Market St](http://api.phila.gov/ais/v1/search/1200-1234%20Market%20St)
 
    * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
     [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St)
 
-   * **intersection** - Inputted as 'n street 1 and street 2', including predirections, i.e.
+   * **intersection** - Inputted as 'street 1 and street 2', including predirections, i.e.
     [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
 
    * **OPA account number** - Office of Property Assessment Account Number - 
     http://api.phila.gov/ais/v1/search/883309050
 
    * **Regmap ID** - This is the Department of Records Registry Map ID - 
-    http://api.phila.gov/ais/v1/search/001S07-0144    
+    http://api.phila.gov/ais/v1/search/001S07-0144   
+    
+   * **coordinates** - Location in x, y format, either as:
+    * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955), or
+    * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
+   
+   ```Coordinate searches are routed to the /reverse_geocode endpoint which handles coordinate searches by finding the nearest address to queried coordinates based on address geocodes projected on the curb. True/full range geocodes are also searched against to incorporate addresses not listed in DOR or PWD parcel records.```
+
 
 
 ### <a name="Owner"></a>__**Owner**__ 
@@ -66,7 +72,6 @@ The API endpoints are:
 ### <a name="Addresses"></a>__**Addresses**__ 
 `\addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/): 
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
-    
 
 
 ## <a name="Query Flags"></a>Query Flags
@@ -104,8 +109,7 @@ A pagination object is returned in the [response envelope](#The Envelope) detail
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
- There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated
- [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).
+ There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects). 
 
 ## <a name="The Envelope"></a>The Envelope
 
@@ -127,6 +131,7 @@ The root of the `FeatureCollection` contains:
   ```
   } 
   * `type`: "FeatureCollection"
+  
 * **Pagination** information.
   * `page`: The current page of data
   * `page_count`: The total number of pages of data for the current query
@@ -287,3 +292,66 @@ A `404 status` is returned when:
         }
     }
 ```
+
+
+## <a name="Additional Resources"></a>Additional Resources
+### <a name="Service Areas"></a>__**Service Areas**__ 
+`\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
+* Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,%2039.951661655671955), or
+* Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206,%20235887.921013063)
+
+The `/service_areas` endpoint response contains the query metadata, geometry and crs objects, as well the service area data. The response format is:
+
+
+  * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
+  * `search_params`: The querystring parameters or flags and their values included in query
+  * `query`: The querystring
+  * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
+  * `crs`: coordinate reference system metadata
+  
+  ```json
+     {
+        "properties": {
+           "href": "link to metadata about the spatial reference system used in the response",
+           "type": "proj4",
+         },
+         "type": "link",
+    }
+  ```
+  
+  * `service_areas`:
+   * `center_city_district`
+   * `cua_zone`
+   * `li_district`
+   * `philly_rising_area`
+   * `census_tract_2010`
+   * `census_block_group_2010`
+   * `census_block_2010`
+   * `council_district_2016`
+   * `political_ward`
+   * `political_division`
+   * `planning_district`
+   * `elementary_school`
+   * `middle_school`
+   * `high_school`
+   * `zoning`
+   * `police_division`
+   * `police_district`
+   * `police_service_area`
+   * `rubbish_recycle_day`
+   * `recycling_diversion_rate`
+   * `leaf_collection_area`
+   * `sanitation_area`
+   * `sanitation_district`
+   * `historic_street`
+   * `highway_district`
+   * `highway_section`
+   * `highway_subsection`
+   * `traffic_district`
+   * `traffic_pm_district`
+
+* `geometry`:
+  * `geocode_type`: 'input'
+  * `type`: 'Point'
+  * `coordinates`: x, y in the same spatial reference system as the inputted coordinates (either 4326 or 2272)
+
