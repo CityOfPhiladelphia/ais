@@ -192,41 +192,42 @@ The root of the `FeatureCollection` contains:
   * `type`: The geometry type (i.e. Point, Line, Polygon) 
   * `coordinates`: longitude, latitude with default SRID = 4326    
 * The following list of `service areas`:
-  * `center_city_district`
-  * `cua_zone`
-  * `li_district`
-  * `philly_rising_area`
-  * `census_tract_2010`
-  * `census_block_group_2010`
   * `census_block_2010`
+  * `census_block_group_2010`
+  * `census_tract_2010`
+  * `center_city_district`
   * `council_district_2016`
-  * `political_ward`
-  * `political_division`
-  * `planning_district`
+  * `cua_zone`
   * `elementary_school`
-  * `middle_school`
   * `high_school`
-  * `zoning`
-  * `police_division`
-  * `police_district`
-  * `police_service_area`
-  * `rubbish_recycle_day`
-  * `recycling_diversion_rate`
-  * `leaf_collection_area`
-  * `sanitation_area`
-  * `sanitation_district`
-  * `historic_street`
   * `highway_district`
   * `highway_section`
   * `highway_subsection`
-  * `traffic_district`
-  * `traffic_pm_district`
-  * `street_light_route`
+  * `historic_street`
+  * `leaf_collection_area`
+  * `li_district`
+  * `middle_school`
+  * `philly_rising_area`
+  * `planning_district`
+  * `police_district`
+  * `police_division`
+  * `police_service_area`
+  * `political_division`
+  * `political_ward`
+  * `pwd_center_city_district`
   * `pwd_maint_district`
   * `pwd_pressure_district`
   * `pwd_treatment_plant`
   * `pwd_water_plate`
-  * `pwd_center_city_district`
+  * `recycling_diversion_rate`
+  * `rubbish_recycle_day`
+  * `sanitation_area`
+  * `sanitation_district`
+  * `street_light_route`
+  * `traffic_district`
+  * `traffic_pm_district`
+  * `zip_code`
+  * `zoning
 
 ### <a name="Intersection"></a>**Intersection**
 * The following list of feature metatdata:
@@ -320,35 +321,42 @@ The `/service_areas` endpoint response contains the query metadata, geometry and
   ```
   
   * `service_areas`:
-   * `center_city_district`
-   * `cua_zone`
-   * `li_district`
-   * `philly_rising_area`
-   * `census_tract_2010`
-   * `census_block_group_2010`
    * `census_block_2010`
+   * `census_block_group_2010`
+   * `census_tract_2010`
+   * `center_city_district`
    * `council_district_2016`
-   * `political_ward`
-   * `political_division`
-   * `planning_district`
+   * `cua_zone`
    * `elementary_school`
-   * `middle_school`
    * `high_school`
-   * `zoning`
-   * `police_division`
-   * `police_district`
-   * `police_service_area`
-   * `rubbish_recycle_day`
-   * `recycling_diversion_rate`
-   * `leaf_collection_area`
-   * `sanitation_area`
-   * `sanitation_district`
-   * `historic_street`
    * `highway_district`
    * `highway_section`
    * `highway_subsection`
+   * `historic_street`
+   * `leaf_collection_area`
+   * `li_district`
+   * `middle_school`
+   * `philly_rising_area`
+   * `planning_district`
+   * `police_district`
+   * `police_division`
+   * `police_service_area`
+   * `political_division`
+   * `political_ward`
+   * `pwd_center_city_district`
+   * `pwd_maint_district`
+   * `pwd_pressure_district`
+   * `pwd_treatment_plant`
+   * `pwd_water_plate`
+   * `recycling_diversion_rate`
+   * `rubbish_recycle_day`
+   * `sanitation_area`
+   * `sanitation_district`
+   * `street_light_route`
    * `traffic_district`
    * `traffic_pm_district`
+   * `zip_code`
+   * `zoning`
 
 * `geometry`:
   * `geocode_type`: 'input'
