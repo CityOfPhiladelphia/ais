@@ -303,10 +303,10 @@ A `404 status` is returned when:
 The `/service_areas` endpoint response contains the query metadata, geometry and crs objects, as well the service area data. The response format is:
 
 
-  * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
-  * `search_params`: The querystring parameters or flags and their values included in query
-  * `query`: The querystring
-  * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
+  * `search_type`: 'coordinates'
+  * `search_params`: No search paramaters are currently being handled by this endpoint.
+  * `query`: x, y
+  * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser. Passyunk normalizes coordinate inputs to x,y format with 6 decimal places.
   * `crs`: coordinate reference system metadata
   
   ```json
