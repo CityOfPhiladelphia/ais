@@ -231,7 +231,7 @@ The root of the `FeatureCollection` contains:
   * `traffic_district`
   * `traffic_pm_district`
   * `zip_code`
-  * `zoning
+  * `zoning`
 
 ### <a name="Intersection"></a>**Intersection**
 * The following list of feature metatdata:
