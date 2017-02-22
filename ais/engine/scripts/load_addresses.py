@@ -410,7 +410,7 @@ for i, address in enumerate(addresses):
     if address.address_high is not None and address.unit_type is None:
         street_range_map[street_full].append(address)
 
-    base_address = address.base_address
+    base_address = address.base_address # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Old method - only get 'has_base' link for addresses with units
     #if address.unit_type is not None:
     # # New method - get 'has_base' link for addresses with units AND addresses with number suffixes
@@ -425,6 +425,8 @@ print('Making address links...')
 generic_unit_types = set(['#', 'APT', 'UNIT'])
 apt_unit_types = set(['APT', 'UNIT'])
 
+new_addresses = []
+addresses_seen = set()
 for i, address in enumerate(addresses):
     if i % 100000 == 0:
         print(i)
@@ -500,9 +502,7 @@ for i, address in enumerate(addresses):
                 break
 
     # New method: create links for all possible address in range of every ranged address
-    new_addresses = []
     if address.address_high:
-        new_addresses = []
         address_low = address.address_low
         address_high = address.address_high
         address_suffix = address.address_low_suffix
@@ -526,9 +526,11 @@ for i, address in enumerate(addresses):
                 # Check for zero address
                 if address.address_low == 0:
                     raise ValueError('Low number is zero')
-                if not street_address in street_addresses_seen:
+                #if not street_address in street_addresses_seen:
+                if not child_address in addresses_seen:
                     new_addresses.append(address)
-                    street_addresses_seen.add(street_address)
+                    addresses_seen.add(child_address)
+                    #street_addresses_seen.add(street_address)
             except ValueError:
                 print('Could not parse new address: {}'.format(child_address))
                 continue
@@ -546,15 +548,22 @@ for i, address in enumerate(addresses):
                         'relationship': 'overlaps',
                         'address_2': range_on_street.street_address,
                     }
+                    # 'overlaps' links are bi-directional
+                    child_link_rev = {
+                        'address_1': range_on_street.street_address,
+                        'relationship': 'overlaps',
+                        'address_2': street_address,
+                    }
                     links.append(child_link)
+                    links.append(child_link_rev)
                 try:
                     address = Address(child_address)
                     # Check for zero address
                     if address.address_low == 0:
                         raise ValueError('Low number is zero')
-                    if not street_address in street_addresses_seen:
+                    if not child_address in addresses_seen:
                         new_addresses.append(address)
-                        street_addresses_seen.add(street_address)
+                        addresses_seen.add(child_address)
                 except ValueError:
                     print('Could not parse new address: {}'.format(child_address))
                     continue
@@ -571,6 +580,7 @@ print('Writing {} new addresses...'.format(len(new_addresses)))
 insert_rows = [dict(x) for x in new_addresses]
 address_table.write(insert_rows, chunk_size=150000)
 del insert_rows
+del addresses_seen
 ###############################################################################
 # ADDRESS-STREETS
 ###############################################################################
