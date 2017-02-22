@@ -196,6 +196,10 @@ ADDRESSES = {
                 {
                     'key':              'opa_account_num',
                     'source_fields':     ['account_num'],
+                    'key':              'opa_owners',
+                    'source_fields':     ['owners'],
+                    'key':              'opa_address',
+                    'source_fields':     ['street_address'],
                 },
             ],
         },
