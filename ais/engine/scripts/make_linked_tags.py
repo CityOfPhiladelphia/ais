@@ -39,7 +39,7 @@ for tag_row in tag_rows:
     value = tag_row['value']
     if not street_address in tag_map:
         tag_map[street_address] = []
-        tag_map[street_address].append(tag_row)
+    tag_map[street_address].append(tag_row)
 
 err_map = {}
 
@@ -50,8 +50,11 @@ linked_tags_map = []
 # loop through addresses
 for address_row in address_rows:
     street_address = address_row['street_address']
+    writeout = True if street_address in ('921-29 E LYCOMING ST', '921-39 E LYCOMING ST', '920-28 LYCOMING ST') else False
     # get address tags associated with street address
     mapped_tags = tag_map.get(street_address)
+    if writeout:
+        print(mapped_tags)
     links = link_map.get(street_address)
     # sort links by traversal order
     sorted_links = []
@@ -62,63 +65,93 @@ for address_row in address_rows:
                 if link['relationship'] == rel:
                     sorted_links.append(link)
                     links.remove(link)
-        print("Sorted links: ", street_address, sorted_links)
+        if writeout:
+            print("Sorted links: ", street_address, sorted_links)
     else:
-        print('************** ', street_address, " has no links to search.")
+        if writeout:
+            print('************** ', street_address, " has no links to search.")
 
 
     # loop through tag fields in config
     for tag_field in tag_fields:
+
         # Skip tag_fields where 'traverse_links' value is false
         if tag_field['traverse_links'] != 'true':
             continue
+
+        tag_key = tag_field['tag_key']
+        look = True
         search_tag_report = None
         found_tag_report = None
+
+        if writeout:
+            print("tag_key------------- ", tag_key)
+
         #try:
         #-------------------------------------------------------
         # Look for tag in tag_map for street_address
-        tag_key = tag_field['tag_key']
         tag_value = None
-        if mapped_tags:
-            for tag in mapped_tags:
-                tag_value = tag['value'] if tag and tag.get('key') == tag_key else None
+        if mapped_tags and look == True:
+            if writeout:
+                print(mapped_tags)
+            for mapped_tag in mapped_tags:
+                mapped_key = mapped_tag.get('key')
+                if writeout:
+                    print("mapped_key------------- ", mapped_key)
+                if mapped_key != tag_key:
+                    if writeout:
+                        print("mapped_key != tag_key")
+                    continue;
+                tag_value = mapped_tag['value']# if tag and tag.get('key') == tag_key else None
+                # if writeout:
+                #     print(street_address, tag_key, tag_value)
                 # if street address has this tag already, continue to next tag_field
                 if tag_value and tag_value != '':
+                    if writeout:
+                        print(street_address, "already has tag ", mapped_tag, tag_value)
                     # move on to next tag field
                     #print(street_address, tag_key, tag_value)
+                    look = False
                     break
+                else:
+                    if writeout:
+                        print("didn't break: ", tag_value)
         #--------------------------------------------------------
         # Otherwise, look for tag in address links
         #print("Searching links for tag: ", street_address, tag_key)
-        if not links:
+        if not links or look == False:
             # Do something if tag can't be found by traversing links so API doesn't look for it
             #print(street_address, " has no links.")
             continue
         # loop through links
         found = False
         for link in sorted_links:
-            if found == False:
+            if found == True:
+                break
                 #print(link)
-                link_address = link.get('address_2')
-                # get tags for current link
-                link_tags = tag_map.get(link_address)
-                if link_tags:
-                    # loop through tags, looking for current tag
-                    for tag in link_tags:
-                        #print(tag)
-                        # if found, get value, linked address and linked path
-                        if tag['key'] == tag_key:
+            link_address = link.get('address_2')
+            # get tags for current link
+            link_tags = tag_map.get(link_address)
+            if link_tags:
+                # loop through tags, looking for current tag
+                for tag in link_tags:
+                    #print(tag)
+                    # if found, get value, linked address and linked path
+                    if tag['key'] == tag_key:
+                        if writeout:
                             print(street_address, " found tag for ", tag_key, "from ", link_address)
-                            #tag_id = tag['id']
-                            tag_value = tag['value']
-                            if tag_value and tag_value != '':
-                                linked_path = link['relationship']
-                                add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value, 'linked_address': link_address, 'linked_path': linked_path}
-                                linked_tags_map.append(add_tag_dict)
-                                found_tag_report = [{key: value} for key, value in add_tag_dict.items()]
+                        #tag_id = tag['id']
+                        tag_value = tag['value']
+                        if tag_value and tag_value != '':
+                            link_path = link['relationship']
+                            add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value, 'linked_address': link_address, 'linked_path': link_path}
+                            linked_tags_map.append(add_tag_dict)
+                            found_tag_report = [{key: value} for key, value in add_tag_dict.items()]
+                            #print(found_tag_report)
+                            if writeout:
                                 print(found_tag_report)
-                                found = True
-                                break
+                            found = True
+                            break
                             #raise
                         # Do something if tag can't be found by traversing links so API doesn't look for it
         # except:
