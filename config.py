@@ -198,7 +198,7 @@ ADDRESSES = {
                     'source_fields':     ['account_num'],
                 },
                 {
-                    'key':              'opa_owners',
+                    'key':              'opa_owner',
                     'source_fields':     ['owners'],
                 },
                 {
