@@ -564,9 +564,9 @@ for i, address in enumerate(addresses):
                     # Check for zero address
                     if address.address_low == 0:
                         raise ValueError('Low number is zero')
-                    if not child_address in addresses_seen:
+                    if not child_address in street_addresses_seen:
                         new_addresses.append(address)
-                        addresses_seen.add(child_address)
+                        street_addresses_seen.add(child_address)
                 except ValueError:
                     print('Could not parse new address: {}'.format(child_address))
                     continue
