@@ -114,8 +114,11 @@ while not done:
                         if tag['key'] == tag_key:
                             tag_value = tag['value']
                             link_path = slink['relationship']
+                            linked_path = tag['linked_path'] if tag['linked_path'] else link_address
+                            linked_address = tag['linked_address'] if tag['linked_address'] else link_address
+                            linked_path = street_address + ' ' + link_path + ' ' + linked_path
                             add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value,
-                                            'linked_address': link_address, 'linked_path': link_path}
+                                            'linked_address': link_address, 'linked_path': linked_path}
                             new_linked_tags.append(add_tag_dict)
                             found = True
                             break
