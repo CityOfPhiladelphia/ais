@@ -74,7 +74,7 @@ while not done:
                 for link in links:
                     if link['relationship'] == rel:
                         sorted_links.append(link)
-                        #links.remove(link)
+                        # links.remove(link)
         # loop through tag fields in config
         for tag_field in tag_fields:
             found = False
@@ -88,7 +88,7 @@ while not done:
             if mapped_tags:
                 for mapped_tag in mapped_tags:
                     mapped_key = mapped_tag.get('key')
-                   # if street address has this tag already, continue to next tag_field
+                    # if street address has this tag already, continue to next tag_field
                     if mapped_key != tag_key:
                         continue;
                     # TODO: handle empty string tag values as null and look for content from address_links
@@ -119,13 +119,12 @@ while not done:
                             new_linked_tags.append(add_tag_dict)
                             found = True
                             break
-                            # Do something if tag can't be found by traversing links so API doesn't look for it
+                            # TODO: Do something if tag can't be found by traversing links so API doesn't look for it
     if len(new_linked_tags) > 0:
         linked_tags_map = linked_tags_map + new_linked_tags
     else:
         done = 'done'
     i += 1
-
 
 """WRITE OUT"""
 
