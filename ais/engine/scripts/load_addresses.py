@@ -508,6 +508,7 @@ for i, address in enumerate(addresses):
         address_suffix = address.address_low_suffix
         street_full = address.street_full
         street_address = address.street_address
+        base_address_no_suffix = address.base_address_no_suffix
         parity = address.parity
 
         for x in range(address_low, address_high + 1, 2):
@@ -517,7 +518,7 @@ for i, address in enumerate(addresses):
             child_link = {
                 'address_1': child_address,
                 'relationship': 'in range',
-                'address_2': address.street_address,
+                'address_2': base_address_no_suffix,
             }
             links.append(child_link)
             # Make new address object for writing to address table
@@ -544,7 +545,7 @@ for i, address in enumerate(addresses):
             ranges_on_street = street_range_map[street_full]
             for range_on_street in ranges_on_street:
                 if street_address != range_on_street.street_address and range_on_street.parity == parity \
-                    and (street_address.unit_type == range_on_street.unit_type and street_address.unit_num == range_on_street.unit_num) \
+                    and (address.unit_type == range_on_street.unit_type and address.unit_num == range_on_street.unit_num) \
                     and ((range_on_street.address_low <= address_low <= range_on_street.address_high)
                      or (range_on_street.address_low <= address_high <= range_on_street.address_high)):
                     child_link = {
