@@ -88,15 +88,11 @@ while not done:
             if mapped_tags:
                 for mapped_tag in mapped_tags:
                     mapped_key = mapped_tag.get('key')
+                   # if street address has this tag already, continue to next tag_field
                     if mapped_key != tag_key:
                         continue;
+                    # TODO: handle empty string tag values as null and look for content from address_links
                     tag_value = mapped_tag['value']
-                    # # if street address has this tag already, continue to next tag_field
-                    # # if tag_value and tag_value != '':
-                    # if tag_value:  # TODO: handle empty string tag values as null and look for content from address_links
-                    #     # move on to next tag field
-                    #     found = True
-                    #     break
                     found = True
                     break
             # Otherwise, look for tag in address links
@@ -104,29 +100,20 @@ while not done:
                 # Do something if tag can't be found by traversing links so API doesn't look for it
                 continue
             # loop through links
-            for link in sorted_links:
+            for slink in sorted_links:
                 if found == True:
                     break
-                link_address = link.get('address_2')
+                link_address = slink.get('address_2')
                 # get tags for current link
                 link_tags = tag_map.get(link_address)
                 if link_tags:
                     # loop through tags, looking for current tag
                     for tag in link_tags:
                         # if found, get value, linked address and linked path
+                        # TODO: handle empty string tag values as null and keep looking for content from remaining address_links
                         if tag['key'] == tag_key:
                             tag_value = tag['value']
-                            # # if tag_value and tag_value != '':
-                            # if tag_value: # TODO: handle empty string tag values as null and keep looking for content from remaining address_links
-                            #     link_path = link['relationship']
-                            #     add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value,
-                            #                     'linked_address': link_address, 'linked_path': link_path}
-                            #     new_linked_tags.append(add_tag_dict)
-                            #     #found_tag_report = [{key: value} for key, value in add_tag_dict.items()]
-                            #     found = True
-                            #     break
-
-                            link_path = link['relationship']
+                            link_path = slink['relationship']
                             add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value,
                                             'linked_address': link_address, 'linked_path': link_path}
                             new_linked_tags.append(add_tag_dict)
