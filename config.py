@@ -1123,19 +1123,19 @@ ADDRESS_SUMMARY = {
             'name':                 'voters',
             'tag_key':              'voter_name',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
         {
             'name':                 'info_residents',
             'tag_key':              'info_resident',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
         {
             'name':                 'info_companies',
             'tag_key':              'info_company',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
     ],
 }
