@@ -39,6 +39,9 @@ ais engine run make_linked_tags
 echo "Geocoding Addresses"
 ais engine run geocode_addresses
 
+echo "Geocoding Addresses from Links"
+ais engine run geocode_addresses_from_links
+
 echo "Making Address Summary"
 ais engine run make_address_summary
 
