@@ -12,7 +12,6 @@ from ais.models import Address
 import traceback
 from pprint import pprint
 
-
 start = datetime.now()
 print('Starting...')
 
@@ -29,18 +28,18 @@ db = datum.connect(config['DATABASES']['engine'])
 parcel_layers = config['BASE_DATA_SOURCES']['parcels']
 address_table = db['address']
 address_fields = [
-	'id',
-	'street_address',
-	'address_low',
-	'address_high',
+    'id',
+    'street_address',
+    'address_low',
+    'address_high',
 ]
 seg_table = db['street_segment']
 seg_fields = [
-	'seg_id',
-	'left_from',
-	'left_to',
-	'right_from',
-	'right_to',
+    'seg_id',
+    'left_from',
+    'left_to',
+    'right_from',
+    'right_to',
 ]
 geocode_table = db['geocode']
 parcel_curb_table = db['parcel_curb']
@@ -60,60 +59,60 @@ WHERE_STREET_NAME = None
 WHERE_STREET_ADDRESS_IN = None
 WHERE_SEG_ID_IN = None
 if FILTER_STREET_NAME not in [None, '']:
-	WHERE_STREET_NAME = "street_name = '{}'".format(FILTER_STREET_NAME)
-	WHERE_STREET_ADDRESS_IN = "street_address in (select street_address from \
+    WHERE_STREET_NAME = "street_name = '{}'".format(FILTER_STREET_NAME)
+    WHERE_STREET_ADDRESS_IN = "street_address in (select street_address from \
 		{} where {})".format(address_table.name, WHERE_STREET_NAME)
-	WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})"\
-		.format(seg_table.name, WHERE_STREET_NAME)
+    WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})" \
+        .format(seg_table.name, WHERE_STREET_NAME)
 
 if WRITE_OUT:
-	print('Dropping indexes...')
-	geocode_table.drop_index('street_address')
+    print('Dropping indexes...')
+    geocode_table.drop_index('street_address')
 
-	print('Deleting existing XYs...')
-	geocode_table.delete()
+    print('Deleting existing XYs...')
+    geocode_table.delete()
 
-	print('Deleting spatial address-parcels...')
-	spatial_stmt = '''
+    print('Deleting spatial address-parcels...')
+    spatial_stmt = '''
 		DELETE FROM address_parcel
 			WHERE match_type = 'spatial' 
 	'''
-	db.execute(spatial_stmt)
+    db.execute(spatial_stmt)
 
 print('Reading streets from AIS...')
 seg_rows = seg_table.read(fields=seg_fields, geom_field='geom', \
-	where=WHERE_STREET_NAME)
+                          where=WHERE_STREET_NAME)
 seg_map = {}
 seg_geom_field = seg_table.geom_field
 for seg_row in seg_rows:
-	seg_id = seg_row['seg_id']
-	seg = {
-		'L': {
-			'low': seg_row['left_from'],
-			'high': seg_row['left_to'],
-		},
-		'R': {
-			'low': seg_row['right_from'],
-			'high': seg_row['right_to'],
-		},		
-		'shape': loads(seg_row[seg_geom_field])
-	}
-	seg_map[seg_id] = seg
+    seg_id = seg_row['seg_id']
+    seg = {
+        'L': {
+            'low': seg_row['left_from'],
+            'high': seg_row['left_to'],
+        },
+        'R': {
+            'low': seg_row['right_from'],
+            'high': seg_row['right_to'],
+        },
+        'shape': loads(seg_row[seg_geom_field])
+    }
+    seg_map[seg_id] = seg
 
 print('Reading parcels...')
 parcel_xy_map = {}  # source name => parcel row id => centroid xy (Shapely)
 
 for parcel_layer_name, parcel_layer_def in parcel_layers.items():
-	# source_name = parcel_source['name']
-	source_table = parcel_layer_name + '_parcel'
-	print('  - {}'.format(parcel_layer_name))
+    # source_name = parcel_source['name']
+    source_table = parcel_layer_name + '_parcel'
+    print('  - {}'.format(parcel_layer_name))
 
-	# DEV
-	parcel_where = ''
-	if WHERE_STREET_NAME:
-		parcel_where = '{} and '.format(WHERE_STREET_NAME)
+    # DEV
+    parcel_where = ''
+    if WHERE_STREET_NAME:
+        parcel_where = '{} and '.format(WHERE_STREET_NAME)
 
-	parcel_stmt = '''
+    parcel_stmt = '''
 		select
 			id,
 			st_astext(st_centroid(geom)) as centroid
@@ -126,29 +125,29 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
 		from {source_table}
 		where {where} not st_intersects(st_centroid(geom), geom)
 	'''.format(where=parcel_where, source_table=source_table)
-	
-	parcel_rows = db.execute(parcel_stmt)
-	parcel_layer_xy_map = {}
-	for parcel_row in parcel_rows:
-		parcel_id = parcel_row['id']
-		xy = loads(parcel_row['centroid'])
 
-		# TODO: now that we're using row IDs, parcel IDs should all be ints		
-		# if isinstance(parcel_id, int):
-		# 	parcel_id = str(parcel_id)
+    parcel_rows = db.execute(parcel_stmt)
+    parcel_layer_xy_map = {}
+    for parcel_row in parcel_rows:
+        parcel_id = parcel_row['id']
+        xy = loads(parcel_row['centroid'])
 
-		parcel_layer_xy_map[parcel_id] = xy
+        # TODO: now that we're using row IDs, parcel IDs should all be ints
+        # if isinstance(parcel_id, int):
+        # 	parcel_id = str(parcel_id)
 
-	parcel_xy_map[parcel_layer_name] = parcel_layer_xy_map
+        parcel_layer_xy_map[parcel_id] = xy
+
+    parcel_xy_map[parcel_layer_name] = parcel_layer_xy_map
 
 print('Reading true range...')
 true_range_rows = true_range_view.read(where=WHERE_SEG_ID_IN)
 for true_range_row in true_range_rows:
-	seg_id = true_range_row['seg_id']
-	seg_map[seg_id]['L']['true_low'] = true_range_row['true_left_from']
-	seg_map[seg_id]['L']['true_high'] = true_range_row['true_left_to']
-	seg_map[seg_id]['R']['true_low'] = true_range_row['true_right_from']
-	seg_map[seg_id]['R']['true_high'] = true_range_row['true_right_to']
+    seg_id = true_range_row['seg_id']
+    seg_map[seg_id]['L']['true_low'] = true_range_row['true_left_from']
+    seg_map[seg_id]['L']['true_high'] = true_range_row['true_left_to']
+    seg_map[seg_id]['R']['true_low'] = true_range_row['true_right_from']
+    seg_map[seg_id]['R']['true_high'] = true_range_row['true_right_to']
 
 # TODO: redo curb stuff so it works with multiple parcel sources
 print('Reading curbs...')
@@ -168,8 +167,8 @@ parcel_curb_map['pwd'] = pwd_parcel_curb_map
 
 print('Reading addresses from AIS...')
 address_rows = address_table.read(fields=address_fields, \
-	where=WHERE_STREET_NAME)
-	# where='street_address = \'2653-55 N ORIANNA ST\'')
+                                  where=WHERE_STREET_NAME)
+# where='street_address = \'2653-55 N ORIANNA ST\'')
 addresses = []
 seg_side_map = {}
 # for address_row in address_rows:
@@ -179,21 +178,21 @@ seg_side_map = {}
 
 addresses = Address.query.all()
 
-	# TODO: index by seg ID, side (seg_side_map above)
-	# For interpolating between parcel centroids
-	# if address_row['seg_id']:
-	# 	seg_id = address_row['seg_id']
-	# 	seg_side = address_row['seg_side']
-	# 	if seg_id in seg_side_map:
-	# 		sides = seg_side_map[seg_id]
-	# 		if seg_side in sides:
-	# 			sides[seg_side].append(address)
-	# 		else:
-	# 			sides[seg_side] = [address]
-	# 	else:
-	# 		seg_side_map[seg_id] = {
-	# 			seg_side: [address]
-	# 		}
+# TODO: index by seg ID, side (seg_side_map above)
+# For interpolating between parcel centroids
+# if address_row['seg_id']:
+# 	seg_id = address_row['seg_id']
+# 	seg_side = address_row['seg_side']
+# 	if seg_id in seg_side_map:
+# 		sides = seg_side_map[seg_id]
+# 		if seg_side in sides:
+# 			sides[seg_side].append(address)
+# 		else:
+# 			sides[seg_side] = [address]
+# 	else:
+# 		seg_side_map[seg_id] = {
+# 			seg_side: [address]
+# 		}
 
 print('Reading address-streets...')
 addr_street_rows = addr_street_table.read(where=WHERE_STREET_ADDRESS_IN)
@@ -206,13 +205,13 @@ addr_parcel_rows = addr_parcel_table.read(where=WHERE_STREET_ADDRESS_IN)
 # Create map: street address => parcel source => [parcel object ids]
 addr_parcel_map = {}
 for addr_parcel_row in addr_parcel_rows:
-	street_address = addr_parcel_row['street_address']
-	parcel_source = addr_parcel_row['parcel_source']
-	parcel_row_id = addr_parcel_row['parcel_row_id']
+    street_address = addr_parcel_row['street_address']
+    parcel_source = addr_parcel_row['parcel_source']
+    parcel_row_id = addr_parcel_row['parcel_row_id']
 
-	addr_parcel_map.setdefault(street_address, {})
-	addr_parcel_map[street_address].setdefault(parcel_source, [])
-	addr_parcel_map[street_address][parcel_source].append(parcel_row_id)
+    addr_parcel_map.setdefault(street_address, {})
+    addr_parcel_map[street_address].setdefault(parcel_source, [])
+    addr_parcel_map[street_address][parcel_source].append(parcel_row_id)
 
 '''
 MAIN
@@ -226,172 +225,172 @@ geocode_count = 0
 address_parcels = []
 
 for i, address_row in enumerate(address_rows):
-	try:
-		if i % 50000 == 0:
-			print(i)
+    try:
+        if i % 50000 == 0:
+            print(i)
 
-		if i % 150000 == 0:
-			geocode_table.write(geocode_rows)
-			geocode_count += len(geocode_rows)
-			geocode_rows = []
+        if i % 150000 == 0:
+            geocode_table.write(geocode_rows)
+            geocode_count += len(geocode_rows)
+            geocode_rows = []
 
-		address_id = address_row['id']
-		street_address = address_row['street_address']
-		address_low = address_row['address_low']
-		address_high = address_row['address_high']
+        address_id = address_row['id']
+        street_address = address_row['street_address']
+        address_low = address_row['address_low']
+        address_high = address_row['address_high']
 
-		# Get mid-address of ranges
-		if address_high:
-			# This is not necessarily an integer, nor the right parity, but
-			# it shouldn't matter for interpolation.
-			address_mid_offset = (address_high - address_low) / 2
-			address_num = address_low + address_mid_offset
-		else:
-			address_num = address_low
+        # Get mid-address of ranges
+        if address_high:
+            # This is not necessarily an integer, nor the right parity, but
+            # it shouldn't matter for interpolation.
+            address_mid_offset = (address_high - address_low) / 2
+            address_num = address_low + address_mid_offset
+        else:
+            address_num = address_low
 
-		# Get seg ID
-		try:
-			addr_street_row = addr_street_map[street_address]
-			seg_id = addr_street_row['seg_id']
-			seg_side = addr_street_row['seg_side']
-		except KeyError:
-			seg_id = None
-			seg_side = None
+        # Get seg ID
+        try:
+            addr_street_row = addr_street_map[street_address]
+            seg_id = addr_street_row['seg_id']
+            seg_side = addr_street_row['seg_side']
+        except KeyError:
+            seg_id = None
+            seg_side = None
 
-		# Get seg XY
-		seg_shp = None  # use this in curbside later
-		if seg_id:
-			
-			'''
-			CENTERLINE
-			'''
+        # Get seg XY
+        seg_shp = None  # use this in curbside later
+        if seg_id:
 
-			# Get seg XY
-			seg = seg_map[seg_id]
-			seg_shp = seg['shape']
+            '''
+            CENTERLINE
+            '''
 
-			# Interpolate using full range
-			low = seg[seg_side]['low']
-			high = seg[seg_side]['high']
-			side_delta = high - low
-			# seg_estimated = False
+            # Get seg XY
+            seg = seg_map[seg_id]
+            seg_shp = seg['shape']
 
-			# If the there's no range
-			if side_delta == 0:
-				# print('No range: seg {}, {} - {}'.format(seg_id, low, high))
-				# continue
-				# Put it in the middle
-				distance_ratio = 0.5
-				# seg_estimated = True
-			else:
-				distance_ratio = (address_num - low) / side_delta
-			# print('Distance ratio: {}'.format(distance_ratio))
-			
-			# Old method: just interpolate
-			# seg_xsect_xy_old = seg_shp.interpolate(distance_ratio, \
-			# 	normalized=True)
-			# print('Old intersect: {}'.format(seg_xsect_xy_old))
+            # Interpolate using full range
+            low = seg[seg_side]['low']
+            high = seg[seg_side]['high']
+            side_delta = high - low
+            # seg_estimated = False
 
-			# New method: interpolate buffered
-			seg_xsect_xy = util.interpolate_buffered(seg_shp, distance_ratio, \
-				centerline_end_buffer)
-			# print('Intersect: {}'.format(seg_xsect_xy))
+            # If the there's no range
+            if side_delta == 0:
+                # print('No range: seg {}, {} - {}'.format(seg_id, low, high))
+                # continue
+                # Put it in the middle
+                distance_ratio = 0.5
+            # seg_estimated = True
+            else:
+                distance_ratio = (address_num - low) / side_delta
+            # print('Distance ratio: {}'.format(distance_ratio))
 
-			seg_xy = util.offset(seg_shp, seg_xsect_xy, centerline_offset, \
-				seg_side)
-			# print('Offset to {}: {}'.format(seg_side, seg_xy))
-			geocode_rows.append({
-				# 'address_id': address_id,
-				'street_address': street_address,
-				'geocode_type': geocode_priority_map['centerline'],
-				# 'estimated': '1' if seg_estimated else '0',
-				'geom': dumps(seg_xy)
-			})
+            # Old method: just interpolate
+            # seg_xsect_xy_old = seg_shp.interpolate(distance_ratio, \
+            # 	normalized=True)
+            # print('Old intersect: {}'.format(seg_xsect_xy_old))
 
-			'''
-			TRUE RANGE
-			'''
+            # New method: interpolate buffered
+            seg_xsect_xy = util.interpolate_buffered(seg_shp, distance_ratio, \
+                                                     centerline_end_buffer)
+            # print('Intersect: {}'.format(seg_xsect_xy))
 
-			true_low = seg[seg_side]['true_low']
-			true_high = seg[seg_side]['true_high']
-			true_side_delta = true_high - true_low
-			# true_estimated = False
-			
-			if true_side_delta == 0:
-				# print('No true range: {}, seg {}, {} - {}'.format(seg_id, true_low, true_high))
-				# continue
-				true_distance_ratio = 0.5
-				# true_estimated = True
-			else:
-				true_distance_ratio = (address_num - true_low) / true_side_delta
-			
-			# true_xsect_xy = seg_shp.interpolate(true_distance_ratio, \
-			# 	normalized=True)
-			true_xsect_xy = util.interpolate_buffered(seg_shp, true_distance_ratio, \
-				centerline_end_buffer)
-			true_seg_xy = util.offset(seg_shp, true_xsect_xy, centerline_offset, \
-				seg_side)
-			# print('true: {}'.format(true_seg_xy))
-			geocode_rows.append({
-				# 'address_id': address_id,
-				'street_address': street_address,
-				'geocode_type': geocode_priority_map['true_range'],
-				# 'estimated': '1' if true_estimated else '0',
-				'geom': dumps(true_seg_xy)
-			})
+            seg_xy = util.offset(seg_shp, seg_xsect_xy, centerline_offset, \
+                                 seg_side)
+            # print('Offset to {}: {}'.format(seg_side, seg_xy))
+            geocode_rows.append({
+                # 'address_id': address_id,
+                'street_address': street_address,
+                'geocode_type': geocode_priority_map['centerline'],
+                # 'estimated': '1' if seg_estimated else '0',
+                'geom': dumps(seg_xy)
+            })
 
-		'''
-		PARCELS
-		'''
+            '''
+            TRUE RANGE
+            '''
 
-		for parcel_layer_name, parcel_layer in parcel_layers.items():
-			source_table = parcel_layer_name + '_parcel'
-			#set these to None to avoid next address inheritance
-			parcel_ids = None
-			parcel_id = None
-			parcel_xy = None
-			try:
-				parcel_ids = addr_parcel_map[street_address][parcel_layer_name]
-			except KeyError as e:
-				# TODO: check if there's an address link that points to an
-				# address in address_parcel
-				parcel_ids = None
+            true_low = seg[seg_side]['true_low']
+            true_high = seg[seg_side]['true_high']
+            true_side_delta = true_high - true_low
+            # true_estimated = False
 
-			# Get parcel XY
-			if parcel_ids:
-				# Single parcel match
-				if len(parcel_ids) == 1:
-					parcel_id = parcel_ids[0]
-					parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
-					geocode_rows.append({
-						# 'address_id': address_id,
-						'street_address':	street_address,
-						'geocode_type': 	geocode_priority_map[source_table],
-						# 'estimated': 		'0',
-						'geom':				dumps(parcel_xy)
-					})
+            if true_side_delta == 0:
+                # print('No true range: {}, seg {}, {} - {}'.format(seg_id, true_low, true_high))
+                # continue
+                true_distance_ratio = 0.5
+            # true_estimated = True
+            else:
+                true_distance_ratio = (address_num - true_low) / true_side_delta
 
-				# Multiple parcel matches
-				else:
-					# TODO: could get the combined centroid of the parcels,
-					# if they're adjacent
-					#print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
-					#num_multiple_parcel_matches += 1
-					parcel_id = None
-					parcel_xy = None
+            # true_xsect_xy = seg_shp.interpolate(true_distance_ratio, \
+            # 	normalized=True)
+            true_xsect_xy = util.interpolate_buffered(seg_shp, true_distance_ratio, \
+                                                      centerline_end_buffer)
+            true_seg_xy = util.offset(seg_shp, true_xsect_xy, centerline_offset, \
+                                      seg_side)
+            # print('true: {}'.format(true_seg_xy))
+            geocode_rows.append({
+                # 'address_id': address_id,
+                'street_address': street_address,
+                'geocode_type': geocode_priority_map['true_range'],
+                # 'estimated': '1' if true_estimated else '0',
+                'geom': dumps(true_seg_xy)
+            })
 
-			elif seg_id:
-				'''
-				SPATIAL MATCH
-				'''
+        '''
+        PARCELS
+        '''
 
-				for test_offset in range(10, 50, 10):
-					# Get test XY
-					test_xy_shp = util.offset(seg_shp, true_xsect_xy, \
-						test_offset, seg_side)
-					test_xy_wkt = dumps(test_xy_shp)
+        for parcel_layer_name, parcel_layer in parcel_layers.items():
+            source_table = parcel_layer_name + '_parcel'
+            # set these to None to avoid next address inheritance
+            parcel_ids = None
+            parcel_id = None
+            parcel_xy = None
+            try:
+                parcel_ids = addr_parcel_map[street_address][parcel_layer_name]
+            except KeyError as e:
+                # TODO: check if there's an address link that points to an
+                # address in address_parcel
+                parcel_ids = None
 
-					parcel_match_stmt = '''
+            # Get parcel XY
+            if parcel_ids:
+                # Single parcel match
+                if len(parcel_ids) == 1:
+                    parcel_id = parcel_ids[0]
+                    parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
+                    geocode_rows.append({
+                        # 'address_id': address_id,
+                        'street_address': street_address,
+                        'geocode_type': geocode_priority_map[source_table],
+                        # 'estimated': 		'0',
+                        'geom': dumps(parcel_xy)
+                    })
+
+                # Multiple parcel matches
+                else:
+                    # TODO: could get the combined centroid of the parcels,
+                    # if they're adjacent
+                    # print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
+                    # num_multiple_parcel_matches += 1
+                    parcel_id = None
+                    parcel_xy = None
+
+            elif seg_id:
+                '''
+                SPATIAL MATCH
+                '''
+
+                for test_offset in range(10, 50, 10):
+                    # Get test XY
+                    test_xy_shp = util.offset(seg_shp, true_xsect_xy, \
+                                              test_offset, seg_side)
+                    test_xy_wkt = dumps(test_xy_shp)
+
+                    parcel_match_stmt = '''
 						SELECT
 							id,
 							CASE
@@ -402,98 +401,160 @@ for i, address_row in enumerate(address_rows):
 						FROM {source_table}
 						WHERE ST_Intersects(geom, ST_GeomFromText('{test_xy_wkt}', 2272))
 					'''.format(source_table=source_table, test_xy_wkt=test_xy_wkt)
-					db.execute(parcel_match_stmt)
-					parcel_match = db._c.fetchone()
+                    db.execute(parcel_match_stmt)
+                    parcel_match = db._c.fetchone()
 
-					if parcel_match:
-						parcel_id = parcel_match['id']
-						# pwd_parcel_id = parcel_match['parcel_id']
-						# pwd_parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
-						# print('Rematched {} to PWD parcel {}'.format(street_address, pwd_parcel_id))
-						parcel_match_wkt = parcel_match['wkt']
-						geocode_rows.append({
-							'street_address': street_address,
-							'geocode_type': geocode_priority_map[source_table + '_spatial'],
-							# 'estimated': '1',
-							# 'geometry': dumps(pwd_parcel_xy)
-							'geom': parcel_match_wkt,
-						})
-						
-						# Make estimated address-parcel
-						address_parcels.append({
-							'street_address':	street_address,
-							'parcel_source': 	parcel_layer_name,
-							'parcel_row_id': 	parcel_id,
-							'match_type':		'spatial',
-						})
+                    if parcel_match:
+                        parcel_id = parcel_match['id']
+                        # pwd_parcel_id = parcel_match['parcel_id']
+                        # pwd_parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
+                        # print('Rematched {} to PWD parcel {}'.format(street_address, pwd_parcel_id))
+                        parcel_match_wkt = parcel_match['wkt']
+                        geocode_rows.append({
+                            'street_address': street_address,
+                            'geocode_type': geocode_priority_map[source_table + '_spatial'],
+                            # 'estimated': '1',
+                            # 'geometry': dumps(pwd_parcel_xy)
+                            'geom': parcel_match_wkt,
+                        })
 
-						break
+                        # Make estimated address-parcel
+                        address_parcels.append({
+                            'street_address': street_address,
+                            'parcel_source': parcel_layer_name,
+                            'parcel_row_id': parcel_id,
+                            'match_type': 'spatial',
+                        })
+
+                        break
+
+            '''
+            CURBSIDE & IN_STREET (MIDPOINT B/T CURB & CENTERLINE)
+            '''
+
+            if seg_id and parcel_id and parcel_xy:
+                # TODO: use pwd parcel if matched spatially
+                parcel_id = str(parcel_id)
+                if parcel_id in parcel_curb_map[parcel_layer_name] and seg_shp is not None:
+                    curb_id = parcel_curb_map[parcel_layer_name][parcel_id]
+                    curb_shp = curb_map[curb_id]
+
+                    # Project parcel centroid to centerline
+                    # if parcel_xy:
+                    proj_dist = seg_shp.project(parcel_xy)
+                    proj_xy = seg_shp.interpolate(proj_dist)
+                    proj_shp = LineString([parcel_xy, proj_xy])
+
+                    # Get point of intersection and add
+                    xsect_line_shp = curb_shp.intersection(proj_shp)
+                    xsect_pt = None
+                    if isinstance(xsect_line_shp, LineString):
+                        xsect_pt = xsect_line_shp.coords[1]
+                    elif isinstance(xsect_line_shp, MultiLineString):
+                        xsect_pt = xsect_line_shp[-1:][0].coords[1]
+                    if xsect_pt:
+                        xsect_pt_shp = Point(xsect_pt)
+                        curb_geocode_row = {
+                            'street_address': street_address,
+                            'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
+                            'geom': dumps(xsect_pt_shp)
+                        }
+                        # Get midpoint between proj_xy and xsect_pt
+                        xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
+                        xy_in_st_shape = Point(xy_in_street)
+                        in_st_geocode_row = {
+                            'street_address': street_address,
+                            'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
+                            'geom': dumps(xy_in_st_shape)
+                        }
+                        geocode_rows.append(curb_geocode_row)
+                        geocode_rows.append(in_st_geocode_row)
 
 
-			'''
-			CURBSIDE & IN_STREET (MIDPOINT B/T CURB & CENTERLINE)
-			'''
+    except ValueError as e:
+        print(e)
 
-			if seg_id and parcel_id and parcel_xy:
-				# TODO: use pwd parcel if matched spatially
-				parcel_id = str(parcel_id)
-				if parcel_id in parcel_curb_map[parcel_layer_name] and seg_shp is not None:
-					curb_id = parcel_curb_map[parcel_layer_name][parcel_id]
-					curb_shp = curb_map[curb_id]
-
-					# Project parcel centroid to centerline
-					#if parcel_xy:
-					proj_dist = seg_shp.project(parcel_xy)
-					proj_xy = seg_shp.interpolate(proj_dist)
-					proj_shp = LineString([parcel_xy, proj_xy])
-
-					# Get point of intersection and add
-					xsect_line_shp = curb_shp.intersection(proj_shp)
-					xsect_pt = None
-					if isinstance(xsect_line_shp, LineString):
-						xsect_pt = xsect_line_shp.coords[1]
-					elif isinstance(xsect_line_shp, MultiLineString):
-						xsect_pt = xsect_line_shp[-1:][0].coords[1]
-					if xsect_pt:
-						xsect_pt_shp = Point(xsect_pt)
-						curb_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
-							'geom': dumps(xsect_pt_shp)
-						}
-						# Get midpoint between proj_xy and xsect_pt
-						xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
-						xy_in_st_shape = Point(xy_in_street)
-						in_st_geocode_row = {
-							'street_address': street_address,
-							'geocode_type': geocode_priority_map[parcel_layer_name + '_street'],
-							'geom': dumps(xy_in_st_shape)
-						}
-						geocode_rows.append(curb_geocode_row)
-						geocode_rows.append(in_st_geocode_row)
-
-
-	except ValueError as e:
-		print(e)
-
-	except Exception:
-		print(traceback.format_exc())
-		sys.exit()
+    except Exception:
+        print(traceback.format_exc())
+        sys.exit()
 
 if WRITE_OUT:
-	print('Writing XYs...')
-	geocode_table.write(geocode_rows, chunk_size=150000)
+    print('Writing XYs...')
+    geocode_table.write(geocode_rows, chunk_size=150000)
 
-	print('Writing address-parcels...')
-	# db.drop_index('address_parcel', 'street_address')
-	addr_parcel_table.write(address_parcels, chunk_size=150000)
-	# db.create_index('address_parcel', 'street_address')
+    print('Writing address-parcels...')
+    # db.drop_index('address_parcel', 'street_address')
+    addr_parcel_table.write(address_parcels, chunk_size=150000)
+    # db.create_index('address_parcel', 'street_address')
 
-	print('Creating index...')
-	geocode_table.create_index('street_address')
+    print('Creating index...')
+    geocode_table.create_index('street_address')
 
-	print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
+    print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
 
+# address_tag_table = db['address_tag']
+# geocode_tag_map = {
+#     'pwd_parcel_id': (1, 3, 7),
+#     'dor_parcel_id': (2, 4, 8)
+# }
+# new_geocode_rows = []
+#
+# print('Reading geocode rows...')
+# geocode_map = {}
+# geocode_rows = geocode_table.read()
+# print('Mapping geocode rows...')
+# for geocode_row in geocode_rows:
+#     street_address = geocode_row['street_address']
+#     if not street_address in geocode_map:
+#         geocode_map[street_address] = []
+#     geocode_map[street_address].append(geocode_row)
+#
+# print('Reading address tags...')
+# tag_map = {}
+# where = "linked_address != '' and key in ('pwd_parcel_id', 'dor_parcel_id')"
+# tag_rows = address_tag_table.read(where=where)
+# print('Mapping address tags...')
+# for tag_row in tag_rows:
+#     street_address = tag_row['street_address']
+#     if not street_address in tag_map:
+#         tag_map[street_address] = []
+#     tag_map[street_address].append(tag_row)
+#
+# for key, value in tag_map.items():
+#     street_address = key
+#     tags = value
+#     for tag in tags:
+#         linked_address = tag['linked_address']
+#         linked_key = tag['key']
+#         try:
+#             linked_geocode_rows = geocode_map[linked_address]
+#         except:
+#             linked_geocode_rows = []
+#         if not linked_geocode_rows:
+#             continue
+#         for linked_row in linked_geocode_rows:
+#             geocode_type = linked_row['geocode_type']
+#             if geocode_type in geocode_tag_map[linked_key]:
+#                 geom = linked_row['geom']
+#                 new_geocode_row = {
+#                     'street_address': street_address,
+#                     'geocode_type': geocode_type,
+#                     'geom': geom
+#                 }
+#                 new_geocode_rows.append(new_geocode_row)
+#
+# if WRITE_OUT:
+#     print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
+#     # TODO: Use geopetl/datum instead of raw sql
+#     for new_row in new_geocode_rows:
+#         street_address = new_row['street_address']
+#         geocode_type = new_row['geocode_type']
+#         geom = new_row['geom']
+#         write_stmt = '''
+#             INSERT INTO geocode (street_address, geocode_type, geom) VALUES ('{street_address}', {geocode_type}, '{geom}')
+#         '''.format(street_address=street_address, geocode_type=geocode_type, geom=geom)
+#         db.execute(write_stmt)
+#         db.save()
 db.close()
 
 print('Finished in {}'.format(datetime.now() - start))
