@@ -11,7 +11,7 @@ command 2>> $error_file_loc 1>> $out_file_loc
 echo "Running the engine"
 
 echo "Loading Streets"
-ais engine run load_street
+ais engine run load_streets
 
 echo "Loading Street Aliases"
 ais engine run load_street_aliases
