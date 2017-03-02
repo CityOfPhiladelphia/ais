@@ -69,15 +69,24 @@ for key, value in tag_map.items():
 if WRITE_OUT:
     print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
     # TODO: Use geopetl/datum instead of raw sql
+    i = 0
+    values = ''
     for new_row in new_geocode_rows:
         street_address = new_row['street_address']
         geocode_type = new_row['geocode_type']
         geom = new_row['geom']
-        write_stmt = '''
-            INSERT INTO geocode (street_address, geocode_type, geom) VALUES ('{street_address}', {geocode_type}, '{geom}')
-        '''.format(street_address=street_address, geocode_type=geocode_type, geom=geom)
-        db.execute(write_stmt)
-        db.save()
+        new_vals = '''('{street_address}', {geocode_type}, '{geom}')'''.format(street_address=street_address, geocode_type=geocode_type, geom=geom)
+        values = values + ', ' + new_vals if values else new_vals
+        i += 1
+        if i % 1000 == 0:
+            toi = i + 1000
+            print("writing rows {i} to {toi}".format(i=i, toi=toi))
+            write_stmt = '''
+                INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
+            '''.format(values=values)
+            db.execute(write_stmt)
+            db.save()
+            values = ''
 
 db.close()
 
