@@ -4,8 +4,7 @@ error_file="build_errors_"
 out_file="build_log_"
 error_file_loc=../log/$error_file$dt.txt
 out_file_loc=../log/$out_file$dt.txt
-mkdir -p $error_file_loc
-mkdir -p $out_file_loc
+mkdir -p ../log
 command 2>> $error_file_loc 1>> $out_file_loc
 
 echo "Running the engine"
