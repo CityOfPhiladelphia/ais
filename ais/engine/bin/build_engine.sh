@@ -2,12 +2,16 @@
 dt=$(date +%Y%m%d)
 error_file="build_errors_"
 out_file="build_log_"
-command 2>> ../log/$error_file$dt 1>> ../log/$out_file$dt
+error_file_loc=../log/$error_file$dt.txt
+out_file_loc=../log/$out_file$dt.txt
+mkdir -p $error_file_loc
+mkdir -p $out_file_loc
+command 2>> $error_file_loc 1>> $out_file_loc
 
 echo "Running the engine"
 
 echo "Loading Streets"
-ais engine run load_streets
+ais engine run load_street
 
 echo "Loading Street Aliases"
 ais engine run load_street_aliases
