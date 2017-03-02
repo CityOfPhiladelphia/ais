@@ -560,7 +560,7 @@ if WRITE_OUT:
         i += 1
         if i % 1000 == 0:
             toi = i + 1000
-            print("writing rows {i} to {toi}".format(i=i, toi=toi))
+            #print("writing rows {i} to {toi}".format(i=i, toi=toi))
             write_stmt = '''
                 INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
             '''.format(values=values)
