@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+dt=$(date +%Y%m%d)
+error_file="build_errors_"
+out_file="build_log_"
+command 2>> ../log/$error_file$dt 1>> ../log/$out_file$dt
 
 echo "Running the engine"
 
