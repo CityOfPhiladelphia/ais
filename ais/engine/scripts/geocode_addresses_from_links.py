@@ -46,9 +46,16 @@ for tag_row in tag_rows:
 for key, value in tag_map.items():
     street_address = key
     tags = value
+#    geocode_types = []
+    try:
+        geocode_types = [x['geocode_type'] for x in geocode_map[street_address]]
+    except:
+        geocode_types = []
     for tag in tags:
         linked_address = tag['linked_address']
         linked_key = tag['key']
+        if linked_key == 'pwd_parcel_id' and 1 in geocode_types or linked_key == 'dor_parcel_id' and 2 in geocode_types:
+            continue
         try:
             linked_geocode_rows = geocode_map[linked_address]
         except:
@@ -57,6 +64,7 @@ for key, value in tag_map.items():
             continue
         for linked_row in linked_geocode_rows:
             geocode_type = linked_row['geocode_type']
+
             if geocode_type in geocode_tag_map[linked_key]:
                 geom = linked_row['geom']
                 new_geocode_row = {
@@ -66,7 +74,13 @@ for key, value in tag_map.items():
                 }
                 new_geocode_rows.append(new_geocode_row)
 
+# Remove any duplicate new_geocode_rows
+new_geocode_rows = [dict(t) for t in set([tuple(d.items()) for d in new_geocode_rows])]
+
 if WRITE_OUT:
+    # print('Dropping indexes...')
+    # geocode_table.drop_index('street_address')
+
     print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
     # TODO: Use geopetl/datum instead of raw sql
     i = 0
