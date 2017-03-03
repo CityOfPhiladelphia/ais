@@ -391,7 +391,7 @@ if WRITE_OUT:
 # ADDRESS LINKS
 ###############################################################################
 
-print('\n** ADDRESS LINKS **')
+print('** ADDRESS LINKS **')
 print('Indexing addresses...')
 street_address_map = {}     # street_full => [addresses]
 street_range_map = {}       # street_full => [range addresses]
@@ -594,7 +594,7 @@ del addresses_seen
 # ADDRESS-STREETS
 ###############################################################################
 
-print('\n** ADDRESS-STREETS **')
+print('** ADDRESS-STREETS **')
 
 # SET UP LOGGING / QC
 street_warning_map = {}  # street_address => [{reason, notes}]
@@ -846,7 +846,7 @@ for street_address, warnings in street_warning_map.items():
 # ADDRESS-PARCELS
 ################################################################################
 
-print('\n** ADDRESS-PARCELS **')
+print('** ADDRESS-PARCELS **')
 
 # This maps address variant names to AddressParcel match types
 ADDRESS_VARIANT_MATCH_TYPE = {
@@ -1053,7 +1053,7 @@ del address_parcels
 # ADDRESS-PROPERTIES
 ################################################################################
 
-print('\n** ADDRESS-PROPERTIES **')
+print('** ADDRESS-PROPERTIES **')
 
 if WRITE_OUT:
     print('Dropping index on address-properties...')
@@ -1155,7 +1155,7 @@ if WRITE_OUT:
 # TRUE RANGE
 ################################################################################
 
-print('\n** TRUE RANGE **')
+print('** TRUE RANGE **')
 
 if WRITE_OUT:
     print('Creating true range view...')
@@ -1167,7 +1167,7 @@ if WRITE_OUT:
 # ERRORS
 ################################################################################
 
-print('\n** ERRORS **')
+print('** ERRORS **')
 
 if WRITE_OUT:
     print('Writing errors...')
@@ -1180,7 +1180,7 @@ if WRITE_OUT:
 # FINISH
 ################################################################################
 
-print('\n** FINISHING **')
+print('** FINISHING **')
 
 if WRITE_OUT:
     print('Creating indexes...')
