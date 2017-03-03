@@ -523,6 +523,7 @@ for tag_row in tag_rows:
 for key, value in tag_map.items():
     street_address = key
     tags = value
+    # Get existing geocodes to avoid making duplicates
     try:
         geocode_types = [x['geocode_type'] for x in geocode_map[street_address]]
     except:
@@ -530,6 +531,7 @@ for key, value in tag_map.items():
     for tag in tags:
         linked_address = tag['linked_address']
         linked_key = tag['key']
+        # Don't allow duplicate geocodes:
         if linked_key == 'pwd_parcel_id' and 1 in geocode_types or linked_key == 'dor_parcel_id' and 2 in geocode_types:
             continue
         try:
