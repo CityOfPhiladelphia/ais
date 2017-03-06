@@ -406,6 +406,10 @@ class ServiceAreaSerializer ():
             data['service_areas']['recycling_diversion_rate'] = round(rate/100, 3)
         except:
             pass
+        # Change all nulls to empty strings:
+        for key, val in data['service_areas'].items():
+            val = val if val else ''
+            data['service_areas'][key] = val
 
         return data
 
