@@ -886,6 +886,11 @@ def service_areas(query):
 
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
+    if parsed['type'] == 'none':
+        error = json_error(404, 'There are no intersecting service areas.',
+                           {'query': query})
+        return json_response(response=error, status=404)
+
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     srid = str(srid_map[parsed['type']])
@@ -913,17 +918,31 @@ def service_areas(query):
     for item in result.fetchall():
         sa_data[item[0]] = item[1]
 
-    if not sa_data:
+    if all(value == None for value in sa_data.values()):
         error = json_error(404, 'There are no intersecting service areas.',
                            {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
+
+    seg_stmt = '''
+            select seg_id
+            from street_segment
+            where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
+            ORDER BY geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid})
+            LIMIT 1
+    '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
+    seg_result = db.engine.execute(seg_stmt)
+    seg_id = None
+    segs = seg_result.first()
+    if segs:
+        for seg in seg_result.first():
+            seg_id = seg if seg else None
 
     # Use ServiceAreaSerializer
     serializer = ServiceAreaSerializer(
         metadata={'search_type': search_type_out, 'query': query,
                   'search_params': request.args, 'normalized': normalized, 'crs': crs},
         #shape=search_shape,
-        sa_data=sa_data, coordinates=coords
+        sa_data=sa_data, coordinates=coords, seg_id=seg_id
     )
     result = serializer.serialize()
 
