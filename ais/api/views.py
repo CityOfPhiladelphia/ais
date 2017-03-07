@@ -932,10 +932,13 @@ def service_areas(query):
     '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
     seg_result = db.engine.execute(seg_stmt)
     seg_id = None
-    segs = seg_result.first()
-    if segs:
-        for seg in seg_result.first():
-            seg_id = seg if seg else None
+    try:
+        segs = seg_result.first()
+        if segs:
+            for seg in segs:
+                seg_id = seg if seg else None
+    except:
+        pass
 
     # Use ServiceAreaSerializer
     serializer = ServiceAreaSerializer(

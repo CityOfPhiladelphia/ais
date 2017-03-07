@@ -390,7 +390,6 @@ class ServiceAreaSerializer ():
         self.coordinates = coordinates
         self.sa_data = sa_data
         self.metadata = metadata
-        print(self.seg_id)
         super().__init__()
 
     def transform_exceptions(self, data):
