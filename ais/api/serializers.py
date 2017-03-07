@@ -386,7 +386,7 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
 class ServiceAreaSerializer ():
 
     def __init__(self, coordinates=None, sa_data=None, metadata=None, seg_id=None, **kwargs):
-        self.seg_id = seg_id
+        #self.seg_id = seg_id
         self.coordinates = coordinates
         self.sa_data = sa_data
         self.metadata = metadata
@@ -417,7 +417,7 @@ class ServiceAreaSerializer ():
         sa_data_obj = {'service_areas': self.sa_data}
         data.update(self.metadata)
         data.update(sa_data_obj)
-        data.update({'seg_id': self.seg_id})
+        #data.update({'seg_id': self.seg_id})
         return data
 
     def render(self, data):
