@@ -3,7 +3,7 @@ import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -484,6 +484,11 @@ class Address(db.Model):
             return unit_full
         return None
 
+class AddressTagQuery(BaseQuery):
+    """A query class that knows how to query address tags"""
+    def filter_tags_by_address(self, street_address):
+        return self.filter(AddressTag.street_address == street_address)
+
 class AddressTag(db.Model):
     """
     Current tags in the database are:
@@ -494,6 +499,8 @@ class AddressTag(db.Model):
     * pwd_account_num
 
     """
+    query_class = AddressTagQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     key = db.Column(db.Text)
@@ -506,6 +513,11 @@ class SourceAddress(db.Model):
     source_name = db.Column(db.Text)
     source_address = db.Column(db.Text)
     street_address = db.Column(db.Text)
+
+class AddressLinkQuery(BaseQuery):
+    """A query class that knows how to query address links"""
+    def filter_links_by_address(self, street_address):
+        return AddressLinkQuery.filter(or_(AddressLink.address_1 == street_address, AddressLink.address_2 == street_address))
 
 class AddressLink(db.Model):
     """
@@ -710,6 +722,9 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.address_high,
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst())
+
+    def filter_by_base_address(self, base_address):
+        return self.filter(AddressSummary.street_address == base_address)
 
     def filter_by_owner(self, *owner_parts):
         query = self
