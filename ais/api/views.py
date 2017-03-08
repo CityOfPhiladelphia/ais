@@ -13,7 +13,7 @@ from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
@@ -133,7 +133,7 @@ def unknown_cascade_view(**kwargs):
 
     # CASCADE TO STREET SEGMENT
     cascadedseg = StreetSegment.query \
-        .filter_by_seg_id(seg_id)
+        .filter_by_seg_id(seg_id) #if seg_id else None
 
     cascadedseg = cascadedseg.first()
 
@@ -302,6 +302,12 @@ def addresses(query):
     seg_id = parsed['components']['cl_seg_id']
     base_address = parsed['components']['base_address']
 
+    # tags = AddressTag.query \
+    #     .filter_tags_by_address(normalized_address)
+    # for tag in tags:
+    #     print(tag.key, ": ", tag.value, tag.linked_address, tag.linked_path)
+    #print(list(tags))
+
     loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
         address_low=low_num if low_num is not None
@@ -341,6 +347,25 @@ def addresses(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
+
+    # # If no matching addresses, try again with base address
+    # if addresses_count == 0:
+    #     addresses = AddressSummary.query \
+    #         .filter_by_base_address(base_address) \
+    #         .include_child_units(
+    #         'include_units' in request.args and request.args['include_units'].lower() != 'false',
+    #         is_range=high_num is not None,
+    #         is_unit=unit_type is not None,
+    #         request=request) \
+    #         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+    #         .get_address_geoms(request)
+    #
+    #     addresses = addresses.order_by_address()
+    #     paginator = QueryPaginator(addresses)
+    #
+    #     # Ensure that we have results
+    #     addresses_count = paginator.collection_size
+
     #print(addresses_count)
     # Handle unmatched addresses
     if addresses_count == 0:
