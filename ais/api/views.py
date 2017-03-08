@@ -923,29 +923,29 @@ def service_areas(query):
                            {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
-    seg_stmt = '''
-            select seg_id
-            from street_segment
-            where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
-            ORDER BY geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid})
-            LIMIT 1
-    '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
-    seg_result = db.engine.execute(seg_stmt)
-    seg_id = None
-    try:
-        segs = seg_result.first()
-        if segs:
-            for seg in segs:
-                seg_id = seg if seg else None
-    except:
-        pass
+    # seg_stmt = '''
+    #         select seg_id
+    #         from street_segment
+    #         where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
+    #         ORDER BY geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid})
+    #         LIMIT 1
+    # '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
+    # seg_result = db.engine.execute(seg_stmt)
+    # seg_id = None
+    # try:
+    #     segs = seg_result.first()
+    #     if segs:
+    #         for seg in segs:
+    #             seg_id = seg if seg else None
+    # except:
+    #     pass
 
     # Use ServiceAreaSerializer
     serializer = ServiceAreaSerializer(
         metadata={'search_type': search_type_out, 'query': query,
                   'search_params': request.args, 'normalized': normalized, 'crs': crs},
         #shape=search_shape,
-        sa_data=sa_data, coordinates=coords, seg_id=seg_id
+        sa_data=sa_data, coordinates=coords, #seg_id=seg_id
     )
     result = serializer.serialize()
 
