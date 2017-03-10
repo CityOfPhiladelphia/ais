@@ -17,7 +17,7 @@ from ais.models import Address, AddressSummary, StreetIntersection, StreetSegmen
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, AddressTagSerializer
 from ais.models import ENGINE_SRID
 
 config = app.config
@@ -280,38 +280,20 @@ def addresses(query):
 
     parsed = PassyunkParser().parse(query)
     normalized_address = parsed['components']['output_address']
-    search_type = parsed['type']
-
-    if search_type != 'address':
-        error = json_error(404, 'Not a valid address.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
-
-
-    # Match a set of addresses. Filters will either be loose, where an omission
-    # is ignored, or strict, where an omission is treated as an explicit NULL.
-    # For example, if the street_predir is omitted, then we should still match
-    # all addresses that match the rest of the information; this is a loose
-    # filter. However, if we do not provide an address_high, we should assume
-    # that we're not looking for a ranged address; this is a strict filter.
-
+    base_address = parsed['components']['base_address']
+    full_num = parsed['components']['address']['full']
+    low_num =  parsed['components']['address']['low_num']
+    high_num = parsed['components']['address']['high_num_full']
+    street_full = parsed['components']['street']['full']
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
-    high_num = parsed['components']['address']['high_num_full']
-    low_num = parsed['components']['address']['low_num']
-    seg_id = parsed['components']['cl_seg_id']
-    base_address = parsed['components']['base_address']
-
-    # tags = AddressTag.query \
-    #     .filter_tags_by_address(normalized_address)
-    # for tag in tags:
-    #     print(tag.key, ": ", tag.value, tag.linked_address, tag.linked_path)
-    #print(list(tags))
+    search_type = parsed['type']
+    base_address_no_num_suffix = '{} {}'.format(low_num, street_full) # TODO: handle ranged addresses with num suffixes
 
     loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
         address_low=low_num if low_num is not None
-            else parsed['components']['address']['full'],
+            else full_num,
         address_low_suffix=parsed['components']['address']['addr_suffix'],
         address_low_frac=parsed['components']['address']['fractional'],
         street_predir=parsed['components']['street']['predir'],
@@ -328,45 +310,82 @@ def addresses(query):
     if unit_num == '':
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
+    if search_type != 'address':
+        error = json_error(404, 'Not a valid address.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+
+    #SECTION TO QUERY ADDRESS TAG TABLE
+    match_type = ''
     filters = strict_filters.copy()
     filters.update(loose_filters)
 
-    addresses = AddressSummary.query \
-        .filter_by(**filters) \
-        .filter_by_unit_type(unit_type) \
-        .include_child_units(
-            'include_units' in request.args and request.args['include_units'].lower() != 'false',
-            is_range=high_num is not None,
-            is_unit=unit_type is not None,
-            request=request) \
-        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-        .get_address_geoms(request)
+    def query_addresses(filters):
+        addresses_query = AddressSummary.query \
+                .filter_by(**filters) \
+                .filter_by_unit_type(unit_type) \
+                .include_child_units(
+                'include_units' in request.args and request.args['include_units'].lower() != 'false',
+                is_range=high_num is not None,
+                is_unit=unit_type is not None,
+                request=request) \
+                .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+                .get_address_geoms(request)
 
-    addresses = addresses.order_by_address()
-    paginator = QueryPaginator(addresses)
+        addresses = addresses_query.order_by_address()
 
-    # Ensure that we have results
-    addresses_count = paginator.collection_size
+        return addresses
 
-    # # If no matching addresses, try again with base address
-    # if addresses_count == 0:
-    #     addresses = AddressSummary.query \
-    #         .filter_by_base_address(base_address) \
-    #         .include_child_units(
-    #         'include_units' in request.args and request.args['include_units'].lower() != 'false',
-    #         is_range=high_num is not None,
-    #         is_unit=unit_type is not None,
-    #         request=request) \
-    #         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-    #         .get_address_geoms(request)
-    #
-    #     addresses = addresses.order_by_address()
-    #     paginator = QueryPaginator(addresses)
-    #
-    #     # Ensure that we have results
-    #     addresses_count = paginator.collection_size
+    print(filters)
+    addresses = query_addresses(filters=filters)
+    print(addresses)
+    match_type = 'exact'
+    if not addresses:
+        print(0)
+    # if no matches, try base_address
+    if not addresses and normalized_address != base_address:
+        print(1)
+        filters['unit_num'] == ''
+        filters['unit_type'] == ''
+        addresses = query_addresses(filters=filters)
+        match_type = 'has_base'
+    # if no matches, try base_address_no_num_suffix
+    if not addresses and base_address != base_address_no_num_suffix:
+        print(2)
+        filters['address_low_suffix'] == ''
+        filters['address_low_frac'] == ''
+        addresses = query_addresses(filters=filters)
+        match_type = 'has_base_no_suffix'
 
-    #print(addresses_count)
+    if not addresses:
+        print(3)
+        error = json_error(404, 'Could not find any addresses matching the query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+
+    else:
+        print(4)
+        paginator = QueryPaginator(addresses)
+        # Ensure that we have results
+        addresses_count = paginator.collection_size
+        print(addresses_count)
+        addresses = addresses.all()
+        all_tags = {}
+        for address, geocode_type, geom in addresses:
+            print(address.street_address)
+            tag_map = {}
+            tags = AddressTag.query \
+                .filter_tags_by_address(address.street_address)
+            # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
+            for tag in tags:
+                linked_address = tag.linked_address if tag.linked_address else address.street_address
+                # print(linked_address)
+                if not linked_address in tag_map:
+                    # tag_map[linked_address] = {}
+                    tag_map[linked_address] = [tag.linked_path, {}]
+                tag_map[linked_address][1][tag.key] = tag.value
+            all_tags[address.street_address] = tag_map
+
     # Handle unmatched addresses
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
@@ -393,7 +412,10 @@ def addresses(query):
         srid=srid,
         normalized_address=normalized_address,
         base_address=base_address,
+        tag_data=all_tags,
+        match_type=match_type
     )
+    print(all_tags)
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
 

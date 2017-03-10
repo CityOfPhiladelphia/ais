@@ -8,6 +8,12 @@ from ais import app, app_db as db
 config = app.config
 from itertools import chain
 
+tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
+tag_field_map = {}
+for tag in tag_fields:
+    tag_field_map[tag['tag_key']] = tag['name']
+
+
 class BaseSerializer:
     def model_to_data(self, instance):
         raise NotImplementedError()
@@ -73,25 +79,29 @@ class GeoJSONSerializer (BaseSerializer):
             'has base': 'exact',
             'matches unit': 'exact',
             'has generic unit': 'exact',
-            'in range': 'exact'
+            'in range': 'exact',
+            'overlaps': 'overlaps'
         }
         query_address_2_match_map = {
             'has base': 'base_address',
             'matches unit': 'unit_sibling',
             'has generic unit': 'unit_sibling',
-            'in range': 'range_child'
+            'in range': 'range_child',
+            'overlaps': 'overlaps'
         }
         unit_address_1_match_map = {
             'has base': 'unit_child',
             'matches unit': 'unit_sibling',
             'has generic unit': 'unit_sibling',
-            'in range': 'exact'
+            'in range': 'exact',
+            'overlaps': 'overlaps'
         }
         unit_address_2_match_map = {
             'has base': 'unit_sibling',
             'matches unit': 'unit_sibling',
             'has generic unit': 'unit_sibling',
-            'in range': 'range_child'
+            'in range': 'range_child',
+            'overlaps': 'overlaps'
         }
         street_address_variations = [address.street_address,
                                      address.street_address.replace(address.unit_type, "APT"),
@@ -162,7 +172,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, match_type=None, **kwargs):
+    def __init__(self, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, match_type=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -178,6 +188,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         #self.sa_data = kwargs.get('sa_data') if 'sa_data' in kwargs else None
         self.sa_data = sa_data
         self.match_type = match_type
+        self.tag_data = tag_data
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
@@ -195,6 +206,29 @@ class AddressJsonSerializer (GeoJSONSerializer):
             ('type', data['type']),
             ('coordinates', data['coordinates'])
         ])
+
+    def transform_tag_data(self, data, tag_data, address):
+        """
+        Handle specific exceptions in the formatting of data.
+        """
+        data_comps = []
+        # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
+        render_source = OrderedDict()
+        print("tag_data: ", tag_data)
+        if not tag_data:
+            return data_comps
+        for rel_address in tag_data[address.street_address]:
+            print(rel_address)
+            render_tag_data = {}
+            tags = tag_data[address.street_address][rel_address]
+            linked_path = tags[0] if tags[0] else 'exact'
+            keyvals = tags[1]
+            for key, val in keyvals.items():
+                render_tag_data[key] = {'value': val, 'source': linked_path}
+            render_source.update(render_tag_data)
+        data_comps.append(render_source)
+
+        return data_comps
 
     def transform_exceptions(self, data):
         """
@@ -253,7 +287,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 # # Version with match_type and related_addresses
             #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
                 # # Version without related_addresses
-            match_type = None
             match_type = self.get_address_link_relationships(address=address, base_address=self.base_address) if not self.estimated else 'unmatched'
             # Hack to get a match_type if address isn't in address_link table:
             match_type = 'exact' if not match_type else match_type
@@ -284,27 +317,33 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
                 ('seg_id', address.seg_id),
-                ('zip_code', address.zip_code or None),
-                ('zip_4', address.zip_4 if address.zip_4 and address.zip_4.isdigit() and len(address.zip_4) == 4 else ''),
-                ('usps_bldgfirm', address.usps_bldgfirm),
-                ('usps_type', address.usps_type),
-                ('election_block_id', address.election_block_id),
-                ('election_precinct', address.election_precinct),
-                ('pwd_parcel_id', address.pwd_parcel_id or None),
-                ('dor_parcel_id', address.dor_parcel_id or None),
-                ('li_address_key', address.li_address_key),
-                ('pwd_account_nums', address.pwd_account_nums.split('|') if address.pwd_account_nums else None),
-                ('opa_account_num', address.opa_account_num or None),
-                ('opa_owners', address.opa_owners.split('|') if address.opa_owners else None),
-                ('opa_address', address.opa_address or None),
+                ('zip_code', {'source': '', 'value': ''}),
+                ('zip_4', {'source': '', 'value': ''}),
+                ('usps_bldgfirm', {'source': '', 'value': ''}),
+                ('usps_type', {'source': '', 'value': ''}),
+                ('election_block_id', {'source': '', 'value': ''}),
+                ('election_precinct', {'source': '', 'value': ''}),
+                ('pwd_parcel_id', {'source': '', 'value': ''}),
+                ('dor_parcel_id', {'source': '', 'value': ''}),
+                ('li_address_key', {'source': '', 'value': ''}),
+                ('pwd_account_nums', {'source': '', 'value': ''}),
+                ('opa_account_num', {'source': '', 'value': ''}),
+                ('opa_owners', {'source': '', 'value': ''}),
+                ('opa_address', {'source': '', 'value': ''}),
             ])),
             ('geometry', geom_data),
         ])
 
-        data['properties'].update(sa_data)
+        data_comps = self.transform_tag_data(data, self.tag_data, address)
+        #print(data_comps)
+        if data_comps:
+            for key, val in data_comps[0].items():
+                key_name = tag_field_map[key]
+                data['properties'][key_name] = val
         #data['properties'].update({'related_addresses': related_addresses})
 
         data = self.transform_exceptions(data)
+        data['properties'].update(sa_data)
 
         return data
 
@@ -447,4 +486,138 @@ class ServiceAreaSerializer ():
     def serialize(self):
         data = self.model_to_data()
         data = self.transform_exceptions(data)
+        return self.render(data)
+
+
+class AddressTagSerializer():
+
+    def __init__(self, address=None, tag_data=None, metadata=None, **kwargs):
+        self.tag_data = tag_data
+        self.metadata = metadata
+        self.address = address
+        super().__init__()
+
+    def transform_tag_data(self, data, tag_data):
+        """
+        Handle specific exceptions in the formatting of data.
+        """
+        data_comps = []
+        #print(tag_data)
+        ## VERSION FOR TAGS GROUPED BY LINKED SOURCE
+        # for rel_address in tag_data:
+        #     render_tag_data = {}
+        #     render_source = OrderedDict([
+        #         ('street_address', ''),
+        #         ('match_type', ''),
+        #         ('properties', '')
+        #     ])
+        #     tags = tag_data[rel_address]
+        #     linked_path = tags[0]
+        #     render_source['street_address'] = rel_address
+        #     render_source['match_type'] = linked_path if linked_path else 'exact'
+        #     render_source['properties'] = []
+        #     keyvals = tags[1]
+        #     for key, val in keyvals.items():
+        #         render_tag_data[key] = val
+        #     render_source['properties'].append(render_tag_data)
+        #     data_comps.append(render_source)
+
+        # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
+        render_source = OrderedDict()
+        print("tag_data: ", tag_data)
+        for rel_address in tag_data:
+            render_tag_data = {}
+            # render_source = OrderedDict([
+            #     ('street_address', ''),
+            #     ('match_type', ''),
+            #     ('properties', '')
+            # ])
+            tags = tag_data[rel_address]
+            linked_path = tags[0] if tags[0] else 'exact'
+            #linked_address =
+            # render_source['street_address'] = rel_address
+            # render_source['match_type'] = linked_path if linked_path else 'exact'
+            # render_source['properties'] = []
+            keyvals = tags[1]
+            for key, val in keyvals.items():
+                render_tag_data[key] = {'value': val, 'source': linked_path}
+            render_source.update(render_tag_data)
+        data_comps.append(render_source)
+
+        return data_comps
+
+    def model_to_data(self):
+        data = {}
+        data = OrderedDict([
+            ('type', 'Feature'),
+            ('ais_feature_type', 'address'),
+            ('match_type', ''),
+            ('properties', OrderedDict([
+                ('street_address', self.address.street_address),
+                ('address_low', self.address.address_low),
+                ('address_low_suffix', self.address.address_low_suffix),
+                ('address_low_frac', self.address.address_low_frac),
+                ('address_high', self.address.address_high),
+                ('street_predir', self.address.street_predir),
+                ('street_name', self.address.street_name),
+                ('street_suffix', self.address.street_suffix),
+                ('street_postdir', self.address.street_postdir),
+                ('unit_type', self.address.unit_type),
+                ('unit_num', self.address.unit_num),
+                ('street_full', self.address.street_full),
+
+                #('street_code', self.address.street_code),
+                #('seg_id', self.address.seg_id),
+
+                ('zip_code', {'source': '', 'value': ''}),
+                ('zip_4', {'source': '', 'value': ''}),
+                ('usps_bldgfirm', {'source': '', 'value': ''}),
+                ('usps_type', {'source': '', 'value': ''}),
+                ('election_block_id', {'source': '', 'value': ''}),
+                ('election_precinct', {'source': '', 'value': ''}),
+                ('pwd_parcel_id', {'source': '', 'value': ''}),
+                ('dor_parcel_id', {'source': '', 'value': ''}),
+                ('li_address_key', {'source': '', 'value': ''}),
+                ('pwd_account_nums', {'source': '', 'value': ''}),
+                ('opa_account_num', {'source': '', 'value': ''}),
+                ('opa_owners', {'source': '', 'value': ''}),
+                ('opa_address', {'source': '', 'value': ''}),
+            ])),
+            ('geometry', {}),
+        ])
+
+        #data['properties'].update(sa_data)
+        data.update(self.metadata)
+        print(self.tag_data)
+        data_comps = self.transform_tag_data(data, self.tag_data)
+        #print(data_comps)
+        for key, val in data_comps[0].items():
+            key_name = tag_field_map[key]
+            data['properties'][key_name] = val
+        #data.update({'features': data_comps})
+        return data
+
+    def render(self, data):
+        final_data = []
+        if self.metadata:
+            final_data += sorted(self.metadata.items(),reverse=True)
+        # Render as a feature collection if in a list
+        if isinstance(data, list):
+            # if self.pagination:
+            #     final_data += self.pagination.items()
+            final_data += [
+                ('type', 'FeatureCollection'),
+                ('features', data),
+            ]
+        # Render as a feature otherwise
+        else:
+            final_data += data.items()
+
+        final_data = OrderedDict(final_data)
+
+        return json.dumps(final_data)
+
+    def serialize(self):
+        data = self.model_to_data()
+
         return self.render(data)
