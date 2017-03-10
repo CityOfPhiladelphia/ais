@@ -214,11 +214,9 @@ class AddressJsonSerializer (GeoJSONSerializer):
         data_comps = []
         # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
         render_source = OrderedDict()
-        print("tag_data: ", tag_data)
         if not tag_data:
             return data_comps
         for rel_address in tag_data[address.street_address]:
-            print(rel_address)
             render_tag_data = {}
             tags = tag_data[address.street_address][rel_address]
             linked_path = tags[0] if tags[0] else 'exact'
@@ -256,12 +254,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
-            # for i in address:
-            #     print(i)
 
             address, geocode_response_type, geom = address
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
-            geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])  # Prints george
+            geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
 
         cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated['cascade_geocode_type'] else None
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
@@ -335,12 +331,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
         ])
 
         data_comps = self.transform_tag_data(data, self.tag_data, address)
-        #print(data_comps)
         if data_comps:
             for key, val in data_comps[0].items():
                 key_name = tag_field_map[key]
                 data['properties'][key_name] = val
-        #data['properties'].update({'related_addresses': related_addresses})
 
         data = self.transform_exceptions(data)
         data['properties'].update(sa_data)
@@ -527,17 +521,8 @@ class AddressTagSerializer():
         print("tag_data: ", tag_data)
         for rel_address in tag_data:
             render_tag_data = {}
-            # render_source = OrderedDict([
-            #     ('street_address', ''),
-            #     ('match_type', ''),
-            #     ('properties', '')
-            # ])
             tags = tag_data[rel_address]
             linked_path = tags[0] if tags[0] else 'exact'
-            #linked_address =
-            # render_source['street_address'] = rel_address
-            # render_source['match_type'] = linked_path if linked_path else 'exact'
-            # render_source['properties'] = []
             keyvals = tags[1]
             for key, val in keyvals.items():
                 render_tag_data[key] = {'value': val, 'source': linked_path}

@@ -336,52 +336,40 @@ def addresses(query):
 
         return addresses
 
-    print(filters)
     addresses = query_addresses(filters=filters)
-    print(addresses)
     match_type = 'exact'
-    if not addresses:
-        print(0)
     # if no matches, try base_address
     if not addresses and normalized_address != base_address:
-        print(1)
         filters['unit_num'] == ''
         filters['unit_type'] == ''
         addresses = query_addresses(filters=filters)
         match_type = 'has_base'
     # if no matches, try base_address_no_num_suffix
     if not addresses and base_address != base_address_no_num_suffix:
-        print(2)
         filters['address_low_suffix'] == ''
         filters['address_low_frac'] == ''
         addresses = query_addresses(filters=filters)
         match_type = 'has_base_no_suffix'
 
     if not addresses:
-        print(3)
         error = json_error(404, 'Could not find any addresses matching the query.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
 
     else:
-        print(4)
         paginator = QueryPaginator(addresses)
         # Ensure that we have results
         addresses_count = paginator.collection_size
-        print(addresses_count)
         addresses = addresses.all()
         all_tags = {}
         for address, geocode_type, geom in addresses:
-            print(address.street_address)
             tag_map = {}
             tags = AddressTag.query \
                 .filter_tags_by_address(address.street_address)
             # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
             for tag in tags:
                 linked_address = tag.linked_address if tag.linked_address else address.street_address
-                # print(linked_address)
                 if not linked_address in tag_map:
-                    # tag_map[linked_address] = {}
                     tag_map[linked_address] = [tag.linked_path, {}]
                 tag_map[linked_address][1][tag.key] = tag.value
             all_tags[address.street_address] = tag_map
@@ -415,7 +403,6 @@ def addresses(query):
         tag_data=all_tags,
         match_type=match_type
     )
-    print(all_tags)
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
 
