@@ -361,7 +361,6 @@ def addresses(query):
     addresses = query_addresses(filters=filters)
 
     match_type = 'exact'
-
     # if no matches, try base_address
     if not addresses.all() and normalized_address != base_address and not high_num:
         #print(1)
