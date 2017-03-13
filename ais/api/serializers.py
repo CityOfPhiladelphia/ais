@@ -219,7 +219,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         for rel_address in tag_data[address.street_address]:
             render_tag_data = {}
             tags = tag_data[address.street_address][rel_address]
-            linked_path = tags[0] if tags[0] else 'exact'
+            linked_path = tags[0] if tags[0] else address.street_address
             keyvals = tags[1]
             for key, val in keyvals.items():
                 render_tag_data[key] = {'value': val, 'source': linked_path}
