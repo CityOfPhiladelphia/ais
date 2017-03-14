@@ -300,7 +300,7 @@ A `404 status` is returned when:
 
 
 ## <a name="Additional Resources"></a>Additional Resources
-### <a name="Service Areas"></a>__**Service Areas**__ 
+### <a name="Service Areas"></a>**Service Areas** 
 `\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
 * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,%2039.951661655671955), or
 * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206,%20235887.921013063)
