@@ -3,7 +3,7 @@
 Welcome to the documentation for AIS API Version 1.0. This document explains how to use version 1.0 of the API. 
 * In general, applications supporting user-defined input and interactive maps should use the [/search](#Search) endpoint, which handles a variety of query types by identifying the type and routing to the appropriate endpoint. 
 * The [/owner](#Owner) endpoint can be used to search for addresses by owner name.
-* The [/service_areas](#Service Areas) endpoint can be used for a quick service area lookup by coordinates.
+* The [/service_areas](#ServiceAreas) endpoint can be used for a quick service area lookup by coordinates.
 * Otherwise, individual endpoints may be used to minimize overhead associated with routing. More information about individual endpoints can be obtained by exploring our [swagger at the API root](http://api.phila.gov/ais/v1).    
 
 # <a name="Authentication"></a>Authentication
@@ -108,14 +108,14 @@ Additional query instructions can be sent via querystring parameters, or flags:
  Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. Use the querystring parameter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response:
  * [http://api.phila.gov/ais/v1/search/2401 pennsylvania ave?include_units&opa_only&page=2](http://api.phila.gov/ais/v1/search/2401%20pennsylvania%20ave?include_units&opa_only&page=2)
  
-A pagination object is returned in the [response envelope](#The Envelope) detailing the ```page``` number of the response.
+A pagination object is returned in the [response envelope](#Envelope) detailing the ```page``` number of the response.
 
 
 # <a name="Response Structure & Metadata"></a>Response Structure & Metadata
 
  There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects). 
 
-## <a name="The Envelope"></a>The Envelope
+## <a name="Envelope"></a>The Envelope
 
 The root of the `FeatureCollection` contains:
 * **Metadata** information.
@@ -256,7 +256,7 @@ The root of the `FeatureCollection` contains:
         * `street_postdir`: street post-direction
         * `street_suffix`: street suffix 
 
-## <a name="Status Codes"></a>Status Codes
+## <a name="StatusCodes"></a>Status Codes
 API calls having an identifiable search type return a response with a `200 status`, structured as an envelope wrapping a feature collection of either address or intersection feature type(s), as described above. The 200 status is understood and a status key is not contained in the response. Please note, a 200 response does not validate an address; the returned [match_type](#ais-feature-types) signifies the relationship of the query to the response.
 
 A `404 status` is returned when:
@@ -300,7 +300,7 @@ A `404 status` is returned when:
 
 
 ## <a name="Additional Resources"></a>Additional Resources
-### <a name="Service Areas"></a>**Service Areas** 
+### <a name="ServiceAreas"></a>__**Service Areas**__ 
 `\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
 * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,%2039.951661655671955), or
 * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206,%20235887.921013063)
