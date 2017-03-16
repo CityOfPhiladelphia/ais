@@ -32,7 +32,7 @@ The API endpoints are:
 * [Search](#Search) - http://api.phila.gov/ais/v1/search
 * [Owner](#Owner) - http://api.phila.gov/ais/v1/owner
 * [Addresses](#Addresses) - http://api.phila.gov/ais/v1/addresses
-* [Service Areas](#Service Areas) - http://api.phila.gov/ais/v1/service_areas
+* [Service Areas](#ServiceAreas) - http://api.phila.gov/ais/v1/service_areas
 
 
 ### <a name="Search"></a>**Search**
