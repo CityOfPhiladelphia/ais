@@ -431,11 +431,11 @@ def block(query):
                                     {'query': query, 'normalized': normalized_address})
             return json_response(response=error, status=404)
         else:
-        # error = json_error(404, 'Could not find any address on a block matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
-            return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                      search_type=search_type)
+        error = json_error(404, 'Could not find any address on a block matching query.',
+                           {'query': query, 'normalized': normalized_address})
+        return json_response(response=error, status=404)
+        #     return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+        #                               search_type=search_type)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
