@@ -125,7 +125,7 @@ def unknown_cascade_view(**kwargs):
     address.pwd_account_nums = None
 
     if not seg_id:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
         # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
@@ -138,7 +138,7 @@ def unknown_cascade_view(**kwargs):
     cascadedseg = cascadedseg.first()
 
     if not cascadedseg:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
         # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
@@ -524,7 +524,7 @@ def account(query):
     # Ensure that we have results
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query})
         return json_response(response=error, status=404)
 
@@ -568,7 +568,7 @@ def pwd_parcel(query):
 
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query})
         return json_response(response=error, status=404)
 
@@ -616,7 +616,7 @@ def dor_parcel(query):
 
     addresses_count = paginator.collection_size
     if addresses_count == 0:
-        error = json_error(404, 'Could not find addresses matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query})
         return json_response(response=error, status=404)
 
@@ -800,7 +800,7 @@ def reverse_geocode(query):
         break
 
     if not result:
-        error = json_error(404, 'Could not find AIS object matching query.',
+        error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
