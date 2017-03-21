@@ -13,12 +13,11 @@ from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, ENGINE_SRID
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
 from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, AddressTagSerializer
-from ais.models import ENGINE_SRID
 
 config = app.config
 
@@ -44,11 +43,19 @@ def get_tag_data(addresses):
             .filter_tags_by_address(address.street_address)
         # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
         for tag in tags:
-            linked_address = tag.linked_address if tag.linked_address else address.street_address
-            if not linked_address in tag_map:
-                tag_map[linked_address] = [tag.linked_path, {}]
-            tag_map[linked_address][1][tag.key] = tag.value
+            #linked_address = tag.linked_address if tag.linked_address else address.street_address
+            if not tag.key in tag_map:
+                tag_map[tag.key] = []
+            tag_map[tag.key].append(tag)
+        #     if not linked_address in tag_map:
+        #         tag_map[linked_address] = [tag.linked_path, {}]
+        #     if not tag.key in tag_map[linked_address][1]:
+        #         tag_map[linked_address][1][tag.key] = [tag.value]
+        #     else:
+        #         tag_map[linked_address][1][tag.key].append(tag.value)
+        #     #tag_map[linked_address][1][tag.key] = tag.value
         all_tags[address.street_address] = tag_map
+        #print(all_tags[address.street_address])
 
     return all_tags
 
@@ -61,6 +68,7 @@ def handle_errors(e):
     return json_response(response=error, status=code)
 
 def unmatched_response(**kwargs):
+    print("unmatched_response")
     query = kwargs.get('query')
     parsed = kwargs.get('parsed')
     search_type = kwargs.get('search_type')
@@ -104,7 +112,7 @@ def unmatched_response(**kwargs):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address,
                   'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
-        estimated={'cascade_geocode_type': 'parsed'}
+        estimated='parsed'
     )
     result = serializer.serialize_many(addresses_page)
 
@@ -114,6 +122,7 @@ def unmatched_response(**kwargs):
 @app.route('/unknown/<path:query>')
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
+    # print("unknown_cascade_view")
 
     query = kwargs.get('query')
     normalized_address = kwargs.get('normalized_address')
@@ -161,7 +170,6 @@ def unknown_cascade_view(**kwargs):
 
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
-
     # Check if address low num is within centerline seg full address range with parity:
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
     if not from_num <= address.address_low <= to_num:
@@ -177,7 +185,7 @@ def unknown_cascade_view(**kwargs):
                 '''.format(seg_id=cascadedseg.seg_id)
     true_range_result = db.engine.execute(true_range_stmt).fetchall()
     true_range_result = list(chain(*true_range_result))
-    # # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
+    # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
     if true_range_result and seg_side=="R" and true_range_result[3] is not None and true_range_result[2] is not None:
         side_delta = true_range_result[3] - true_range_result[2]
         cascade_geocode_type = 'true range'
@@ -240,7 +248,7 @@ def unknown_cascade_view(**kwargs):
         srid=srid,
         normalized_address=normalized_address,
         base_address=base_address,
-        estimated={'cascade_geocode_type': cascade_geocode_type},
+        estimated=cascade_geocode_type,
         shape=seg_xy,
         sa_data=sa_data
     )
@@ -330,13 +338,11 @@ def addresses(query):
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
 
-    #SECTION TO QUERY ADDRESS TAG TABLE
-    match_type = ''
     filters = strict_filters.copy()
     filters.update(loose_filters)
 
     def query_addresses(filters):
-        print(filters)
+        #print(filters)
         addresses_query = AddressSummary.query \
                 .filter_by(**filters) \
                 .filter_by_unit_type(unit_type) \
@@ -353,13 +359,12 @@ def addresses(query):
         return addresses
 
     addresses = query_addresses(filters=filters)
-    #print(filters)
+
     match_type = 'exact'
 
-    print(normalized_address, base_address, base_address_no_num_suffix)
     # if no matches, try base_address
     if not addresses.all() and normalized_address != base_address:
-        print(1)
+        #print(1)
         if 'unit_num' in filters:
             filters['unit_num'] = ''
             unit_type = None  # more elegant approach involving filter_by_unit_type preferred
@@ -368,14 +373,17 @@ def addresses(query):
 
     # # If no matches and is ranged address, try non-ranged low_num address
     if not addresses.all() and high_num:
-        print(2)
-        del filters['address_high']
+        #print(2)
+        # TODO: handle overlapping addresses
+        #high_num = None
+        filters.pop('address_high', None)
+        #filters['address_high'] = None
         addresses = query_addresses(filters=filters)
         match_type = 'in_range'
-        #print(filters)
+
     # if no matches, try base_address_no_num_suffix
     if not addresses.all() and base_address != base_address_no_num_suffix:
-        print(3)
+        #print(3)
         if 'address_low_suffix' in filters:
             del filters['address_low_suffix']
         if 'address_low_frac' in filters:
@@ -383,34 +391,10 @@ def addresses(query):
         addresses = query_addresses(filters=filters)
         match_type = 'has_base_no_suffix'
 
-    if not addresses.all():
-        print(4)
-        error = json_error(404, 'Could not find any addresses matching the query.',
-                           {'query': query, 'normalized': normalized_address})
-        return json_response(response=error, status=404)
-
-    else:
-        print(5)
-        paginator = QueryPaginator(addresses)
-        # Ensure that we have results
-        addresses_count = paginator.collection_size
-        #print(addresses_count)
-        addresses = addresses.all()
-        all_tags = {}
-        for address, geocode_type, geom in addresses:
-            tag_map = {}
-            tags = AddressTag.query \
-                .filter_tags_by_address(address.street_address)
-            # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
-            for tag in tags:
-                linked_address = tag.linked_address if tag.linked_address else address.street_address
-                if not linked_address in tag_map:
-                    tag_map[linked_address] = [tag.linked_path, {}]
-                tag_map[linked_address][1][tag.key] = tag.value
-            all_tags[address.street_address] = tag_map
-
-    # Handle unmatched addresses
-    if addresses_count == 0:
+    if not addresses.all(): # TODO: Decide what to do here!
+        # error = json_error(404, 'Could not find any addresses matching the query.',
+        #                    {'query': query, 'normalized': normalized_address})
+        # return json_response(response=error, status=404)
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address})
@@ -418,6 +402,23 @@ def addresses(query):
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
+    else:
+        #print(5)
+        paginator = QueryPaginator(addresses)
+        # Ensure that we have results
+        addresses_count = paginator.collection_size
+
+    # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
+    if addresses_count == 0:
+
+        if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+            error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                    {'query': query, 'normalized': normalized_address})
+            return json_response(response=error, status=404)
+        else: # Try to cascade to street centerline segment
+            return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+
+    all_tags = get_tag_data(addresses)
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
     if error:
@@ -436,7 +437,7 @@ def addresses(query):
         normalized_address=normalized_address,
         base_address=base_address,
         tag_data=all_tags,
-        match_type=match_type
+        match_type=match_type,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -457,7 +458,6 @@ def block(query):
           would go at a new route, like `segment` or `block-face`.
     """
     query = query.strip('/')
-
     parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     normalized_address = parsed['components']['output_address']
@@ -474,6 +474,7 @@ def block(query):
 
     # Match a set of addresses
     block_num = ((address_num // 100) * 100)
+
     filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
         street_predir=parsed['components']['street']['predir'],
@@ -493,31 +494,31 @@ def block(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
+    print(addresses_count)
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',
                                     {'query': query, 'normalized': normalized_address})
             return json_response(response=error, status=404)
         else:
-        # error = json_error(404, 'Could not find any address on a block matching query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
-            return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-                                      search_type=search_type)
+            error = json_error(404, 'Could not find any address on a block matching query.',
+                               {'query': query, 'normalized': normalized_address})
+            return json_response(response=error, status=404)
+        #     return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
+        #                               search_type=search_type)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
     if error:
         return json_response(response=error, status=error['status'])
-
     all_tags = get_tag_data(addresses)
-
     # Serialize the response
     block_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'], tag_data=all_tags,
+        normalized_address=normalized_address,
     )
     result = serializer.serialize_many(block_page)
     #result = serializer.serialize_many(block_page) if addresses_count > 1 else serializer.serialize(next(block_page))
@@ -727,13 +728,9 @@ def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
     '''
-    #query_original = query
     query = query.strip('/')
-
     parsed = PassyunkParser().parse(query)
     search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
-    #normalized = parsed['components']['output_address']
-
     street_1_full = parsed['components']['street']['full']
     street_1_name = parsed['components']['street']['name']
     street_1_predir = parsed['components']['street']['predir']
@@ -801,7 +798,6 @@ def intersection(query):
             .filter_by(**filters)
 
     intersections = intersections.order_by_intersection()
-    # intersections = intersections.distinct(StreetIntersection.street_1_predir, StreetIntersection.street_2_predir)
     intersections = intersections.distinct(StreetIntersection.street_1_full, StreetIntersection.street_2_full)
 
     paginator = QueryPaginator(intersections)
@@ -811,10 +807,6 @@ def intersection(query):
         error = json_error(404, 'Could not find intersection matching query.',
                            {'query': query, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
         return json_response(response=error, status=404)
-        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized,
-        #                           search_type=search_type)
-    # else:
-    #     match_type = 'unmatched'
     else:
         match_type = 'exact'
 
@@ -865,7 +857,7 @@ def reverse_geocode(query):
         SELECT street_address, geocode_type
         from geocode
         where geocode_type IN ({pwd_curb}, {dor_curb}, {true_range}) AND
-        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
+        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 2000)
         ORDER BY
             geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
             length(street_address) asc
@@ -889,7 +881,7 @@ def reverse_geocode(query):
     unit_num = parsed['components']['address_unit']['unit_num']
     high_num = parsed['components']['address']['high_num_full']
     low_num = parsed['components']['address']['low_num']
-    seg_id = parsed['components']['cl_seg_id']
+    # seg_id = parsed['components']['cl_seg_id']
     base_address = parsed['components']['base_address']
 
     loose_filters = NotNoneDict(
@@ -934,7 +926,6 @@ def reverse_geocode(query):
         error = json_error(404, 'Could not find any addresses matching query.',
                            {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
-
 
     #Get tag data
     all_tags=get_tag_data(addresses)
@@ -1083,7 +1074,7 @@ def search(query):
 def base_landing():
     # url = url_for('apidocs', _external=True) + '/index.html'
     url = url_for('base_landing', _external=True) + 'index.html'
-    print(url)
+    #print(url)
     #return redirect(url_for(base_landing, _external=True) + '//apidocs/index.html')
     return redirect(url, code=302)
     # return """

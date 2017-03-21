@@ -1,13 +1,11 @@
 import json
 from collections import OrderedDict
-from ais import util, models
 from geoalchemy2.shape import to_shape
-from geoalchemy2.functions import ST_X, ST_Y
-from shapely import wkt
-from ais import app, app_db as db
-config = app.config
-from itertools import chain
+from ais import app, util #, app_db as db
+from ais.models import Address, ENGINE_SRID
+#from itertools import chain
 
+config = app.config
 tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
 tag_field_map = {}
 for tag in tag_fields:
@@ -37,8 +35,6 @@ class GeoJSONSerializer (BaseSerializer):
         self.srid = srid
         super().__init__()
 
-    # def check_srid(self, srid=None):
-
 
     def render(self, data):
         final_data = []
@@ -53,7 +49,6 @@ class GeoJSONSerializer (BaseSerializer):
                 ('type', 'FeatureCollection'),
                 ('features', data),
             ]
-
         # Render as a feature otherwise
         else:
             final_data += data.items()
@@ -61,110 +56,81 @@ class GeoJSONSerializer (BaseSerializer):
         final_data = OrderedDict(final_data)
         return json.dumps(final_data)
 
-    def get_address_link_relationships(self, address=None, base_address=None, **kwargs):
 
-        address = address
-        base_address = base_address
-        link_stmt = '''
-                        SELECT address_1, relationship, address_2
-                        from address_link
-                        where address_1 = '{street_address}' or address_2 = '{base_address}'
-                    '''.format(street_address=address.street_address, base_address=base_address)
-        link_addresses = db.engine.execute(link_stmt).fetchall()
+    def get_address_response_relationships(self, address=None, **kwargs):
 
+        #print("normalized: ", self.normalized_address)
+        ref_address = Address(self.normalized_address)
+        address = Address(address.street_address)
+        ref_base_address = ' '.join([ref_address.address_full, ref_address.street_full])
+        ref_base_address_no_suffix = '{} {}'.format(ref_address.address_full_num, ref_address.street_full)
+        base_address = ' '.join([address.address_full, address.street_full])
+        base_address_no_suffix = '{} {}'.format(address.address_full_num, address.street_full)
         match_type = None
-        related_addresses = []
 
-        query_address_1_match_map = {
-            'has base': 'exact',
-            'matches unit': 'exact',
-            'has generic unit': 'exact',
-            'in range': 'exact',
-            'overlaps': 'overlaps'
-        }
-        query_address_2_match_map = {
-            'has base': 'base_address',
-            'matches unit': 'unit_sibling',
-            'has generic unit': 'unit_sibling',
-            'in range': 'range_child',
-            'overlaps': 'overlaps'
-        }
-        unit_address_1_match_map = {
-            'has base': 'unit_child',
-            'matches unit': 'unit_sibling',
-            'has generic unit': 'unit_sibling',
-            'in range': 'exact',
-            'overlaps': 'overlaps'
-        }
-        unit_address_2_match_map = {
-            'has base': 'unit_sibling',
-            'matches unit': 'unit_sibling',
-            'has generic unit': 'unit_sibling',
-            'in range': 'range_child',
-            'overlaps': 'overlaps'
-        }
         street_address_variations = [address.street_address,
                                      address.street_address.replace(address.unit_type, "APT"),
                                      address.street_address.replace(address.unit_type, "UNIT"),
-                                     address.street_address.replace(address.unit_type, "#")]
+                                     address.street_address.replace(address.unit_type, "#")] if address.unit_type else []
 
-
-        # if address.street_address == self.normalized_address:
-        # Add OR condition for unit type variations (i.e. address 337 S CAMAC ST APT 2R -> # 2R
-        # if address.street_address == self.normalized_address or \
-        #                 address.street_address.replace("#", "APT") == self.normalized_address or \
-        #                 address.street_address.replace("#", "UNIT") == self.normalized_address:
-        if self.normalized_address in street_address_variations:
-            #print(0)
-            # Base query response address (not joined with flag(s))
-            for link_address in link_addresses:
-                match_type = None
-                related_address = {}
-                address_1 = link_address['address_1']
-                address_2 = link_address['address_2']
-                relationship = link_address['relationship']
-
-                # if address_1 == address.street_address:
-                if address_1 in street_address_variations:
-                    #print(1, link_address)
-                    match_type = query_address_1_match_map[relationship]
-                    #related_address[link_address['address_2']] = relationship
-
-                # elif address_2 == address.street_address:
-                elif address_2 in street_address_variations:
-                    #print(2, link_address)
-                    # if address.street_address == base_address:
-                    if base_address in street_address_variations:
-                        #print(3, link_address)
-                        match_type = query_address_1_match_map[relationship]
-                        #related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
+        #print(address.street_address, ref_address.street_address)
+        if address.street_address == ref_address.street_address:
+            #print(0, ': ', address.street_address)
+            # Address is same as reference address
+            match_type = self.match_type
+        elif address.unit_type not in ('', None):
+            #print(1, ': ', address.street_address)
+            # Address is different from ref address and has unit type
+            if address.address_high is None:
+                # Address also doesn't have a high num
+                if ref_address.unit_type is not None:
+                    # Reference address has unit type
+                    if ref_address.unit_num == address.unit_num:
+                        # Reference and address have same unit num
+                        match_type = 'unit_sibling' #TODO: verify
+                        if ref_address.street_address in street_address_variations:
+                            # Unit type is a generic unit type
+                            match_type = 'generic_unit_sibling'
+                    elif base_address == ref_base_address:
+                        match_type = 'has_base_unit_child'
+                elif ref_address.address_high is not None:
+                    #print('1b', ': ', address.street_address)
+                    # Ref address has no unit type but has high_num:
+                    if ref_address.unit_type is not None:
+                        # Ref address has unit type
+                        match_type = 'in_range'
                     else:
-                        #print(4, link_address)
-                        match_type = query_address_1_match_map[relationship]
-                        #related_address[link_address['address_1']] = query_address_2_match_map[relationship]
-
-                #related_addresses.append(related_address)
-
+                        match_type = 'in_range_unit_child'
+                else:
+                    # ref address has no unit type or address high num
+                    match_type = 'unit_child'
+            else:
+                # Address is different from ref address and has unit type and high num (is ranged unit address)
+                #print(2, ': ', address.street_address)
+                if ref_address.unit_type is not None:
+                    # Unit type is a generic unit type
+                    if ref_address.street_address in street_address_variations:
+                        if ref_address.address_high is None:
+                            match_type = 'unit_sibling'
+                    else:
+                        pass
+                else:
+                    match_type = 'range_parent'
         else:
-            #print(00)
-            # include_units flag joined child_unit addresses
-            for link_address in link_addresses:
-                related_address = {}
-                address_1 = link_address['address_1']
-                address_2 = link_address['address_2']
-                relationship = link_address['relationship']
-
-                # if address_1 == address.street_address:
-                if address_1 in street_address_variations:
-                    #print(5, link_address)
-                    match_type = unit_address_1_match_map[relationship]
-                    related_address[link_address['address_2']] = query_address_2_match_map[relationship]
-                    #related_addresses.append(related_address)
-                # elif address_2 == base_address and address.street_address != self.normalized_address:
-                elif address_2 == base_address and self.normalized_address not in street_address_variations:
-                    #print(6, link_address)
-                    related_address[link_address['address_1']] = unit_address_2_match_map[relationship]
-                    #related_addresses.append(related_address)
+            print(address.unit_type)
+            # Address is different from ref address but has no unit type
+            if address.address_high:
+                if not ref_address.address_high:
+                    match_type = 'range_parent'
+                else:
+                    if not ref_address.unit_type:
+                        match_type = 'overlaps'
+                    else:
+                        match_type = 'has_base'
+            elif ref_address.address_high:
+                 match_type = 'in_range'
+            else:
+                match_type = 'has_base'
 
         return match_type#, related_addresses
 
@@ -172,7 +138,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, pcomps=None, sa_data=None, estimated=None, match_type=None, **kwargs):
+    def __init__(self, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, requestargs=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -189,15 +155,16 @@ class AddressJsonSerializer (GeoJSONSerializer):
         self.sa_data = sa_data
         self.match_type = match_type
         self.tag_data = tag_data
+
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
         return util.geom_to_shape(
-            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+            geom, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def project_shape(self, shape):
         return util.project_shape(
-            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+            shape, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def shape_to_geodict(self, shape):
         from shapely.geometry import mapping
@@ -212,27 +179,31 @@ class AddressJsonSerializer (GeoJSONSerializer):
         Handle specific exceptions in the formatting of data.
         """
         data_comps = []
-        # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
         render_source = OrderedDict()
         if not tag_data:
             return data_comps
-        for rel_address in tag_data[address.street_address]:
-            render_tag_data = {}
-            tags = tag_data[address.street_address][rel_address]
-            linked_path = tags[0] if tags[0] else address.street_address
-            keyvals = tags[1]
-            for key, val in keyvals.items():
-                render_tag_data[key] = {'value': val, 'source': linked_path}
-            render_source.update(render_tag_data)
-        data_comps.append(render_source)
-
+        # If 'source_details' query flag, then return tags as lists of dicts with source and value
+        if 'source_details' in self.metadata.get('search_params'):
+            for key in tag_data[address.street_address]:
+                if not key in render_source:
+                    render_source[key] = []
+                for val in tag_data[address.street_address].get(key):
+                    render_source[key].append({'source': val.linked_path if val.linked_path else address.street_address, 'value': val.value})
+            data_comps.append(render_source)
+        # If no 'source_details' in request args return tags as key (pipe delimited) value pairs
+        else:
+            for key in tag_data[address.street_address]:
+                if not key in render_source:
+                    render_source[key] = None
+                for val in tag_data[address.street_address].get(key):
+                    render_source[key] = render_source[key] + '|' + val.value if render_source[key] else val.value
+            data_comps.append(render_source)
         return data_comps
 
     def transform_exceptions(self, data):
         """
         Handle specific exceptions in the formatting of data.
         """
-
         # Convert the recycling diversion rate to a percentage with fixed
         # precision.
         try:
@@ -246,12 +217,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
     def model_to_data(self, address):
 
         from collections import Iterable
-
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable object
-
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
 
@@ -259,11 +228,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
 
-        cascade_geocode_type = self.estimated['cascade_geocode_type'] if self.estimated and self.estimated['cascade_geocode_type'] else None
+        #cascade_geocode_type = self.estimated if self.estimated else None
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
-            if not self.estimated['cascade_geocode_type'] else {'geocode_type': self.estimated['cascade_geocode_type']}
+            if not self.estimated else {'geocode_type': self.estimated}
 
-        if cascade_geocode_type != 'parsed':
+        if self.estimated != 'parsed':
             shape = self.geom_to_shape(geom) if not shape else shape
             geom_data = self.shape_to_geodict(shape)
             geom_data.update(geom_type)
@@ -279,17 +248,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
             else:
                 sa_data = self.sa_data
 
-            # # Get address link relationships
-                # # Version with match_type and related_addresses
-            #match_type, related_addresses = self.get_address_link_relationships(address.street_address, self.base_address)
-                # # Version without related_addresses
-            match_type = self.get_address_link_relationships(address=address, base_address=self.base_address) if not self.estimated else 'unmatched'
-            # Hack to get a match_type if address isn't in address_link table:
-            match_type = 'exact' if not match_type else match_type
-            match_type = self.match_type if self.match_type else match_type
+            match_type = self.get_address_response_relationships(address=address) if not self.estimated else 'unmatched'
 
         else:
-            match_type = cascade_geocode_type
+            match_type = self.estimated
             geom_data = {'geocode_type': None, 'type': None, 'coordinates': None}
             sa_data = {}
 
@@ -313,19 +275,19 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
                 ('seg_id', address.seg_id),
-                ('zip_code', {'source': '', 'value': ''}),
-                ('zip_4', {'source': '', 'value': ''}),
-                ('usps_bldgfirm', {'source': '', 'value': ''}),
-                ('usps_type', {'source': '', 'value': ''}),
-                ('election_block_id', {'source': '', 'value': ''}),
-                ('election_precinct', {'source': '', 'value': ''}),
-                ('pwd_parcel_id', {'source': '', 'value': ''}),
-                ('dor_parcel_id', {'source': '', 'value': ''}),
-                ('li_address_key', {'source': '', 'value': ''}),
-                ('pwd_account_nums', {'source': '', 'value': ''}),
-                ('opa_account_num', {'source': '', 'value': ''}),
-                ('opa_owners', {'source': '', 'value': ''}),
-                ('opa_address', {'source': '', 'value': ''}),
+                ('zip_code', None),
+                ('zip_4', None),
+                ('usps_bldgfirm', None),
+                ('usps_type', None),
+                ('election_block_id', None),
+                ('election_precinct', None),
+                ('pwd_parcel_id', None),
+                ('dor_parcel_id', None),
+                ('li_address_key', None),
+                ('pwd_account_nums', None),
+                ('opa_account_num', None),
+                ('opa_owners', None),
+                ('opa_address', None),
             ])),
             ('geometry', geom_data),
         ])
@@ -333,30 +295,30 @@ class AddressJsonSerializer (GeoJSONSerializer):
         data_comps = self.transform_tag_data(data, self.tag_data, address)
         if data_comps:
             for key, val in data_comps[0].items():
+                if key in self.excluded_tags:
+                    continue
                 key_name = tag_field_map[key]
                 data['properties'][key_name] = val
 
-        data = self.transform_exceptions(data)
         data['properties'].update(sa_data)
+        data = self.transform_exceptions(data)
 
         return data
 
 
 class IntersectionJsonSerializer (GeoJSONSerializer):
 
-    def __init__(self, geom_type='centroid', geom_source=None, match_type=None, **kwargs):
-        #self.geom_type = 'Point'
-        #self.geom_source = geom_source
+    def __init__(self, match_type=None, **kwargs):
         self.match_type = match_type
         super().__init__(**kwargs)
 
     def geom_to_shape(self, geom):
         return util.geom_to_shape(
-            geom, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+            geom, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def project_shape(self, shape):
         return util.project_shape(
-            shape, from_srid=models.ENGINE_SRID, to_srid=self.srid)
+            shape, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def shape_to_geodict(self, shape):
         from shapely.geometry import mapping
@@ -381,7 +343,6 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
                 ('type', None),
                 ('coordinates', None)
             ])
-
         # Build the intersection feature, then attach properties
         #num_ints = intersection.int_ids.count('|') + 1
         data = OrderedDict([
@@ -518,7 +479,7 @@ class AddressTagSerializer():
 
         # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
         render_source = OrderedDict()
-        print("tag_data: ", tag_data)
+        #print("tag_data: ", tag_data)
         for rel_address in tag_data:
             render_tag_data = {}
             tags = tag_data[rel_address]
@@ -573,7 +534,7 @@ class AddressTagSerializer():
 
         #data['properties'].update(sa_data)
         data.update(self.metadata)
-        print(self.tag_data)
+        #print(self.tag_data)
         data_comps = self.transform_tag_data(data, self.tag_data)
         #print(data_comps)
         for key, val in data_comps[0].items():
