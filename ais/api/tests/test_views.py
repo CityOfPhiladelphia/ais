@@ -233,7 +233,8 @@ def test_nonsynonymous_unit_types_not_used(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert (match_type == 'unmatched')
+    # assert (match_type == 'unmatched')
+    assert (match_type == 'has_base')
 
 def test_filter_for_only_opa_addresses(client):
     response = client.get('/addresses/1234 Market St?opa_only&include_units')
@@ -453,6 +454,32 @@ def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
 def test_address_without_seg_match_returns_404(client):
     response = client.get('/search/2100 SITTY TAWK AVE')
     assert_status(response, 404)
+
+
+# TESTS for LINKED TAGS CHANGES
+
+def test_addresses_with_unmatching_unit_num_resolves_to_base_address_match(client):
+    response = client.get('/search/1769 frankford ave apt 2000')
+    assert_status(response, 200)
+
+def test_addresses_with_unmatching_unit_num_resolves_to_base_address_match_with_include_units(client):
+    response = client.get('/search/1769 frankford ave apt 2000?include_units')
+    data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
+    assert data['total_size'] == 7
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1769 FRANKFORD AVE'
+    assert features[1]['properties']['street_address'] == '1769 FRANKFORD AVE APT 1'
+
+def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num(client):
+    response = client.get('/search/1769-75 frankford ave')
+    assert_status(response, 200)
+
+def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num_with_include_units(client):
+    pass
+
+def test_addresses_with_unit_and_unmatching_high_num_resolves_to_match_with_no_high_num(client):
+    pass
 
 
 
