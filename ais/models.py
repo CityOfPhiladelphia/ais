@@ -811,19 +811,15 @@ class AddressSummaryQuery(BaseQuery):
             non_child_addresses = self\
                 .with_entities(AddressSummary.street_address)\
                 .filter(False)
-            print("range")
         # If the query is not for ranged addresses, handle the case where more
         # than one address may have been matched (e.g., the N and S variants
         # along a street), but some are children of ranged addresses and some
         # are not.
         else:
-            print("not range")
             range_parent_addresses = self\
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(AddressLink.relationship == 'in range')\
                 .with_entities(AddressLink.address_2)
-            for range_parent_address in range_parent_addresses.all():
-                print("range_parent_address: ", range_parent_address)
 
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
