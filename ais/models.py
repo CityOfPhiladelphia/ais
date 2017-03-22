@@ -723,6 +723,51 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst())
 
+    def sort_by_source_address_from_search_type(self, search_type, normalized_query):
+        search_type_sort_map = {
+            # 'address': addresses,
+            # 'intersection_addr': intersection,
+            # 'opa_account': account,
+            # 'mapreg': dor_parcel,
+            # 'block': block,
+            # 'latlon': reverse_geocode,
+            # 'stateplane': reverse_geocode,
+            # 'street': street,
+            'pwd_parcel_id': {'orig_tab': 'PwdParcel', 'asm_key_field': 'pwd_parcel_id',
+                              'orig_tab_key_field': 'parcel_id',
+                              'orig_tab_addr_field': 'street_address'}
+        }
+        orig_tab = search_type_sort_map[search_type]['orig_tab']
+        orig_tab_key_field = search_type_sort_map[search_type]['orig_tab_key_field']
+        orig_tab_addr_field = search_type_sort_map[search_type]['orig_tab_addr_field']
+        asm_key_field = search_type_sort_map[search_type]['asm_key_field']
+
+        sort =  self.join(PwdParcel, str(PwdParcel.parcel_id) == AddressSummary.pwd_parcel_id).order_by(PwdParcel.street_address == AddressSummary.street_address)
+        #print(sort)
+        return self
+        # return self.join('{orig_tab}, {orig_tab}.{orig_tab_key_field}=={AddressSummary}.{asm_key_field}'.format(orig_tab=orig_tab, orig_tab_key_field=str(orig_tab_key_field), AddressSummary=AddressSummary, asm_key_field=asm_key_field))\
+        #         .order_by('{orig_tab}.{orig_tab_addr_field}'.format(orig_tab=orig_tab, orig_tab_addr_field=orig_tab_addr_field) == AddressSummary.street_address)
+
+
+        # )
+        # sort_stmt = '''
+        #             select
+        #                 a.{asm_key_field}, a.street_address, p.{orig_tab_addr_field},
+        #                 (a.street_address = p.{orig_tab_addr_field}) as is_it
+        #             from address_summary as a
+        #             join {orig_tab} as p
+        #                 on p.{orig_tab_key_field} = a.{asm_key_field}
+        #             where
+        #             p.{orig_tab_key_field} = {normalized_query}
+        #             order by a.street_address = p.{orig_tab_addr_field} desc
+        #         '''.format(asm_key_field=search_type_sort_map[search_type]['asm_key_field'],
+        #                    orig_tab_addr_field=str(search_type_sort_map[search_type]['orig_tab_addr_field']),
+        #                    orig_tab=search_type_sort_map[search_type]['orig_tab'],
+        #                    orig_tab_key_field=search_type_sort_map[search_type]['orig_tab_key_field'],
+        #                    normalized_query=normalized_query)
+        #
+        # return db.session(sort_stmt)
+
     def filter_by_base_address(self, base_address):
         return self.filter(AddressSummary.street_address == base_address)
 
@@ -766,16 +811,19 @@ class AddressSummaryQuery(BaseQuery):
             non_child_addresses = self\
                 .with_entities(AddressSummary.street_address)\
                 .filter(False)
-
+            print("range")
         # If the query is not for ranged addresses, handle the case where more
         # than one address may have been matched (e.g., the N and S variants
         # along a street), but some are children of ranged addresses and some
         # are not.
         else:
+            print("not range")
             range_parent_addresses = self\
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(AddressLink.relationship == 'in range')\
                 .with_entities(AddressLink.address_2)
+            for range_parent_address in range_parent_addresses.all():
+                print("range_parent_address: ", range_parent_address)
 
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
@@ -792,19 +840,25 @@ class AddressSummaryQuery(BaseQuery):
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
 
-        # get geom for each child
+        # get unit children in-range children of query address
         range_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter(AddressLink.address_2.in_(range_child_addresses.subquery()))
 
-        #get geom from parent
+        # get unit children for query address
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
 
-        return self.union(range_child_units).union(non_child_units)
+        # get unit children for range parent addresses
+        range_parent_units = AddressSummary.query \
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
+            .filter(AddressLink.relationship == 'has base') \
+            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
+
+        return self.union(range_child_units).union(non_child_units).union(range_parent_units)
 
     def exclude_children(self, should_exclude=True):
         if not should_exclude:
