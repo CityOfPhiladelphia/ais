@@ -68,7 +68,7 @@ def handle_errors(e):
     return json_response(response=error, status=code)
 
 def unmatched_response(**kwargs):
-    print("unmatched_response")
+    #print("unmatched_response")
     query = kwargs.get('query')
     parsed = kwargs.get('parsed')
     search_type = kwargs.get('search_type')
@@ -402,11 +402,9 @@ def addresses(query):
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
-    else:
-        #print(5)
-        paginator = QueryPaginator(addresses)
-        # Ensure that we have results
-        addresses_count = paginator.collection_size
+    paginator = QueryPaginator(addresses)
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
 
     # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
     if addresses_count == 0:
@@ -438,6 +436,7 @@ def addresses(query):
         base_address=base_address,
         tag_data=all_tags,
         match_type=match_type,
+        ref_addr=normalized_address,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -459,7 +458,8 @@ def block(query):
     """
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
-    search_type = parsed['type']
+    # search_type = parsed['type']
+    search_type = 'block'
     normalized_address = parsed['components']['output_address']
 
     # Ensure that we can get a valid address number
@@ -494,7 +494,7 @@ def block(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
-    print(addresses_count)
+    #print(addresses_count)
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',
@@ -590,7 +590,7 @@ def account(query):
         .filter(AddressSummary.opa_account_num==query)\
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
-        .order_by_address()
+        .sort_by_source_address_from_search_type(search_type)
 
     paginator = QueryPaginator(addresses)
 
@@ -610,7 +610,19 @@ def account(query):
     # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
 
-    all_tags = get_tag_data(addresses)
+    # # Get reference address from source table to generate match_types
+    # ref_addr_stmt = '''
+    #     select street_address
+    #     from opa_property
+    #     where account_num = '{query}'
+    # '''.format(query=normalized)
+    # ref_addr_query = db.engine.execute(ref_addr_stmt)
+    # ref_addr = None
+    # for result in ref_addr_query:
+    #     ref_addr = result[0]
+    #     break
+
+    all_tags = get_tag_data(addresses) #if ref_addr else None
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -618,6 +630,7 @@ def account(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+#        ref_addr=ref_addr,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -632,16 +645,19 @@ def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
     """
+    search_type = 'pwd_parcel_id'
     addresses = AddressSummary.query\
         .filter(AddressSummary.pwd_parcel_id==query) \
+        .sort_by_source_address_from_search_type(search_type)\
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
-        .order_by_address()
+        #.order_by_address()
 
-    addresses = addresses.order_by_address()
+    # addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
 
     addresses_count = paginator.collection_size
+    print(addresses_count)
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
                            {'query': query})
@@ -656,14 +672,29 @@ def pwd_parcel(query):
     # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
 
-    all_tags = get_tag_data(addresses)
+    # # Get reference address from source table to generate match_types
+    # ref_addr_stmt = '''
+    #     select street_address
+    #     from pwd_parcel
+    #     where parcel_id = {query}
+    # '''.format(query=query)
+    # ref_addr_query = db.engine.execute(ref_addr_stmt)
+    # ref_addr = None
+    # for result in ref_addr_query:
+    #     ref_addr = result[0]
+    #     break
+
+    # Get tag data
+    all_tags = get_tag_data(addresses) #if ref_addr else None
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': 'pwd_parcel_id', 'query': query, 'normalized': query, 'search_params': request.args, 'crs': crs},
+        metadata={'search_type': search_type, 'query': query, 'normalized': query, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        #ref_addr=ref_addr,
+        # match_type='exact'
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
@@ -686,7 +717,7 @@ def dor_parcel(query):
         .filter(AddressSummary.dor_parcel_id==normalized_id) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
-        .order_by_address()
+        .sort_by_source_address_from_search_type(search_type)
 
     addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
@@ -706,6 +737,18 @@ def dor_parcel(query):
     # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
 
+    # # Get reference address from source table to generate match_types
+    # ref_addr_stmt = '''
+    #         select street_address
+    #         from dor_parcel
+    #         where parcel_id = '{query}'
+    #     '''.format(query=normalized_id)
+    # ref_addr_query = db.engine.execute(ref_addr_stmt)
+    # ref_addr = None
+    # for result in ref_addr_query:
+    #     ref_addr = result[0]
+    #     break
+
     #Get tag data
     all_tags = get_tag_data(addresses)
 
@@ -715,6 +758,7 @@ def dor_parcel(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        #ref_addr=ref_addr,
     )
     result = serializer.serialize_many(addresses_page)
     #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))

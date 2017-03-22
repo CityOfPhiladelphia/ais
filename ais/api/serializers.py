@@ -60,7 +60,8 @@ class GeoJSONSerializer (BaseSerializer):
     def get_address_response_relationships(self, address=None, **kwargs):
 
         #print("normalized: ", self.normalized_address)
-        ref_address = Address(self.normalized_address)
+        #print(self.ref_addr)
+        ref_address = Address(self.ref_addr)
         address = Address(address.street_address)
         ref_base_address = ' '.join([ref_address.address_full, ref_address.street_full])
         ref_base_address_no_suffix = '{} {}'.format(ref_address.address_full_num, ref_address.street_full)
@@ -73,7 +74,7 @@ class GeoJSONSerializer (BaseSerializer):
                                      address.street_address.replace(address.unit_type, "UNIT"),
                                      address.street_address.replace(address.unit_type, "#")] if address.unit_type else []
 
-        #print(address.street_address, ref_address.street_address)
+        #print(address.unit_type, ref_address.unit_type)
         if address.street_address == ref_address.street_address:
             #print(0, ': ', address.street_address)
             # Address is same as reference address
@@ -90,7 +91,8 @@ class GeoJSONSerializer (BaseSerializer):
                         match_type = 'unit_sibling' #TODO: verify
                         if ref_address.street_address in street_address_variations:
                             # Unit type is a generic unit type
-                            match_type = 'generic_unit_sibling'
+                            # match_type = 'generic_unit_sibling'
+                            match_type = 'exact'
                     elif base_address == ref_base_address:
                         match_type = 'has_base_unit_child'
                 elif ref_address.address_high is not None:
@@ -112,10 +114,16 @@ class GeoJSONSerializer (BaseSerializer):
                     if ref_address.street_address in street_address_variations:
                         if ref_address.address_high is None:
                             match_type = 'unit_sibling'
+                        else:
+                            match_type = 'unit_child'
                     else:
                         pass
                 else:
-                    match_type = 'range_parent'
+                    if ref_address.address_high is None:
+                        match_type = 'range_parent unit_child'
+                    else:
+                        match_type = 'unit_child'
+                    # match_type = 'range_parent'
         else:
             print(address.unit_type)
             # Address is different from ref address but has no unit type
@@ -138,7 +146,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, requestargs=None, **kwargs):
+    def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, requestargs=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -155,6 +163,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         self.sa_data = sa_data
         self.match_type = match_type
         self.tag_data = tag_data
+        self.ref_addr = ref_addr
 
         super().__init__(**kwargs)
 
@@ -197,6 +206,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     render_source[key] = None
                 for val in tag_data[address.street_address].get(key):
                     render_source[key] = render_source[key] + '|' + val.value if render_source[key] else val.value
+                    # render_source[key] = [render_source[key], val.value] if render_source[key] else val.value
             data_comps.append(render_source)
         return data_comps
 
@@ -247,8 +257,19 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     sa_data[col.name] = getattr(address.service_areas, col.name)
             else:
                 sa_data = self.sa_data
-
-            match_type = self.get_address_response_relationships(address=address) if not self.estimated else 'unmatched'
+            if self.metadata['search_type'] == 'address':
+                match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
+            else:
+                match_type_key = {
+                    'block': 'on block',
+                    'owner': 'contains query string',
+                    'coordinates': 'exact location',
+                    'stateplane': 'exact location',
+                    'mapreg': 'exact_key',
+                    'pwd_parcel_id': 'exact_key',
+                    'opa_account': 'exact_key'
+                }
+                match_type = match_type_key[self.metadata['search_type']]
 
         else:
             match_type = self.estimated

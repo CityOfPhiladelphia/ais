@@ -1,14 +1,14 @@
-import copy
+#import copy
 import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, cast, String, desc
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
 from ais.util import *
-from pprint import pprint
+#from pprint import pprint
 
 Parser = app.config['PARSER']
 parser = Parser()
@@ -723,28 +723,46 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst())
 
-    def sort_by_source_address_from_search_type(self, search_type, normalized_query):
-        search_type_sort_map = {
-            # 'address': addresses,
-            # 'intersection_addr': intersection,
-            # 'opa_account': account,
-            # 'mapreg': dor_parcel,
-            # 'block': block,
-            # 'latlon': reverse_geocode,
-            # 'stateplane': reverse_geocode,
-            # 'street': street,
-            'pwd_parcel_id': {'orig_tab': 'PwdParcel', 'asm_key_field': 'pwd_parcel_id',
-                              'orig_tab_key_field': 'parcel_id',
-                              'orig_tab_addr_field': 'street_address'}
-        }
-        orig_tab = search_type_sort_map[search_type]['orig_tab']
-        orig_tab_key_field = search_type_sort_map[search_type]['orig_tab_key_field']
-        orig_tab_addr_field = search_type_sort_map[search_type]['orig_tab_addr_field']
-        asm_key_field = search_type_sort_map[search_type]['asm_key_field']
+    def sort_by_source_address_from_search_type(self, search_type):
 
-        sort =  self.join(PwdParcel, str(PwdParcel.parcel_id) == AddressSummary.pwd_parcel_id).order_by(PwdParcel.street_address == AddressSummary.street_address)
-        #print(sort)
-        return self
+        if search_type == 'pwd_parcel_id':
+            sort = self.join(PwdParcel, cast(PwdParcel.parcel_id, String) == AddressSummary.pwd_parcel_id).order_by(
+                desc(PwdParcel.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high,
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst()
+                )
+        elif search_type == 'account':
+            sort = self.join(OpaProperty, cast(OpaProperty.account_num, String) == AddressSummary.opa_account_num).order_by(
+                desc(OpaProperty.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high,
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst()
+            )
+        elif search_type == 'mapreg':
+            sort = self.join(DorParcel, cast(DorParcel.parcel_id, String) == AddressSummary.dor_parcel_id).order_by(
+                desc(DorParcel.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high,
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst()
+                )
+
+        return sort
         # return self.join('{orig_tab}, {orig_tab}.{orig_tab_key_field}=={AddressSummary}.{asm_key_field}'.format(orig_tab=orig_tab, orig_tab_key_field=str(orig_tab_key_field), AddressSummary=AddressSummary, asm_key_field=asm_key_field))\
         #         .order_by('{orig_tab}.{orig_tab_addr_field}'.format(orig_tab=orig_tab, orig_tab_addr_field=orig_tab_addr_field) == AddressSummary.street_address)
 
