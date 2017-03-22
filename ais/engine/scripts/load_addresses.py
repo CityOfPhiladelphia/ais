@@ -541,7 +541,7 @@ for i, address in enumerate(addresses):
                     print('Could not parse new address: {}'.format(child_address))
                     continue
 
-        # Overlap link TODO: what to do with ranged addresses with units? - now handled below
+        # Overlap link
         if street_full in street_range_map:
             ranges_on_street = street_range_map[street_full]
             for range_on_street in ranges_on_street:
