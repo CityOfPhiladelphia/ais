@@ -763,28 +763,6 @@ class AddressSummaryQuery(BaseQuery):
                 )
 
         return sort
-        # return self.join('{orig_tab}, {orig_tab}.{orig_tab_key_field}=={AddressSummary}.{asm_key_field}'.format(orig_tab=orig_tab, orig_tab_key_field=str(orig_tab_key_field), AddressSummary=AddressSummary, asm_key_field=asm_key_field))\
-        #         .order_by('{orig_tab}.{orig_tab_addr_field}'.format(orig_tab=orig_tab, orig_tab_addr_field=orig_tab_addr_field) == AddressSummary.street_address)
-
-
-        # )
-        # sort_stmt = '''
-        #             select
-        #                 a.{asm_key_field}, a.street_address, p.{orig_tab_addr_field},
-        #                 (a.street_address = p.{orig_tab_addr_field}) as is_it
-        #             from address_summary as a
-        #             join {orig_tab} as p
-        #                 on p.{orig_tab_key_field} = a.{asm_key_field}
-        #             where
-        #             p.{orig_tab_key_field} = {normalized_query}
-        #             order by a.street_address = p.{orig_tab_addr_field} desc
-        #         '''.format(asm_key_field=search_type_sort_map[search_type]['asm_key_field'],
-        #                    orig_tab_addr_field=str(search_type_sort_map[search_type]['orig_tab_addr_field']),
-        #                    orig_tab=search_type_sort_map[search_type]['orig_tab'],
-        #                    orig_tab_key_field=search_type_sort_map[search_type]['orig_tab_key_field'],
-        #                    normalized_query=normalized_query)
-        #
-        # return db.session(sort_stmt)
 
     def filter_by_base_address(self, base_address):
         return self.filter(AddressSummary.street_address == base_address)
