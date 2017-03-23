@@ -862,6 +862,7 @@ class AddressSummaryQuery(BaseQuery):
                 # Get rid of anything with a relationship of 'in range',
                 # 'has generic unit', or 'matches unit'.
                 (AddressLink.relationship == 'has base') |
+                (AddressLink.relationship == 'overlaps') |
                 (AddressLink.relationship == None)
             )
 
