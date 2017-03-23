@@ -725,6 +725,8 @@ class AddressSummaryQuery(BaseQuery):
 
     def sort_by_source_address_from_search_type(self, search_type):
 
+        sort = self
+
         if search_type == 'pwd_parcel_id':
             sort = self.join(PwdParcel, cast(PwdParcel.parcel_id, String) == AddressSummary.pwd_parcel_id).order_by(
                 desc(PwdParcel.street_address == AddressSummary.street_address),
