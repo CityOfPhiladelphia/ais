@@ -332,7 +332,7 @@ def test_block_can_exclude_non_opa(client):
             AND address_summary.address_low < 1900
 
             AND address_summary.opa_account_num != ''
-            AND (address_link.relationship = 'has base' OR address_link.relationship IS NULL)
+            AND (address_link.relationship = 'has base' OR address_link.relationship = 'overlaps' OR address_link.relationship IS NULL)
             AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
           ) AS block_addresses
     '''
