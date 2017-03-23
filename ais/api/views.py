@@ -648,16 +648,16 @@ def pwd_parcel(query):
     search_type = 'pwd_parcel_id'
     addresses = AddressSummary.query\
         .filter(AddressSummary.pwd_parcel_id==query) \
-        .sort_by_source_address_from_search_type(search_type)\
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
+        .sort_by_source_address_from_search_type(search_type)
         #.order_by_address()
 
     # addresses = addresses.order_by_address()
     paginator = QueryPaginator(addresses)
 
     addresses_count = paginator.collection_size
-    print(addresses_count)
+    #print(addresses_count)
     if addresses_count == 0:
         error = json_error(404, 'Could not find addresses matching query.',
                            {'query': query})
