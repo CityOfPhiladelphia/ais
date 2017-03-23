@@ -3,7 +3,7 @@ import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_, or_, cast, String, desc
+from sqlalchemy import func, and_, or_, cast, String, Integer, desc
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -721,14 +721,15 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.address_low,
                              AddressSummary.address_high,
                              AddressSummary.unit_type.nullsfirst(),
-                             AddressSummary.unit_num.nullsfirst())
+                             AddressSummary.unit_num.nullsfirst(),
+                             AddressSummary.address_low_suffix.nullsfirst())
 
     def sort_by_source_address_from_search_type(self, search_type):
 
         sort = self
 
         if search_type == 'pwd_parcel_id':
-            sort = self.join(PwdParcel, cast(PwdParcel.parcel_id, String) == AddressSummary.pwd_parcel_id).order_by(
+            sort = self.join(PwdParcel, PwdParcel.parcel_id == cast(AddressSummary.pwd_parcel_id, Integer)).order_by(
                 desc(PwdParcel.street_address == AddressSummary.street_address),
                 AddressSummary.street_name,
                 AddressSummary.street_suffix,
@@ -737,7 +738,8 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.address_low,
                 AddressSummary.address_high,
                 AddressSummary.unit_type.nullsfirst(),
-                AddressSummary.unit_num.nullsfirst()
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
                 )
         elif search_type == 'account':
             sort = self.join(OpaProperty, cast(OpaProperty.account_num, String) == AddressSummary.opa_account_num).order_by(
@@ -749,8 +751,9 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.address_low,
                 AddressSummary.address_high,
                 AddressSummary.unit_type.nullsfirst(),
-                AddressSummary.unit_num.nullsfirst()
-            )
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
+                )
         elif search_type == 'mapreg':
             sort = self.join(DorParcel, cast(DorParcel.parcel_id, String) == AddressSummary.dor_parcel_id).order_by(
                 desc(DorParcel.street_address == AddressSummary.street_address),
@@ -761,7 +764,8 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.address_low,
                 AddressSummary.address_high,
                 AddressSummary.unit_type.nullsfirst(),
-                AddressSummary.unit_num.nullsfirst()
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
                 )
 
         return sort
