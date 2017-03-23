@@ -473,13 +473,21 @@ def test_addresses_with_unmatching_unit_num_resolves_to_base_address_match_with_
 
 def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num(client):
     response = client.get('/search/1769-75 frankford ave')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 1
     assert_status(response, 200)
 
 def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num_with_include_units(client):
-    pass
+    response = client.get('/search/1769-75 frankford ave?include_units')
+    data = json.loads(response.get_data().decode())
+    assert_status(response, 200)
+    assert data['total_size'] == 7
 
 def test_addresses_with_unit_and_unmatching_high_num_resolves_to_match_with_no_high_num(client):
-    pass
+    response = client.get('/search/1769-75 frankford ave apt 4')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 1
+    assert_status(response, 200)
 
 
 
