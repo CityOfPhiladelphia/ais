@@ -239,7 +239,6 @@ The root of the `FeatureCollection` contains:
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
-     * `parsed`: Intersection cannot be matched and location cannot be estimated. Response includes parsed street components and null geometry.
 * The following list of `properties`:
      * `street_1`: properties for street_1 are:
         * `street_code`: 5 digit numeric unique code associated with each unique street name
