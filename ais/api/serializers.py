@@ -105,7 +105,6 @@ class GeoJSONSerializer (BaseSerializer):
                     match_type = 'unit_child'
             else:
                 # Address is different from ref address and has unit type and high num (is ranged unit address)
-                #print(2, ': ', address.street_address)
                 if ref_address.unit_type is not None:
                     # Unit type is a generic unit type
                     if ref_address.street_address in street_address_variations:
