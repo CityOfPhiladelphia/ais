@@ -719,10 +719,10 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.street_predir,
                              AddressSummary.street_postdir,
                              AddressSummary.address_low,
-                             AddressSummary.address_high.nullsfirst(),
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst(),
-                             AddressSummary.address_low_suffix.nullsfirst())
+                             AddressSummary.address_low_suffix.nullsfirst(),
+                             AddressSummary.address_high)
 
     def sort_by_source_address_from_search_type(self, search_type):
 
