@@ -121,7 +121,7 @@ class StreetIntersection(db.Model):
 class PwdParcel(db.Model):
     """A land parcel per PWD."""
     id = db.Column(db.Integer, primary_key=True)
-    parcel_id = db.Column(db.Integer)
+    parcel_id = db.Column(db.Integer, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
@@ -138,7 +138,7 @@ class PwdParcel(db.Model):
 
 class DorParcel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    parcel_id = db.Column(db.Text)
+    parcel_id = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
@@ -162,7 +162,7 @@ class DorParcel(db.Model):
 
 class OpaProperty(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    account_num = db.Column(db.Text)
+    account_num = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
