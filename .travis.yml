@@ -25,4 +25,5 @@ deploy:
   on:
     branch:
       - master
+      - develop
 after_deploy: .travis/clean_up.sh

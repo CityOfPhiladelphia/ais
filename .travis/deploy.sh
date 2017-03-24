@@ -22,6 +22,12 @@ aws_secret_access_key = $AWS_SECRET
 aws_access_key_id = $AWS_ID
 EOF
 
+
+if [ $TRAVIS_BRANCH = "develop" ] ; then
+    eb deploy ais-api-develop
+    exit 0
+fi
+
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
 source bin/eb_env_utils.sh
