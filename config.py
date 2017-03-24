@@ -1002,6 +1002,18 @@ SERVICE_AREAS = {
                 },
             },
         },
+        {
+            'layer_id':             'litter_schema_test',
+            'name':                 'Litter Schema Test',
+            'description':          '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_gsg.LITTER_SCHEMA_TEST',
+                    'value_field':          'score',
+                },
+            },
+        },
     ],
 }
 
