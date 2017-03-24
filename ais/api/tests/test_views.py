@@ -493,7 +493,7 @@ def test_addresses_with_unit_and_unmatching_high_num_resolves_to_match_with_no_h
     data = json.loads(response.get_data().decode())
     assert data['total_size'] == 1
     features = data['features']
-    assert features[0]['properties']['street_address'] == '1769 FRANKFORD AVE'
+    assert features[0]['properties']['street_address'] == '1769 FRANKFORD AVE APT 4'
     assert features[0]['match_type'] == 'in_range'
 
 def test_sort_order_for_address_low_suffix_in_response(client):

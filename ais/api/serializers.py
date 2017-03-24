@@ -88,7 +88,7 @@ class GeoJSONSerializer (BaseSerializer):
                     # Reference address has unit type
                     if ref_address.unit_num == address.unit_num:
                         # Reference and address have same unit num
-                        match_type = 'unit_sibling' #TODO: verify
+                        match_type = 'unit_sibling' if not ref_address.address_high else 'in_range' #TODO: verify
                         if ref_address.street_address in street_address_variations:
                             # Unit type is a generic unit type
                             # match_type = 'generic_unit_sibling'

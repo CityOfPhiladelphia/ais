@@ -363,12 +363,13 @@ def addresses(query):
     match_type = 'exact'
 
     # if no matches, try base_address
-    if not addresses.all() and normalized_address != base_address:
+    if not addresses.all() and normalized_address != base_address and not high_num:
         #print(1)
         if 'unit_num' in filters:
-            filters['unit_num'] = ''
+            filters_copy = filters
+            filters_copy['unit_num'] = ''
             unit_type = None  # more elegant approach involving filter_by_unit_type preferred
-        addresses = query_addresses(filters=filters)
+        addresses = query_addresses(filters=filters_copy)
         match_type = 'has_base'
 
     # # If no matches and is ranged address, try non-ranged low_num address
@@ -376,10 +377,20 @@ def addresses(query):
         #print(2)
         # TODO: handle overlapping addresses
         #high_num = None
-        filters.pop('address_high', None)
+        filters_copy = filters
+        filters_copy.pop('address_high', None)
         #filters['address_high'] = None
-        addresses = query_addresses(filters=filters)
+        addresses = query_addresses(filters=filters_copy)
         match_type = 'in_range'
+
+    if not addresses.all() and normalized_address != base_address and high_num:
+        #print(1)
+        if 'unit_num' in filters:
+            filters_copy = filters
+            filters_copy['unit_num'] = ''
+            unit_type = None  # more elegant approach involving filter_by_unit_type preferred
+        addresses = query_addresses(filters=filters_copy)
+        match_type = 'has_base'
 
     # if no matches, try base_address_no_num_suffix
     if not addresses.all() and base_address != base_address_no_num_suffix:
