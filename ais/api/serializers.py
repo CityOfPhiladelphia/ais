@@ -120,7 +120,7 @@ class GeoJSONSerializer (BaseSerializer):
                         pass
                 else:
                     if ref_address.address_high is None:
-                        match_type = 'range_parent unit_child'
+                        match_type = 'range_parent_unit_child'
                     else:
                         match_type = 'unit_child'
                     # match_type = 'range_parent'
