@@ -210,7 +210,7 @@ class AddressQuery(BaseQuery):
                              Address.street_postdir,
                              Address.address_low,
                              Address.address_low_suffix.nullsfirst(),
-                             Address.address_high,
+                             Address.address_high.nullsfirst(),
                              Address.unit_type.nullsfirst(),
                              Address.unit_num.nullsfirst())
 
@@ -719,7 +719,7 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.street_predir,
                              AddressSummary.street_postdir,
                              AddressSummary.address_low,
-                             AddressSummary.address_high,
+                             AddressSummary.address_high.nullsfirst(),
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst(),
                              AddressSummary.address_low_suffix.nullsfirst())
@@ -736,7 +736,7 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.street_predir,
                 AddressSummary.street_postdir,
                 AddressSummary.address_low,
-                AddressSummary.address_high,
+                AddressSummary.address_high.nullsfirst(),
                 AddressSummary.unit_type.nullsfirst(),
                 AddressSummary.unit_num.nullsfirst(),
                 AddressSummary.address_low_suffix.nullsfirst()
@@ -749,7 +749,7 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.street_predir,
                 AddressSummary.street_postdir,
                 AddressSummary.address_low,
-                AddressSummary.address_high,
+                AddressSummary.address_high.nullsfirst(),
                 AddressSummary.unit_type.nullsfirst(),
                 AddressSummary.unit_num.nullsfirst(),
                 AddressSummary.address_low_suffix.nullsfirst()
@@ -762,7 +762,7 @@ class AddressSummaryQuery(BaseQuery):
                 AddressSummary.street_predir,
                 AddressSummary.street_postdir,
                 AddressSummary.address_low,
-                AddressSummary.address_high,
+                AddressSummary.address_high.nullsfirst(),
                 AddressSummary.unit_type.nullsfirst(),
                 AddressSummary.unit_num.nullsfirst(),
                 AddressSummary.address_low_suffix.nullsfirst()
