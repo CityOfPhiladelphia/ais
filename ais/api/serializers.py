@@ -76,11 +76,9 @@ class GeoJSONSerializer (BaseSerializer):
 
         #print(address.unit_type, ref_address.unit_type)
         if address.street_address == ref_address.street_address:
-            #print(0, ': ', address.street_address)
             # Address is same as reference address
             match_type = self.match_type
         elif address.unit_type not in ('', None):
-            #print(1, ': ', address.street_address)
             # Address is different from ref address and has unit type
             if address.address_high is None:
                 # Address also doesn't have a high num
@@ -96,7 +94,6 @@ class GeoJSONSerializer (BaseSerializer):
                     elif base_address == ref_base_address:
                         match_type = 'has_base_unit_child'
                 elif ref_address.address_high is not None:
-                    #print('1b', ': ', address.street_address)
                     # Ref address has no unit type but has high_num:
                     if ref_address.unit_type is not None:
                         # Ref address has unit type
@@ -125,18 +122,18 @@ class GeoJSONSerializer (BaseSerializer):
                         match_type = 'unit_child'
                     # match_type = 'range_parent'
         else:
-            print(address.unit_type)
             # Address is different from ref address but has no unit type
             if address.address_high:
                 if not ref_address.address_high:
                     match_type = 'range_parent'
                 else:
-                    if not ref_address.unit_type:
-                        match_type = 'overlaps'
+                    if ref_address.address_high != address.address_high or ref_address.address_low != address.address_low:
+                        match_type = 'overlaps' if not ref_address.unit_type else "has_base_overlaps"
                     else:
                         match_type = 'has_base'
             elif ref_address.address_high:
-                 match_type = 'in_range'
+                # no address.address_high but ref_address.address_high
+                 match_type = 'in_range' if not ref_address.unit_type else 'has_base_in_range'
             else:
                 match_type = 'has_base'
 
@@ -146,7 +143,7 @@ class GeoJSONSerializer (BaseSerializer):
 class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = ('info_resident', 'info_company', 'voter_name')
 
-    def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, requestargs=None, **kwargs):
+    def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
