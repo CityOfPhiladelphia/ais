@@ -921,7 +921,7 @@ class AddressSummaryQuery(BaseQuery):
                 return self.get_all_parcel_geocode_locations(srid=srid, request=request)
 
             parcel_geocode_location_val = config['ADDRESS_SUMMARY']['geocode_priority'][str(parcel_geocode_location)]
-            print(parcel_geocode_location_val)
+            #print(parcel_geocode_location_val)
 
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address==AddressSummary.street_address) \
