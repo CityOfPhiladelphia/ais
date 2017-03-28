@@ -88,3 +88,4 @@ instance/config.py
 *build_errors*
 ais/engine/log/
 tmp/
+ais/api/profiling/
