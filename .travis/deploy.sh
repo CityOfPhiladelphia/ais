@@ -23,7 +23,7 @@ aws_access_key_id = $AWS_ID
 EOF
 
 
-if [ $TRAVIS_BRANCH = "develop" ] ; then
+if [ $TRAVIS_BRANCH = "develop" ] || [ $TRAVIS_BRANCH = "develop_test" ]; then
     eb deploy ais-api-develop
     exit 0
 fi

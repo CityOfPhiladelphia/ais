@@ -21,7 +21,7 @@ aws_secret_access_key = $AWS_SECRET
 aws_access_key_id = $AWS_ID
 EOF
 
-if [ $TRAVIS_BRANCH = "develop" ] ; then
+if [ $TRAVIS_BRANCH = "develop" ] || [ $TRAVIS_BRANCH = "develop_test" ] ; then
     echo "Downloading environment for branch \"$TRAVIS_BRANCH\" from $EB_ENV"
     eb printenv ais-api-develop | tail -n +2 > .env
     # Install the application dependencies
