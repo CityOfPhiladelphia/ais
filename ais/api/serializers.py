@@ -396,10 +396,8 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
 
 class ServiceAreaSerializer ():
 
-    def __init__(self, coordinates=None, sa_data=None, metadata=None, **kwargs):
-        #self.geom_type = 'Point'
-        #self.geom_source = geom_source
-        #self.match_type = match_type
+    def __init__(self, coordinates=None, sa_data=None, metadata=None, seg_id=None, **kwargs):
+        #self.seg_id = seg_id
         self.coordinates = coordinates
         self.sa_data = sa_data
         self.metadata = metadata
@@ -417,6 +415,10 @@ class ServiceAreaSerializer ():
             data['service_areas']['recycling_diversion_rate'] = round(rate/100, 3)
         except:
             pass
+        # Change all nulls to empty strings:
+        for key, val in data['service_areas'].items():
+            val = val if val else ''
+            data['service_areas'][key] = val
 
         return data
 
@@ -426,6 +428,7 @@ class ServiceAreaSerializer ():
         sa_data_obj = {'service_areas': self.sa_data}
         data.update(self.metadata)
         data.update(sa_data_obj)
+        #data.update({'seg_id': self.seg_id})
         return data
 
     def render(self, data):
