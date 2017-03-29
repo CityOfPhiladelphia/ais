@@ -1,7 +1,7 @@
 import sys
 import traceback
 from datetime import datetime
-from pprint import pprint
+#from pprint import pprint
 # from phladdress.parser import Parser
 from ais import app
 from datum import Database

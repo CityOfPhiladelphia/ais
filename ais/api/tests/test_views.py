@@ -149,7 +149,7 @@ def test_child_address_has_all_units_in_ranged_address(client):
         ('Child address has {} results, whereas the ranged address has {} '
          'results.').format(child_data['total_size'], ranged_data['total_size'])
 
-@pytest.mark.skip(reason="todo - return OPA full address")
+@pytest.mark.skip(reason="todo - return OPA source address instead of parsed OPA street_address")
 def test_unit_address_in_db(client):
     response = client.get('/addresses/826-28 N 3rd St # 1')
     assert_status(response, 200)
@@ -233,7 +233,8 @@ def test_nonsynonymous_unit_types_not_used(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert_status(response, 200)
-    assert (match_type == 'unmatched')
+    # assert (match_type == 'unmatched')
+    assert (match_type == 'has_base')
 
 def test_filter_for_only_opa_addresses(client):
     response = client.get('/addresses/1234 Market St?opa_only&include_units')
@@ -331,7 +332,7 @@ def test_block_can_exclude_non_opa(client):
             AND address_summary.address_low < 1900
 
             AND address_summary.opa_account_num != ''
-            AND (address_link.relationship = 'has base' OR address_link.relationship IS NULL)
+            AND (address_link.relationship = 'has base' OR address_link.relationship = 'overlaps' OR address_link.relationship IS NULL)
             AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
           ) AS block_addresses
     '''
@@ -446,7 +447,6 @@ def test_unit_type_siblings_match_exact(client):
 def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
     response = client.get('/search/2100 KITTY HAWK AVE')
     data = json.loads(response.get_data().decode())
-    assert_status(response, 200)
     feature = data['features'][0]
     assert feature['geometry']['geocode_type'] == 'true_range'
 
@@ -455,7 +455,95 @@ def test_address_without_seg_match_returns_404(client):
     assert_status(response, 404)
 
 
+# TESTS for LINKED TAGS CHANGES
 
+def test_addresses_with_unmatching_unit_num_resolves_to_base_address_match(client):
+    response = client.get('/search/1769 frankford ave apt 2000')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['match_type'] == 'has_base'
 
+def test_addresses_with_unmatching_unit_num_resolves_to_base_address_match_with_include_units(client):
+    response = client.get('/search/1769 frankford ave apt 2000?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 7
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1769 FRANKFORD AVE'
+    assert features[1]['properties']['street_address'] == '1769 FRANKFORD AVE APT 1'
+    assert features[1]['match_type'] == 'has_base_unit_child'
+
+def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num(client):
+    response = client.get('/search/1769-75 frankford ave')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 1
+    features = data['features']
+    assert features[0]['match_type'] == 'in_range'
+
+def test_addresses_with_unmatching_high_num_resolves_to_match_with_no_high_num_with_include_units(client):
+    response = client.get('/search/1769-75 frankford ave?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 7
+    features = data['features']
+    assert features[1]['properties']['street_address'] == '1769 FRANKFORD AVE APT 1'
+    assert features[1]['match_type'] == 'in_range_unit_child'
+
+def test_addresses_with_unit_and_unmatching_high_num_resolves_to_match_with_no_high_num(client):
+    response = client.get('/search/1769-75 frankford ave apt 4')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 1
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1769 FRANKFORD AVE APT 4'
+    assert features[0]['match_type'] == 'in_range'
+
+def test_sort_order_for_address_low_suffix_in_response(client):
+    response = client.get('/search/1801 jfk blvd')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 2
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1801 JOHN F KENNEDY BLVD'
+    assert features[1]['properties']['street_address'] == '1801S JOHN F KENNEDY BLVD'
+
+def test_child_addresses_get_linked_address_tags(client):
+    response = client.get('/search/621 REED ST APT 2R')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['dor_parcel_id'] == '009S190092'
+
+def test_match_type_for_search_by_key(client):
+    response = client.get('/search/009S190092')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 7
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '621-25 REED ST'
+    assert features[0]['match_type'] == 'exact_key'
+
+def test_ranged_addresses_have_linked_tags_from_overlapping(client):
+    response = client.get('/search/921-29 E LYCOMING ST?source_details')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['opa_account_num'][0]['source'] == '921-29 E LYCOMING ST overlaps 921-39 E LYCOMING ST'
+
+def test_related_addresses_returned_with_include_units(client):
+    response = client.get('/search/1708%20chestnut%20st?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 3
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1708 CHESTNUT ST'
+    assert features[0]['match_type'] == 'exact'
+    assert features[1]['properties']['street_address'] == '1708-14 CHESTNUT ST # A'
+    assert features[1]['match_type'] == 'range_parent_unit_child'
+
+def test_ranged_addresses_with_unmatched_unit_returns_correct_match_types(client):
+    response = client.get('/search/826-28 N 3rd St Floor 1')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '826-28 N 3RD ST'
+    assert features[0]['match_type'] == 'has_base'
+    assert features[1]['properties']['street_address'] == '826-30 N 3RD ST'
+    assert features[1]['match_type'] == 'has_base_overlaps'
+    assert features[2]['properties']['street_address'] == '826-34 N 3RD ST'
+    assert features[2]['match_type'] == 'has_base_overlaps'
+    assert features[3]['properties']['street_address'] == '826 N 3RD ST'
+    assert features[3]['match_type'] == 'has_base_in_range'
 
 

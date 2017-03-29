@@ -1,14 +1,14 @@
-import copy
+#import copy
 import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_, cast, String, Integer, desc
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
 from ais.util import *
-from pprint import pprint
+#from pprint import pprint
 
 Parser = app.config['PARSER']
 parser = Parser()
@@ -121,7 +121,7 @@ class StreetIntersection(db.Model):
 class PwdParcel(db.Model):
     """A land parcel per PWD."""
     id = db.Column(db.Integer, primary_key=True)
-    parcel_id = db.Column(db.Integer)
+    parcel_id = db.Column(db.Integer, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
@@ -138,7 +138,7 @@ class PwdParcel(db.Model):
 
 class DorParcel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    parcel_id = db.Column(db.Text)
+    parcel_id = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
@@ -162,7 +162,7 @@ class DorParcel(db.Model):
 
 class OpaProperty(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    account_num = db.Column(db.Text)
+    account_num = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
@@ -210,7 +210,7 @@ class AddressQuery(BaseQuery):
                              Address.street_postdir,
                              Address.address_low,
                              Address.address_low_suffix.nullsfirst(),
-                             Address.address_high,
+                             Address.address_high.nullsfirst(),
                              Address.unit_type.nullsfirst(),
                              Address.unit_num.nullsfirst())
 
@@ -484,6 +484,11 @@ class Address(db.Model):
             return unit_full
         return None
 
+class AddressTagQuery(BaseQuery):
+    """A query class that knows how to query address tags"""
+    def filter_tags_by_address(self, street_address):
+        return self.filter(AddressTag.street_address == street_address)
+
 class AddressTag(db.Model):
     """
     Current tags in the database are:
@@ -494,16 +499,25 @@ class AddressTag(db.Model):
     * pwd_account_num
 
     """
+    query_class = AddressTagQuery
+
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
     key = db.Column(db.Text)
     value = db.Column(db.Text)
+    linked_address = db.Column(db.Text)
+    linked_path = db.Column(db.Text)
 
 class SourceAddress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     source_name = db.Column(db.Text)
     source_address = db.Column(db.Text)
     street_address = db.Column(db.Text)
+
+class AddressLinkQuery(BaseQuery):
+    """A query class that knows how to query address links"""
+    def filter_links_by_address(self, street_address):
+        return AddressLinkQuery.filter(or_(AddressLink.address_1 == street_address, AddressLink.address_2 == street_address))
 
 class AddressLink(db.Model):
     """
@@ -705,9 +719,59 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.street_predir,
                              AddressSummary.street_postdir,
                              AddressSummary.address_low,
-                             AddressSummary.address_high,
                              AddressSummary.unit_type.nullsfirst(),
-                             AddressSummary.unit_num.nullsfirst())
+                             AddressSummary.unit_num.nullsfirst(),
+                             AddressSummary.address_low_suffix.nullsfirst(),
+                             AddressSummary.address_high)
+
+    def sort_by_source_address_from_search_type(self, search_type):
+
+        sort = self
+
+        if search_type == 'pwd_parcel_id':
+            sort = self.join(PwdParcel, PwdParcel.parcel_id == cast(AddressSummary.pwd_parcel_id, Integer)).order_by(
+                desc(PwdParcel.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high.nullsfirst(),
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
+                )
+        elif search_type == 'account':
+            sort = self.join(OpaProperty, cast(OpaProperty.account_num, String) == AddressSummary.opa_account_num).order_by(
+                desc(OpaProperty.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high.nullsfirst(),
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
+                )
+        elif search_type == 'mapreg':
+            sort = self.join(DorParcel, cast(DorParcel.parcel_id, String) == AddressSummary.dor_parcel_id).order_by(
+                desc(DorParcel.street_address == AddressSummary.street_address),
+                AddressSummary.street_name,
+                AddressSummary.street_suffix,
+                AddressSummary.street_predir,
+                AddressSummary.street_postdir,
+                AddressSummary.address_low,
+                AddressSummary.address_high.nullsfirst(),
+                AddressSummary.unit_type.nullsfirst(),
+                AddressSummary.unit_num.nullsfirst(),
+                AddressSummary.address_low_suffix.nullsfirst()
+                )
+
+        return sort
+
+    def filter_by_base_address(self, base_address):
+        return self.filter(AddressSummary.street_address == base_address)
 
     def filter_by_owner(self, *owner_parts):
         query = self
@@ -749,7 +813,6 @@ class AddressSummaryQuery(BaseQuery):
             non_child_addresses = self\
                 .with_entities(AddressSummary.street_address)\
                 .filter(False)
-
         # If the query is not for ranged addresses, handle the case where more
         # than one address may have been matched (e.g., the N and S variants
         # along a street), but some are children of ranged addresses and some
@@ -775,19 +838,25 @@ class AddressSummaryQuery(BaseQuery):
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
 
-        # get geom for each child
+        # get unit children in-range children of query address
         range_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter(AddressLink.address_2.in_(range_child_addresses.subquery()))
 
-        #get geom from parent
+        # get unit children for query address
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
 
-        return self.union(range_child_units).union(non_child_units)
+        # get unit children for range parent addresses
+        range_parent_units = AddressSummary.query \
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
+            .filter(AddressLink.relationship == 'has base') \
+            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
+
+        return self.union(range_child_units).union(non_child_units).union(range_parent_units)
 
     def exclude_children(self, should_exclude=True):
         if not should_exclude:
@@ -799,6 +868,7 @@ class AddressSummaryQuery(BaseQuery):
                 # Get rid of anything with a relationship of 'in range',
                 # 'has generic unit', or 'matches unit'.
                 (AddressLink.relationship == 'has base') |
+                (AddressLink.relationship == 'overlaps') |
                 (AddressLink.relationship == None)
             )
 
@@ -851,7 +921,7 @@ class AddressSummaryQuery(BaseQuery):
                 return self.get_all_parcel_geocode_locations(srid=srid, request=request)
 
             parcel_geocode_location_val = config['ADDRESS_SUMMARY']['geocode_priority'][str(parcel_geocode_location)]
-            print(parcel_geocode_location_val)
+            #print(parcel_geocode_location_val)
 
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address==AddressSummary.street_address) \

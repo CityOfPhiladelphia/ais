@@ -192,6 +192,28 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'opa_account_num',
+                    'source_fields':     ['account_num'],
+                },
+                {
+                    'key':              'opa_owner',
+                    'source_fields':     ['owners'],
+                },
+                {
+                    'key':              'opa_address',
+                    'source_fields':     ['street_address'],
+                },
+                {
+                    'key':              'opa_owner',
+                    'source_fields':     ['owners'],
+                },
+                {
+                    'key':              'opa_address',
+                    'source_fields':     ['street_address'],
+                },
+            ],
         },
         {
             'name':                 'pwd_parcels',
@@ -200,6 +222,12 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'pwd_parcel_id',
+                    'source_fields':     ['parcel_id'],
+                },
+            ],
         },
         {
             'name':                 'dor_parcels',
@@ -208,6 +236,12 @@ ADDRESSES = {
             'address_fields': {
                 'street_address':       'street_address',
             },
+            'tag_fields': [
+                {
+                    'key':              'dor_parcel_id',
+                    'source_fields':     ['parcel_id'],
+                },
+            ],
         },
         {
             'name':                 'info_commercial',
@@ -241,33 +275,6 @@ ADDRESSES = {
                 },
             ],
         },
-        # HANSEN DIRECT
-        # {
-        #     'name':                 'li_address_keys',
-        #     'table':                'imsv7.address',
-        #     'db':                   'lidb',
-        #     'address_fields':       {
-        #         'address_low':          'stno',
-        #         'address_low_suffix':   'postdir',
-        #         'address_high':         'hseextn',
-        #         'street_predir':        'predir',
-        #         'street_name':          'stname',
-        #         'street_suffix':        'suffix',
-        #         # 'street_postdir':       'postdir',
-        #         'unit_num':             'condnum',
-        #     },
-        #     'preprocessor':          make_li_address,
-        #     'tag_fields': [
-        #         {
-        #             'key':              'li_address_key',
-        #             'source_field':     'addrkey',
-        #         },
-        #     ],
-        #     # 'where':                '''
-        #         # expdate is null and
-        #         # addby in ('INTERFACE', 'ADDRESS_MODULE', 'MAN_UNEXPIRED')
-        #     # ''',
-        # },
         # NICK'S DB
         {
             'name':                 'li_address_keys',
@@ -283,20 +290,6 @@ ADDRESSES = {
                 },
             ],
         },
-        # {
-        #     'name':                 'voters',
-        #     'table':                'voters',
-        #     'db':                   'gis',
-        #     'address_fields':       {
-        #             'street_address':   'street_address',
-        #     },
-        #     'tag_fields': [
-        #         {
-        #             'key':          'voter_name',
-        #             'source_field': 'full_name',
-        #         },
-        #     ],
-        # },
         {
             'name':                 'voters',
             'table':                'gis_elections.voters_2017_03',
@@ -1060,91 +1053,109 @@ ADDRESS_SUMMARY = {
             'name':                 'zip_code',
             'tag_key':              'usps_zipcode',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'zip_4',
             'tag_key':              'usps_zip4',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'usps_type',
             'tag_key':              'usps_type',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'usps_bldgfirm',
             'tag_key':              'usps_bldgfirm',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'election_block_id',
             'tag_key':              'election block_id',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'election_precinct',
             'tag_key':              'election precinct',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'seg_id',
             'tag_key':              'seg_id',
             'type':                 'number',
+            'traverse_links':       'true',
         },
         {
             'name':                 'seg_side',
             'tag_key':              'seg_side',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'pwd_parcel_id',
             'tag_key':              'pwd_parcel_id',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'dor_parcel_id',
             'tag_key':              'dor_parcel_id',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'opa_account_num',
             'tag_key':              'opa_account_num',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'opa_owners',
             'tag_key':              'opa_owner',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'opa_address',
             'tag_key':              'opa_address',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'pwd_account_nums',
             'tag_key':              'pwd_account_num',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'li_address_key',
             'tag_key':              'li_address_key',
             'type':                 'text',
+            'traverse_links':       'true',
         },
         {
             'name':                 'voters',
             'tag_key':              'voter_name',
             'type':                 'text',
+            'traverse_links':       'false',
         },
         {
             'name':                 'info_residents',
             'tag_key':              'info_resident',
             'type':                 'text',
+            'traverse_links':       'false',
         },
         {
             'name':                 'info_companies',
             'tag_key':              'info_company',
             'type':                 'text',
+            'traverse_links':       'false',
         },
     ],
 }
