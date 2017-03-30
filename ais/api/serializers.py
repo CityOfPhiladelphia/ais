@@ -1,5 +1,5 @@
 import json
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 from geoalchemy2.shape import to_shape
 from ais import app, util #, app_db as db
 from ais.models import Address, ENGINE_SRID
@@ -217,19 +217,22 @@ class AddressJsonSerializer (GeoJSONSerializer):
             data['properties']['recycling_diversion_rate'] = round(rate/100, 3)
         except:
             pass
+        opa_owners = data['properties']['opa_owners']
+        if not 'source_details' in self.metadata.get('search_params'):
+            data['properties']['opa_owners'] = opa_owners.split("|") if opa_owners else []
 
         return data
 
     def model_to_data(self, address):
 
-        from collections import Iterable
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
         # creating an iterable object
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
-
+            # print(address)
+            # print(len(address))
             address, geocode_response_type, geom = address
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
@@ -247,6 +250,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             # Build the set of associated service areas
             sa_data = OrderedDict()
             if not self.estimated:
+                #print(address.street_address, address.service_areas)
                 for col in address.service_areas.__table__.columns:
                     if col.name in ('id', 'street_address'):
                         continue
