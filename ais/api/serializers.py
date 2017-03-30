@@ -1,5 +1,5 @@
 import json
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 from geoalchemy2.shape import to_shape
 from ais import app, util #, app_db as db
 from ais.models import Address, ENGINE_SRID
@@ -217,15 +217,14 @@ class AddressJsonSerializer (GeoJSONSerializer):
             data['properties']['recycling_diversion_rate'] = round(rate/100, 3)
         except:
             pass
-
         opa_owners = data['properties']['opa_owners']
-        data['properties']['opa_owners'] = opa_owners.split("|") if opa_owners else []
+        if not 'source_details' in self.metadata.get('search_params'):
+            data['properties']['opa_owners'] = opa_owners.split("|") if opa_owners else []
 
         return data
 
     def model_to_data(self, address):
 
-        from collections import Iterable
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,
