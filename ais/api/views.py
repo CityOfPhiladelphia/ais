@@ -48,7 +48,6 @@ def get_tag_data(addresses):
             tag_map[tag.key].append(tag)
 
         all_tags[address.street_address] = tag_map
-        #print(all_tags[address.street_address])
 
     return all_tags
 
@@ -56,9 +55,6 @@ def get_tag_datas(addresses):
     street_addresses = [address.street_address for address, geocode_type, geom in addresses]
     tags = AddressTag.query \
         .filter(AddressTag.street_address.in_(street_addresses))
-
-    # print("TAGS QUERY: \n")
-    # print(tags)
 
     return tags
 
@@ -344,21 +340,22 @@ def addresses(query):
 
     filters = strict_filters.copy()
     filters.update(loose_filters)
+    range = None
 
     def query_addresses(filters):
         #print(filters)
-        addresses_query = AddressSummary.query \
+        addresses = AddressSummary.query \
                 .filter_by(**filters) \
-                .filter_by_unit_type(unit_type) \
-                .include_child_units(
-                'include_units' in request.args and request.args['include_units'].lower() != 'false',
-                is_range=high_num is not None,
-                is_unit=unit_type is not None,
-                request=request) \
-                .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-                .get_address_geoms(request)
+                .filter_by_unit_type(unit_type) #\
+                # .include_child_units(
+                # 'include_units' in request.args and request.args['include_units'].lower() != 'false',
+                # is_range=high_num is not None,
+                # is_unit=unit_type is not None,
+                # request=request) \
+                # .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+                # .get_address_geoms(request)
 
-        addresses = addresses_query.order_by_address()
+        #addresses = addresses_query.order_by_address()
 
         return addresses
 
@@ -373,6 +370,8 @@ def addresses(query):
             unit_type = None  # more elegant approach involving filter_by_unit_type preferred
         addresses = query_addresses(filters=filters_copy)
         match_type = 'has_base'
+    # else:
+    #     print(0)
 
     # # If no matches and is ranged address, try non-ranged low_num address
     if not addresses.all() and high_num:
@@ -381,12 +380,13 @@ def addresses(query):
         #high_num = None
         filters_copy = filters
         filters_copy.pop('address_high', None)
+        range = True
         #filters['address_high'] = None
         addresses = query_addresses(filters=filters_copy)
         match_type = 'in_range'
 
     if not addresses.all() and normalized_address != base_address and high_num:
-        #print(1)
+        #print(3)
         if 'unit_num' in filters:
             filters_copy = filters
             filters_copy['unit_num'] = ''
@@ -396,7 +396,7 @@ def addresses(query):
 
     # if no matches, try base_address_no_num_suffix
     if not addresses.all() and base_address != base_address_no_num_suffix:
-        #print(3)
+        #print(4)
         if 'address_low_suffix' in filters:
             del filters['address_low_suffix']
         if 'address_low_frac' in filters:
@@ -415,6 +415,14 @@ def addresses(query):
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
+    addresses = addresses.include_child_units(
+            'include_units' in request.args and request.args['include_units'].lower() != 'false',
+            is_range=False if range else high_num is not None,
+            is_unit=unit_type is not None,
+            request=request) \
+            .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+            .get_address_geoms(request) \
+            .order_by_address()
     # print("ADDRESS QUERY: \n")
     # print(addresses)
     tags = get_tag_datas(addresses)
@@ -422,7 +430,7 @@ def addresses(query):
     paginator = QueryPaginator(addresses)
     # Ensure that we have results
     addresses_count = paginator.collection_size
-
+    #print(addresses_count)
     # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
     if addresses_count == 0:
 

@@ -807,6 +807,7 @@ class AddressSummaryQuery(BaseQuery):
         # addresses as parent addresses; use an empty set as addresses with no
         # parent (non-child addresses).
         if is_range:
+            print("range")
             range_parent_addresses = self\
                 .with_entities(AddressSummary.street_address)
 
@@ -814,12 +815,13 @@ class AddressSummaryQuery(BaseQuery):
                 .with_entities(AddressSummary.street_address)\
                 .filter(False)
 
+            # get in-range children of query address
             range_child_addresses = AddressLink.query\
                 .filter(AddressLink.relationship == 'in range')\
                 .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))\
                 .with_entities(AddressLink.address_1)
 
-            # get unit children in-range children of query address
+            # get unit children of query address
             range_child_units = AddressSummary.query \
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
                 .filter(AddressLink.relationship == 'has base') \
@@ -838,7 +840,7 @@ class AddressSummaryQuery(BaseQuery):
 
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
-                .filter(AddressLink.relationship == None)\
+                .filter(or_(AddressLink.relationship == None, AddressLink.relationship == 'in range'))\
                 .with_entities(AddressSummary.street_address)
 
         # For the parent addresses, find all the child addresses within the
@@ -851,9 +853,16 @@ class AddressSummaryQuery(BaseQuery):
                 .filter(AddressLink.relationship == 'has base') \
                 .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
 
+
+
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
-
+        # for a in non_child_addresses:
+        #     print("non-child: ", a[0])
+        # for a in range_parent_addresses:
+        #     print(a[0])
+        # for a in range_parent_units:
+        #     print(a[0])
         # get unit children for query address
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
@@ -861,11 +870,13 @@ class AddressSummaryQuery(BaseQuery):
             .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
 
 
-        union_sets = list(filter(None, [range_child_units, non_child_units, range_parent_units]))
+        union_sets = tuple(filter(None, [range_child_units, non_child_units, range_parent_units]))
+        #print(union_sets)
         for union_set in union_sets:
-            union = self.union(union_set)
-            self = union
-        return union
+            cum_union = self.union(union_set)
+            self = cum_union
+        return cum_union
+#        return self.union(and_(union_sets))
 #        return self.union(range_child_units).union(non_child_units).union(range_parent_units)
 
     def exclude_children(self, should_exclude=True):
