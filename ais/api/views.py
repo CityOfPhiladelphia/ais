@@ -35,28 +35,36 @@ def validate_page_param(request, paginator):
 
     return page_num, None
 
+# def get_tag_data(addresses):
+#     all_tags = {}
+#     for address, geocode_type, geom in addresses:
+#         tag_map = {}
+#         tags = AddressTag.query \
+#             .filter_tags_by_address(address.street_address)
+#         # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
+#         for tag in tags:
+#             if not tag.key in tag_map:
+#                 tag_map[tag.key] = []
+#             tag_map[tag.key].append(tag)
+#
+#         all_tags[address.street_address] = tag_map
+#
+#     return all_tags
+
 def get_tag_data(addresses):
-    all_tags = {}
-    for address, geocode_type, geom in addresses:
-        tag_map = {}
-        tags = AddressTag.query \
-            .filter_tags_by_address(address.street_address)
-        # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
-        for tag in tags:
-            if not tag.key in tag_map:
-                tag_map[tag.key] = []
-            tag_map[tag.key].append(tag)
-
-        all_tags[address.street_address] = tag_map
-
-    return all_tags
-
-def get_tag_datas(addresses):
     street_addresses = [address.street_address for address, geocode_type, geom in addresses]
     tags = AddressTag.query \
         .filter(AddressTag.street_address.in_(street_addresses))
+    # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
+    all_tags = {}
+    for tag in tags:
+        if not tag.street_address in all_tags:
+            all_tags[tag.street_address] = {}
+        if not tag.key in all_tags[tag.street_address]:
+            all_tags[tag.street_address][tag.key] = []
+        all_tags[tag.street_address][tag.key].append(tag)
 
-    return tags
+    return all_tags
 
 
 @app.errorhandler(404)
@@ -325,11 +333,9 @@ def addresses(query):
     )
     strict_filters = dict(
         address_high=high_num,
-        # unit_num=unit_num if unit_num or not unit_type else '',
         unit_num=unit_num or '',
-        #unit_type=unit_type or '',
     )
-    # if unit num is null, add unit_type to strict filter
+
     if unit_num == '':
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
@@ -343,19 +349,10 @@ def addresses(query):
     range = None
 
     def query_addresses(filters):
-        #print(filters)
+
         addresses = AddressSummary.query \
                 .filter_by(**filters) \
                 .filter_by_unit_type(unit_type) #\
-                # .include_child_units(
-                # 'include_units' in request.args and request.args['include_units'].lower() != 'false',
-                # is_range=high_num is not None,
-                # is_unit=unit_type is not None,
-                # request=request) \
-                # .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-                # .get_address_geoms(request)
-
-        #addresses = addresses_query.order_by_address()
 
         return addresses
 
@@ -405,9 +402,7 @@ def addresses(query):
         match_type = 'has_base_no_suffix'
 
     if not addresses.all(): # TODO: Decide what to do here!
-        # error = json_error(404, 'Could not find any addresses matching the query.',
-        #                    {'query': query, 'normalized': normalized_address})
-        # return json_response(response=error, status=404)
+
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address})
@@ -423,14 +418,16 @@ def addresses(query):
             .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
             .get_address_geoms(request) \
             .order_by_address()
-    # print("ADDRESS QUERY: \n")
-    # print(addresses)
-    tags = get_tag_datas(addresses)
 
+    # Get tag data
+    all_tags = get_tag_data(addresses)
+
+    # Get pagination
     paginator = QueryPaginator(addresses)
+
     # Ensure that we have results
     addresses_count = paginator.collection_size
-    #print(addresses_count)
+
     # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
     if addresses_count == 0:
 
@@ -440,16 +437,6 @@ def addresses(query):
             return json_response(response=error, status=404)
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
-    #print(addresses_count)
-
-    # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
-    all_tags = {}
-    for tag in tags:
-        if not tag.street_address in all_tags:
-            all_tags[tag.street_address] = {}
-        if not tag.key in all_tags[tag.street_address]:
-            all_tags[tag.street_address][tag.key] = []
-        all_tags[tag.street_address][tag.key].append(tag)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -457,7 +444,7 @@ def addresses(query):
         return json_response(response=error, status=error['status'])
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
+
     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
 
     # Serialize the response
@@ -473,7 +460,6 @@ def addresses(query):
         ref_addr=normalized_address,
     )
     result = serializer.serialize_many(addresses_page)
-    #result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
 
     return json_response(response=result, status=200)
 
