@@ -43,21 +43,25 @@ def get_tag_data(addresses):
             .filter_tags_by_address(address.street_address)
         # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
         for tag in tags:
-            #linked_address = tag.linked_address if tag.linked_address else address.street_address
             if not tag.key in tag_map:
                 tag_map[tag.key] = []
             tag_map[tag.key].append(tag)
-        #     if not linked_address in tag_map:
-        #         tag_map[linked_address] = [tag.linked_path, {}]
-        #     if not tag.key in tag_map[linked_address][1]:
-        #         tag_map[linked_address][1][tag.key] = [tag.value]
-        #     else:
-        #         tag_map[linked_address][1][tag.key].append(tag.value)
-        #     #tag_map[linked_address][1][tag.key] = tag.value
+
         all_tags[address.street_address] = tag_map
         #print(all_tags[address.street_address])
 
     return all_tags
+
+def get_tag_datas(addresses):
+    street_addresses = [address.street_address for address, geocode_type, geom in addresses]
+    tags = AddressTag.query \
+        .filter(AddressTag.street_address.in_(street_addresses))
+
+    # print("TAGS QUERY: \n")
+    # print(tags)
+
+    return tags
+
 
 @app.errorhandler(404)
 @app.errorhandler(500)
@@ -359,7 +363,6 @@ def addresses(query):
         return addresses
 
     addresses = query_addresses(filters=filters)
-
     match_type = 'exact'
     # if no matches, try base_address
     if not addresses.all() and normalized_address != base_address and not high_num:
@@ -412,6 +415,10 @@ def addresses(query):
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
+    # print("ADDRESS QUERY: \n")
+    # print(addresses)
+    tags = get_tag_datas(addresses)
+
     paginator = QueryPaginator(addresses)
     # Ensure that we have results
     addresses_count = paginator.collection_size
@@ -425,8 +432,17 @@ def addresses(query):
             return json_response(response=error, status=404)
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+    #print(addresses_count)
 
-    all_tags = get_tag_data(addresses)
+    # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
+    all_tags = {}
+    for tag in tags:
+        if not tag.street_address in all_tags:
+            all_tags[tag.street_address] = {}
+        if not tag.key in all_tags[tag.street_address]:
+            all_tags[tag.street_address][tag.key] = []
+        all_tags[tag.street_address][tag.key].append(tag)
+
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
     if error:
