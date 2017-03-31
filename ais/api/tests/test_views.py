@@ -569,7 +569,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['address_low'], int)
     assert isinstance(feature['properties']['address_low_suffix'], str)
     assert isinstance(feature['properties']['address_low_frac'], str)
-    assert isinstance(feature['properties']['address_high'], int)
+    assert isinstance(feature['properties']['address_high'], (int, None))
     assert isinstance(feature['properties']['street_predir'], str)
     assert isinstance(feature['properties']['street_name'], str)
     assert isinstance(feature['properties']['street_suffix'], str)
