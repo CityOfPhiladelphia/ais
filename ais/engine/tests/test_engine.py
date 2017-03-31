@@ -10,14 +10,15 @@ def startup():
     new_db = datum.connect(config['DATABASES']['engine'])
     old_db = datum.connect(config['DATABASES']['engine_staging'])
 
-    #system tables
-    ignore_tables = ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'street_intersection')
+    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
+    changed_tables = ('street_intersection', 'geocode')
+    ignore_tables = unused_tables + changed_tables
 
     #tables of question id'd in debugging
     #mysterious_tables = ('address_link', 'parcel_curb')
     #ignore_tables = ignore_tables + mysterious_tables
 
-    return {'new_db': new_db, 'old_db': old_db, 'ignore_tables': ignore_tables}
+    return {'new_db': new_db, 'old_db': old_db, 'unused_tables': unused_tables, 'changed_tables': changed_tables, 'ignore_tables': ignore_tables}
 
 
 def test_compare_num_tables(startup):
@@ -77,11 +78,11 @@ def test_matching_indexes(startup):
         WHERE c.relkind IN ('i','')
               AND n.nspname NOT IN ('pg_catalog', 'pg_toast')
               AND pg_catalog.pg_table_is_visible(c.oid)
+              AND c2.relname NOT IN {ignore_tables}
         ORDER BY 1,2;
-    '''
+    '''.format(ignore_tables=startup['unused_tables'])
     new_db_result = startup['new_db'].execute(stmt)
     old_db_result = startup['old_db'].execute(stmt)
-    assert len(new_db_result) == len(old_db_result), ("new db has {} more indexes.".format(len(new_db_result) - len(old_db_result)))
 
     unmatched_indexes = []
     for old_row in old_db_result:
@@ -93,9 +94,10 @@ def test_matching_indexes(startup):
                 found = True
                 break
         if not found:
-            unmatched_indexes.append(old_row['Name'])
+            unmatched_indexes.append({'name': old_row['Name'], 'table': old_row['Table']})
     assert len(unmatched_indexes) == 0, (unmatched_indexes)
-
+    # assert len(new_db_result) == len(old_db_result), (
+    # "new db has {} more indexes.".format(len(new_db_result) - len(old_db_result)))
 
 
 @pytest.fixture(scope="module")
