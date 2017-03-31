@@ -569,7 +569,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['address_low'], int)
     assert isinstance(feature['properties']['address_low_suffix'], str)
     assert isinstance(feature['properties']['address_low_frac'], str)
-    assert isinstance(feature['properties']['address_high'], (int, None))
+    assert isinstance(feature['properties']['address_high'], (int)) if feature['properties']['address_high'] else None == None
     assert isinstance(feature['properties']['street_predir'], str)
     assert isinstance(feature['properties']['street_name'], str)
     assert isinstance(feature['properties']['street_suffix'], str)
@@ -610,7 +610,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['police_district'], str)
     assert isinstance(feature['properties']['police_service_area'], str)
     assert isinstance(feature['properties']['rubbish_recycle_day'], str)
-    assert isinstance(feature['properties']['recycling_diversion_rate'], int)
+    assert isinstance(feature['properties']['recycling_diversion_rate'], float)
     assert isinstance(feature['properties']['leaf_collection_area'], str)
     assert isinstance(feature['properties']['sanitation_area'], str)
     assert isinstance(feature['properties']['sanitation_district'], str)
