@@ -218,8 +218,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
         except:
             pass
         opa_owners = data['properties']['opa_owners']
+        pwd_account_nums = data['properties']['pwd_account_nums']
         if not 'source_details' in self.metadata.get('search_params'):
             data['properties']['opa_owners'] = opa_owners.split("|") if opa_owners else []
+            data['properties']['pwd_account_nums'] = pwd_account_nums.split("|") if pwd_account_nums else []
 
         return data
 

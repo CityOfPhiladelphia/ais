@@ -130,7 +130,6 @@ def unmatched_response(**kwargs):
 @app.route('/unknown/<path:query>')
 @cache_for(hours=1)
 def unknown_cascade_view(**kwargs):
-    # print("unknown_cascade_view")
 
     query = kwargs.get('query')
     normalized_address = kwargs.get('normalized_address')
