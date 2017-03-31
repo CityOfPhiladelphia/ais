@@ -630,3 +630,9 @@ def test_api_response_signature(client):
     assert isinstance(feature['geometry']['geocode_type'], str)
     assert isinstance(feature['geometry']['type'], str)
     assert isinstance(feature['geometry']['coordinates'], list)
+
+def test_reverse_geocode(client):
+    response = client.get('/search/-75.15311665258051,39.94923709403044')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '714 CHESTNUT ST'
