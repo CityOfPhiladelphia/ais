@@ -39,23 +39,23 @@ The API endpoints are:
 `\search` is a resource which handles a variety of query types, including:
 
    * **address** - Represents a particular address - 
-    [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+    [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
    * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
-    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St)
+    [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais/v1/search/1200-1299%20block%20of%20Market%20St?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
    * **intersection** - Inputted as 'street 1 and street 2', including predirections, i.e.
-    [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St)
+    [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais/v1/search/N%2012th%20and%20Market%20St?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
    * **OPA account number** - Office of Property Assessment Account Number - 
-    http://api.phila.gov/ais/v1/search/883309050
+    [http://api.phila.gov/ais/v1/search/883309050](http://api.phila.gov/ais/v1/search/883309050?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
    * **Regmap ID** - This is the Department of Records Registry Map ID - 
-    http://api.phila.gov/ais/v1/search/001S07-0144   
+    [http://api.phila.gov/ais/v1/search/001S07-0144](http://api.phila.gov/ais/v1/search/001S07-0144?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
     
    * **coordinates** - Location in x, y format, either as:
-    * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955), or
-    * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
+     * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+     * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais_test/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206,235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
    
 ```
    Coordinate searches are routed to the /reverse_geocode endpoint which finds the nearest address 
@@ -68,14 +68,14 @@ The API endpoints are:
 ### <a name="Owner"></a>__**Owner**__ 
 `\owner` is a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. 
 * Queries are treated as substrings of owner names:
- * Request properties owned by anyone whose first or last name contains "Poe" - http://api.phila.gov/ais/v1/owner/Poe
+ * Request properties owned by anyone whose first or last name contains "Poe" - [http://api.phila.gov/ais/v1/owner/Poe](http://api.phila.gov/ais/v1/owner/Poe?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 * You can search for multiple substrings by separating search terms by spaces:
- * Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
+ * Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 
 ### <a name="Addresses"></a>__**Addresses**__ 
 `\addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/): 
-* [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st)
+* [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/search/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 
 ## <a name="Query Flags"></a>Query Flags
@@ -83,30 +83,30 @@ The API endpoints are:
 Additional query instructions can be sent via querystring parameters, or flags:
 
 * `opa_only`: Filters results to contain only addresses that have OPA account numbers:
- *  [http://api.phila.gov/ais/v1/search/1234 Market St?opa_only](http://api.phila.gov/ais/v1/search/1234%20Market%20St?opa_only)
+ *  [http://api.phila.gov/ais/v1/search/1234 Market St?opa_only](http://api.phila.gov/ais/v1/search/1234%20Market%20St?opa_only&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
     
 * `include_units`: Requests that units contained within a given property be returned along with the top-level property:
- *  [http://api.phila.gov/ais/v1/search/1234 Market St?include_units](http://api.phila.gov/ais/v1/search/1234%20Market%20St?include_units)
+ *  [http://api.phila.gov/ais/v1/search/1234 Market St?include_units](http://api.phila.gov/ais/v1/search/1234%20Market%20St?include_units&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
  
 * `srid=#`: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where #  is the numeric projection [SRID/EPSG](http://spatialreference.org/ref/): 
  * Responses without the `srid` flag in the request default to WGS84 coordinates (SRID=4326)
- * State Plane: [http://api.phila.gov/ais/v1/search/1234 Market St?srid=2272](http://api.phila.gov/ais/v1/search/1234%20Market%20St?srid=2272)
+ * State Plane: [http://api.phila.gov/ais/v1/search/1234 Market St?srid=2272](http://api.phila.gov/ais/v1/search/1234%20Market%20St?srid=2272&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
         
 * `on_curb`: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?on_curb](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_curb)    
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?on_curb](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_curb&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)    
    
 * `on_street`: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?on_street](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_street)   
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?on_street](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_street&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
  
 * `parcel_geocode_location`: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?parcel_geocode_location](http://api.phila.gov/ais/v1/search/1234%20Market%20St?parcel_geocode_location)   
+ * [http://api.phila.gov/ais/v1/search/1234 Market St?parcel_geocode_location](http://api.phila.gov/ais/v1/search/1234%20Market%20St?parcel_geocode_location&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
 
 
 ## <a name="Pagination"></a>Pagination
 
  Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. Use the querystring parameter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response:
- * [http://api.phila.gov/ais/v1/search/2401 pennsylvania ave?include_units&opa_only&page=2](http://api.phila.gov/ais/v1/search/2401%20pennsylvania%20ave?include_units&opa_only&page=2)
+ * [http://api.phila.gov/ais/v1/search/2401 pennsylvania ave?include_units&opa_only&page=2](http://api.phila.gov/ais/v1/search/2401%20pennsylvania%20ave?include_units&opa_only&page=2&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
  
 A pagination object is returned in the [response envelope](#Envelope) detailing the ```page``` number of the response.
 
@@ -153,11 +153,22 @@ The root of the `FeatureCollection` contains:
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
-     * `generic_unit`: Exact but interchanged generic unit_type (APT, UNIT, #, STE) 
-     * `base`: Base address match for unit address query
+     * `generic_unit`: Exact but interchanged generic unit_type (APT, UNIT, #, STE)
+     * `unit_sibling`: Base address match but different unit types/numbers between matched and queried address
+     * `has_base`: Base address match for unit address query
      * `unit_child`: Unit address match for base address query
-     * `range-parent`: Ranged_address match for range_child query
-     * `range_child`: Range_child match for ranged_address query
+     * `in_range`: Range_child match for ranged address query     
+     * `overlaps`: Range address match by range overlapping queried ranged_address range 
+     * `range-parent`: Ranged_address match for in-range query
+     * `has_base_unit_child`: Base address unit child match
+     * `has_base_in_range`: In-range base address match for ranged unit address query 
+     * `has_base_overlaps`: Overlapping ranged base address match for ranged unit address query
+     * `in_range_unit_child`: In-range unit address match for ranged address query
+     * `range_parent_unit_child`: Ranged address unit child match for in-range query
+     * `on_block`: Returned via block search
+     * `contains_query_string`: Returned via owner search
+     * `exact_location`: Returned via reverse geocode search
+     * `exact_key`: Retrurned via pwd_parcel id, regmap id, or property account number query
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
@@ -301,8 +312,8 @@ A `404 status` is returned when:
 ## <a name="Additional Resources"></a>Additional Resources
 ### <a name="ServiceAreas"></a>__**Service Areas**__ 
 `\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
-* Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,%2039.951661655671955), or
-* Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206,%20235887.921013063)
+* Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/service_areas/-75.16097658476633,%2039.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+* Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/service_areas/2694253.78730206,%20235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 The `/service_areas` endpoint response contains the query metadata, geometry and crs objects, as well the service area data. The response format is:
 
