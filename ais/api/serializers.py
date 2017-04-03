@@ -197,13 +197,16 @@ class AddressJsonSerializer (GeoJSONSerializer):
             data_comps.append(render_source)
         # If no 'source_details' in request args return tags as key (pipe delimited) value pairs
         else:
-            for key in tag_data[address.street_address]:
-                if not key in render_source:
-                    render_source[key] = None
-                for val in tag_data[address.street_address].get(key):
-                    render_source[key] = render_source[key] + '|' + val.value if render_source[key] else val.value
-                    # render_source[key] = [render_source[key], val.value] if render_source[key] else val.value
-            data_comps.append(render_source)
+            try:
+                for key in tag_data[address.street_address]:
+                    if not key in render_source:
+                        render_source[key] = None
+                    for val in tag_data[address.street_address].get(key):
+                        render_source[key] = render_source[key] + '|' + val.value if render_source[key] else val.value
+                        # render_source[key] = [render_source[key], val.value] if render_source[key] else val.value
+                data_comps.append(render_source)
+            except:
+                pass
         return data_comps
 
     def transform_exceptions(self, data):
