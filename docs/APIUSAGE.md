@@ -54,8 +54,8 @@ The API endpoints are:
     http://api.phila.gov/ais/v1/search/001S07-0144   
     
    * **coordinates** - Location in x, y format, either as:
-    * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955), or
-    * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
+     * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+     * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais_test/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206,235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
    
 ```
    Coordinate searches are routed to the /reverse_geocode endpoint which finds the nearest address 
