@@ -153,11 +153,22 @@ The root of the `FeatureCollection` contains:
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
-     * `generic_unit`: Exact but interchanged generic unit_type (APT, UNIT, #, STE) 
-     * `base`: Base address match for unit address query
+     * `generic_unit`: Exact but interchanged generic unit_type (APT, UNIT, #, STE)
+     * `unit_sibling`: Base address match but different unit types/numbers between matched and queried address
+     * `has_base`: Base address match for unit address query
      * `unit_child`: Unit address match for base address query
-     * `range-parent`: Ranged_address match for range_child query
-     * `range_child`: Range_child match for ranged_address query
+     * `in_range`: Range_child match for ranged address query     
+     * `overlaps`: Range address match by range overlapping queried ranged_address range 
+     * `range-parent`: Ranged_address match for in-range query
+     * `has_base_unit_child`: Base address unit child match
+     * `has_base_in_range`: In-range base address match for ranged unit address query 
+     * `has_base_overlaps`: Overlapping ranged base address match for ranged unit address query
+     * `in_range_unit_child`: In-range unit address match for ranged address query
+     * `range_parent_unit_child`: Ranged address unit child match for in-range query
+     * `on_block`: Returned via block search
+     * `contains_query_string`: Returned via owner search
+     * `exact_location`: Returned via reverse geocode search
+     * `exact_key`: Retrurned via pwd_parcel id, regmap id, or property account number query
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
