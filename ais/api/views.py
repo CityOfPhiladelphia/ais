@@ -993,7 +993,12 @@ def service_areas(query):
 
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
-    srid = str(srid_map[parsed['type']])
+    try:
+        srid = str(srid_map[parsed['type']])
+    except:
+        error = json_error(404, 'Not a valid query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
     engine_srid = str(ENGINE_SRID)
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
@@ -1085,9 +1090,14 @@ def search(query):
     # TODO: Pass search_type (or parsed) to view function to avoid reparsing
     if search_type != 'none':
         # get the corresponding view function
-        view = parser_search_type_map[search_type]
-        # call it
-        return view(query)
+        try:
+            view = parser_search_type_map[search_type]
+            # call it
+            return view(query)
+        except:
+            error = json_error(404, 'Invalid query.',
+                               {'query': query})
+            return json_response(response=error, status=404)
 
     # Handle search type = 'none:
     else:
