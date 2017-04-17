@@ -440,7 +440,7 @@ def addresses(query):
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
     if error:
-        return json_response(response=error, status=error['status'])
+        return json_response(response=error, status=404)
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
