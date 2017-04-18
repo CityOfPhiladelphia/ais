@@ -877,6 +877,7 @@ def reverse_geocode(query):
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
     x, y = normalized.split(",", 1)
     search_radius = request.args.get('search_radius') if 'search_radius' in request.args else config['DEFAULT_SEARCH_RADIUS']
+    search_radius = min(int(search_radius), config['MAXIMUM_SEARCH_RADIUS'])
     # queries the geocode table by coordinates for the record with the nearest coordinates having \
     # geocode type = pwd_curb, dor_curb, true_range or centerline
     reverse_geocode_stmt = '''
