@@ -872,23 +872,24 @@ def reverse_geocode(query):
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     srid = str(srid_map[search_type])
-    engine_srid = str(ENGINE_SRID) # check if necessary
+    engine_srid = str(ENGINE_SRID)  # check if necessary
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
-    x, y = normalized.split(",",1)
-
+    x, y = normalized.split(",", 1)
+    search_radius = request.args.get('search_radius') if 'search_radius' in request.args else config['DEFAULT_SEARCH_RADIUS']
     # queries the geocode table by coordinates for the record with the nearest coordinates having \
     # geocode type = pwd_curb, dor_curb, true_range or centerline
     reverse_geocode_stmt = '''
         SELECT street_address, geocode_type
         from geocode
-        where geocode_type IN ({pwd_curb}, {dor_curb}, {true_range}) AND
-        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
+        where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), {search_radius})
+          AND geocode_type IN ({pwd_curb}, {dor_curb}, {true_range})
         ORDER BY
             geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
             length(street_address) asc
         LIMIT 1
-        '''.format(x=x, y=y, srid=srid, engine_srid=engine_srid, pwd_curb=7, dor_curb=8, true_range=5, centerline=6)
+        '''.format(x=x, y=y, srid=srid, engine_srid=engine_srid, pwd_curb=7, dor_curb=8, true_range=5, centerline=6,
+                   search_radius=search_radius)
 
     results = db.engine.execute(reverse_geocode_stmt)
     result = None
