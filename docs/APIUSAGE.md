@@ -106,6 +106,7 @@ Additional query instructions can be sent via querystring parameters, or flags:
  
 * `search_radius=#`: Specifies a custom search radius for reverse geocoding, where # is the user defined radius in feet:
   * [http://api.phila.gov/ais/v1/reverse_geocode/2734283 294882?search_radius=750](http://api.phila.gov/ais/v1/reverse_geocode/2734283%20294882?search_radius=750&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+  * `*note`: A user defined search_radius is limited to a maximum of 10,000 feet.
 
 
 ## <a name="Pagination"></a>Pagination
