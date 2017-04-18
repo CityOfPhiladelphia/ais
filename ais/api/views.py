@@ -883,7 +883,7 @@ def reverse_geocode(query):
         SELECT street_address, geocode_type
         from geocode
         where geocode_type IN ({pwd_curb}, {dor_curb}, {true_range}) AND
-        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 2000)
+        ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), 1000)
         ORDER BY
             geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
             length(street_address) asc
