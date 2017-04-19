@@ -61,6 +61,8 @@ The API endpoints are:
    Coordinate searches are routed to the /reverse_geocode endpoint which finds the nearest address 
    to queried coordinates based on address geocodes projected on the curb. True/full range geocodes 
    are also searched against to incorporate addresses not listed in DOR or PWD parcel records.
+   Searches are limited within the default search radius of 300 ft unless specified explicitly in the
+   request using search_radius=# query flag.
 ```
 
 
@@ -83,24 +85,28 @@ The API endpoints are:
 Additional query instructions can be sent via querystring parameters, or flags:
 
 * `opa_only`: Filters results to contain only addresses that have OPA account numbers:
- *  [http://api.phila.gov/ais/v1/search/1234 Market St?opa_only](http://api.phila.gov/ais/v1/search/1234%20Market%20St?opa_only&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+  *  [http://api.phila.gov/ais/v1/search/1234 Market St?opa_only](http://api.phila.gov/ais/v1/search/1234%20Market%20St?opa_only&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
     
 * `include_units`: Requests that units contained within a given property be returned along with the top-level property:
- *  [http://api.phila.gov/ais/v1/search/1234 Market St?include_units](http://api.phila.gov/ais/v1/search/1234%20Market%20St?include_units&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+  *  [http://api.phila.gov/ais/v1/search/1234 Market St?include_units](http://api.phila.gov/ais/v1/search/1234%20Market%20St?include_units&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
  
 * `srid=#`: Specifies that the geometry of the address object be returned as coordinates of a particular projection, 
      where #  is the numeric projection [SRID/EPSG](http://spatialreference.org/ref/): 
- * Responses without the `srid` flag in the request default to WGS84 coordinates (SRID=4326)
- * State Plane: [http://api.phila.gov/ais/v1/search/1234 Market St?srid=2272](http://api.phila.gov/ais/v1/search/1234%20Market%20St?srid=2272&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+  * Responses without the `srid` flag in the request default to WGS84 coordinates (SRID=4326)
+  * State Plane: [http://api.phila.gov/ais/v1/search/1234 Market St?srid=2272](http://api.phila.gov/ais/v1/search/1234%20Market%20St?srid=2272&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
         
 * `on_curb`: Specifies that the geometry of the response be the best geocode type on the curb in front of the parcel:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?on_curb](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_curb&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)    
+  * [http://api.phila.gov/ais/v1/search/1234 Market St?on_curb](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_curb&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)    
    
 * `on_street`: Specifies that the geometry of the response be the best geocode type on the street in front of the parcel:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?on_street](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_street&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
+  * [http://api.phila.gov/ais/v1/search/1234 Market St?on_street](http://api.phila.gov/ais/v1/search/1234%20Market%20St?on_street&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
  
 * `parcel_geocode_location`: Requests that a feature for [each type of address geocode geometry](#geocode_type) be returned:
- * [http://api.phila.gov/ais/v1/search/1234 Market St?parcel_geocode_location](http://api.phila.gov/ais/v1/search/1234%20Market%20St?parcel_geocode_location&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
+  * [http://api.phila.gov/ais/v1/search/1234 Market St?parcel_geocode_location](http://api.phila.gov/ais/v1/search/1234%20Market%20St?parcel_geocode_location&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
+ 
+* `search_radius=#`: Specifies a custom search radius for reverse geocoding, where # is the user defined radius in feet:
+  * [http://api.phila.gov/ais/v1/reverse_geocode/2734283 294882?search_radius=750](http://api.phila.gov/ais/v1/reverse_geocode/2734283%20294882?search_radius=750&gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+  * `*note`: A user defined search_radius is limited to a maximum of 10,000 feet.
 
 
 ## <a name="Pagination"></a>Pagination
