@@ -547,6 +547,7 @@ for i, address in enumerate(addresses):
             ranges_on_street = street_range_map[street_full]
             for range_on_street in ranges_on_street:
                 if street_address != range_on_street.street_address \
+                    and range_on_street.parity == parity \
                     and base_address != range_on_street.base_address \
                     and base_address_no_suffix != range_on_street.base_address_no_suffix \
                     and unit_type == range_on_street.unit_type \
