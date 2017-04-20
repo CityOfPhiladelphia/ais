@@ -379,6 +379,7 @@ def test_intersection_query(client):
     assert_status(response, 200)
     feature = data['features'][0]
     assert feature['ais_feature_type'] == 'intersection'
+    # assert feature['properties']['int_id'] == 21258
 
 def test_intersection_query_no_predir(client):
     # TODO: Make functional without street predir (and st suffix): i.e. 'S 12th and chestnut st' works
@@ -522,6 +523,12 @@ def test_ranged_addresses_have_linked_tags_from_overlapping(client):
     data = json.loads(response.get_data().decode())
     features = data['features']
     assert features[0]['properties']['opa_account_num'][0]['source'] == '921-29 E LYCOMING ST overlaps 921-39 E LYCOMING ST'
+
+def test_overlap_link_respects_parity(client):
+    response = client.get('/search/1834-48 BLAIR ST')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['dor_parcel_id'] is None
 
 def test_related_addresses_returned_with_include_units(client):
     response = client.get('/search/1708%20chestnut%20st?include_units')
