@@ -112,6 +112,7 @@ for i, cl_row in enumerate(centerline_rows):
         source_street_full_comps = [x for x in source_street_full_comps if x != '']
         source_street_full = ' '.join(source_street_full_comps)
         seg_id = cl_row[field_map['seg_id']]
+        parsed = None
         try:
             parsed = parser.parse(source_street_full)
             if parsed['type'] != 'street':
@@ -119,8 +120,11 @@ for i, cl_row in enumerate(centerline_rows):
 
             # comps = parsed['components']    			<== phladdress
             comps = parsed['components']['street']  # <== passyunk
-        except Exception as e:
-            raise ValueError('Could not parse')
+        except:
+            pass
+        # Test with this version allowing all nodes in (including ramps, etc.) - if troublesome remove
+        # except Exception as e:
+        #     raise ValueError('Could not parse')
 
         street_comps = {
             'street_predir': comps['predir'] or '',
@@ -128,7 +132,13 @@ for i, cl_row in enumerate(centerline_rows):
             'street_suffix': comps['suffix'] or '',
             'street_postdir': comps['postdir'] or '',
             'street_full': comps['full'],
-        }
+        } if parsed else {
+            'street_predir': cl_row[field_map['street_predir']] or '',
+            'street_name': cl_row[field_map['street_name']] or '',
+            'street_suffix': cl_row[field_map['street_suffix']] or '',
+            'street_postdir': cl_row[field_map['street_postdir']] or '',
+            'street_full': source_street_full,
+            }
 
         centerline = {key: cl_row[value] for key, value in field_map.items()}
         centerline.update(street_comps)
