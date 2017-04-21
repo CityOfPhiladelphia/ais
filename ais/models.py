@@ -99,6 +99,8 @@ class StreetIntersection(db.Model):
     query_class = StreetIntersectionQuery
 
     id = db.Column(db.Integer, primary_key=True)
+    node_id = db.Column(db.Integer)
+    int_id = db.Column(db.Integer)
     street_1_full = db.Column(db.Text)
     street_1_name = db.Column(db.Text)
     street_1_code = db.Column(db.Text, index=True)
