@@ -4,7 +4,7 @@ Welcome to the documentation for AIS API Version 1.0. This document explains how
 * In general, applications supporting user-defined input and interactive maps should use the [/search](#Search) endpoint, which handles a variety of query types by identifying the type and routing to the appropriate endpoint. 
 * The [/owner](#Owner) endpoint can be used to search for addresses by owner name.
 * The [/service_areas](#ServiceAreas) endpoint can be used for a quick service area lookup by coordinates.
-* Otherwise, individual endpoints may be used to minimize overhead associated with routing. More information about individual endpoints can be obtained by exploring our [swagger at the API root](http://api.phila.gov/ais/v1).    
+* Otherwise, individual endpoints may be used to minimize overhead associated with routing. More information about individual endpoints can be obtained by exploring our [swagger at the API root](http://api.phila.gov/ais/v1/?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf).    
 
 # <a name="Authentication"></a>Authentication
 
