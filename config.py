@@ -42,8 +42,6 @@ BASE_DATA_SOURCES = {
             'street_name':              'st_name',
             'street_suffix':            'st_type',
             'street_postdir':           'suf_dir',
-            'fnode':                    'fnode_',
-            'tnode':                    'tnode_',
         }
     },
     'street_aliases': {

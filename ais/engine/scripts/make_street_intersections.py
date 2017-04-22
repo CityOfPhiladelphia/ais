@@ -143,6 +143,8 @@ for i, cl_row in enumerate(centerline_rows):
         centerline = {key: cl_row[value] for key, value in field_map.items()}
         centerline.update(street_comps)
         centerline['geom'] = cl_row[source_geom_field]
+        centerline['fnode'] = cl_row['fnode_']
+        centerline['tnode'] = cl_row['tnode_']
         centerline.pop('left_to', None)
         centerline.pop('left_from', None)
         centerline.pop('right_to', None)
