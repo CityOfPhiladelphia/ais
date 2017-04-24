@@ -268,21 +268,21 @@ print("Writing street intersection table...")
 db.execute(st_int_stmt)
 db.save()
 
-# print("Deleting temporary centerline table...")
-# del_st_cent_stmt =\
-# '''
-#     Drop table if exists street_centerlines;
-# '''
-# db.execute(del_st_cent_stmt)
-# db.save()
-#
-# print("Deleting temporary nodes table...")
-# del_st_node_stmt =\
-# '''
-#     Drop table if exists street_nodes;
-# '''
-# db.execute(del_st_node_stmt)
-# db.save()
+print("Deleting temporary centerline table...")
+del_st_cent_stmt =\
+'''
+    Drop table if exists street_centerlines;
+'''
+db.execute(del_st_cent_stmt)
+db.save()
+
+print("Deleting temporary nodes table...")
+del_st_node_stmt =\
+'''
+    Drop table if exists street_nodes;
+'''
+db.execute(del_st_node_stmt)
+db.save()
 '''
 FINISH
 '''
