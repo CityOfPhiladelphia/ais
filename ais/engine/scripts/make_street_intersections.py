@@ -127,18 +127,21 @@ for i, cl_row in enumerate(centerline_rows):
         # Test with this version allowing all nodes in (including ramps, etc.) - if troublesome remove
         # except Exception as e:
         #     raise ValueError('Could not parse')
-
-        street_comps = {
-            'street_predir': comps['predir'] or '',
-            'street_name': comps['name'] or '',
-            'street_suffix': comps['suffix'] or '',
-            'street_postdir': comps['postdir'] or '',
-            'street_full': comps['full'],
-        } if parsed else {
-            'street_predir': cl_row[field_map['street_predir']] or '',
-            'street_name': cl_row[field_map['street_name']] or '',
-            'street_suffix': cl_row[field_map['street_suffix']] or '',
-            'street_postdir': cl_row[field_map['street_postdir']] or '',
+        if parsed['type'] == 'street':
+            street_comps = {
+                'street_predir': comps['predir'] or '',
+                'street_name': comps['name'] or '',
+                'street_suffix': comps['suffix'] or '',
+                'street_postdir': comps['postdir'] or '',
+                'street_full': comps['full'],
+            }
+        else:
+            print(source_street_full)
+            street_comps = {
+            # 'street_predir': cl_row[field_map['street_predir']] or '',
+            # 'street_name': cl_row[field_map['street_name']] or '',
+            # 'street_suffix': cl_row[field_map['street_suffix']] or '',
+            # 'street_postdir': cl_row[field_map['street_postdir']] or '',
             'street_full': source_street_full,
             }
 
@@ -265,21 +268,21 @@ print("Writing street intersection table...")
 db.execute(st_int_stmt)
 db.save()
 
-print("Deleting temporary centerline table...")
-del_st_cent_stmt =\
-'''
-    Drop table if exists street_centerlines;
-'''
-db.execute(del_st_cent_stmt)
-db.save()
-
-print("Deleting temporary nodes table...")
-del_st_node_stmt =\
-'''
-    Drop table if exists street_nodes;
-'''
-db.execute(del_st_node_stmt)
-db.save()
+# print("Deleting temporary centerline table...")
+# del_st_cent_stmt =\
+# '''
+#     Drop table if exists street_centerlines;
+# '''
+# db.execute(del_st_cent_stmt)
+# db.save()
+#
+# print("Deleting temporary nodes table...")
+# del_st_node_stmt =\
+# '''
+#     Drop table if exists street_nodes;
+# '''
+# db.execute(del_st_node_stmt)
+# db.save()
 '''
 FINISH
 '''
