@@ -317,8 +317,8 @@ def addresses(query):
     street_full = parsed['components']['street']['full']
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
-    search_type = parsed['type']
     base_address_no_num_suffix = '{} {}'.format(low_num, street_full) # TODO: handle ranged addresses with num suffixes
+    search_type = parsed['type']
 
     loose_filters = NotNoneDict(
         street_name=parsed['components']['street']['name'],
@@ -338,7 +338,7 @@ def addresses(query):
     if unit_num == '':
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
-    if search_type != 'address':
+    if search_type != 'address' or low_num is None:
         error = json_error(404, 'Not a valid address.',
                            {'query': query, 'normalized': normalized_address})
         return json_response(response=error, status=404)
