@@ -71,6 +71,7 @@ st_cent_stmt = '''
       street_predir text,
       street_postdir text,
       street_suffix text,
+      street_type text,
       fnode numeric(10,0),
       tnode numeric(10,0),
       geom geometry(MultiLineString, 2272)
@@ -96,6 +97,7 @@ db.save()
 
 print('Reading streets from source...')
 source_fields = list(field_map.values())
+# where = "st_type != 'RAMP'"
 centerline_rows = centerline_table.read(to_srid=engine_srid)
 centerlines = []
 nodes = []
@@ -145,6 +147,7 @@ for i, cl_row in enumerate(centerline_rows):
         centerline['geom'] = cl_row[source_geom_field]
         centerline['fnode'] = cl_row['fnode_']
         centerline['tnode'] = cl_row['tnode_']
+        centerline['street_type'] = cl_row['st_type']
         centerline.pop('left_to', None)
         centerline.pop('left_from', None)
         centerline.pop('right_to', None)
@@ -226,7 +229,7 @@ with distinct_st1scns as
 	select distinct on (int_id, street_1_code, street_2_code) *
 	from scsndj_distinct
 	)
-	select scsn.*, sc.street_predir as street_1_predir, sc.street_name as street_1_name, sc.street_suffix as street_1_suffix, sc.street_postdir as street_1_postdir, sc.street_full as street_1_full
+	select scsn.*, sc.street_predir as street_1_predir, sc.street_name as street_1_name, sc.street_suffix as street_1_suffix, sc.street_postdir as street_1_postdir, sc.street_full as street_1_full, sc.street_type as street_1_type
 	from scsndjd_distinct scsn
 	left join street_centerlines sc on sc.street_code = scsn.street_1_code
 	order by scsn.node_id
@@ -236,7 +239,7 @@ with distinct_st1scns as
 ,
 st12scns as
 (
-select scsn1.*, sc.street_predir as street_2_predir, sc.street_name as street_2_name, sc.street_suffix as street_2_suffix, sc.street_postdir as street_2_postdir, sc.street_full as street_2_full
+select scsn1.*, sc.street_predir as street_2_predir, sc.street_name as street_2_name, sc.street_suffix as street_2_suffix, sc.street_postdir as street_2_postdir, sc.street_full as street_2_full, sc.street_type as street_2_type
 from distinct_st1scns scsn1
 left join street_centerlines sc on sc.street_code = street_2_code
 order by scsn1.node_id
@@ -244,9 +247,10 @@ order by scsn1.node_id
 ,
 final AS
 (
-select distinct *
+select distinct node_id, int_id, street_1_code, street_1_name, street_1_full, street_1_predir, street_1_postdir, street_1_suffix,
+  street_2_code, street_2_name, street_2_full, street_2_predir, street_2_postdir, street_2_suffix, geom
 from st12scns
-WHERE int_id is not NULL
+WHERE int_id is not NULL and street_1_type != 'RAMP' and street_2_type != 'RAMP'
 order by node_id
 )
 INSERT INTO street_intersection (node_id, int_id, street_1_code, street_1_name, street_1_full, street_1_predir, street_1_postdir, street_1_suffix, street_2_code,
@@ -261,21 +265,21 @@ print("Writing street intersection table...")
 db.execute(st_int_stmt)
 db.save()
 
-print("Deleting temporary centerline table...")
-del_st_cent_stmt =\
-'''
-    Drop table if exists street_centerlines;
-'''
-db.execute(del_st_cent_stmt)
-db.save()
+# print("Deleting temporary centerline table...")
+# del_st_cent_stmt =\
+# '''
+#     Drop table if exists street_centerlines;
+# '''
+# db.execute(del_st_cent_stmt)
+# db.save()
 
-print("Deleting temporary nodes table...")
-del_st_node_stmt =\
-'''
-    Drop table if exists street_nodes;
-'''
-db.execute(del_st_node_stmt)
-db.save()
+# print("Deleting temporary nodes table...")
+# del_st_node_stmt =\
+# '''
+#     Drop table if exists street_nodes;
+# '''
+# db.execute(del_st_node_stmt)
+# db.save()
 '''
 FINISH
 '''
