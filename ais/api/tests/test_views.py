@@ -532,7 +532,7 @@ def test_overlap_link_respects_parity(client):
     response = client.get('/search/1834-48 BLAIR ST')
     data = json.loads(response.get_data().decode())
     features = data['features']
-    assert features[0]['properties']['dor_parcel_id'] is None
+    assert features[0]['properties']['dor_parcel_id'] == ''
 
 def test_related_addresses_returned_with_include_units(client):
     response = client.get('/search/1708%20chestnut%20st?include_units')
