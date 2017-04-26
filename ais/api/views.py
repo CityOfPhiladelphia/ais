@@ -11,9 +11,10 @@ from flask_cachecontrol import cache_for
 from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
+from sqlalchemy import func, desc
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, ENGINE_SRID
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, DorParcel, PwdParcel, OpaProperty, ENGINE_SRID
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
@@ -609,11 +610,22 @@ def account(query):
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
 
-    addresses = AddressSummary.query\
-        .filter(AddressSummary.opa_account_num==query)\
+    # addresses = AddressSummary.query\
+    #     .filter(AddressSummary.opa_account_num==query)\
+    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+    #     .get_address_geoms(request) \
+    #     .sort_by_source_address_from_search_type(search_type)
+
+    tagged_opa_account_nums = OpaProperty.query \
+        .filter(OpaProperty.account_num == normalized).all()
+    street_addresses = tuple(set([x.street_address for x in tagged_opa_account_nums]))
+    print(street_addresses)
+
+    addresses = AddressSummary.query \
+        .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
-        .sort_by_source_address_from_search_type(search_type)
+        .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
 
     # Get pagination
     paginator = QueryPaginator(addresses)
@@ -657,11 +669,22 @@ def pwd_parcel(query):
     Looks up information about the property with the given PWD parcel id.
     """
     search_type = 'pwd_parcel_id'
-    addresses = AddressSummary.query\
-        .filter(AddressSummary.pwd_parcel_id==query) \
+    # addresses = AddressSummary.query\
+    #     .filter(AddressSummary.pwd_parcel_id==query) \
+    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+    #     .get_address_geoms(request) \
+    #     .sort_by_source_address_from_search_type(search_type)
+
+    tagged_pwd_parcel_ids = PwdParcel.query \
+        .filter(PwdParcel.parcel_id==query).all()
+    street_addresses = tuple(set([x.street_address for x in tagged_pwd_parcel_ids]))
+    print(street_addresses)
+
+    addresses = AddressSummary.query \
+        .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-        .get_address_geoms(request) \
-        .sort_by_source_address_from_search_type(search_type)
+        .get_address_geoms(request)\
+        .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
 
     # Get pagination
     paginator = QueryPaginator(addresses)
@@ -708,11 +731,22 @@ def dor_parcel(query):
     normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
 
-    addresses = AddressSummary.query\
-        .filter(AddressSummary.dor_parcel_id==normalized_id) \
+    tagged_dor_parcel_ids = DorParcel.query  \
+        .filter(DorParcel.parcel_id==normalized_id).all()
+    street_addresses = tuple(set([x.street_address for x in tagged_dor_parcel_ids]))
+
+    addresses = AddressSummary.query \
+        .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-        .get_address_geoms(request) \
-        .sort_by_source_address_from_search_type(search_type)
+        .get_address_geoms(request)\
+        .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
+    #     .sort_by_source_address_from_search_type(search_type) # <- doesn't work with pipe delimited tag fields in AddressSummary
+
+    # addresses = AddressSummary.query\
+    #     .filter(AddressSummary.dor_parcel_id==normalized_id) \
+    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+    #     .get_address_geoms(request) \
+    #     .sort_by_source_address_from_search_type(search_type)
 
     # Get pagination
     paginator = QueryPaginator(addresses)
