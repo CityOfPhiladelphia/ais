@@ -651,3 +651,7 @@ def test_reverse_geocode(client):
 def test_0_address_low_addresses_return_404(client):
     response = client.get('/addresses/0 Lister')
     assert_status(response, 404)
+
+def test_dor_parcel_search_works_for_multiples_in_address_summary(client):
+    response = client.get('/search/016S080346')
+    assert_status(response, 200)
