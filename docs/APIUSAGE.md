@@ -257,6 +257,7 @@ The root of the `FeatureCollection` contains:
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
 * The following list of `properties`:
+     * `int_id`: the intersection id as assigned by Streets
      * `street_1`: properties for street_1 are:
         * `street_code`: 5 digit numeric unique code associated with each unique street name
         * `street_full`: full street (includeing predir, postdir and suffix)
