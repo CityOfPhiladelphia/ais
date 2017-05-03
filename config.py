@@ -551,18 +551,18 @@ SERVICE_AREAS = {
             },
         },
         # ZONING RCO OVERLAYS - CAN BE MULTIPLE PER ADDRESS? CLARIFY AND INCORPORATE
-        # {
-        #     'layer_id':             'zoning_rco',
-        #     'name':                 'Zoning_RCO',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.Zoning_RCO',
-        #             'value_field':          'objectid',
-        #         },
-        #     },
-        # },
+        {
+            'layer_id':             'zoning_rco',
+            'name':                 'Zoning_RCO',
+            'description':           '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Zoning_RCO',
+                    'value_field':          'objectid',
+                },
+            },
+        },
         # STEEP SLOPE PROTECTION AREAS
         # {
         #     'layer_id':             'zoning_steepslopeprotectionarea',
@@ -615,8 +615,6 @@ SERVICE_AREAS = {
         # #       },
         # #   },
         # # },
-
-
         # GIS_POLICE
         {
             'layer_id':             'police_division',
@@ -669,7 +667,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-
         # GIS_RDA
         #   SHOULD THIS GO IN SOURCES?
         #     investigate whether 2 addreses are same property
