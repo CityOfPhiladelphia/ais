@@ -349,31 +349,31 @@ ADDRESSES = {
                 },
             ],
         },
-        {
-            'name': 'rtt',
-            'table': 'gis_dor_rttmapping.cris_properties',
-            'db': 'gisp_t',
-            'address_fields': {
-                'address_low': 'house_number',
-                'address_low_suffix': 'house_num_suffix',
-                'address_high': 'house_num_range',
-                'street_predir': 'street_dir',
-                'street_postdir': 'street_dir_suffix',
-                'street_name': 'street_name',
-                'street_type': 'street_type',
-                'unit_num': 'condo_unit',
-            },
-            'preprocessor': make_rtt_address,
-            'tag_fields': [
-                {
-                    'key': 'dor_parcel_id',
-                    'source_fields': ['reg_map_id'],
-                    'preprocessor': make_dor_parcel_id,
-                },
-            ],
-            # Query only records with non-null reg_map_id
-            'where':            'reg_map_id is not null',
-        },
+        # {
+        #     'name': 'rtt',
+        #     'table': 'gis_dor_rttmapping.cris_properties',
+        #     'db': 'gisp_t',
+        #     'address_fields': {
+        #         'address_low': 'house_number',
+        #         'address_low_suffix': 'house_num_suffix',
+        #         'address_high': 'house_num_range',
+        #         'street_predir': 'street_dir',
+        #         'street_postdir': 'street_dir_suffix',
+        #         'street_name': 'street_name',
+        #         'street_type': 'street_type',
+        #         'unit_num': 'condo_unit',
+        #     },
+        #     'preprocessor': make_rtt_address,
+        #     'tag_fields': [
+        #         {
+        #             'key': 'dor_parcel_id',
+        #             'source_fields': ['reg_map_id'],
+        #             'preprocessor': make_dor_parcel_id,
+        #         },
+        #     ],
+        #     # Query only records with non-null reg_map_id
+        #     'where':            'reg_map_id is not null',
+        # },
     ]
 }
 
