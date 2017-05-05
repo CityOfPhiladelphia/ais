@@ -140,7 +140,12 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		# Create and insert summary row
 		sa_summary_row = deepcopy(sa_summary_row_template)
 		sa_summary_row['street_address'] = street_address
-		update_dict = {x['layer_id']: x['value'] for x in sa_rows}
+		update_dict = {}
+		for x in sa_rows:
+			if x['layer_id'] != 'zoning_rco':
+				update_dict[x['layer_id']] = x['value']
+			else:
+				update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
 		sa_summary_row.update(update_dict)
 
 		# Override poly values with values from lines
