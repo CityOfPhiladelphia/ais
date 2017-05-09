@@ -830,7 +830,7 @@ class AddressSummaryQuery(BaseQuery):
                 .filter(AddressLink.relationship == 'has base') \
                 .filter(AddressLink.address_2.in_(range_child_addresses.subquery()))
 
-            range_parent_units = None
+            # range_parent_units = None
         # If the query is not for ranged addresses, handle the case where more
         # than one address may have been matched (e.g., the N and S variants
         # along a street), but some are children of ranged addresses and some
@@ -848,11 +848,11 @@ class AddressSummaryQuery(BaseQuery):
 
             range_child_units = None
 
-            # get unit children for range parent addresses
-            range_parent_units = AddressSummary.query \
-                .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
-                .filter(AddressLink.relationship == 'has base') \
-                .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
+        # get unit children for range parent addresses
+        range_parent_units = AddressSummary.query \
+            .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
+            .filter(AddressLink.relationship == 'has base') \
+            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
 
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.

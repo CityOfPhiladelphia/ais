@@ -544,6 +544,16 @@ def test_related_addresses_returned_with_include_units(client):
     assert features[1]['properties']['street_address'] == '1708-14 CHESTNUT ST # A'
     assert features[1]['match_type'] == 'range_parent_unit_child'
 
+def test_ranged_address_returns_related_addresses_with_includes_units(client):
+    response = client.get('/search/1708-14%20chestnut%20st?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['total_size'] == 3
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '1708-14 CHESTNUT ST'
+    assert features[0]['match_type'] == 'exact'
+    assert features[1]['properties']['street_address'] == '1708-14 CHESTNUT ST # A'
+    assert features[1]['match_type'] == 'unit_child'
+
 def test_ranged_addresses_with_unmatched_unit_returns_correct_match_types(client):
     response = client.get('/search/826-28 N 3rd St Floor 1')
     data = json.loads(response.get_data().decode())
