@@ -60,7 +60,7 @@ REM------------------------------------------------------------------
 REM Swap & Deploy (DOS/POWERSHELL)
 
 echo "Marking the %EB_ENV% environment as ready for testing (swap)"
-eb setenv -e %EB_ENV% EB_BLUEGREEN_STATUS=Swap
+eb setenv -e %EB_ENV% SWAP=True
 
 
 REM ---- PLEASE FINISH ROUTINE MANUALLY BY RESTARTING LAST BUILD IN AIS REPO ON TRAVIS -----
@@ -68,7 +68,7 @@ REM ---- PLEASE FINISH ROUTINE MANUALLY BY RESTARTING LAST BUILD IN AIS REPO ON 
 REM ----THE REMAINING PART IS NOT FUNCTIONAL - NEED TO CONFIG PROD VM FOR TRAVIS-----
 
 REM Get last travis build and parse build number
-set lb=travis history --branch master --limit 1
+REM set lb=travis history --branch master --limit 1
 
 REM set LAST_BUILD=$lb.split(' ')[0].split('#')[1] # this is powershell > 2.0 syntax (5.0)
 REM $e = ($lb -split(' '))[0]
@@ -77,5 +77,5 @@ REM $LAST_BUILD = ($e -split('#'))[1]
 REM echo "Restarting the latest master branch build (requires travis CLI)"
 REM travis restart $LAST_BUILD
 
-# NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
-# for further step.
+REM NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
+REM for further step.

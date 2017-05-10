@@ -17,11 +17,13 @@ get_prod_env() {
     echo "$url" | grep --quiet "ais-api-prod.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Production"
-      if [ $? -eq 0 ] ; then
-          eval "export $__ENV_STATUS_NAME=Production"
-          return 0
-      fi
+      eval "export $__ENV_STATUS_NAME=Production"
+      return 0
+#      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Production"
+#      if [ $? -eq 0 ] ; then
+#          eval "export $__ENV_STATUS_NAME=Production"
+#          return 0
+#      fi
     fi
   done
   # If no environment is found, return with an error.
@@ -43,16 +45,26 @@ get_staging_env() {
     echo "$url" | grep --quiet "ais-api-staging.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Staging"
-      if [ $? -eq 0 ] ; then
-          eval "export $__ENV_STATUS_NAME=Staging"
-          return 0
-      fi
-      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
+      echo $vars | grep --quiet "SWAP = True"
       if [ $? -eq 0 ] ; then
           eval "export $__ENV_STATUS_NAME=Swap"
           return 0
       fi
+      echo $vars | grep --quiet "SWAP = False"
+      if [ $? -eq 0 ] ; then
+          eval "export $__ENV_STATUS_NAME=Staging"
+          return 0
+      fi
+#      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Staging"
+#      if [ $? -eq 0 ] ; then
+#          eval "export $__ENV_STATUS_NAME=Staging"
+#          return 0
+#      fi
+#      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
+#      if [ $? -eq 0 ] ; then
+#          eval "export $__ENV_STATUS_NAME=Swap"
+#          return 0
+#      fi
     fi
   done
 
@@ -74,7 +86,7 @@ get_test_env() {
     echo "$url" | grep --quiet "ais-api-staging.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Swap"
+      echo $vars | grep --quiet "SWAP = True"
       if [ $? -eq 0 ] ; then
           eval "export $__ENV_STATUS_NAME=Swap"
           return 0
@@ -90,11 +102,13 @@ get_test_env() {
     echo "$url" | grep --quiet "ais-api-prod.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Production"
-      if [ $? -eq 0 ] ; then
-          eval "export $__ENV_STATUS_NAME=Production"
-          return 0
-      fi
+      eval "export $__ENV_STATUS_NAME=Production"
+      return 0
+#      echo $vars | grep --quiet "EB_BLUEGREEN_STATUS = Production"
+#      if [ $? -eq 0 ] ; then
+#          eval "export $__ENV_STATUS_NAME=Production"
+#          return 0
+#      fi
     fi
   done
 
