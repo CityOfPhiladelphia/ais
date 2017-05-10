@@ -3,10 +3,6 @@
 # Find the environment that is either marked as staging or ready to swap in.
 
 $EB_ENVS = eb list
-#$EB_ENV
-#$ENV_STATUS_NAME
-#$env_vars
-#$DB_URI
 
 for($i=0; $i -lt $EB_ENVS.Length; $i+=1){
 
@@ -27,12 +23,7 @@ $b=$vars -like '*SQLALCHEMY_DATABASE_URI*'
 # $DB_URI=$b.split('@')[1].split(':')[0] # this is powershell > 2.0 syntax (5.0)
 $c=($b -split '@')[1]
 $DB_URI=($c -split ':')[0]
-# get staging/swap EB_BLUEGREEN_STATUS property
-#echo "Obtaining the staging/swap env property"
-$vars = eb printenv $EB_ENV
-$b=$vars -like '*EB_BLUEGREEN_STATUS*'
-$ENV_STATUS_NAME=($b -split '= ')[1]
 
 #echo out for use in batch script
-$EB_ENV, $ENV_STATUS_NAME, $DB_URI
+$EB_ENV, $DB_URI
 

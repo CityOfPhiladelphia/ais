@@ -13,8 +13,7 @@ set /A i=0
 for /f "delims=" %%G in ('%pout%') do ( ^
 	set /A i+=1
 	IF !i! == 1 set EB_ENV=%%G
-	IF !i! == 2 set ENV_STATUS_NAME=%%G
- 	IF !i! == 3 set DB_URI=%%G )
+ 	IF !i! == 2 set DB_URI=%%G )
 
 REM -------------------------------
 
