@@ -32,11 +32,7 @@ $DB_URI=($c -split ':')[0]
 $vars = eb printenv $EB_ENV
 $b=$vars -like '*EB_BLUEGREEN_STATUS*'
 $ENV_STATUS_NAME=($b -split '= ')[1]
-$EB_ENV
-$DB_URI
-$ENV_STATUS_NAME
-
 
 #echo out for use in batch script
-#$EB_ENV, $ENV_STATUS_NAME, $DB_URI
+$EB_ENV, $ENV_STATUS_NAME, $DB_URI
 
