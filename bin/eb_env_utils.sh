@@ -17,7 +17,6 @@ get_prod_env() {
     echo "$url" | grep --quiet "ais-api-prod.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      eval "export $__ENV_STATUS_NAME=Production"
       return 0
     fi
   done
