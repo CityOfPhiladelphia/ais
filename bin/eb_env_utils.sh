@@ -3,20 +3,16 @@
 EB_ENVS=$(eb list)
 
 get_prod_env() {
-  __ENV_VAR_NAME=$1
-  __ENV_STATUS_NAME=$2
-
   # Find the environment that is either marked as staging or ready to swap in.
   for env in $EB_ENVS ; do
     # Trim carriage returns (\r) off of the env name. On windows, bash will 
     # strip the new-line (\n) characters but leave the \r.
     trimmed_env=$(echo $env | tr -d '\r')
     url=$(eb status $trimmed_env)
-    vars=$(eb printenv $trimmed_env)
 
     echo "$url" | grep --quiet "ais-api-prod.us-east-1.elasticbeanstalk.com"
     if [ $? -eq 0 ] ; then
-      eval "export $__ENV_VAR_NAME=$trimmed_env"
+      echo $trimmed_env
       return 0
     fi
   done
