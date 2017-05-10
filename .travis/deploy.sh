@@ -50,8 +50,8 @@ if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
 
   echo "Setting deployment environment variables"
   # Start as background processes in parallel
-  eb setenv --environment $EB_OLD_PROD_ENV EB_BLUEGREEN_STATUS=Staging &
-  eb setenv --environment $EB_NEW_PROD_ENV EB_BLUEGREEN_STATUS=Production &
+  eb setenv --environment $EB_OLD_PROD_ENV SWAP=False &
+  eb setenv --environment $EB_NEW_PROD_ENV SWAP=False &
   # Wait for both
   wait $(jobs -p)
 
