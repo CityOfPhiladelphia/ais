@@ -63,14 +63,14 @@ address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '3700-90 SEPVIVA ST'
+DEV_ADDRESS = '4700-26 ALDEN WALK'
 DEV_ADDRESS_COMPS = {
-    'address_low':      '1234',
-    'address_high':     '',
-    'street_name':      "'MARKET'",
-    'street_suffix':    "'ST'",
+    # 'address_low':      '4700',
+    # 'address_high':     '4726',
+    # 'street_name':      'ALDEN',
+    # 'street_suffix':    'WALK',
 }
-DEV_STREET_NAME = 'MARKET'
+DEV_STREET_NAME = 'ALDEN'
 
 # Logging stuff.
 address_errors = []
@@ -517,6 +517,10 @@ for i, address in enumerate(addresses):
 
             child_address_comps = (str(x), street_full)
             child_address = " ".join(filter(None, child_address_comps))
+            child_street_address = child_obj.street_address
+            if not child_street_address in street_addresses_seen:
+                addresses.append(child_obj)
+                street_addresses_seen.add(child_street_address)
             child_link = {
                 'address_1': child_address,
                 'relationship': 'in range',
@@ -524,7 +528,7 @@ for i, address in enumerate(addresses):
             }
             links.append(child_link)
             # Make new address object for writing to address table
-            if child_address not in street_addresses_seen:
+            if child_street_address not in street_addresses_seen:
                 try:
                     address = Address(child_address)
                     # Check for zero address
@@ -585,18 +589,19 @@ for i, address in enumerate(addresses):
 # Remove any duplicates in link list
 links = [dict(t) for t in set([tuple(d.items()) for d in links])]
 
-print('Writing address links...')
 
 if WRITE_OUT:
+    print('Writing address links...')
     address_link_table.write(links, chunk_size=150000)
     print('Created {} address links'.format(len(links)))
 
 del links
 
-print('Writing {} new addresses...'.format(len(new_addresses)))
-
+#  Ensure that there are no duplicates:
 insert_rows = [dict(x) for x in new_addresses]
-address_table.write(insert_rows, chunk_size=150000)
+print("Writing {} new addresses... ".format(len(insert_rows)))
+if WRITE_OUT:
+    address_table.write(insert_rows, chunk_size=150000)
 del insert_rows
 del addresses_seen
 # ###############################################################################
