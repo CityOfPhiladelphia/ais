@@ -657,6 +657,16 @@ def test_reverse_geocode(client):
     data = json.loads(response.get_data().decode())
     features = data['features']
     assert features[0]['properties']['street_address'] == '714 CHESTNUT ST'
+    response = client.get('/search/-75.15311665258051 39.94923709403044')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '714 CHESTNUT ST'
+    response = client.get('/search/-75.15311665258051/39.94923709403044')
+    data = json.loads(response.get_data().decode())
+    features = data['features']
+    assert features[0]['properties']['street_address'] == '714 CHESTNUT ST'
+    response = client.get('/search/-70 40')
+    assert_status(response, 404)
 
 def test_0_address_low_addresses_return_404(client):
     response = client.get('/addresses/0 Lister')
