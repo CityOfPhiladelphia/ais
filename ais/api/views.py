@@ -900,10 +900,7 @@ def intersection(query):
 def reverse_geocode(query):
 
     query = query.strip('/')
-    query_fmt = query.split('/')
-    query_fmt = ' '.join(query_fmt)
-    #TODO: implement error handling for ill formatted coordinate queries
-    parsed = PassyunkParser().parse(query_fmt)
+    parsed = PassyunkParser().parse(query)
     search_type_out = 'coordinates'
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
@@ -911,8 +908,8 @@ def reverse_geocode(query):
     try:
         srid = str(srid_map[search_type])
     except:
-        error = json_error(404, 'Could not find any addresses matching query.',
-                           {'search_type': search_type_out, 'query': query, 'normalized': query_fmt})
+        error = json_error(404, 'Please format your query in State Plane or latitude longitude coordinates separated by a space or comma.',
+                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
     engine_srid = str(ENGINE_SRID)  # check if necessary
     crs = {'type': 'link',
