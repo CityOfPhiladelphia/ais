@@ -900,7 +900,10 @@ def intersection(query):
 def reverse_geocode(query):
 
     query = query.strip('/')
-    parsed = PassyunkParser().parse(query)
+    query_fmt = query.split('/')
+    query_fmt = ' '.join(query_fmt)
+    #TODO: implement error handling for ill formatted coordinate queries
+    parsed = PassyunkParser().parse(query_fmt)
     search_type = parsed['type']
     search_type_out = 'coordinates'
     normalized = parsed['components']['output_address']
