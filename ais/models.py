@@ -438,7 +438,7 @@ class Address(db.Model):
 
     @property
     def child_addresses(self):
-        """Returns a list of individual street addresses for a range"""
+        """Returns a list of address objects with in-range street addresses"""
         address_low_re = re.compile('^{}'.format(self.address_low))
         address_high_re = re.compile('-\d+')
         child_addresses = []
