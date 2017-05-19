@@ -904,11 +904,16 @@ def reverse_geocode(query):
     query_fmt = ' '.join(query_fmt)
     #TODO: implement error handling for ill formatted coordinate queries
     parsed = PassyunkParser().parse(query_fmt)
-    search_type = parsed['type']
     search_type_out = 'coordinates'
+    search_type = parsed['type']
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
-    srid = str(srid_map[search_type])
+    try:
+        srid = str(srid_map[search_type])
+    except:
+        error = json_error(404, 'Could not find any addresses matching query.',
+                           {'search_type': search_type_out, 'query': query, 'normalized': query_fmt})
+        return json_response(response=error, status=404)
     engine_srid = str(ENGINE_SRID)  # check if necessary
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
