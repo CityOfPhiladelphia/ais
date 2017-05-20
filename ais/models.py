@@ -1048,7 +1048,7 @@ class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
 
     id = db.Column(db.Integer, primary_key=True)
-    street_address = db.Column(db.Text)
+    street_address = db.Column(db.Text, unique=True)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
