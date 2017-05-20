@@ -1,7 +1,7 @@
-import sys
-import os
-import csv
-from copy import deepcopy
+# import sys
+# import os
+# import csv
+# from copy import deepcopy
 from datetime import datetime
 import datum
 from ais import app
@@ -9,8 +9,8 @@ from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from passyunk.parser import PassyunkParser
 # DEV
-import traceback
-from pprint import pprint
+# import traceback
+# from pprint import pprint
 
 print('Starting...')
 start = datetime.now()
