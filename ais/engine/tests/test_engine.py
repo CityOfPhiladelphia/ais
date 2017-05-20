@@ -2,23 +2,30 @@ import datum
 import pytest
 from ais import app
 config = app.config
-db = datum.connect(config['DATABASES']['test_engine'])
+db = datum.connect(config['DATABASES']['engine'])
 
 @pytest.fixture
 def startup():
     """Startup fixture: make database connections and define tables to ignore"""
     new_db = datum.connect(config['DATABASES']['engine'])
     old_db = datum.connect(config['DATABASES']['engine_staging'])
-
     unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
-    changed_tables = ('street_intersection', 'geocode')
+    changed_tables = ('',)
     ignore_tables = unused_tables + changed_tables
 
-    #tables of question id'd in debugging
-    #mysterious_tables = ('address_link', 'parcel_curb')
-    #ignore_tables = ignore_tables + mysterious_tables
-
     return {'new_db': new_db, 'old_db': old_db, 'unused_tables': unused_tables, 'changed_tables': changed_tables, 'ignore_tables': ignore_tables}
+
+def test_no_duplicates(startup):
+    """ Don't allow duplicate street_addresses in address_summary """
+
+    new_db = startup['new_db']
+    total_stmt = "select count(*) as total_addresses from address_summary"
+    distinct_stmt = "select count(*) as distinct_addresses from (select distinct street_address from address_summary) foo"
+    num_total_row = new_db.execute(total_stmt)
+    num_distinct_row = new_db.execute(distinct_stmt)
+    num_total = num_total_row[0]['total_addresses']
+    num_distinct = num_distinct_row[0]['distinct_addresses']
+    assert num_total == num_distinct
 
 
 def test_compare_num_tables(startup):
