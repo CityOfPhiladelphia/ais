@@ -12,7 +12,6 @@ from passyunk.parser import PassyunkParser
 import traceback
 from pprint import pprint
 
-
 print('Starting...')
 start = datetime.now()
 
@@ -78,7 +77,6 @@ address_errors = []
 source_map = {}  # source_address => [source_names]
 source_address_map = {}  # street_address => [source_addresses]
 
-
 """MAIN"""
 
 addresses = []
@@ -120,15 +118,16 @@ for source in sources:
     if len(address_fields) == 1:
         if 'street_address' in address_fields:
             source_type = 'single_field'
-        else: raise ValueError('Unknown address field mapping')
+        else:
+            raise ValueError('Unknown address field mapping')
         preprocessor = source.get('preprocessor')
     else:
         source_type = 'comps'
         # Check for necessary components
         for field_name in ['address_low', 'street_name']:
             if not field_name in address_fields:
-                raise ValueError('Missing required address field: {}'\
-                    .format(field_name))
+                raise ValueError('Missing required address field: {}' \
+                                 .format(field_name))
         if 'preprocessor' not in source:
             raise ValueError('No preprocessor specified for address source `{}`'.format(source_name))
         preprocessor = source['preprocessor']
@@ -137,7 +136,7 @@ for source in sources:
     address_fields = source['address_fields']
     source_fields = list(address_fields.values())
     if 'tag_fields' in source:
-        #source_fields += [x['source_field'] for x in source['tag_fields']]
+        # source_fields += [x['source_field'] for x in source['tag_fields']]
         for tag_field in source['tag_fields']:
             tag_source_fields = tag_field['source_fields']
             tag_preprocessor = tag_field.get('preprocessor')
@@ -154,38 +153,39 @@ for source in sources:
     # Add source fields depending on address type
     # Not using this since we implemented the `aliases` arg on .read()
     # if source_type == 'single_field':
-        # source_fields.append('{} AS street_address'\
-        #     .format(address_fields['street_address']))
-        # source_fields.append(address_fields['street_address'])
+    # source_fields.append('{} AS street_address'\
+    #     .format(address_fields['street_address']))
+    # source_fields.append(address_fields['street_address'])
     # elif source_type == 'comps':
-        # for address_field_std, address_field in address_fields.items():
-        #     source_fields.append('{} AS {}'\
-        #         .format(address_field, address_field_std))
-        # source_fields.append(address_fields.values())
+    # for address_field_std, address_field in address_fields.items():
+    #     source_fields.append('{} AS {}'\
+    #         .format(address_field, address_field_std))
+    # source_fields.append(address_fields.values())
 
     where = source['where'] if 'where' in source else None
 
     # For debugging. (Only fetch a specific address.)
     if DEV:
         if source_type == 'single_field':
-            dev_where = "{} = '{}'"\
+            dev_where = "{} = '{}'" \
                 .format(address_fields['street_address'], DEV_ADDRESS)
         elif source_type == 'comps':
             clauses = ["{} = {}".format(address_fields[key], value) \
-                for key, value in DEV_ADDRESS_COMPS.items()]
+                       for key, value in DEV_ADDRESS_COMPS.items()]
             dev_where = ' AND '.join(clauses)
         if where:
-                where += ' AND ' + dev_where
-        else: where = dev_where
+            where += ' AND ' + dev_where
+        else:
+            where = dev_where
         source_rows = source_table.read(fields=source_fields, \
-            aliases=aliases, where=where)
+                                        aliases=aliases, where=where)
     else:
         if source_type == 'single_field':
             source_rows = source_table.read(fields=source_fields, \
-                aliases=aliases, where=where, return_geom=False)
+                                            aliases=aliases, where=where, return_geom=False)
         elif source_type == 'comps':
             source_rows = source_table.read(fields=source_fields, \
-                aliases=aliases, where=where, return_geom=False)
+                                            aliases=aliases, where=where, return_geom=False)
 
     # Loop over addresses
     for i, source_row in enumerate(source_rows):
@@ -228,7 +228,7 @@ for source in sources:
                     parsed_addresses[source_address] = parsed_address
 
                 except:
-                   raise ValueError('Could not parse')
+                    raise ValueError('Could not parse')
 
             if parsed_address['type'] == "none":
                 raise ValueError('Unknown address type')
@@ -252,9 +252,9 @@ for source in sources:
 
             # Make source address
             source_address_dict = {
-                'source_name':      source_name,
-                'source_address':   source_address,
-                'street_address':   street_address,
+                'source_name': source_name,
+                'source_address': source_address,
+                'street_address': street_address,
             }
             source_addresses.append(source_address_dict)
 
@@ -281,7 +281,7 @@ for source in sources:
                     value = value.upper()
 
                 key = tag_field['key']
-                #value = source_row[source_field]
+                # value = source_row[source_field]
 
                 # Make address tag string to check if we already added this tag
                 address_tag_string_vals = [
@@ -290,15 +290,15 @@ for source in sources:
                     value,
                 ]
                 address_tag_string = '|'.join([str(x) for x in \
-                    address_tag_string_vals])
+                                               address_tag_string_vals])
 
                 if not address_tag_string in address_tag_strings:
                     address_tag = {
-                        'street_address':   street_address,
+                        'street_address': street_address,
                         # 'key':              tag_field['key'],
-                        'key':              key,
+                        'key': key,
                         # 'value':            source_row[source_field]
-                        'value':            value
+                        'value': value
                     }
                     address_tags.append(address_tag)
                     address_tag_strings.add(address_tag_string)
@@ -341,14 +341,14 @@ for source in sources:
 
         except ValueError as e:
             address_error = {
-                'source_name':      source_name,
-                'source_address':   source_address,
-                'street_address':   street_address or '',
-                'level':            'error',
-                'reason':           str(e),
+                'source_name': source_name,
+                'source_address': source_address,
+                'street_address': street_address or '',
+                'level': 'error',
+                'reason': str(e),
                 # TODO: haven't needed these so far, but they should be passed
                 # in with the exception if we ever do.
-                'notes':            '',
+                'notes': '',
             }
             address_errors.append(address_error)
 
@@ -364,9 +364,10 @@ for source in sources:
 
     source_db.close()
 
+insert_rows = [dict(x) for x in addresses]
+
 if WRITE_OUT:
     print('Writing {} addresses...'.format(len(addresses)))
-    insert_rows = [dict(x) for x in addresses]
     address_table.write(insert_rows, chunk_size=150000)
     del insert_rows
 
@@ -386,15 +387,14 @@ for source_address, comps in parsed_addresses.items():
 if WRITE_OUT:
     address_tag_table.write(parser_address_tags, chunk_size=150000)
 
-
 ###############################################################################
 # ADDRESS LINKS
 ###############################################################################
 print('** ADDRESS LINKS **')
 print('Indexing addresses...')
-street_address_map = {}     # street_full => [addresses]
-street_range_map = {}       # street_full => [range addresses]
-base_address_map = {}       # base_address => [unit addresses]
+street_address_map = {}  # street_full => [addresses]
+street_range_map = {}  # street_full => [range addresses]
+base_address_map = {}  # base_address => [unit addresses]
 
 for i, address in enumerate(addresses):
     if i % 100000 == 0:
@@ -409,9 +409,9 @@ for i, address in enumerate(addresses):
     if address.address_high is not None and address.unit_type is None:
         street_range_map[street_full].append(address)
 
-    base_address = address.base_address # TODO: handle addresses with number suffixes using base_address_no_suffix
+    base_address = address.base_address  # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Old method - only get 'has_base' link for addresses with units
-    #if address.unit_type is not None:
+    # if address.unit_type is not None:
     # # New method - get 'has_base' link for addresses with units AND addresses with number suffixes
     if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
@@ -431,15 +431,15 @@ for i, address in enumerate(addresses):
         print(i)
 
     # # Old Method: only include address with unit_type in 'has_base' link set
-    #if address.unit_type is not None
+    # if address.unit_type is not None
     # # New Method: include addresses with low_suffixes in 'has_base' link set
     if address.unit_type is not None or address.address_low_suffix is not None:
         # Base link
         base_link = {
-            'address_1':        address.street_address,
-            'relationship':     'has base',
-            #'address_2':       address.base_address,
-            'address_2':        address.base_address_no_suffix,
+            'address_1': address.street_address,
+            'relationship': 'has base',
+            # 'address_2':       address.base_address,
+            'address_2': address.base_address_no_suffix,
         }
         links.append(base_link)
 
@@ -451,17 +451,17 @@ for i, address in enumerate(addresses):
             base_matches = base_address_map[base_address]
             for base_match in base_matches:
                 if address.unit_num == base_match.unit_num and \
-                    address.unit_type != base_match.unit_type and \
-                    base_match.unit_type in generic_unit_types:
+                                address.unit_type != base_match.unit_type and \
+                                base_match.unit_type in generic_unit_types:
                     matches_unit_link_1 = {
-                        'address_1':        address.street_address,
-                        'relationship':     'matches unit',
-                        'address_2':        base_match.street_address,
+                        'address_1': address.street_address,
+                        'relationship': 'matches unit',
+                        'address_2': base_match.street_address,
                     }
                     matches_unit_link_2 = {
-                        'address_1':        base_match.street_address,
-                        'relationship':     'matches unit',
-                        'address_2':        address.street_address,
+                        'address_1': base_match.street_address,
+                        'relationship': 'matches unit',
+                        'address_2': address.street_address,
                     }
                     links.append(matches_unit_link_1)
                     links.append(matches_unit_link_2)
@@ -474,9 +474,9 @@ for i, address in enumerate(addresses):
                 generic_unit = address.generic_unit
                 if generic_unit in street_addresses_seen:
                     parent_unit_link = {
-                        'address_1':            address.street_address,
-                        'relationship':         'has generic unit',
-                        'address_2':            generic_unit,
+                        'address_1': address.street_address,
+                        'relationship': 'has generic unit',
+                        'address_2': generic_unit,
                     }
                     links.append(parent_unit_link)
 
@@ -489,18 +489,18 @@ for i, address in enumerate(addresses):
 
         for range_on_street in ranges_on_street:
             if (range_on_street.address_low <= address_low <= \
-                range_on_street.address_high) and \
-                range_on_street.parity == parity and \
-                range_on_street.address_low_suffix == address_suffix:
+                        range_on_street.address_high) and \
+                            range_on_street.parity == parity and \
+                            range_on_street.address_low_suffix == address_suffix:
                 child_link = {
-                    'address_1':        address.street_address,
-                    'relationship':     'in range',
-                    'address_2':        range_on_street.street_address,
+                    'address_1': address.street_address,
+                    'relationship': 'in range',
+                    'address_2': range_on_street.street_address,
                 }
                 links.append(child_link)
                 break
 
-    # New method: create links for all possible address in range of every ranged address
+    # New method: create links (and address objects) for all possible address in range of every ranged address
     if address.address_high:
         address_low = address.address_low
         address_high = address.address_high
@@ -517,48 +517,38 @@ for i, address in enumerate(addresses):
 
             child_address_comps = (str(x), street_full)
             child_address = " ".join(filter(None, child_address_comps))
-            child_street_address = child_obj.street_address
-            if not child_street_address in street_addresses_seen:
-                addresses.append(child_obj)
-                street_addresses_seen.add(child_street_address)
-            child_link = {
-                'address_1': child_address,
-                'relationship': 'in range',
-                'address_2': base_address_no_suffix,
-            }
-            links.append(child_link)
-            # Make new address object for writing to address table
-            if child_street_address not in street_addresses_seen:
-                try:
-                    address = Address(child_address)
+            try:
+                child_obj = Address(child_address)
+                child_street_address = child_obj.street_address
+                if not child_street_address in street_addresses_seen:
                     # Check for zero address
-                    if address.address_low == 0:
+                    if child_obj.address_low == 0:
                         raise ValueError('Low number is zero')
-                    #if not street_address in street_addresses_seen:
-                    # if not child_address in addresses_seen:
-                    #     new_addresses.append(address)
-                    #     addresses_seen.add(child_address)
-                    new_addresses.append(address)
-                    street_addresses_seen.add(child_address)
-                        #     addresses_seen.add(child_address)
-                        #street_addresses_seen.add(street_address)
-                except ValueError:
-                    print('Could not parse new address: {}'.format(child_address))
-                    continue
+                    new_addresses.append(child_obj)
+                    street_addresses_seen.add(child_street_address)
+                    child_link = {
+                        'address_1': child_street_address,
+                        'relationship': 'in range',
+                        'address_2': base_address_no_suffix,
+                    }
+                    links.append(child_link)
+            except ValueError:
+                print('Could not parse new address: {}'.format(child_address))
+                continue
 
         # Overlap link
         if street_full in street_range_map:
             ranges_on_street = street_range_map[street_full]
             for range_on_street in ranges_on_street:
                 if street_address != range_on_street.street_address \
-                    and range_on_street.parity == parity \
-                    and base_address != range_on_street.base_address \
-                    and base_address_no_suffix != range_on_street.base_address_no_suffix \
-                    and unit_type == range_on_street.unit_type \
-                    and unit_num == range_on_street.unit_num \
-                    and (
-                            range_on_street.address_low <= address_low <= range_on_street.address_high
-                         or range_on_street.address_low <= address_high <= range_on_street.address_high
+                        and range_on_street.parity == parity \
+                        and base_address != range_on_street.base_address \
+                        and base_address_no_suffix != range_on_street.base_address_no_suffix \
+                        and unit_type == range_on_street.unit_type \
+                        and unit_num == range_on_street.unit_num \
+                        and (
+                                            range_on_street.address_low <= address_low <= range_on_street.address_high
+                                or range_on_street.address_low <= address_high <= range_on_street.address_high
                         ):
                     child_link = {
                         'address_1': street_address,
@@ -573,22 +563,9 @@ for i, address in enumerate(addresses):
                     }
                     links.append(child_link)
                     links.append(child_link_rev)
-                try:
-                    address = Address(child_address)
-                    # Check for zero address
-                    if address.address_low == 0:
-                        raise ValueError('Low number is zero')
-                    if not child_address in street_addresses_seen:
-                        new_addresses.append(address)
-                        street_addresses_seen.add(child_address)
-                except ValueError:
-                    print('Could not parse new address: {}'.format(child_address))
-                    continue
-
 
 # Remove any duplicates in link list
 links = [dict(t) for t in set([tuple(d.items()) for d in links])]
-
 
 if WRITE_OUT:
     print('Writing address links...')
@@ -597,13 +574,13 @@ if WRITE_OUT:
 
 del links
 
-#  Ensure that there are no duplicates:
+print("Writing {} new addresses... ".format(len(new_addresses)))
 insert_rows = [dict(x) for x in new_addresses]
-print("Writing {} new addresses... ".format(len(insert_rows)))
+
 if WRITE_OUT:
     address_table.write(insert_rows, chunk_size=150000)
 del insert_rows
-del addresses_seen
+del street_addresses_seen
 # ###############################################################################
 # # ADDRESS-STREETS
 # ###############################################################################
@@ -614,8 +591,10 @@ print('** ADDRESS-STREETS **')
 street_warning_map = {}  # street_address => [{reason, notes}]
 street_error_map = {}  # # street_address => {reason, notes}
 
+
 class ContinueIteration(Exception):
     pass
+
 
 def had_street_warning(street_address, reason, notes=None):
     '''
@@ -624,10 +603,11 @@ def had_street_warning(street_address, reason, notes=None):
     global street_warning_map
     address_warnings = street_warning_map.setdefault(street_address, [])
     warning = {
-        'reason':   reason,
-        'notes':    notes or '',
+        'reason': reason,
+        'notes': notes or '',
     }
     address_warnings.append(warning)
+
 
 def had_street_error(street_address, reason, notes=None):
     '''
@@ -638,6 +618,7 @@ def had_street_error(street_address, reason, notes=None):
     street_error_map[street_address] = {'reason': reason, 'notes': notes}
     had_street_warning(street_address, reason, notes=notes)
     raise ContinueIteration
+
 
 # START WORK
 if WRITE_OUT:
@@ -753,9 +734,10 @@ for address in addresses:
                         # Check for a previously matched seg
                         if matching_seg:
                             seg_ids = sorted([x['seg_id'] for x in \
-                                [matching_seg, seg]])
+                                              [matching_seg, seg]])
                             notes = ', '.join([str(x) for x in seg_ids])
-                            had_street_error(street_address, 'Range address matches multiple street segments', notes=notes)
+                            had_street_error(street_address, 'Range address matches multiple street segments',
+                                             notes=notes)
                         # Match it
                         matching_seg = seg
 
@@ -789,9 +771,9 @@ for address in addresses:
             # Store the match
             if matching_seg:
                 match = {
-                    'seg_id':               matching_seg['seg_id'],
-                    'seg_side':             matching_side,
-                    'had_alias':            had_alias,
+                    'seg_id': matching_seg['seg_id'],
+                    'seg_side': matching_side,
+                    'had_alias': had_alias,
                 }
                 base_address_map[base_address] = match
 
@@ -814,9 +796,9 @@ for address in addresses:
         seg_side = match['seg_side']
 
         address_street = {
-            'street_address':   street_address,
-            'seg_id':           seg_id,
-            'seg_side':         seg_side,
+            'street_address': street_address,
+            'seg_id': seg_id,
+            'seg_side': seg_side,
         }
         address_streets.append(address_street)
 
@@ -847,14 +829,13 @@ for street_address, warnings in street_warning_map.items():
             sources = source_map[source_address]
             for source in sources:
                 address_errors.append({
-                    'source_name':      source,
-                    'source_address':   source_address,
-                    'street_address':   street_address,
-                    'level':            'warning',
-                    'reason':           reason,
-                    'notes':            notes,
+                    'source_name': source,
+                    'source_address': source_address,
+                    'street_address': street_address,
+                    'level': 'warning',
+                    'reason': reason,
+                    'notes': notes,
                 })
-
 
 ################################################################################
 # ADDRESS-PARCELS
@@ -864,9 +845,9 @@ print('** ADDRESS-PARCELS **')
 
 # This maps address variant names to AddressParcel match types
 ADDRESS_VARIANT_MATCH_TYPE = {
-    'base_address':             'base',
-    'base_address_no_suffix':   'base_no_suffix',
-    'generic_unit':             'generic_unit'
+    'base_address': 'base',
+    'base_address_no_suffix': 'base_no_suffix',
+    'generic_unit': 'generic_unit'
 }
 
 match_counts = {x: 0 for x in ADDRESS_VARIANT_MATCH_TYPE.values()}
@@ -889,7 +870,7 @@ for parcel_layer in parcel_layers:
     if DEV:
         where = "street_name = '{}'".format(DEV_STREET_NAME)
         parcel_rows = source_table.read(fields=['street_address', 'id'], \
-            where=where)
+                                        where=where)
     else:
         parcel_rows = source_table.read(fields=['street_address', 'id'])
 
@@ -943,14 +924,14 @@ for parcel_layer in parcel_layers:
         if street_address in parcel_map:
             for row_id in parcel_map[street_address]:
                 matches.append({
-                    'parcel_row_id':    row_id,
-                    'match_type':       'exact',
+                    'parcel_row_id': row_id,
+                    'match_type': 'exact',
                 })
         else:
             try:
                 # BASE, BASE NO SUFFIX, GENERIC UNIT
-                for variant_type in ['base_address', 'base_address_no_suffix',\
-                    'generic_unit']:
+                for variant_type in ['base_address', 'base_address_no_suffix', \
+                                     'generic_unit']:
                     variant = getattr(address, variant_type)
 
                     if variant in parcel_map:
@@ -958,8 +939,8 @@ for parcel_layer in parcel_layers:
                         for row_id in row_ids:
                             match_type = ADDRESS_VARIANT_MATCH_TYPE[variant_type]
                             matches.append({
-                                'parcel_row_id':    row_id,
-                                'match_type':       match_type,
+                                'parcel_row_id': row_id,
+                                'match_type': match_type,
                             })
                             match_counts[match_type] += 1
                             raise ContinueIteration
@@ -1028,28 +1009,28 @@ for parcel_layer in parcel_layers:
                                 match_type = 'parcel_in_address_range'
                             match_counts[match_type] += 1
                             matches.append({
-                                'parcel_row_id':        row_id,
-                                'match_type':           match_type,
+                                'parcel_row_id': row_id,
+                                'match_type': match_type,
                             })
 
         # Handle matches
         for match in matches:
             address_parcel = {
-                'street_address':   street_address,
-                'parcel_source':    parcel_layer,
+                'street_address': street_address,
+                'parcel_source': parcel_layer,
             }
             address_parcel.update(match)
             address_parcels.append(address_parcel)
 
-        # Rework this to support multiple matches
-        # if parcel_id is not None:
-        #   address_parcel = {
-        #       'street_address':   street_address,
-        #       'parcel_source':    parcel_layer,
-        #       'parcel_id':        parcel_id,
-        #       'match_type':       match_type,
-        #   }
-        #   address_parcels.append(address_parcel)
+            # Rework this to support multiple matches
+            # if parcel_id is not None:
+            #   address_parcel = {
+            #       'street_address':   street_address,
+            #       'parcel_source':    parcel_layer,
+            #       'parcel_id':        parcel_id,
+            #       'match_type':       match_type,
+            #   }
+            #   address_parcels.append(address_parcel)
 
 if WRITE_OUT:
     print('Writing address-parcels...')
@@ -1061,7 +1042,6 @@ for variant_type, count in match_counts.items():
     print('{} matched on {}'.format(count, variant_type))
 
 del address_parcels
-
 
 ################################################################################
 # ADDRESS-PROPERTIES
@@ -1135,7 +1115,7 @@ for i, address in enumerate(addresses):
             range_prop_address_low = range_prop['address_low']
             range_prop_address_high = range_prop['address_high']
             range_prop_parity = parity_for_range(range_prop_address_low, \
-                range_prop_address_high)
+                                                 range_prop_address_high)
 
             # Check parity
             if address_parity != range_prop_parity:
@@ -1144,7 +1124,7 @@ for i, address in enumerate(addresses):
             if range_prop['address_low'] <= address.address_low <= range_prop['address_high']:
                 # If there's a unit num we have to make sure that matches too
                 if (address.unit_num or range_prop['unit_num']) and \
-                    address.unit_num != range_prop['unit_num']:
+                                address.unit_num != range_prop['unit_num']:
                     continue
 
                 prop = range_prop
@@ -1153,9 +1133,9 @@ for i, address in enumerate(addresses):
 
     if prop:
         address_prop = {
-            'street_address':   street_address,
-            'opa_account_num':  prop['account_num'],
-            'match_type':       match_type,
+            'street_address': street_address,
+            'opa_account_num': prop['account_num'],
+            'match_type': match_type,
         }
         address_props.append(address_prop)
 
@@ -1163,7 +1143,6 @@ if WRITE_OUT:
     address_property_table.write(address_props)
     print('Indexing address-properties...')
     address_property_table.create_index('street_address')
-
 
 ################################################################################
 # TRUE RANGE
@@ -1175,7 +1154,6 @@ if WRITE_OUT:
     print('Creating true range view...')
     db.drop_view(true_range_view_name)
     db.create_view(true_range_view_name, true_range_select_stmt)
-
 
 ################################################################################
 # ERRORS
@@ -1198,11 +1176,11 @@ print('** FINISHING **')
 
 if WRITE_OUT:
     print('Creating indexes...')
-#     index_tables = (
-#         address_table,
-#         address_tag_table,
-#         source_address_table,
-#     )
+    #     index_tables = (
+    #         address_table,
+    #         address_tag_table,
+    #         source_address_table,
+    #     )
     for table in (address_table, address_tag_table, source_address_table):
         table.create_index('street_address')
     address_link_table.create_index('address_1')
