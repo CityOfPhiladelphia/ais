@@ -308,8 +308,14 @@ def addresses(query):
         if ';' in val:
             val = val[:val.index(';')]
         requestargs[arg] = val
+    # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
+    try:
+        parsed = PassyunkParser().parse(query)
+    except:
+        error = json_error(404, 'Could not parse query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
 
-    parsed = PassyunkParser().parse(query)
     normalized_address = parsed['components']['output_address']
     base_address = parsed['components']['base_address']
     full_num = parsed['components']['address']['full']
@@ -1125,8 +1131,12 @@ def search(query):
         'stateplane': reverse_geocode,
         'street': street,
     }
-
-    parsed = PassyunkParser().parse(query)
+    try:
+        parsed = PassyunkParser().parse(query)
+    except:
+        error = json_error(404, 'Could not parse query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
     search_type = parsed['type']
     # TODO: Pass search_type (or parsed) to view function to avoid reparsing
     if search_type != 'none':
