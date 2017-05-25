@@ -197,6 +197,11 @@ def make_dor_parcel_id(comps):
     reg_map_id = comps['reg_map_id']
     return reg_map_id.replace('-', '')
 
+def make_eclipse_address(comps):
+    base_address = comps['base_address']
+    unit_num = comps['unit_num']
+    return base_address + ' # ' + unit_num if unit_num else base_address
+
 
 ADDRESSES = {
     'parser_tags': {
@@ -311,6 +316,22 @@ ADDRESSES = {
                 {
                     'key':              'li_address_key',
                     'source_fields':     ['addrkey'],
+                },
+            ],
+        },
+        {
+            'name':                 'li_eclipse_objectid',
+            'table':                'gis_lni.eclipse_addressobjectid_mvw',
+            'db':                   'gislni',
+            'address_fields':       {
+                'base_address':       'licenseaddress1',
+                'unit_num':           'unit',
+            },
+            'preprocessor':         make_eclipse_address,
+            'tag_fields': [
+                {
+                    'key':              'eclipse_object_id',
+                    'source_fields':     ['addressobjectid'],
                 },
             ],
         },

@@ -125,7 +125,7 @@ for source in sources:
         source_type = 'comps'
         # Check for necessary components
         for field_name in ['address_low', 'street_name']:
-            if not field_name in address_fields:
+            if not field_name in address_fields and not all(x in address_fields for x in ['base_address', 'unit_num']):
                 raise ValueError('Missing required address field: {}' \
                                  .format(field_name))
         if 'preprocessor' not in source:
