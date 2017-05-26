@@ -330,7 +330,7 @@ ADDRESSES = {
             'preprocessor':         make_eclipse_address,
             'tag_fields': [
                 {
-                    'key':              'eclipse_location_id',
+                    'key':              'eclipse_object_id',
                     'source_fields':     ['addressobjectid'],
                 },
             ],
@@ -1226,7 +1226,7 @@ ADDRESS_SUMMARY = {
         },
         {
             'name':                 'eclipse_location_id',
-            'tag_key':              'eclipse_location_id',
+            'tag_key':              'eclipse_object_id',
             'type':                 'text',
             'traverse_links':       'true',
         },
