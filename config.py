@@ -1224,6 +1224,12 @@ ADDRESS_SUMMARY = {
             'type':                 'text',
             'traverse_links':       'false',
         },
+        {
+            'name':                 'eclipse_object_id',
+            'tag_key':              'eclipse_object_id',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
     ],
 }
 
