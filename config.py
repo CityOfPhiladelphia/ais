@@ -320,7 +320,7 @@ ADDRESSES = {
             ],
         },
         {
-            'name':                 'li_eclipse_objectid',
+            'name':                 'li_eclipse_location_ids',
             'table':                'gis_lni.eclipse_addressobjectid_mvw',
             'db':                   'gislni',
             'address_fields':       {
@@ -330,7 +330,7 @@ ADDRESSES = {
             'preprocessor':         make_eclipse_address,
             'tag_fields': [
                 {
-                    'key':              'eclipse_object_id',
+                    'key':              'eclipse_location_id',
                     'source_fields':     ['addressobjectid'],
                 },
             ],
@@ -1225,10 +1225,10 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
         {
-            'name':                 'eclipse_object_id',
-            'tag_key':              'eclipse_object_id',
+            'name':                 'eclipse_location_id',
+            'tag_key':              'eclipse_location_id',
             'type':                 'text',
-            'traverse_links':       'false',
+            'traverse_links':       'true',
         },
     ],
 }

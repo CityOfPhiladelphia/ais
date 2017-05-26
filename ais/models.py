@@ -1080,7 +1080,7 @@ class AddressSummary(db.Model):
     info_companies = db.Column(db.Text)
     pwd_account_nums = db.Column(db.Text)
     li_address_key = db.Column(db.Text)
-    eclipse_object_id = db.Column(db.Text)
+    eclipse_location_id = db.Column(db.Text)
     voters = db.Column(db.Text)
 
     geocode_type = db.Column(db.Text)
