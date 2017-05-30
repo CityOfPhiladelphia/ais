@@ -614,7 +614,7 @@ SERVICE_AREAS = {
                 'polygon':  {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.Zoning_BaseDistricts',
-                    'value_field':          'code',
+                    'value_field':          'long_code',
                 },
             },
         },
