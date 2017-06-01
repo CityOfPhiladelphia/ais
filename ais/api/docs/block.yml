@@ -120,6 +120,8 @@ responses:
               type: string
             li_address_key:
               type: string
+            eclipse_location_id:
+              type: string
             pwd_account_nums:
               type: array
               items:

@@ -197,6 +197,8 @@ The root of the `FeatureCollection` contains:
   * `election_precinct`  
   * `pwd_parcel_id` (Phila. Water Dept.)
   * `dor_parcel_id` (Dept. of Records)
+  * `li_address_key` (Licenses & Inspections)
+  * `eclipse_location_id` (Licenses & Inspections)
   * `opa_account_num` (Office of Prop. Assessment)
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
