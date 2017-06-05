@@ -1204,7 +1204,7 @@ ADDRESS_SUMMARY = {
             'name':                 'li_address_key',
             'tag_key':              'li_address_key',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
         {
             'name':                 'voters',
@@ -1228,7 +1228,7 @@ ADDRESS_SUMMARY = {
             'name':                 'eclipse_location_id',
             'tag_key':              'eclipse_location_id',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
     ],
 }
