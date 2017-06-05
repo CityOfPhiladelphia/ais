@@ -3,7 +3,7 @@ alembic==0.8.4
 #-e git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
 flasgger==0.5.14
-Flask==0.12.2
+Flask==0.10.1
 Flask-Migrate==1.8.0
 Flask-Script==2.0.5
 Flask-SQLAlchemy==2.1
@@ -19,7 +19,7 @@ psycopg2==2.6.2
 pyproj==1.9.5.1
 python-editor==0.5
 PyYAML==3.11
-raven==6.0.0
+raven[flask]==5.21.0
 Shapely>=1.5.13
 SQLAlchemy==1.0.12
 Werkzeug==0.11.4
