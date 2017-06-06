@@ -78,8 +78,8 @@ for key, value in tag_map.items():
 new_geocode_rows = [dict(t) for t in set([tuple(d.items()) for d in new_geocode_rows])]
 
 if WRITE_OUT:
-    # print('Dropping indexes...')
-    # geocode_table.drop_index('street_address')
+    print('Dropping indexes...')
+    geocode_table.drop_index('street_address')
 
     print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
     # TODO: Use geopetl/datum instead of raw sql
@@ -101,6 +101,9 @@ if WRITE_OUT:
             db.execute(write_stmt)
             db.save()
             values = ''
+
+    print('Creating index...')
+    geocode_table.create_index('street_address')
 
 db.close()
 

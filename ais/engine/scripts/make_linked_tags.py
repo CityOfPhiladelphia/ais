@@ -17,6 +17,8 @@ address_tag_table = db['address_tag']
 source_address_table = db['source_address']
 address_link_table = db['address_link']
 tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
+geocode_table = db['geocode']
+geocode_where = "geocode_type in (1,2)"
 
 
 print('Deleting linked tags...')
@@ -49,6 +51,20 @@ for tag_row in tag_rows:
 
 err_map = {}
 
+print('Reading geocode rows...')
+geocode_map = {}
+geocode_rows = geocode_table.read(where=geocode_where)
+print('Mapping geocode rows...')
+for geocode_row in geocode_rows:
+    street_address = geocode_row['street_address']
+    geocode_type = geocode_row['geocode_type']
+    if not street_address in geocode_map:
+        geocode_map[street_address] = {'pwd': '', 'dor': ''}
+    if geocode_row['geocode_type'] == 1:
+        geocode_map[street_address]['pwd'] = geocode_row['geom']
+    else:
+        geocode_map[street_address]['dor'] = geocode_row['geom']
+
 print('Reading addresses...')
 address_rows = address_table.read()
 print('Making linked tags...')
@@ -56,6 +72,8 @@ linked_tags_map = []
 new_linked_tags = []
 i = 1
 done = False
+
+rejected_link_map = {}
 
 while not done:
 
@@ -77,7 +95,6 @@ while not done:
         links = link_map.get(street_address)
         # sort links by traversal order
         sorted_links = []
-        # sorted_links = [sorted_links.append(x) for x in links if x['relationship'] == rel for rel in traversal_order]
         if links:
             for rel in traversal_order:
                 for link in links:
@@ -93,7 +110,7 @@ while not done:
             tag_key = tag_field['tag_key']
             # Look for tag in tag_map for street_address
             tag_value = None
-            # if mapped_tags and not found: # Should always be not found at this point
+            # Check if already have value for this tag
             if mapped_tags:
                 for mapped_tag in mapped_tags:
                     mapped_key = mapped_tag.get('key')
@@ -113,6 +130,16 @@ while not done:
                 if found == True:
                     break
                 link_address = slink.get('address_2')
+                # Don't allow tags from links with different non-null pwd or dor geocoded geoms:
+                if all(a in geocode_map for a in (link_address, street_address)):
+                    # if either parcel geocodes have different geoms don't inherit:
+                    if (geocode_map[link_address]['pwd'] is not None and geocode_map[link_address]['pwd'] != geocode_map[street_address]['pwd']) or \
+                    (geocode_map[link_address]['dor'] is not None and geocode_map[link_address]['dor'] != geocode_map[street_address]['dor']):
+                        if street_address not in rejected_link_map:
+                            rejected_link_map[street_address] = []
+                        rejected_link_map[street_address].append(link_address)
+                        continue
+
                 # get tags for current link
                 link_tags = tag_map.get(link_address)
                 if link_tags:
@@ -143,6 +170,11 @@ while not done:
 if WRITE_OUT:
     print('Writing ', len(linked_tags_map), ' linked tags to address_tag table...')
     address_tag_table.write(linked_tags_map, chunk_size=150000)
+    print('Rejected links: ')
+    for key, value in rejected_link_map.items():
+        value=list(set(value))
+        print('{key}: {value}'.format(key=key, value=value))
+    # print(rejected_link_map)
 # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
 # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
 # loop address.
@@ -199,10 +231,11 @@ for link_row in link_rows:
     link_map[address_2].append(link_row)
 
 i=0
+rejected_link_map = {}
 print('Looping through {} addresses...'.format(len(address_rows)))
 for address_row in address_rows:
     i+=1
-    if i % 1000 == 0:
+    if i % 10000 == 0:
         print(i)
     unit_num = address_row['unit_num']
     street_address = address_row['street_address']
@@ -259,8 +292,19 @@ for address_row in address_rows:
                 if found:
                     break
                 if link.get('relationship') == 'has base':
+                    l_street_address = link['address_1']
+                    parsed = parser.parse(l_street_address)
+                    if all(a in geocode_map for a in (l_street_address, linked_address)):
+                        # if both parcel geocodes have different geoms don't use:
+                        if (geocode_map[l_street_address]['pwd'] is not None and geocode_map[l_street_address]['pwd'] !=
+                            geocode_map[linked_address]['pwd']) and \
+                                (geocode_map[l_street_address]['dor'] is not None and geocode_map[l_street_address]['dor'] !=
+                                    geocode_map[linked_address]['dor']):
+                            if linked_address not in rejected_link_map:
+                                rejected_link_map[linked_address] = []
+                            rejected_link_map[linked_address].append(l_street_address)
+                            continue
 
-                    parsed = parser.parse(link['address_1'])
                     l_low_num = parsed['components']['address']['low_num']
                     l_high_num = parsed['components']['address']['high_num_full']
                     l_street_full = parsed['components']['street']['full']
@@ -308,6 +352,12 @@ for address_row in address_rows:
 if WRITE_OUT and len(new_linked_tags) > 0:
     print('Writing ', len(new_linked_tags), ' linked tags to address_tag table...')
     address_tag_table.write(new_linked_tags, chunk_size=150000)
+
+print('Rejected links: ')
+for key, value in rejected_link_map.items():
+    value = list(set(value))
+    print('{key}: {value}'.format(key=key, value=value))
+# print(rejected_link_map)
 
 print("Cleaning up...")
 del link_rows

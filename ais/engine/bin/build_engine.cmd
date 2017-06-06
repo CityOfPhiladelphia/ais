@@ -37,11 +37,14 @@ ais engine run load_curbs
 echo. && echo "Loading Addresses"
 ais engine run load_addresses
 
+echo. && echo "Geocoding Addresses"
+ais engine run geocode_addresses
+
 echo. && echo "Making Address Tags from Linked Addresses"
 ais engine run make_linked_tags
 
-echo. && echo "Geocoding Addresses"
-ais engine run geocode_addresses
+echo. && echo "Geocoding addresses from links"
+ais engine run geocode_addresses_from_links
 
 echo. && echo "Making Address Summary"
 ais engine run make_address_summary
