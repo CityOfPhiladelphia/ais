@@ -3,8 +3,8 @@ This endpoint handles owner searches. Successful requests return a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s)
 
 Queries are treated as substrings of owner names. You can search for multiple substrings by separating search terms by spaces:
-* Request properties owned by anyone whose first or last name contains "Lee" - http://api.phila.gov/ais/v1/owner/Lee
-* Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais/v1/owner/phil%20lee)
+#* Request properties owned by anyone whose first or last name contains "Lee" - [http://api.phila.gov/ais/v1/owner/Lee](http://api.phila.gov/ais_doc/v1/owner/Lee?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
+* Request properties owned by anyone whose first or last name contains "Phil" AND whose first or last name contains "Lee" (both conditions must be met) - [http://api.phila.gov/ais/v1/owner/Phil Lee](http://api.phila.gov/ais_doc/v1/owner/phil%20lee?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

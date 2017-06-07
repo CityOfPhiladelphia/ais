@@ -4,8 +4,8 @@ This endpoint handles coordinate searches by finding the nearest address to quer
 Successful requests return a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of the nearest [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
 To search by coordintes, please enter in x, y format, either as:
- * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633,39.951661655671955), or
- * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063)
+ * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/reverse_geocode/-75.16097658476633,39.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+ * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais_doc/v1/reverse_geocode/2694253.78730206, 235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

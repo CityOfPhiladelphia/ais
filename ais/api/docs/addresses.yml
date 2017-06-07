@@ -3,7 +3,7 @@ This endpoint handles address searches. It is the original AIS endpoint designed
 
 Successful requests return a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
-* Query format requires an address low number followed by a full street name: [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais/v1/addresses/1234%20market%20st)
+* Query format requires an address low number followed by a full street name: [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais_doc/v1/addresses/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

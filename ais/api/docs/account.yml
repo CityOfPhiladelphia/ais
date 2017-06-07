@@ -5,7 +5,7 @@ Successful requests return a paginated
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
 
 * Query format requires a 9 digit numeric OPA account number:
-[http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais/v1/account/883309050)
+[http://api.phila.gov/ais/v1/account/883309050](http://api.phila.gov/ais_doc/v1/account/883309050?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

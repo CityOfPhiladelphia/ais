@@ -3,9 +3,9 @@ This endpoint handles DOR Registry Map ID searches. Successful requests return a
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address) feature(s).
 
 * Query format requires a ten digit alpha numeric DOR Parcel/Registry Map ID:
-[http://api.phila.gov/ais/v1/dor_parcel/001S070144](http://api.phila.gov/ais/v1/dor_parcel/001S070144)
+[http://api.phila.gov/ais/v1/dor_parcel/001S070144](http://api.phila.gov/ais_doc/v1/dor_parcel/001S070144?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 * Optionally separating digits 6 & 7 with a hyphen:
-[http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais/v1/dor_parcel/001S07-0144)
+[http://api.phila.gov/ais/v1/dor_parcel/001S07-0144](http://api.phila.gov/ais_doc/v1/dor_parcel/001S07-0144?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

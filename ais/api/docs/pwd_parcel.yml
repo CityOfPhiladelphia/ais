@@ -3,7 +3,7 @@ This endpoint handles PWD parcel ID searches. Successful requests return a pagin
 [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects) of [address](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#address)  feature(s).
 
 * Query format requires a numeric PWD parcel ID:
-[http://api.phila.gov/ais/v1/pwd_parcel/542611](http://api.phila.gov/ais/v1/pwd_parcel/542611)
+[http://api.phila.gov/ais/v1/pwd_parcel/542611](http://api.phila.gov/ais_doc/v1/pwd_parcel/542611?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---

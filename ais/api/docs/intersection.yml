@@ -4,9 +4,9 @@ This endpoint handles street intersection searches. Successful requests return a
 
 Query format requires 2 street names, including predirections and suffixes, separated by either
 * 'and':
-[http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais/v1/intersection/N%2012th%20st%20and%20market%20st), or
+[http://api.phila.gov/ais/v1/intersection/n 12th st and market st](http://api.phila.gov/ais_doc/v1/intersection/N%2012th%20st%20and%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
 * '&':
-[http://api.phila.gov/ais/v1/intersection/n 12th st & market st](http://api.phila.gov/ais/v1/interection/n%2012th%20st%20%26%20market%20st)
+[http://api.phila.gov/ais/v1/intersection/n 12th st & market st](http://api.phila.gov/ais_doc/v1/interection/n%2012th%20st%20%26%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
