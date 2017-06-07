@@ -132,6 +132,7 @@ while not done:
                 link_address = slink.get('address_2')
                 # Don't allow tags from links with different non-null pwd or dor geocoded geoms:
                 if all(a in geocode_map for a in (link_address, street_address)):
+                    # TODO: different constraints based on tag type (i.e. dor/pwd ids)
                     # if either parcel geocodes have different geoms don't inherit:
                     if (geocode_map[link_address]['pwd'] is not None and geocode_map[link_address]['pwd'] != geocode_map[street_address]['pwd']) or \
                     (geocode_map[link_address]['dor'] is not None and geocode_map[link_address]['dor'] != geocode_map[street_address]['dor']):
@@ -297,7 +298,7 @@ for address_row in address_rows:
                     if all(a in geocode_map for a in (l_street_address, linked_address)):
                         # if both parcel geocodes have different geoms don't use:
                         if (geocode_map[l_street_address]['pwd'] is not None and geocode_map[l_street_address]['pwd'] !=
-                            geocode_map[linked_address]['pwd']) and \
+                            geocode_map[linked_address]['pwd']) or \
                                 (geocode_map[l_street_address]['dor'] is not None and geocode_map[l_street_address]['dor'] !=
                                     geocode_map[linked_address]['dor']):
                             if linked_address not in rejected_link_map:
