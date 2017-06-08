@@ -70,6 +70,10 @@ responses:
         properties:
           type: object
           properties:
+            int_id:
+              type: integer
+              default: "integer"
+
             street_1:
               type: object
               properties:

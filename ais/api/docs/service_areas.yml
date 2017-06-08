@@ -10,7 +10,7 @@ To search by coordinates, please enter in x, y format, either as:
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
-  - service_areas
+  - service areas
 parameters:
   - name: query
     in: path
@@ -32,6 +32,8 @@ responses:
             cua_zone:
               type: string
             li_district:
+              type: string
+            litter_schema_test:
               type: string
             philly_rising_area:
               type: string
@@ -56,6 +58,8 @@ responses:
             high_school:
               type: string
             zoning:
+              type: string
+            zoning_rco:
               type: string
             poice_division:
               type: string

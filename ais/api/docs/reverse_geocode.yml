@@ -10,7 +10,7 @@ To search by coordintes, please enter in x, y format, either as:
 See [Response Structure & Metadata](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md#response-structure--metadata) for more information about the response.
 ---
 tags:
-  - reverse_geocode
+  - reverse geocode
 parameters:
   - name: query
     in: path
@@ -127,6 +127,8 @@ responses:
               type: string
             zoning:
               type: string
+            zoning_rco:
+              type: string
             poice_division:
               type: string
             police_district:
@@ -167,6 +169,8 @@ responses:
             pwd_water_plate:
               type: string
             pwd_center_city_district:
+              type: string
+            litter_schema_test:
               type: string
         geometry:
           type: object
