@@ -426,7 +426,12 @@ def addresses(query):
             .order_by_address()
 
     # Get tag data
-    all_tags = get_tag_data(addresses)
+    try:
+        all_tags = get_tag_data(addresses)
+    except:
+        error = json_error(404, 'Invalid query.',
+                           {'query': query, 'normalized': normalized_address, 'search_params': requestargs,})
+        return json_response(response=error, status=404)
 
     # Get pagination
     paginator = QueryPaginator(addresses)
@@ -465,7 +470,12 @@ def addresses(query):
         match_type=match_type,
         ref_addr=normalized_address,
     )
-    result = serializer.serialize_many(addresses_page)
+    try:
+        result = serializer.serialize_many(addresses_page)
+    except:
+        error = json_error(404, 'Invalid query.',
+                           {'query': query, 'normalized': normalized_address, 'search_params': requestargs,})
+        return json_response(response=error, status=404)
 
     return json_response(response=result, status=200)
 
