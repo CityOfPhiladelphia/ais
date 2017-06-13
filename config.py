@@ -362,6 +362,22 @@ ADDRESSES = {
                 },
             ],
         },
+        {
+            'name': 'zoning_documents',
+            'table': 'gis_ais_sources.vw_zoning_documents',
+            'db': 'gis',
+            'address_fields': {
+                'street_address': 'address',
+            },
+            'tag_fields': [
+                {
+                    'key': 'zoning_document_id',
+                    # 'source_field': 'water1_acc_no',
+                    'source_fields': ['doc_id'],
+                },
+            ],
+        },
+
         # {
         #     'name': 'rtt',
         #     'table': 'gis_dor_rttmapping.cris_properties',
@@ -1219,6 +1235,12 @@ ADDRESS_SUMMARY = {
         {
             'name':                 'eclipse_location_id',
             'tag_key':              'eclipse_location_id',
+            'type':                 'text',
+            'traverse_links':       'true',
+        },
+        {
+            'name':                 'zoning_document_id',
+            'tag_key':              'zoning_document_id',
             'type':                 'text',
             'traverse_links':       'true',
         },
