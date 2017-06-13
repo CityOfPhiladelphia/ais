@@ -235,14 +235,6 @@ ADDRESSES = {
                     'key':              'opa_address',
                     'source_fields':     ['street_address'],
                 },
-                {
-                    'key':              'opa_owner',
-                    'source_fields':     ['owners'],
-                },
-                {
-                    'key':              'opa_address',
-                    'source_fields':     ['street_address'],
-                },
             ],
         },
         {
