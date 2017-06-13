@@ -1239,7 +1239,7 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'true',
         },
         {
-            'name':                 'zoning_document_id',
+            'name':                 'zoning_document_ids',
             'tag_key':              'zoning_document_id',
             'type':                 'text',
             'traverse_links':       'true',
