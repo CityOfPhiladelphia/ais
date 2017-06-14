@@ -158,7 +158,7 @@ def unknown_cascade_view(**kwargs):
 
     if not seg_id:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
         # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
         #                           search_type=search_type, address=address)
@@ -171,7 +171,7 @@ def unknown_cascade_view(**kwargs):
 
     if not cascadedseg:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
         # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
         #                           search_type=search_type, address=address)
@@ -182,7 +182,7 @@ def unknown_cascade_view(**kwargs):
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
     if not from_num <= address.address_low <= to_num:
         error = json_error(404, 'Address number is out of range.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
 
     # Get geom from true_range view item with same seg_id
@@ -347,7 +347,7 @@ def addresses(query):
 
     if search_type != 'address' or low_num is None:
         error = json_error(404, 'Not a valid address.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_address,'search_type': search_type})
         return json_response(response=error, status=404)
 
     filters = strict_filters.copy()
@@ -411,7 +411,7 @@ def addresses(query):
 
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching the query.',
-                                    {'query': query, 'normalized': normalized_address})
+                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
@@ -430,7 +430,7 @@ def addresses(query):
         all_tags = get_tag_data(addresses)
     except:
         error = json_error(404, 'Invalid query.',
-                           {'query': query, 'normalized': normalized_address, 'search_params': requestargs,})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs,})
         return json_response(response=error, status=404)
 
     # Get pagination
@@ -444,7 +444,7 @@ def addresses(query):
 
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching the query.',
-                                    {'query': query, 'normalized': normalized_address})
+                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
@@ -474,7 +474,7 @@ def addresses(query):
         result = serializer.serialize_many(addresses_page)
     except:
         error = json_error(404, 'Invalid query.',
-                           {'query': query, 'normalized': normalized_address, 'search_params': requestargs,})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs})
         return json_response(response=error, status=404)
 
     return json_response(response=result, status=200)
@@ -494,7 +494,13 @@ def block(query):
     """
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
+
     # search_type = parsed['type']
+    # if search_type != 'block':
+    #     error = json_error(404, 'Not a valid block query.',
+    #                        {'query': query, 'search_type': search_type})
+    #     return json_response(response=error, status=404)
+    # Handle address direct queries to this endpoint as block queries
     search_type = 'block'
     normalized_address = parsed['components']['output_address']
 
@@ -505,7 +511,7 @@ def block(query):
                           else parsed['components']['address']['full'])
     except (TypeError, ValueError):
         error = json_error(404, 'No valid block number provided.',
-                           {'query': query, 'normalized': normalized_address})
+                           {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
 
     # Match a set of addresses
@@ -534,11 +540,11 @@ def block(query):
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',
-                                    {'query': query, 'normalized': normalized_address})
+                                    {'query': query, 'normalized': normalized_address,'search_type': search_type})
             return json_response(response=error, status=404)
         else:
             error = json_error(404, 'Could not find any address on a block matching query.',
-                               {'query': query, 'normalized': normalized_address})
+                               {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
         #     return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
         #                               search_type=search_type)
@@ -635,7 +641,6 @@ def account(query):
     tagged_opa_account_nums = OpaProperty.query \
         .filter(OpaProperty.account_num == normalized).all()
     street_addresses = tuple(set([x.street_address for x in tagged_opa_account_nums]))
-    print(street_addresses)
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
@@ -650,7 +655,7 @@ def account(query):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query})
+                           {'query': query,'search_type': search_type})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -684,6 +689,10 @@ def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
     """
+    if not (query.isdigit() and len(query) < 8):
+        error = json_error(404, 'Not a valid pwd_parcel_id.',
+                           {'query': query})
+        return json_response(response=error, status=404)
     search_type = 'pwd_parcel_id'
     # addresses = AddressSummary.query\
     #     .filter(AddressSummary.pwd_parcel_id==query) \
@@ -694,7 +703,6 @@ def pwd_parcel(query):
     tagged_pwd_parcel_ids = PwdParcel.query \
         .filter(PwdParcel.parcel_id==query).all()
     street_addresses = tuple(set([x.street_address for x in tagged_pwd_parcel_ids]))
-    print(street_addresses)
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
@@ -709,7 +717,7 @@ def pwd_parcel(query):
 
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query})
+                           {'query': query, 'search_type': search_type})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -746,6 +754,10 @@ def dor_parcel(query):
     parsed = PassyunkParser().parse(query)
     normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
+    if search_type != 'mapreg':
+        error = json_error(404, 'Not a valid dor_parcel_id.',
+                           {'query': query})
+        return json_response(response=error, status=404)
 
     tagged_dor_parcel_ids = DorParcel.query  \
         .filter(DorParcel.parcel_id==normalized_id).all()
@@ -756,13 +768,6 @@ def dor_parcel(query):
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request)\
         .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
-    #     .sort_by_source_address_from_search_type(search_type) # <- doesn't work with pipe delimited tag fields in AddressSummary
-
-    # addresses = AddressSummary.query\
-    #     .filter(AddressSummary.dor_parcel_id==normalized_id) \
-    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-    #     .get_address_geoms(request) \
-    #     .sort_by_source_address_from_search_type(search_type)
 
     # Get pagination
     paginator = QueryPaginator(addresses)
@@ -770,7 +775,7 @@ def dor_parcel(query):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query})
+                           {'query': query, 'search_type': search_type})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -807,6 +812,12 @@ def intersection(query):
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
     search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
+
+    if search_type != 'intersection':
+        error = json_error(404, 'Not a valid intersection query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
+
     street_1_full = parsed['components']['street']['full']
     street_1_name = parsed['components']['street']['name']
     street_1_predir = parsed['components']['street']['predir']
@@ -882,7 +893,7 @@ def intersection(query):
 
     if intersections_count == 0:
         error = json_error(404, 'Could not find intersection matching query.',
-                           {'query': query, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
+                           {'query': query, 'search_type': search_type, 'normalized': {'street_name_1': street_1_name, 'street_name_2': street_2_name}})
         return json_response(response=error, status=404)
     else:
         match_type = 'exact'
@@ -925,7 +936,7 @@ def reverse_geocode(query):
         srid = str(srid_map[search_type])
     except:
         error = json_error(404, 'Please format your query in State Plane or latitude longitude coordinates separated by a space or comma.',
-                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
+                           {'search_type': search_type, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
     engine_srid = str(ENGINE_SRID)  # check if necessary
     crs = {'type': 'link',
@@ -955,7 +966,7 @@ def reverse_geocode(query):
 
     if not result:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'query': query, 'normalized': normalized})
+                           {'query': query, 'normalized': normalized, 'search_type': search_type})
         return json_response(response=error, status=404)
 
     parsed = PassyunkParser().parse(street_address)
@@ -1008,7 +1019,7 @@ def reverse_geocode(query):
     # Handle unmatched addresses
     if addresses_count == 0:
         error = json_error(404, 'Could not find any addresses matching query.',
-                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
+                           {'search_type': search_type, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
     #Get tag data
@@ -1043,7 +1054,9 @@ def service_areas(query):
 
     query = query.strip('/')
     parsed = PassyunkParser().parse(query)
-    if parsed['type'] == 'none':
+    search_type = parsed['type']
+
+    if search_type == 'none':
         error = json_error(404, 'There are no intersecting service areas.',
                            {'query': query})
         return json_response(response=error, status=404)
@@ -1051,10 +1064,10 @@ def service_areas(query):
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     try:
-        srid = str(srid_map[parsed['type']])
+        srid = str(srid_map[search_type])
     except:
-        error = json_error(404, 'Not a valid query.',
-                           {'query': query})
+        error = json_error(404, 'Not a valid service_area query.',
+                           {'query': query, 'search_type': search_type})
         return json_response(response=error, status=404)
     engine_srid = str(ENGINE_SRID)
     crs = {'type': 'link',
@@ -1082,7 +1095,7 @@ def service_areas(query):
 
     if all(value == None for value in sa_data.values()):
         error = json_error(404, 'There are no intersecting service areas.',
-                           {'search_type': search_type_out, 'query': query, 'normalized': normalized})
+                           {'search_type': search_type, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
 
     # Use ServiceAreaSerializer
@@ -1157,7 +1170,7 @@ def search(query):
             return view(query)
         except:
             error = json_error(404, 'Invalid query.',
-                               {'query': query})
+                               {'query': query, 'search_type': search_type})
             return json_response(response=error, status=404)
 
     # Handle search type = 'none:
