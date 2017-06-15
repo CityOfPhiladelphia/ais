@@ -631,6 +631,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['high_school'], str)
     assert isinstance(feature['properties']['zoning'], str)
     assert isinstance(feature['properties']['zoning_rco'], str)
+    assert isinstance(feature['properties']['zoning_document_ids'], list)
     assert isinstance(feature['properties']['police_division'], str)
     assert isinstance(feature['properties']['police_district'], str)
     assert isinstance(feature['properties']['police_service_area'], str)
