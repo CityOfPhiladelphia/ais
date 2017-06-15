@@ -222,9 +222,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
             pass
         opa_owners = data['properties']['opa_owners']
         pwd_account_nums = data['properties']['pwd_account_nums']
+        zoning_document_ids = data['properties']['zoning_document_ids']
         if not 'source_details' in self.metadata.get('search_params'):
             data['properties']['opa_owners'] = opa_owners.split("|") if opa_owners else []
             data['properties']['pwd_account_nums'] = pwd_account_nums.split("|") if pwd_account_nums else []
+            data['properties']['zoning_document_ids'] = zoning_document_ids.split("|") if zoning_document_ids else []
 
         return data
 
@@ -311,6 +313,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('dor_parcel_id', ''),
                 ('li_address_key', ''),
                 ('eclipse_location_id', ''),
+                ('zoning_document_ids', ''),
                 ('pwd_account_nums', ''),
                 ('opa_account_num', ''),
                 ('opa_owners', ''),
@@ -556,6 +559,7 @@ class AddressTagSerializer():
                 ('dor_parcel_id', {'source': '', 'value': ''}),
                 ('li_address_key', {'source': '', 'value': ''}),
                 ('eclipse_location_id', {'source': '', 'value': ''}),
+                ('zoning_document_ids', {'source': '', 'value': ''}),
                 ('pwd_account_nums', {'source': '', 'value': ''}),
                 ('opa_account_num', {'source': '', 'value': ''}),
                 ('opa_owners', {'source': '', 'value': ''}),
