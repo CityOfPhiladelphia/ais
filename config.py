@@ -72,6 +72,7 @@ BASE_DATA_SOURCES = {
                 'parcel_id':            'parcelid',
                 'source_address':       'address',
                 'source_brt_id':        'brt_id',
+                'building_yn':          'buildingyn',
             },
         },
         'dor': {

@@ -80,6 +80,7 @@ parcel_table.delete()
 source_parcel_id_field = source_field_map['parcel_id']
 source_address_field = source_field_map['source_address']
 source_brt_id_field = source_field_map['source_brt_id']
+source_parcel_building_yn_field = source_field_map['building_yn']
 
 # Read parcels
 print('Reading parcels from source...')
@@ -98,6 +99,7 @@ for i, source_parcel in enumerate(source_parcels):
 		geometry = source_parcel[source_geom_field]
 		source_brt_id = source_parcel[source_brt_id_field]
 		source_address = source_parcel[source_address_field]
+		building_yn = source_parcel[source_parcel_building_yn_field]
 		
 		if source_address in (None, ''):
 			raise ValueError('No address')
@@ -121,6 +123,7 @@ for i, source_parcel in enumerate(source_parcels):
 		parcel.update({
 			parcel_geom_field:	geometry,
 			'parcel_id':		parcel_id,
+			'building_yn':		building_yn,
 		})
 		parcels.append(parcel)
 
