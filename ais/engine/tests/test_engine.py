@@ -10,7 +10,7 @@ def startup():
     new_db = datum.connect(config['DATABASES']['engine'])
     old_db = datum.connect(config['DATABASES']['engine_staging'])
     unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
-    changed_tables = ('',)
+    changed_tables = ('address_error',)
     ignore_tables = unused_tables + changed_tables
 
     return {'new_db': new_db, 'old_db': old_db, 'unused_tables': unused_tables, 'changed_tables': changed_tables, 'ignore_tables': ignore_tables}
@@ -30,22 +30,36 @@ def test_no_duplicates(startup):
 
 def test_compare_num_tables(startup):
     """Test #1: Check if all tables are included in build"""
-    assert len(startup['new_db'].tables) == len(startup['old_db'].tables)
-
+    # assert len(startup['new_db'].tables) == len(startup['old_db'].tables)
+    new_db = startup['new_db']
+    old_db = startup['old_db']
+    table_count_stmt = "select count(*) from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE'"
+    new_table_count = new_db.execute(table_count_stmt)
+    old_table_count = old_db.execute(table_count_stmt)
+    assert new_table_count == old_table_count
 
 def test_num_rows_bt_db_tables(startup):
     """"Test #2: Check if all tables within 10% of rows as old version"""
-    new_db_tables = startup['new_db'].tables
+    new_db = startup['new_db']
+    old_db = startup['old_db']
+    list_tables_stmt = "select table_name from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE'"
+    new_db_tables = new_db.execute(list_tables_stmt)
+    old_db_tables = old_db.execute(list_tables_stmt)
+    # new_db_tables = startup['new_db'].tables
     for ntable in new_db_tables:
+        table_name = ntable['table_name']
 
-        if ntable in startup['ignore_tables']:
+        if table_name in startup['ignore_tables']:
             continue
 
-        ndb_table = startup['new_db'][ntable]
-        n_rows = ndb_table.count
-        odb_table = startup['old_db'][ntable]
-        o_rows = odb_table.count
-        fdif = abs((n_rows - o_rows) / o_rows)
+        # ndb_table = startup['new_db'][ntable]
+        # n_rows = ndb_table.count
+        row_count_stmt = "select count(*) as count from {}".format(table_name)
+        n_rows = new_db.execute(row_count_stmt)
+        o_rows = old_db.execute(row_count_stmt)
+        # odb_table = startup['old_db'][ntable]
+        # o_rows = odb_table.count
+        fdif = abs((n_rows[0]['count'] - o_rows[0]['count']) / o_rows[0]['count'])
 
         assert fdif <= 0.1, (ntable, fdif)
 
