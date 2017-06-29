@@ -1098,6 +1098,7 @@ SERVICE_AREAS = {
 ADDRESS_SUMMARY = {
     # Order in which to look for geocode XYs
     'geocode_types': [
+        'pwd_parcel_front',
         'pwd_parcel',
         'dor_parcel',
         # 'pwd_parcel_spatial',
