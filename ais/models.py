@@ -137,6 +137,7 @@ class PwdParcel(db.Model):
     unit_type = db.Column(db.Text)
     unit_num = db.Column(db.Text)
     street_full = db.Column(db.Text)
+    building_yn = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
 class DorParcel(db.Model):

@@ -115,6 +115,7 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
         parcel_stmt = '''
             select
                 id,
+                building_yn,
                 ST_AsText(geom) as geom,
                 st_astext(st_centroid(geom)) as centroid
             from {source_table}
@@ -122,6 +123,7 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
             union
             select
                 id,
+                building_yn,
                 ST_AsText(geom) as geom,
                 st_astext(st_pointonsurface(geom)) as centroid
             from {source_table}
@@ -135,7 +137,8 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
             xy = loads(parcel_row['centroid'])
             poly = loads(parcel_row['geom'])
             parcel_layer_xy_map[parcel_id] = xy
-            pwd_parcel_geom_map[str(parcel_id)] = poly
+            if parcel_row['building_yn'] == 'Y':
+                pwd_parcel_geom_map[str(parcel_id)] = poly
         parcel_xy_map[parcel_layer_name] = parcel_layer_xy_map
         # for i, (k,v) in enumerate(pwd_parcel_geom_map.items()):
         #     print(i, k, v)
