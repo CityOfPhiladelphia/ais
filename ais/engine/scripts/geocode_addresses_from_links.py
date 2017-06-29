@@ -17,7 +17,7 @@ WRITE_OUT = True
 geocode_table = db['geocode']
 address_tag_table = db['address_tag']
 geocode_tag_map = {
-    'pwd_parcel_id': (1, 3, 7),
+    'pwd_parcel_id': (0, 1, 3, 7),
     'dor_parcel_id': (2, 4, 8)
 }
 new_geocode_rows = []
