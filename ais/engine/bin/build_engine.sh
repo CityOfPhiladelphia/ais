@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+source ../../../env/bin/activate
 dt=$(date +%Y%m%d)
 error_file="build_errors_"
 out_file="build_log_"
