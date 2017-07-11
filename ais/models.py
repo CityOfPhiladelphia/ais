@@ -875,15 +875,20 @@ class AddressSummaryQuery(BaseQuery):
         if not should_exclude:
             return self
 
-        return self\
-            .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
-            .filter(
-                # Get rid of anything with a relationship of 'in range',
-                # 'has generic unit', or 'matches unit'.
-                (AddressLink.relationship == 'has base') |
-                (AddressLink.relationship == 'overlaps') |
-                (AddressLink.relationship == None)
-            )
+        # return self\
+        #     .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
+        #     .filter(
+        #         # Get rid of anything with a relationship of 'in range',
+        #         # 'has generic unit', or 'matches unit'.
+        #         (AddressLink.relationship == 'has base') |
+        #         (AddressLink.relationship == 'overlaps') |
+        #         (AddressLink.relationship == None)
+        #     )
+
+        # Include all opa addresses
+        return self \
+            .filter(AddressSummary.street_address == AddressSummary.opa_address)
+
 
     def exclude_non_opa(self, should_exclude=True):
         if should_exclude:
