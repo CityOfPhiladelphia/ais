@@ -1,6 +1,9 @@
 import sys
 from datetime import datetime
 import datum
+import petl as etl
+import cx_Oracle
+import geopetl
 from ais import app
 # DEV
 import traceback
@@ -17,6 +20,7 @@ db = datum.connect(config['DATABASES']['engine'])
 poly_table = db['service_area_polygon']
 line_single_table = db['service_area_line_single']
 line_dual_table = db['service_area_line_dual']
+point_table = db['service_area_point']
 layer_table = db['service_area_layer']
 layers = config['SERVICE_AREAS']['layers']
 geom_field = 'shape'
@@ -70,10 +74,13 @@ if WRITE_OUT:
 	line_single_table.delete()
 	print('Deleting existing service area dual-value lines...')
 	line_dual_table.delete()
+	print('Deleting existing service area points...')
+	point_table.delete()
 
 polys = []
 line_singles = []
 line_duals = []
+points = []
 
 print('Reading service areas...')
 # wkt_field = geom_field + '_wkt'
@@ -128,8 +135,6 @@ for layer in layers:
 				# because we want to do it to all strings.
 				if isinstance(value, str):
 					value = value.strip()
-
-				object_id = source_row[object_id_field]
 
 				poly = {
 					'layer_id': 			layer_id,
@@ -196,6 +201,38 @@ for layer in layers:
 				}
 				line_duals.append(line_dual)
 
+
+		# POINT
+		if source_type == 'point':
+			value_field = source['value_field']
+			seg_id_field = source.get('seg_id_field', '')
+			source_fields = [value_field, object_id_field]
+			if seg_id_field:
+				source_fields.append(seg_id_field)
+			source_rows = source_table.read(fields=source_fields, \
+											geom_field=geom_field)
+
+			for i, source_row in enumerate(source_rows):
+				# Transform if necessary
+				for f in transform_map.values():
+					source_row = f(source_row, value_field)
+
+				value = source_row[value_field]
+
+				# Remove excess whitespace from strings. This isn't a transform
+				# because we want to do it to all strings.
+				if isinstance(value, str):
+					value = value.strip()
+
+				point = {
+					'layer_id': layer_id,
+					'source_object_id': source_row[object_id_field],
+					'seg_id': source_row[seg_id_field] if seg_id_field else None,
+					'value': value or '',
+					'geom': source_row[source_geom_field],
+				}
+				points.append(point)
+
 if WRITE_OUT:
 	print('Writing service area polygons...')
 	poly_table.write(polys)
@@ -205,6 +242,9 @@ if WRITE_OUT:
 
 	print('Writing service area line dual-value lines...')
 	line_dual_table.write(line_duals)
+
+	print('Writing service area points...')
+	point_table.write(points)
 
 	print('Creating indexes...')
 	line_single_table.create_index('seg_id')
