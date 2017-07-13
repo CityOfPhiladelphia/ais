@@ -640,8 +640,8 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':                     'commercial_corridors',
-            'name':                         'Commercial_Corridor',
+            'layer_id':                     'commercial_corridor',
+            'name':                         'Commercial_Corridors',
             'description':                  '',
             'sources': {
                 'polygon': {
@@ -855,7 +855,7 @@ SERVICE_AREAS = {
         },
         {
             'layer_id':                     'sanitation_district',
-            'name':                         'Sanitation District',
+            'name':                         'Sanitation Districts',
             'description':                  '',
             'sources': {
                 'polygon':  {
@@ -872,8 +872,8 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':                     'sanitation_convenience_centers',
-            'name':                         'Sanitation_Convenience_Centers',
+            'layer_id':                     'sanitation_convenience_center',
+            'name':                         'Sanitation_Convenience_Center',
             'description':                  '',
             'sources': {
                 'point': {
@@ -885,7 +885,7 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':                     'clean_philly_block_captains',
+            'layer_id':                     'clean_philly_block_captain',
             'name':                         'Clean_Philly_Block_Captains',
             'description':                  '',
             'sources': {
@@ -1113,7 +1113,7 @@ SERVICE_AREAS = {
         },
         # GIS_WATERSHEDS
         {
-            'layer_id':                     'major_watersheds_phila',
+            'layer_id':                     'major_phila_watershed',
             'name':                         'Major Watersheds Phila',
             'description':                  '',
             'sources': {
@@ -1139,7 +1139,7 @@ SERVICE_AREAS = {
         },
         # GIS_OHCD
         {
-            'layer_id':                     'neighborhood_advisory_committees',
+            'layer_id':                     'neighborhood_advisory_committee',
             'name':                         'Neighborhood Advisory Committees',
             'description': '',
             'sources': {
