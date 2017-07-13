@@ -671,6 +671,21 @@ class ServiceAreaLineDual(db.Model):
     left_value = db.Column(db.Text)
     right_value = db.Column(db.Text)
 
+class ServiceAreaPoint(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    layer_id = db.Column(db.Text)
+    source_object_id = db.Column(db.Integer)  # The object ID in the source dataset
+    seg_id = db.Column(db.Integer)
+    value = db.Column(db.Text)
+    geom = db.Column(Geometry(geometry_type='MULTIPOINT', srid=ENGINE_SRID))
+
+    layer = db.relationship(
+        'ServiceAreaLayer',
+        primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPoint.layer_id',
+        lazy='joined',
+        uselist=False,
+    )
+
 class ServiceAreaDiff(db.Model):
     '''
     Layer of all Address Summary points where a difference was observed between

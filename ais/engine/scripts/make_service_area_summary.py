@@ -29,6 +29,7 @@ sa_layer_ids = [x['layer_id'] for x in sa_layer_defs]
 poly_table = db['service_area_polygon']
 line_single_table = db['service_area_line_single']
 line_dual_table = db['service_area_line_dual']
+point_table = db['service_area_point']
 #sa_summary_table = db['service_area_summary']
 address_summary_table = db['address_summary']
 address_summary_fields = [
@@ -144,6 +145,10 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		for x in sa_rows:
 			if x['layer_id'] != 'zoning_rco':
 				update_dict[x['layer_id']] = x['value']
+				# if x['layer_id'] != 'commercial_corridors':
+				# 	update_dict[x['layer_id']] = x['value']
+				# else:
+				# 	update_dict[x['layer_id']] = 'yes' if x['value'] else 'no'
 			else:
 				update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
 		sa_summary_row.update(update_dict)
@@ -158,7 +163,7 @@ for i, address_summary_row in enumerate(address_summary_rows):
 
 		# 	# Line dual
 		# 	for layer_id in line_dual_map:
-		# 		if 
+		# 		if
 
 		sa_summary_rows.append(sa_summary_row)
 
@@ -200,7 +205,7 @@ if WRITE_OUT:
 				SET {layer_id} = sals.value
 				FROM address_summary ads, service_area_line_single sals
 				WHERE
-					sas.street_address = ads.street_address AND 
+					sas.street_address = ads.street_address AND
 					sals.seg_id = ads.seg_id AND
 					sals.layer_id = '{layer_id}' AND
 					sals.value <> ''
@@ -226,6 +231,54 @@ if WRITE_OUT:
 
 	print('Dropping temporary index...')
 	address_summary_table.drop_index('seg_id')
+
+#############################################################################
+# SERVICE AREA POINTS
+#############################################################################
+print('Finding nearest service area point to each address...')
+for sa_layer_def in sa_layer_defs:
+	layer_id = sa_layer_def['layer_id']
+	if 'point' in sa_layer_def['sources']:
+		print('Updating from {}...'.format(layer_id))
+		method = sa_layer_def['sources']['point']['method']
+		if method == 'nearest':
+			stmt = '''
+					with sap_layer as
+					(
+						select sap.*
+						from service_area_point sap
+						where sap.layer_id = '{layer_id}'
+					)
+					update service_area_summary sas
+					set {layer_id} = sapf.value
+					from
+						(
+						select ads.street_address, saplv.value
+						from address_summary ads 
+						cross join lateral
+						(
+							select sap_layer.value
+							from sap_layer
+							order by st_setsrid(st_point(ads.geocode_x, ads.geocode_y), 2272) <-> sap_layer.geom limit 1
+						) as saplv
+						) sapf
+					where sas.street_address = sapf.street_address
+				'''.format(layer_id=layer_id)
+
+		elif method == 'seg_id':
+			stmt = '''
+					UPDATE service_area_summary sas
+					SET {layer_id} = sap.value
+					FROM address_summary ads, service_area_point sap
+					WHERE
+						sas.street_address = ads.street_address AND
+						sap.seg_id = ads.seg_id AND
+						sap.layer_id = '{layer_id}' AND
+						sap.value <> ''
+				'''.format(layer_id=layer_id)
+
+		db.execute(stmt)
+		db.save()
 
 db.close()
 

@@ -425,9 +425,9 @@ SERVICE_AREAS = {
     'layers': [
         # GIS_AIS_SOURCES
         {
-            'layer_id':             'center_city_district',
-            'name':                 'Center City District',
-            'description':          '',
+            'layer_id':                     'center_city_district',
+            'name':                         'Center City District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis',
@@ -439,9 +439,9 @@ SERVICE_AREAS = {
 
         # GIS_DHS
         {
-            'layer_id':             'cua_zone',
-            'name':                 'CUA Zone',
-            'description':          '',
+            'layer_id':                     'cua_zone',
+            'name':                         'CUA Zone',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -453,9 +453,9 @@ SERVICE_AREAS = {
 
         # GIS_LNI
         {
-            'layer_id':             'li_district',
-            'name':                 'L&I District',
-            'description':          '',
+            'layer_id':                     'li_district',
+            'name':                         'L&I District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -467,9 +467,9 @@ SERVICE_AREAS = {
 
         # GIS_PHILLYRISING
         {
-            'layer_id':             'philly_rising_area',
-            'name':                 'Philly Rising Area',
-            'description':          '',
+            'layer_id':                     'philly_rising_area',
+            'name':                         'Philly Rising Area',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -482,9 +482,9 @@ SERVICE_AREAS = {
 
         # GIS_PLANNING
         {
-            'layer_id':             'census_tract_2010',
-            'name':                 'Census Tract 2010',
-            'description':          '',
+            'layer_id':                     'census_tract_2010',
+            'name':                         'Census Tract 2010',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -494,9 +494,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'census_block_group_2010',
-            'name':                 'Census Block Group 2010',
-            'description':          '',
+            'layer_id':                     'census_block_group_2010',
+            'name':                         'Census Block Group 2010',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -506,9 +506,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'census_block_2010',
-            'name':                 'Census Block 2010',
-            'description':          '',
+            'layer_id':                     'census_block_2010',
+            'name':                         'Census Block 2010',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -518,9 +518,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'council_district_2016',
-            'name':                 'Council District 2016',
-            'description':          '',
+            'layer_id':                     'council_district_2016',
+            'name':                         'Council District 2016',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -530,9 +530,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'political_ward',
-            'name':                 'Ward',
-            'description':          '',
+            'layer_id':                     'political_ward',
+            'name':                         'Ward',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -542,9 +542,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'political_division',
-            'name':                 'Ward Division',
-            'description':          '',
+            'layer_id':                     'political_division',
+            'name':                         'Ward Division',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -554,9 +554,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'planning_district',
-            'name':                 'Planning District',
-            'description':          '',
+            'layer_id':                     'planning_district',
+            'name':                         'Planning District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -567,9 +567,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'elementary_school',
-            'name':                 'Elementary School',
-            'description':          '',
+            'layer_id':                     'elementary_school',
+            'name':                         'Elementary School',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -579,9 +579,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'middle_school',
-            'name':                 'Middle School',
-            'description':          '',
+            'layer_id':                     'middle_school',
+            'name':                         'Middle School',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -591,9 +591,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'high_school',
-            'name':                 'High School',
-            'description':          '',
+            'layer_id':                     'high_school',
+            'name':                         'High School',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -611,13 +611,13 @@ SERVICE_AREAS = {
         #             'db':                   'gis_sa',
         #             'table':                'gis_planning.Neighborhoods',
         #             'value_field':          'name',
-        #         },
-        #     },
-        # },
+        # #         },
+        # #     },
+        # # },
         {
-            'layer_id':             'zoning',
-            'name':                 'Zoning',
-            'description':          '',
+            'layer_id':                     'zoning',
+            'name':                         'Zoning',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -628,14 +628,27 @@ SERVICE_AREAS = {
         },
         # ZONING RCO OVERLAYS - CAN BE MULTIPLE PER ADDRESS? CLARIFY AND INCORPORATE
         {
-            'layer_id':             'zoning_rco',
-            'name':                 'Zoning_RCO',
-            'description':           '',
+            'layer_id':                     'zoning_rco',
+            'name':                         'Zoning_RCO',
+            'description':                  '',
             'sources': {
                 'polygon': {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.Zoning_RCO',
                     'value_field':          'objectid',
+                },
+            },
+        },
+        {
+            'layer_id':                     'commercial_corridor',
+            'name':                         'Commercial_Corridors',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Commercial_Corridors',
+                    'value_field':          'name',
+                    'method':               'yes_or_no',
                 },
             },
         },
@@ -693,9 +706,9 @@ SERVICE_AREAS = {
         # # },
         # GIS_POLICE
         {
-            'layer_id':             'police_division',
-            'name':                 'Police Division',
-            'description':          '',
+            'layer_id':                     'police_division',
+            'name':                         'Police Division',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -717,9 +730,9 @@ SERVICE_AREAS = {
         #     },
         # },
         {
-            'layer_id':             'police_district',
-            'name':                 'Police District',
-            'description':          '',
+            'layer_id':                     'police_district',
+            'name':                         'Police District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -732,9 +745,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'police_service_area',
-            'name':                 'Police Service Area',
-            'description':          '',
+            'layer_id':                     'police_service_area',
+            'name':                         'Police Service Area',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -775,9 +788,9 @@ SERVICE_AREAS = {
 
        # GIS_STREETS
         {
-            'layer_id':             'rubbish_recycle_day',
-            'name':                 'Rubbish/Recycle Day',
-            'description':          '',
+            'layer_id':                     'rubbish_recycle_day',
+            'name':                         'Rubbish/Recycle Day',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -793,9 +806,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'recycling_diversion_rate',
-            'name':                 'Recycling Diversion Rate',
-            'description':          '',
+            'layer_id':                     'recycling_diversion_rate',
+            'name':                         'Recycling Diversion Rate',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -805,9 +818,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'leaf_collection_area',
-            'name':                 'Leaf Collection Area',
-            'description':          '',
+            'layer_id':                     'leaf_collection_area',
+            'name':                         'Leaf Collection Area',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -823,9 +836,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'sanitation_area',
-            'name':                 'Sanitation Area',
-            'description':          '',
+            'layer_id':                     'sanitation_area',
+            'name':                         'Sanitation Area',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -841,9 +854,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'sanitation_district',
-            'name':                 'Sanitation District',
-            'description':          '',
+            'layer_id':                     'sanitation_district',
+            'name':                         'Sanitation Districts',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -859,9 +872,37 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'historic_street',
-            'name':                 'Historic Street',
-            'description':          '',
+            'layer_id':                     'sanitation_convenience_center',
+            'name':                         'Sanitation_Convenience_Center',
+            'description':                  '',
+            'sources': {
+                'point': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_streets.Sanitation_Convenience_Centers',
+                    'value_field':          'name',
+                    'method':               'nearest',
+                },
+            },
+        },
+        {
+            'layer_id':                     'clean_philly_block_captain',
+            'name':                         'Clean_Philly_Block_Captains',
+            'description':                  '',
+            'sources': {
+                'point': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_streets.CleanPhilly_Block_Captains',
+                    'seg_id_field':         'seg_id',
+                    'value_field':          'address',
+                    'object_id_field':      'objectid',
+                    'method':               'seg_id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'historic_street',
+            'name':                         'Historic Street',
+            'description':                  '',
             'sources': {
                 'line_single': {
                     'db':                   'gis_sa',
@@ -873,9 +914,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'highway_district',
-            'name':                 'Highway District',
-            'description':          '',
+            'layer_id':                     'highway_district',
+            'name':                         'Highway District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -891,9 +932,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'highway_section',
-            'name':                 'Highway Section',
-            'description':          '',
+            'layer_id':                     'highway_section',
+            'name':                         'Highway Section',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -915,9 +956,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'highway_subsection',
-            'name':                 'Highway Subsection',
-            'description':          '',
+            'layer_id':                     'highway_subsection',
+            'name':                         'Highway Subsection',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -939,9 +980,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'traffic_district',
-            'name':                 'Traffic District',
-            'description':          '',
+            'layer_id':                     'traffic_district',
+            'name':                         'Traffic District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -957,9 +998,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'traffic_pm_district',
-            'name':                 'Traffic PM District',
-            'description':          '',
+            'layer_id':                     'traffic_pm_district',
+            'name':                         'Traffic PM District',
+            'description':                  '',
             'sources': {
                 # NOTE: these have m-values.
                 'polygon':  {
@@ -976,9 +1017,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'zip_code',
-            'name':                 'ZIP Code',
-            'description':          '',
+            'layer_id':                     'zip_code',
+            'name':                         'ZIP Code',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -995,9 +1036,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'street_light_route',
-            'name':                 'Street Light Route',
-            'description':          '',
+            'layer_id':                     'street_light_route',
+            'name':                         'Street Light Route',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1009,9 +1050,9 @@ SERVICE_AREAS = {
 
         # GIS_WATER
         {
-            'layer_id':             'pwd_maint_district',
-            'name':                 'PWD Maintenance District',
-            'description':          '',
+            'layer_id':                     'pwd_maint_district',
+            'name':                         'PWD Maintenance District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1021,9 +1062,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'pwd_pressure_district',
-            'name':                 'PWD Pressure District',
-            'description':          '',
+            'layer_id':                     'pwd_pressure_district',
+            'name':                         'PWD Pressure District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1033,9 +1074,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'pwd_treatment_plant',
-            'name':                 'PWD Treatment Plant',
-            'description':          '',
+            'layer_id':                     'pwd_treatment_plant',
+            'name':                         'PWD Treatment Plant',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1046,9 +1087,9 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id':             'pwd_water_plate',
-            'name':                 'PWD Water Plate',
-            'description':          '',
+            'layer_id':                     'pwd_water_plate',
+            'name':                         'PWD Water Plate',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1059,9 +1100,9 @@ SERVICE_AREAS = {
             # 'source_account':       'gis',
         },
         {
-            'layer_id':             'pwd_center_city_district',
-            'name':                 'PWD Center City District',
-            'description':          '',
+            'layer_id':                     'pwd_center_city_district',
+            'name':                         'PWD Center City District',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1070,10 +1111,24 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # GIS_WATERSHEDS
         {
-            'layer_id':             'litter_schema_test',
-            'name':                 'Litter Schema Test',
-            'description':          '',
+            'layer_id':                     'major_phila_watershed',
+            'name':                         'Major Watersheds Phila',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_watersheds.MAJOR_WATERSHEDS_PHILA',
+                    'value_field':          'watershed_name',
+                },
+            },
+        },
+        # GIS_GSG
+        {
+            'layer_id':                     'litter_schema_test',
+            'name':                         'Litter Schema Test',
+            'description':                  '',
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
@@ -1082,6 +1137,34 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # GIS_OHCD
+        {
+            'layer_id':                     'neighborhood_advisory_committee',
+            'name':                         'Neighborhood Advisory Committees',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db': 'gis_sa',
+                    'table':                'gis_ohcd.NEIGHBORHOODADVISORYCOMMITTEES',
+                    'value_field':          'organization',
+                },
+            },
+        },
+        # GIS_PPR
+        {
+            'layer_id':                     'ppr_friends',
+            'name':                         'PPR Friends',
+            'description': '',
+            'sources': {
+                'point': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_ppr.PPR_FRIENDS_ADDR_WEBONLY',
+                    'value_field':          'friendsnam',
+                    'method':               'nearest',
+                },
+            },
+        },
+
     ],
 }
 
