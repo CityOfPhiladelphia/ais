@@ -144,10 +144,11 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		update_dict = {}
 		for x in sa_rows:
 			if x['layer_id'] != 'zoning_rco':
-				if x['layer_id'] != 'commercial_corridors':
-					update_dict[x['layer_id']] = x['value']
-				else:
-					update_dict[x['layer_id']] = 'yes' if x['value'] else 'no'
+				update_dict[x['layer_id']] = x['value']
+				# if x['layer_id'] != 'commercial_corridors':
+				# 	update_dict[x['layer_id']] = x['value']
+				# else:
+				# 	update_dict[x['layer_id']] = 'yes' if x['value'] else 'no'
 			else:
 				update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
 		sa_summary_row.update(update_dict)
