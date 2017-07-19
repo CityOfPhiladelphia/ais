@@ -133,6 +133,8 @@ class GeoJSONSerializer (BaseSerializer):
             elif ref_address.address_high:
                 # no address.address_high but ref_address.address_high
                  match_type = 'in_range' if not ref_address.unit_type else 'has_base_in_range'
+            elif address.base_address_no_suffix == ref_address.street_address:
+                match_type = 'has_base_no_suffix'
             else:
                 match_type = 'has_base'
 
