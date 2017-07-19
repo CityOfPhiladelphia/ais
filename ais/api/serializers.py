@@ -379,6 +379,7 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             ('type', 'Feature'),
             ('ais_feature_type', 'intersection'),
             ('match_type', self.match_type),
+            ('street_address', intersection.street_1_full + ' & ' + intersection.street_2_full),
             ('properties', OrderedDict([
                 ('int_id', intersection.int_id),
                 #('intersection_ids', intersection.int_ids),
