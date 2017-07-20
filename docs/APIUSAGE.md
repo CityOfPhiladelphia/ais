@@ -109,6 +109,10 @@ Additional query instructions can be sent via querystring parameters, or flags:
   * `*note`: A user defined search_radius is limited to a maximum of 10,000 feet.
 
 
+# <a name="Response Structure & Metadata"></a>Response Structure & Metadata
+
+ There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects). 
+
 ## <a name="Pagination"></a>Pagination
 
  Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects).  A maximum of 100 features are returned per page. Use the querystring parameter ```page=#```, where # is the page number, to specify a particular page of features to be returned in the response:
@@ -116,10 +120,6 @@ Additional query instructions can be sent via querystring parameters, or flags:
  
 A pagination object is returned in the [response envelope](#Envelope) detailing the ```page``` number of the response.
 
-
-# <a name="Response Structure & Metadata"></a>Response Structure & Metadata
-
- There are currently two distinct json response formats representing [address](#Address) and [intersection](#Intersection) response objects. Responses for all endpoints are returned in a paginated [GeoJSON](http://geojson.org/geojson-spec.html) [FeatureCollection](http://geojson.org/geojson-spec.html#feature-collection-objects). 
 
 ## <a name="Envelope"></a>The Envelope
 
