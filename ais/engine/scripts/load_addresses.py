@@ -438,8 +438,8 @@ for i, address in enumerate(addresses):
         base_link = {
             'address_1': address.street_address,
             'relationship': 'has base',
-            # 'address_2':       address.base_address,
-            'address_2': address.base_address_no_suffix,
+            'address_2':       address.base_address,
+            # 'address_2': address.base_address_no_suffix,
         }
         links.append(base_link)
 
@@ -529,7 +529,8 @@ for i, address in enumerate(addresses):
                     child_link = {
                         'address_1': child_street_address,
                         'relationship': 'in range',
-                        'address_2': base_address_no_suffix,
+                        'address_2': address.base_address,
+                        # 'address_2': base_address_no_suffix,
                     }
                     links.append(child_link)
             except ValueError:

@@ -683,3 +683,19 @@ def test_block_search_includes_all_opa_addresses(client):
     response = client.get('/block/2400 block of east york st?include_units&opa_only')
     data = json.loads(response.get_data().decode())
     assert data['page_size'] == 27
+
+def test_address_low_suffix_include_units_matches_on_base(client):
+    response = client.get('/search/742R S DARIEN ST?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['page_size'] == 4
+    assert data['features'][0]['match_type'] == 'exact'
+    assert data['features'][1]['match_type'] == 'unit_child'
+    assert data['features'][1]['properties']['street_address'] == '742R S DARIEN ST # 1'
+
+def test_address_low_suffix_include_units_matches_on_base_for_ranged_address(client):
+    response = client.get('/search/5431R-39 westford rd?include_units')
+    data = json.loads(response.get_data().decode())
+    assert data['page_size'] == 7
+    assert data['features'][0]['match_type'] == 'exact'
+    assert data['features'][1]['match_type'] == 'unit_child'
+    assert data['features'][1]['properties']['street_address'] == '5431R-39 WESTFORD RD # A'
