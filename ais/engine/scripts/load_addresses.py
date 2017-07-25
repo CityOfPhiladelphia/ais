@@ -515,7 +515,8 @@ for i, address in enumerate(addresses):
 
         for x in range(address_low, address_high + 1, 2):
 
-            child_address_comps = (str(x), street_full)
+            child_address_low_full = str(x) + address_suffix if address_suffix else str(x)
+            child_address_comps = (child_address_low_full, street_full)
             child_address = " ".join(filter(None, child_address_comps))
             try:
                 child_obj = Address(child_address)
