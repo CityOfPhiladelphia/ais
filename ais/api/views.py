@@ -193,18 +193,18 @@ def unknown_cascade_view(**kwargs):
                 '''.format(seg_id=cascadedseg.seg_id)
     true_range_result = db.engine.execute(true_range_stmt).fetchall()
     true_range_result = list(chain(*true_range_result))
-    # Get side delta (address number range on seg side - from true range if exists else from centerline seg)
+    # Get side delta (address number range on seg side - from true_range if exists else from centerline seg)
     if true_range_result and seg_side=="R" and true_range_result[3] is not None and true_range_result[2] is not None:
         side_delta = true_range_result[3] - true_range_result[2]
-        cascade_geocode_type = 'true range'
+        cascade_geocode_type = 'true_range'
     elif true_range_result and seg_side=="L" and true_range_result[1] is not None and true_range_result[0] is not None:
         side_delta = true_range_result[1] - true_range_result[0]
-        cascade_geocode_type = 'true range'
+        cascade_geocode_type = 'true_range'
     else:
         # side_delta = cascadedseg.right_to - cascadedseg.right_from if seg_side == "R" \
         #     else cascadedseg.left_to - cascadedseg.left_from
         side_delta = to_num - from_num
-        cascade_geocode_type = 'full range'
+        cascade_geocode_type = 'full_range'
     if side_delta == 0:
         distance_ratio = 0.5
     else:
