@@ -403,7 +403,7 @@ def test_cascade_to_true_range(client):
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'true range'
+    assert feature['geometry']['geocode_type'] == 'true_range'
     assert feature['match_type'] == 'unmatched'
 
 def test_cascade_to_full_range(client):
@@ -411,7 +411,7 @@ def test_cascade_to_full_range(client):
     response = client.get('/search/3419 ashfield lane')
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'full range'
+    assert feature['geometry']['geocode_type'] == 'full_range'
     assert feature['match_type'] == 'unmatched'
     assert_status(response, 200)
 
