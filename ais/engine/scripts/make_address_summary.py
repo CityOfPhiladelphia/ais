@@ -254,8 +254,12 @@ for i, street_name in enumerate(street_names):
             if geocode_type in xy_map:
                 xy_wkt = xy_map[geocode_type]
                 x, y = wkt_to_xy(xy_wkt)
-                geocode_vals['geocode_street_x'] = x
-                geocode_vals['geocode_street_y'] = y
+                #TODO: Resolve this quickfix
+                try:
+                    geocode_vals['geocode_street_x'] = x
+                    geocode_vals['geocode_street_y'] = y
+                except:
+                    print("Could not get geocode_street values for: ", street_address)
 
                 break
 
