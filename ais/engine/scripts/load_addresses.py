@@ -369,7 +369,7 @@ insert_rows = [dict(x) for x in addresses]
 if WRITE_OUT:
     print('Writing {} addresses...'.format(len(addresses)))
     address_table.write(insert_rows, chunk_size=150000)
-    del insert_rows
+del insert_rows
 
 print('Writing {} parser_address_tags...'.format(len(parsed_addresses)))
 for source_address, comps in parsed_addresses.items():
@@ -386,6 +386,7 @@ for source_address, comps in parsed_addresses.items():
 
 if WRITE_OUT:
     address_tag_table.write(parser_address_tags, chunk_size=150000)
+del parser_address_tags
 
 ###############################################################################
 # ADDRESS LINKS
@@ -1145,6 +1146,7 @@ if WRITE_OUT:
     address_property_table.write(address_props)
     print('Indexing address-properties...')
     address_property_table.create_index('street_address')
+del address_props
 
 ################################################################################
 # TRUE RANGE
@@ -1166,6 +1168,7 @@ print('** ERRORS **')
 if WRITE_OUT:
     print('Writing errors...')
     address_error_table.write(address_errors, chunk_size=150000)
+del address_errors
 
 # print('{} errors'.format(error_count))
 # print('{} warnings'.format(warning_count))
