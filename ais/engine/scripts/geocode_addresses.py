@@ -176,7 +176,7 @@ seg_side_map = {}
 # 	address = Address(street_address)
 # 	addresses.append(address)
 
-addresses = Address.query.all()
+# addresses = Address.query.all()
 
 # TODO: index by seg ID, side (seg_side_map above)
 # For interpolating between parcel centroids
