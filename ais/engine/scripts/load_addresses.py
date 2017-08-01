@@ -411,7 +411,7 @@ for i, address in enumerate(addresses):
     if address.address_high is not None and address.unit_type is None:
         street_range_map[street_full].append(address)
 
-    base_address = address.base_address
+    base_address = address.base_address  # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Get 'has_base' link for addresses with units
     if address.unit_type is not None:
     # if address.unit_type is not None or address.address_low_suffix is not None:
