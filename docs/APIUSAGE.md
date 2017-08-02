@@ -41,10 +41,10 @@ The API endpoints are:
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais_doc/v1/search/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
-   * **block** - Represents all addresses on a particular block; inputted as range of addresses follewed by 'block of' and then street name (with predirection) - 
+   * **block** - Represents all addresses on a particular block; inputted as range of addresses followed by 'block of' and then street name (with pre-direction) -
     [http://api.phila.gov/ais/v1/search/1200-1299 block of Market St](http://api.phila.gov/ais_doc/v1/search/1200-1299%20block%20of%20Market%20St?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
-   * **intersection** - Inputted as 'street 1 and street 2', including predirections, i.e.
+   * **intersection** - Inputted as 'street 1 and street 2', including pre-directions, i.e.
     [http://api.phila.gov/ais/v1/search/N 12th and Market St](http://api.phila.gov/ais_doc/v1/search/N%2012th%20and%20Market%20St?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
    * **OPA account number** - Office of Property Assessment Account Number - 
@@ -54,7 +54,7 @@ The API endpoints are:
     [http://api.phila.gov/ais/v1/search/001S07-0144](http://api.phila.gov/ais_doc/v1/search/001S07-0144?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)   
     
    * **coordinates** - Location in x, y format, either as:
-     * Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/reverse_geocode/-75.16097658476633,39.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+     * Geographic WG84 coordinates (srid=4326): [http://api.phila.gov/ais/v1/reverse_geocode/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/reverse_geocode/-75.16097658476633,39.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
      * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais_test/v1/reverse_geocode/2694253.78730206, 235887.921013063](http://api.phila.gov/ais_doc/v1/reverse_geocode/2694253.78730206,235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
    
 ```
@@ -154,7 +154,7 @@ The root of the `FeatureCollection` contains:
 ## <a name="AIS Feature Types"></a>AIS Feature Types
 
 ### <a name="Address"></a>**Address**
-* The following list of feature metatdata:
+* The following list of feature metadata:
   * `type`: "Feature"
   * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
@@ -174,7 +174,7 @@ The root of the `FeatureCollection` contains:
      * `on_block`: Returned via block search
      * `contains_query_string`: Returned via owner search
      * `exact_location`: Returned via reverse geocode search
-     * `exact_key`: Retrurned via pwd_parcel id, regmap id, or property account number query
+     * `exact_key`: Returned via pwd_parcel id, regmap id, or property account number query
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
@@ -260,9 +260,9 @@ The root of the `FeatureCollection` contains:
   * `ppr_friends`
 
 ### <a name="Intersection"></a>**Intersection**
-* The following list of feature metatdata:
+* The following list of feature metadata:
   * `type`: "Feature"
-  * `ais_feature_type`: The AIS object type represented by the feature (address or interesection)
+  * `ais_feature_type`: The AIS object type represented by the feature (address or intersection)
   * `match_type`: The relationship between the 'normalized' query string and the feature response. Options are:
      * `exact`: Exact match
 * The following list of `properties`:
@@ -328,14 +328,14 @@ A `404 status` is returned when:
 ## <a name="Additional Resources"></a>Additional Resources
 ### <a name="ServiceAreas"></a>__**Service Areas**__ 
 `\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
-* Geographic WG84 coordintes (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/service_areas/-75.16097658476633,%2039.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
+* Geographic WG84 coordinates (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/service_areas/-75.16097658476633,%2039.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
 * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais_doc/v1/service_areas/2694253.78730206,%20235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 The `/service_areas` endpoint response contains the query metadata, geometry and crs objects, as well the service area data. The response format is:
 
 
   * `search_type`: 'coordinates'
-  * `search_params`: No search paramaters are currently being handled by this endpoint.
+  * `search_params`: No search parameters are currently being handled by this endpoint.
   * `query`: x, y
   * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser. Passyunk normalizes coordinate inputs to x,y format with 6 decimal places.
   * `crs`: coordinate reference system metadata
