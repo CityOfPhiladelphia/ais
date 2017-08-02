@@ -183,6 +183,10 @@ responses:
               type: string
             sanitation_district:
               type: string
+            sanitation_convenience_center:
+              type: string
+            clean_philly_block_captain:
+              type: string
             historic_street:
               type: string
             highway_district:
@@ -207,7 +211,13 @@ responses:
               type: string
             pwd_center_city_district:
               type: string
+            major_phila_watershed:
+              type: string
             litter_schema_test:
+              type: string
+            litter_advisory_committee:
+              type: string
+            ppr_friends:
               type: string
         geometry:
           type: object
