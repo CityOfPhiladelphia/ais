@@ -67,6 +67,8 @@ responses:
           type: string
         match_type:
           type: string
+        street_address:
+          type: string
         properties:
           type: object
           properties:
