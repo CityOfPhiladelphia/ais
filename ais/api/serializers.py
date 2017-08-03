@@ -102,7 +102,10 @@ class GeoJSONSerializer (BaseSerializer):
                         match_type = 'in_range_unit_child'
                 else:
                     # ref address has no unit type or address high num
-                    match_type = 'unit_child'
+                    if address.address_low_suffix is not None and address.base_address_no_suffix == ref_address.base_address:
+                        match_type = 'has_base_no_suffix_unit_child'
+                    else:
+                        match_type = 'unit_child'
             else:
                 # Address is different from ref address and has unit type and high num (is ranged unit address)
                 if ref_address.unit_type is not None:
