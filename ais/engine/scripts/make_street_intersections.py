@@ -27,7 +27,7 @@ dsn = config['DATABASES']['engine']
 db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
 db_pw = dsn[dsn.index(":",dsn.index(db_user)) + 1:dsn.index("@")]
 db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw}'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
 
 # Get table params
 source_def = config['BASE_DATA_SOURCES']['streets']
