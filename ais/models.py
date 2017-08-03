@@ -855,8 +855,8 @@ class AddressSummaryQuery(BaseQuery):
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(AddressLink.relationship == 'in range')\
                 .with_entities(AddressLink.address_2)
+            # print(range_parent_addresses.all())
 
-            #TODO: Update build engine scripts to stop making 'has base' links for addresses with address_low_suffix base addresses (self referential)
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
                 .filter(or_(AddressLink.relationship == None, AddressLink.relationship == 'in range', AddressLink.relationship == 'has base' and AddressLink.address_1 == AddressLink.address_2))\
@@ -870,7 +870,7 @@ class AddressSummaryQuery(BaseQuery):
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
             .filter(AddressLink.relationship == 'has base') \
             .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
-
+        # print(range_parent_units.all())
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
 
@@ -878,10 +878,13 @@ class AddressSummaryQuery(BaseQuery):
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
             .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
-
         # print(non_child_units.all())
-
-
+        #
+        ## Logic to include ranged_parent addresses in response:
+        # range_parent_addresses = AddressSummary.query\
+        #     .filter(AddressSummary.street_address.in_(range_parent_addresses.subquery()))
+        #
+        # union_sets = tuple(filter(None, [range_child_units, non_child_units, range_parent_units, range_parent_addresses]))
         union_sets = tuple(filter(None, [range_child_units, non_child_units, range_parent_units]))
         #print(union_sets)
         for union_set in union_sets:
