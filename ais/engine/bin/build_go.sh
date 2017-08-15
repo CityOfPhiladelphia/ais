@@ -19,8 +19,30 @@ echo "Time Summary: "
 echo "Started: "$start_dt
 echo "Finished: "$end_dt
 
+echo "Finding the production environment"
+source ../../../bin/eb_env_utils.sh
+get_prod_env EB_PROD_ENV || {
+  echo "Could not find the production environment" ;
+  exit 1 ;
+}
+
+error_file_loc=../log/pytest_engine_errors_$datestamp.txt
+out_file_loc=../log/pytest_engine_log_$datestamp.txt
+pytest ../tests/test_engine.py $EB_PROD_ENV > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
 
 
+if [ $? -ne 0 ]
+then
+  echo "Engine tests failed"
+  exit 1;
+fi
 
+error_file_loc=../log/pytest_api_errors_$datestamp.txt
+out_file_loc=../log/pytest_api_log_$datestamp.txt
+pytest ../../api/tests/  > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
 
-
+if [ $? -ne 0 ]
+then
+  echo "API tests failed"
+  exit 1;
+fi
