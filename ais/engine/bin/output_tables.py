@@ -11,19 +11,21 @@ import pyproj
 from ais import app
 from ais.util import parse_url
 
-
 config = app.config
 read_db_string = config['DATABASES']['engine']
 write_db_string = config['DATABASES']['gis_ais']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
-write_dsn = parsed_write_db_string['user'] + '/' + parsed_write_db_string['password'] + '@' + parsed_write_db_string['host']
+write_dsn = parsed_write_db_string['user'] + '/' + parsed_write_db_string['password'] + '@' + parsed_write_db_string[
+    'host']
 address_summary_write_table_name = 'ADDRESS_SUMMARY'
 service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
 true_range_write_table_name = 'TRUE_RANGE'
-read_conn = psycopg2.connect("dbname={db_name} user={user}".format(db_name=parsed_read_db_string['db_name'], user=parsed_read_db_string['user']))
+read_conn = psycopg2.connect(
+    "dbname={db_name} user={user}".format(db_name=parsed_read_db_string['db_name'], user=parsed_read_db_string['user']))
 datetimenow = datetime.now()
 print(datetimenow)
+
 #########################################################################################################################
 ## Read in files, format and write to tables
 #########################################################################################################################
@@ -61,7 +63,8 @@ def transform_coords(comps):
     x = transformed_point.x
     y = transformed_point.y
 
-    return [x,y, shape]
+    return [x, y, shape]
+
 
 mapping = OrderedDict([
     ('id', 'id'),
@@ -99,7 +102,7 @@ mapping = OrderedDict([
     ('shape', 'shape'),
     ('eclipse_location_id', 'eclipse_location_id'),
     ('zoning_document_ids', 'zoning_document_ids')
-    ])
+])
 
 ########################
 # TRUE RANGE #
@@ -164,9 +167,7 @@ mapping = OrderedDict([
 # DOR PARCEL ERROR
 ########################
 import re
-from passyunk.data import DIRS_STD, SUFFIXES_STD
 from passyunk.parser import PassyunkParser
-from petl import header
 
 street_name_re = re.compile('^[A-Z0-9 ]+$')
 unit_num_re = re.compile('^[A-Z0-9\-]+$')
@@ -208,17 +209,8 @@ def standardize_nulls(val):
     else:
         return None if val == 0 else val
 
-def make_concatenated_dor_address(source_comps):
-    ## For now don't clean up components to illustrate state in concatenated address
-    # for field, value in source_comps.items():
-    #     if isinstance(value, str):
-    #         value = value.strip()
-    #         if len(value) == 0 or value == '0':
-    #             value = None
-    #             source_comps[field] = value
-    #     elif value == 0:
-    #         source_comps[field] = None
-    # print(source_comps)
+
+def concatenate_dor_address(source_comps):
 
     # Get attributes
     address_low = source_comps[field_map['address_low']]
@@ -229,7 +221,7 @@ def make_concatenated_dor_address(source_comps):
     street_suffix = source_comps[field_map['street_suffix']]
     street_postdir = source_comps[field_map['street_postdir']]
     unit_num = source_comps[field_map['unit_num']]
-    street_code = source_comps[field_map['street_code']]
+    # street_code = source_comps[field_map['street_code']]
     # Declare this here so the except clause doesn't bug out
     source_address = None
     street_full = ''
@@ -239,37 +231,15 @@ def make_concatenated_dor_address(source_comps):
                         street_postdir]
         street_full = ' '.join([x for x in street_comps if x])
 
+    # Only accept numeric address_low_suffixes = 2 for transformation to 1/2; discard other numeric suffixes
     address_low_fractional = None
-    if address_low_suffix == '2':
-        address_low_fractional = '1/2'
+    try:
+        address_low_suffix_int = int(address_low_suffix)
+        if address_low_suffix_int == 2:
+            address_low_fractional = '1/2'
         address_low_suffix = None
-    #
-    # # Handle ranges
-    # if address_low and address_high:
-    #     address_low_str = str(address_low)
-    #     address_high_str = str(address_high)
-    #     len_address_low = len(address_low_str)
-    #     len_address_high = len(address_high_str)
-    #     address_high_full = None
-    #
-    #     if not address_high_str.isnumeric():
-    #         address_high = None
-    #
-    #     if address_high:
-    #         # Case: 1234-36 or 1234-6
-    #         if len_address_high < len_address_low:
-    #             # Make address high full and compare to address low
-    #             address_high_prefix = address_low_str[:-len_address_high]
-    #             address_high_full = int(address_high_prefix + address_high_str)
-    #         # Cases: 1234-1236 or 2-12
-    #         elif len_address_low == len_address_high or \
-    #                 (len_address_low == 1 and len_address_high == 2):
-    #             address_high_full = address_high
-    #
-    #         # Case: 317-315
-    #         if address_high_full:
-    #             # Make sure both addresses are on the same hundred block
-    #             address_high = str(address_high_full)[-2:]
+    except:
+        pass
 
     address_full = None
     if address_low:
@@ -302,9 +272,11 @@ parsed_dor_db_string = parse_url(source_db_url)
 read_dsn = parsed_dor_db_string['user'] + '/' + parsed_dor_db_string['password'] + '@' + parsed_dor_db_string['host']
 dsn = config['DATABASES']['engine']
 db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
-db_pw = dsn[dsn.index(":",dsn.index(db_user)) + 1:dsn.index("@")]
+db_pw = dsn[dsn.index(":", dsn.index(db_user)) + 1:dsn.index("@")]
 db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+pg_db = psycopg2.connect(
+    'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
+                                                                             db_pw=db_pw))
 
 source_field_map = source_def['field_map']
 # source_table_name = source_def['table']
@@ -315,15 +287,15 @@ print("Reading, parsing, and analyzing dor_parcel components and writing to db..
 
 dor_table_address_analysis = etl.fromoraclesde(read_dsn, source_table_name) \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
-                                  'stdes', 'stdessuf', 'shape') \
-    .select(lambda c: standardize_nulls(c['stnam']) is not None and standardize_nulls(c['house'] is not None)) \
-    .addfield('concatenated_address', lambda c: make_concatenated_dor_address(
+         'stdes', 'stdessuf', 'shape') \
+    .addfield('concatenated_address', lambda c: concatenate_dor_address(
     {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
      'stdes': c['stdes'],
      'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
     .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
     .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
-    .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix']) \
+    .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
+a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']['components']['address']['fractional']) \
     .addfield('std_high_num', lambda a: a['parsed_comps']['components']['address']['high_num']) \
     .addfield('std_street_predir', lambda a: a['parsed_comps']['components']['street']['predir']) \
     .addfield('std_street_name', lambda a: a['parsed_comps']['components']['street']['name']) \
@@ -336,27 +308,26 @@ dor_table_address_analysis = etl.fromoraclesde(read_dsn, source_table_name) \
     .addfield('std_seg_id', lambda a: a['parsed_comps']['components']['cl_seg_id']) \
     .addfield('cl_addr_match', lambda a: a['parsed_comps']['components']['cl_addr_match']) \
     .cutout('parsed_comps') \
-    .addfield('change_stcod', lambda a: 1 if str(standardize_nulls(a['stcod'])) != str(a['std_street_code']) else 0) \
-    .addfield('change_house', lambda a: 1 if str(standardize_nulls(a['house'])) != str(a['std_address_low']) else 0) \
-    .addfield('change_suf', lambda a: 1 if str(standardize_nulls(a['suf'])) != str(a['std_address_low_suffix']) else 0) \
-    .addfield('change_unit', lambda a: 1 if str(standardize_nulls(a['unit'])) != str(a['std_unit_num']) else 0) \
-    .addfield('change_stex', lambda a: 1 if str(standardize_nulls(a['stex'])) != str(a['std_high_num']) else 0) \
-    .addfield('change_stdir', lambda a: 1 if str(standardize_nulls(a['stdir'])) != str(a['std_street_predir']) else 0) \
-    .addfield('change_stnam', lambda a: 1 if str(standardize_nulls(a['stnam'])) != str(a['std_street_name']) else 0) \
-    .addfield('change_stdes', lambda a: 1 if str(standardize_nulls(a['stdes'])) != str(a['std_street_suffix']) else 0) \
+    .addfield('no_address', lambda a: 1 if standardize_nulls(a['stnam']) is None or standardize_nulls(a['house']) is None else None) \
+    .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(standardize_nulls(a['std_street_code'])) else 0) \
+    .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(standardize_nulls(a['std_address_low'])) else 0) \
+    .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(standardize_nulls(a['std_address_low_suffix'])) else 0) \
+    .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(standardize_nulls(a['std_unit_num'])) else 0) \
+    .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(standardize_nulls(a['std_high_num'])) else 0) \
+    .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(standardize_nulls(a['std_street_predir'])) else 0) \
+    .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(standardize_nulls(a['std_street_name'])) else 0) \
+    .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(standardize_nulls(a['std_street_suffix'])) else 0) \
     .addfield('change_stdessuf',
-              lambda a: 1 if str(standardize_nulls(a['stdessuf'])) != str(a['std_address_postdir']) else 0) \
+              lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(standardize_nulls(a['std_address_postdir'])) else 0) \
+    .head(100) \
     .progress(10000) \
-    .select(lambda d: 1 in [d['change_stcod'], d['change_house'], d['change_suf'], d['change_unit'],
-                            d['change_stex'], d['change_stdir'], d['change_stnam'], d['change_stdes'],
-                            d['change_stdessuf']
-                            or d['cl_addr_match'] != 'A']) \
-    .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam', 'stdes', 'stdessuf',
-         'concatenated_address', 'std_street_address', 'std_address_low', 'std_address_low_suffix', 'std_high_num',
-         'std_street_predir', 'std_street_name', 'std_street_suffix', 'std_address_postdir', 'std_unit_type',
-         'std_unit_num', 'std_street_code', 'std_seg_id', 'cl_addr_match', 'change_stcod', 'change_house', 'change_suf',
-         'change_unit', 'change_stex', 'change_stdir', 'change_stnam', 'change_stdes', 'change_stdessuf',
-         'shape') \
-    .topostgis(pg_db, 'dor_parcel_address_comp_analysis')
+    .tooraclesde(write_dsn, 'dor_parcel_address_analysis')
 
-# print(etl.look(dor_table_address_analysis))
+    # .topostgis(pg_db, 'dor_parcel_address_comp_analysis')
+
+# .select(lambda d: 1 in [d['change_stcod'], d['change_house'], d['change_suf'], d['change_unit'],
+#                         d['change_stex'], d['change_stdir'], d['change_stnam'], d['change_stdes'],
+#                         d['change_stdessuf']
+#                         or d['cl_addr_match'] != 'A'])
+
+# .select(lambda c: standardize_nulls(c['stnam']) is not None and standardize_nulls(c['house'] is not None)) \
