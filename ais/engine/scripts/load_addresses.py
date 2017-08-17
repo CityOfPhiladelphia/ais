@@ -414,8 +414,6 @@ for i, address in enumerate(addresses):
         street_range_map[street_full] = []
     street_address_map[street_full].append(address)
 
-    # TODO: Include addresses with units in street range map? - base address or include unit? YES!
-    # if address.address_high is not None and address.unit_type is None:
     if address.address_high is not None:
         street_range_map[street_full].append(address)
 
@@ -563,6 +561,7 @@ for i, address in enumerate(addresses):
                         and base_address_no_suffix != range_on_street.base_address_no_suffix \
                         and unit_type == range_on_street.unit_type \
                         and unit_num == range_on_street.unit_num \
+                        and address_suffix == range_on_street.address_low_suffix \
                         and (
                                             range_on_street.address_low <= address_low <= range_on_street.address_high
                                 or range_on_street.address_low <= address_high <= range_on_street.address_high
