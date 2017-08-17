@@ -526,6 +526,14 @@ for i, address in enumerate(addresses):
                     if child_obj.address_low == 0:
                         raise ValueError('Low number is zero')
                     new_addresses.append(child_obj)
+                    # Make source address
+                    source_address_dict = {
+                        'source_name': 'AIS',
+                        'source_address': child_street_address,
+                        'street_address': child_street_address,
+                    }
+                    # Add in-range AIS created addresses to source_address table
+                    source_addresses.append(source_address_dict)
                     street_addresses_seen.add(child_street_address)
                     child_link = {
                         'address_1': child_street_address,
