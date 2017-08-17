@@ -327,7 +327,7 @@ for source in sources:
                         'source_address': base_address,
                         'street_address': base_address,
                     }
-                    # Add in-range AIS created addresses to source_address table
+                    # Add base AIS created addresses to source_address table
                     source_addresses.append(source_address_dict)
                     # Add to source address map
                     _source_addresses = source_address_map.setdefault(base_address, [])
@@ -414,14 +414,14 @@ for i, address in enumerate(addresses):
         street_range_map[street_full] = []
     street_address_map[street_full].append(address)
 
-    # TODO: Include addresses with units in street range map? - base address or include unit?
-    if address.address_high is not None and address.unit_type is None:
+    # TODO: Include addresses with units in street range map? - base address or include unit? YES!
+    # if address.address_high is not None and address.unit_type is None:
+    if address.address_high is not None:
         street_range_map[street_full].append(address)
 
     base_address = address.base_address  # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Get 'has_base' link for addresses with units
     if address.unit_type is not None:
-    # if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
             base_address_map[base_address] = []
         base_address_map[base_address].append(address)
