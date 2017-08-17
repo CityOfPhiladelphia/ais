@@ -594,7 +594,7 @@ del links
 print("Writing {} new addresses... ".format(len(new_addresses)))
 insert_rows = [dict(x) for x in new_addresses]
 
-print('Writing {} in-range AIS source addresses...'.format(len(source_addresses)))
+print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
 source_address_table.write(source_addresses, chunk_size=150000)
 source_addresses = []
 
