@@ -321,23 +321,30 @@ for source in sources:
 
                     addresses.append(base_address_obj)
                     street_addresses_seen.add(base_address)
-
+                    # Make source address
+                    source_address_dict = {
+                        'source_name': 'AIS',
+                        'source_address': base_address,
+                        'street_address': base_address,
+                    }
+                    # Add base AIS created addresses to source_address table
+                    source_addresses.append(source_address_dict)
                     # Add to source address map
                     _source_addresses = source_address_map.setdefault(base_address, [])
                     if not source_address in _source_addresses:
                         _source_addresses.append(source_address)
 
-            # If it's a range, make sure we have all the child addresses
-            for child_obj in address.child_addresses:
-                child_street_address = child_obj.street_address
-                if not child_street_address in street_addresses_seen:
-                    addresses.append(child_obj)
-                    street_addresses_seen.add(child_street_address)
-
-                    # Add to source address map
-                    _source_addresses = source_address_map.setdefault(child_street_address, [])
-                    if not source_address in _source_addresses:
-                        _source_addresses.append(source_address)
+            # # If it's a range, make sure we have all the child addresses
+            # for child_obj in address.child_addresses:
+            #     child_street_address = child_obj.street_address
+            #     if not child_street_address in street_addresses_seen:
+            #         addresses.append(child_obj)
+            #         street_addresses_seen.add(child_street_address)
+            #
+            #         # Add to source address map
+            #         _source_addresses = source_address_map.setdefault(child_street_address, [])
+            #         if not source_address in _source_addresses:
+            #             _source_addresses.append(source_address)
 
         except ValueError as e:
             address_error = {
@@ -414,7 +421,6 @@ for i, address in enumerate(addresses):
     base_address = address.base_address  # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Get 'has_base' link for addresses with units
     if address.unit_type is not None:
-    # if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
             base_address_map[base_address] = []
         base_address_map[base_address].append(address)
@@ -526,6 +532,14 @@ for i, address in enumerate(addresses):
                     if child_obj.address_low == 0:
                         raise ValueError('Low number is zero')
                     new_addresses.append(child_obj)
+                    # Make source address
+                    source_address_dict = {
+                        'source_name': 'AIS',
+                        'source_address': child_street_address,
+                        'street_address': child_street_address,
+                    }
+                    # Add in-range AIS created addresses to source_address table
+                    source_addresses.append(source_address_dict)
                     street_addresses_seen.add(child_street_address)
                     child_link = {
                         'address_1': child_street_address,
@@ -579,8 +593,14 @@ del links
 print("Writing {} new addresses... ".format(len(new_addresses)))
 insert_rows = [dict(x) for x in new_addresses]
 
+print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
+source_address_table.write(source_addresses, chunk_size=150000)
+source_addresses = []
+
 if WRITE_OUT:
     address_table.write(insert_rows, chunk_size=150000)
+    source_address_table.write(source_addresses, chunk_size=150000)
+source_addresses = []
 del insert_rows
 del street_addresses_seen
 # ###############################################################################
