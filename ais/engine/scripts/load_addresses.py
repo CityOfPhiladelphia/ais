@@ -327,7 +327,7 @@ for source in sources:
                         'source_address': base_address,
                         'street_address': base_address,
                     }
-                    # Add in-range AIS created addresses to source_address table
+                    # Add base AIS created addresses to source_address table
                     source_addresses.append(source_address_dict)
                     # Add to source address map
                     _source_addresses = source_address_map.setdefault(base_address, [])
@@ -421,7 +421,6 @@ for i, address in enumerate(addresses):
     base_address = address.base_address  # TODO: handle addresses with number suffixes using base_address_no_suffix
     # # Get 'has_base' link for addresses with units
     if address.unit_type is not None:
-    # if address.unit_type is not None or address.address_low_suffix is not None:
         if not base_address in base_address_map:
             base_address_map[base_address] = []
         base_address_map[base_address].append(address)
