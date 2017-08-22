@@ -268,7 +268,7 @@ ADDRESSES = {
         {
             'name':                 'info_commercial',
             #'table':                'gis_gsg.infogroup_commercial',
-            'table':                'gis_ais_sources.infogroup_commercial_2016_12',
+            'table':                'gis_ais_sources.infogroup_commercial_2017_07',
             'db':                   'gis',
             'address_fields':       {
                 'street_address':       'primary_address',
@@ -283,7 +283,7 @@ ADDRESSES = {
         {
             'name':                 'info_residents',
             #'table':                'gis_gsg.infogroup_residential',
-            'table':                'gis_ais_sources.infogroup_residential_2016_12',
+            'table':                'gis_ais_sources.infogroup_residential_2017_07',
             'db':                   'gis',
             'address_fields':       {
                 #'street_address':       'caddr',
