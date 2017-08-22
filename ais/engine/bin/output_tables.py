@@ -309,17 +309,16 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
     .addfield('cl_addr_match', lambda a: a['parsed_comps']['components']['cl_addr_match']) \
     .cutout('parsed_comps') \
     .addfield('no_address', lambda a: 1 if standardize_nulls(a['stnam']) is None or standardize_nulls(a['house']) is None else None) \
-    .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(standardize_nulls(a['std_street_code'])) else 0) \
-    .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(standardize_nulls(a['std_address_low'])) else 0) \
-    .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(standardize_nulls(a['std_address_low_suffix'])) else 0) \
-    .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(standardize_nulls(a['std_unit_num'])) else 0) \
-    .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(standardize_nulls(a['std_high_num'])) else 0) \
-    .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(standardize_nulls(a['std_street_predir'])) else 0) \
-    .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(standardize_nulls(a['std_street_name'])) else 0) \
-    .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(standardize_nulls(a['std_street_suffix'])) else 0) \
+    .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(standardize_nulls(a['std_street_code'])) else None) \
+    .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(standardize_nulls(a['std_address_low'])) else None) \
+    .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(standardize_nulls(a['std_address_low_suffix'])) else None) \
+    .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(standardize_nulls(a['std_unit_num'])) else None) \
+    .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(standardize_nulls(a['std_high_num'])) else None) \
+    .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(standardize_nulls(a['std_street_predir'])) else None) \
+    .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(standardize_nulls(a['std_street_name'])) else None) \
+    .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(standardize_nulls(a['std_street_suffix'])) else None) \
     .addfield('change_stdessuf',
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(standardize_nulls(a['std_address_postdir'])) else 0) \
-    .head(100) \
     .progress(10000) \
     .tooraclesde(write_dsn, 'dor_parcel_address_analysis')
 
