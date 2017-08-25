@@ -286,7 +286,7 @@ class Address(db.Model):
             raise ValueError('Not an address')
 
         # if p['type'] != 'address':
-        if p['type'] not in ('address', 'street'):
+        if p['type'] not in ('address', 'street') or None in (p['components']['address']['low'], p['components']['street']['name']):
             raise ValueError('Not an address')
 
         c = p['components']
