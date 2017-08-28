@@ -403,7 +403,6 @@ print('Indexing addresses...')
 street_address_map = {}  # street_full => [addresses]
 street_range_map = {}  # street_full => [range addresses]
 base_address_map = {}  # base_address => [unit addresses]
-
 for i, address in enumerate(addresses):
     if i % 100000 == 0:
         print(i)
@@ -667,6 +666,7 @@ address_streets = []
 base_address_map = {}  # base_address => {seg_id, seg_side, had_alias}
 
 print('Making address-streets...')
+addresses = addresses + new_addresses
 for address in addresses:
     try:
         street_address = address.street_address
