@@ -664,7 +664,7 @@ for seg_row in seg_rows:
 
 address_streets = []
 base_address_map = {}  # base_address => {seg_id, seg_side, had_alias}
-
+addresses = addresses + new_addresses
 print('Making address-streets...')
 addresses = addresses + new_addresses
 for address in addresses:
