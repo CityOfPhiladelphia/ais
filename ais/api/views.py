@@ -1151,7 +1151,7 @@ def search(query):
         'block': block,
         'latlon': reverse_geocode,
         'stateplane': reverse_geocode,
-        'street': addresses,
+        'street': street,
     }
     try:
         parsed = PassyunkParser().parse(query)
@@ -1159,12 +1159,16 @@ def search(query):
         error = json_error(404, 'Could not parse query.',
                            {'query': query})
         return json_response(response=error, status=404)
+
     search_type = parsed['type']
-    # TODO: Pass search_type (or parsed) to view function to avoid reparsing
+    # search_type = 'address' if search_type == 'street' and parsed['components']['address']['low_num'] is not None else search_type
+    print(search_type)
     if search_type != 'none':
         # get the corresponding view function
         try:
             view = parser_search_type_map[search_type]
+            if view == street and parsed['components']['address']['low_num'] is not None:
+                view = addresses
             # call it
             return view(query)
         except:
