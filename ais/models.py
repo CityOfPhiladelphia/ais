@@ -15,7 +15,8 @@ parser = Parser()
 config = app.config
 ENGINE_SRID = config['ENGINE_SRID']
 default_SRID = 4326
-
+OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
+OWNER_PARTS_THRESHOLD = config['OWNER_PARTS_THRESHOLD']
 ###########
 # STREETS #
 ###########
@@ -792,8 +793,19 @@ class AddressSummaryQuery(BaseQuery):
 
     def filter_by_owner(self, *owner_parts):
         query = self
-        for part in owner_parts:
-            query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        tot_len = sum(len(s) for s in owner_parts)
+        if tot_len > OWNER_PARTS_THRESHOLD:
+            for part in owner_parts:
+                query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        else:
+            for part in owner_parts:
+                query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+                    OWNER_RESPONSE_LIMIT).from_self()
+            if not query.all():
+                query = self
+                for part in reversed(owner_parts):
+                    query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+                        OWNER_RESPONSE_LIMIT).from_self()
         return query
 
     def filter_by_unit_type(self, unit_type):
