@@ -64,7 +64,6 @@ def get_tag_data(addresses):
         if not tag.key in all_tags[tag.street_address]:
             all_tags[tag.street_address][tag.key] = []
         all_tags[tag.street_address][tag.key].append(tag)
-
     return all_tags
 
 
@@ -345,7 +344,8 @@ def addresses(query):
     if unit_num == '':
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
-    if search_type != 'address' or low_num is None:
+    # if search_type != 'address' or low_num is None:
+    if search_type not in ('address', 'street') or low_num is None:
         error = json_error(404, 'Not a valid address.',
                            {'query': query, 'normalized': normalized_address,'search_type': search_type})
         return json_response(response=error, status=404)
@@ -359,7 +359,6 @@ def addresses(query):
         addresses = AddressSummary.query \
                 .filter_by(**filters) \
                 .filter_by_unit_type(unit_type) #\
-
         return addresses
 
     addresses = query_addresses(filters=filters)
@@ -1160,12 +1159,16 @@ def search(query):
         error = json_error(404, 'Could not parse query.',
                            {'query': query})
         return json_response(response=error, status=404)
+
     search_type = parsed['type']
-    # TODO: Pass search_type (or parsed) to view function to avoid reparsing
+    # search_type = 'address' if search_type == 'street' and parsed['components']['address']['low_num'] is not None else search_type
+    print(search_type)
     if search_type != 'none':
         # get the corresponding view function
         try:
             view = parser_search_type_map[search_type]
+            if view == street and parsed['components']['address']['low_num'] is not None:
+                view = addresses
             # call it
             return view(query)
         except:
