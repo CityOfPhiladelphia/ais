@@ -1006,9 +1006,10 @@ class AddressSummaryQuery(BaseQuery):
                     .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid))
 
                 if on_street_xy_row.first():
-
                     return on_street_xy_row
                     break
+            # if cannot get on_street geocode_type, return self
+            return self.get_address_geoms(request=request, i=1)
 
         else:
             # call get_address_geoms but skip get_parcel_geocode_on_street method by setting i=1:
@@ -1032,6 +1033,8 @@ class AddressSummaryQuery(BaseQuery):
 
                     return on_curb_xy_row
                     break
+            # if cannot get on_curb geocode_type, return self
+            return self.get_address_geoms(request=request, i=1)
 
         else:
             # call get_address_geoms but skip get_parcel_geocode_on_curb method by setting i=1:
@@ -1040,6 +1043,7 @@ class AddressSummaryQuery(BaseQuery):
     def get_address_geoms(self, request=None, i=0):
 
         if self.first():
+
             srid = request.args.get('srid') if 'srid' in request.args else default_SRID
 
             if 'parcel_geocode_location' in request.args and i==0:
