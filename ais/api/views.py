@@ -311,9 +311,11 @@ def addresses(query):
     # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
     try:
         parsed = PassyunkParser().parse(query)
+        search_type = parsed['type']
+        normalized_address = parsed['components']['output_address']
     except:
         error = json_error(404, 'Could not parse query.',
-                           {'query': query})
+                           {'query': query, 'normalized': normalized_address,'search_type': search_type})
         return json_response(response=error, status=404)
 
     normalized_address = parsed['components']['output_address']
@@ -461,7 +463,7 @@ def addresses(query):
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
     serializer = AddressJsonSerializer(
-        metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': requestargs, 'crs': crs},
+        metadata={'query': query, 'normalized': normalized_address,'search_type': search_type, 'search_params': requestargs, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid,
         normalized_address=normalized_address,
@@ -1161,6 +1163,7 @@ def search(query):
                            {'query': query})
         return json_response(response=error, status=404)
     search_type = parsed['type']
+    normalized_address = parsed['components']['output_address']
     # TODO: Pass search_type (or parsed) to view function to avoid reparsing
     if search_type != 'none':
         # get the corresponding view function
@@ -1170,7 +1173,7 @@ def search(query):
             return view(query)
         except:
             error = json_error(404, 'Invalid query.',
-                               {'query': query, 'search_type': search_type})
+                               {'query': query, 'normalized': normalized_address,'search_type': search_type})
             return json_response(response=error, status=404)
 
     # Handle search type = 'none:
