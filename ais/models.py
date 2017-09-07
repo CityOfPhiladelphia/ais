@@ -285,7 +285,8 @@ class Address(db.Model):
         else:
             raise ValueError('Not an address')
 
-        if p['type'] != 'address':
+        # if p['type'] != 'address':
+        if p['type'] not in ('address', 'street'):
             raise ValueError('Not an address')
 
         c = p['components']
@@ -294,6 +295,9 @@ class Address(db.Model):
         # is missing for an address, so check here and do it manually.
         if c['street']['name'] is None:
             raise ValueError('No street name')
+
+        if c['address']['low'] is None:
+            raise ValueError('No address low')
 
         # TEMP: Passyunk doesn't raise an error if the address high is
         # lower than the address low.

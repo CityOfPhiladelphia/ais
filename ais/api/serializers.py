@@ -236,6 +236,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return data
 
     def model_to_data(self, address):
+        # print(address)
 
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
@@ -269,7 +270,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     sa_data[col.name] = getattr(address.service_areas, col.name)
             else:
                 sa_data = self.sa_data
-            if self.metadata['search_type'] == 'address':
+            # if self.metadata['search_type'] == 'address':
+            if self.metadata['search_type'] in ('address', 'street'):
                 match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
             else:
                 match_type_key = {

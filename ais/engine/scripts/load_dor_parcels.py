@@ -405,8 +405,11 @@ for i, source_parcel in enumerate(source_parcels):
                             matching_seg = seg
 
                 if matching_seg is None:
-                    had_error('Out of street range')
-                    should_add_parcel = False
+                    # had_error('Out of street range')
+                    # should_add_parcel = False
+                    had_warning('Out of street range')
+                    should_add_parcel = True
+
 
         '''
         END STREET MATCH
