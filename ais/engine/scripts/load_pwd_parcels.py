@@ -143,7 +143,7 @@ parcel_table.write(parcels, chunk_size=50000)
 print('Creating indexes...')
 parcel_table.create_index('street_address')
 
-source_db.close()
+#source_db.close()
 db.close()
 # log.close()
 print('Finished in {} seconds'.format(datetime.now() - start))
