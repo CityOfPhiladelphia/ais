@@ -545,7 +545,7 @@ if WRITE_OUT:
     parcel_table.create_index('street_address')
     # TODO: index error tables?
 
-source_db.close()
+#source_db.close()
 db.close()
 
 print('Finished in {} seconds'.format(datetime.now() - start))
