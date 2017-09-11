@@ -78,10 +78,14 @@ get_test_env() {
 }
 
 get_db_uri() {
+
     trimmed_env=$(echo $1 | tr -d '\r')
     vars=$(eb printenv $trimmed_env)
-    uri=$(echo $vars | grep -Po '@.*?:')
+    #uri=$(echo $vars | grep -Po 'SQLALCHEMY.*@.*?:')
+    uri=$(echo $vars | grep -Po 'postgresql://ais_engine:.*?:')
+    uri=${uri#*'@'}
     uri=$(echo "${uri//:}")
-    uri=$(echo "${test//@}")
-    return $uri
+    #uri=$(echo "${uri//@}")
+    echo $uri
+    return 0
 }
