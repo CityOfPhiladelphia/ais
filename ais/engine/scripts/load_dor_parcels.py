@@ -213,7 +213,8 @@ for i, source_parcel in enumerate(source_parcels):
             if street_full not in street_code_map:
                 found_street_full = False
                 note = 'Unknown street: {}'.format(street_full)
-                had_error('Unknown street', note=note)
+                # had_error('Unknown street', note=note)
+                had_warning('Unknown street', note=note)
 
             if street_code:
                 # QC: Check if street code exists
