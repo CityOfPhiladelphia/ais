@@ -67,3 +67,5 @@ get_staging_env EB_STAGING_ENV || {
   exit 1 ;
 }
 # Get dsn of staging RDS
+db_uri=$(get_db_uri $EB_STAGING_ENV)
+
