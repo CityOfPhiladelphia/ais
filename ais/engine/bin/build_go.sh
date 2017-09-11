@@ -25,16 +25,17 @@ echo "Finished: "$end_dt
 # Get AWS production environment
 echo "Finding the production environment"
 source ../../../bin/eb_env_utils.sh
-get_prod_env EB_PROD_ENV || {
+eb_prod_env=$(get_prod_env EB_PROD_ENV || {
   echo "Could not find the production environment" ;
   exit 1 ;
-}
+})
+echo "Production environment is: "$eb_prod_env
 
 # Run tests
 echo "Running engine tests."
 error_file_loc=../log/pytest_engine_errors_$datestamp.txt
 out_file_loc=../log/pytest_engine_log_$datestamp.txt
-pytest ../tests/test_engine.py $EB_PROD_ENV > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+#pytest ../tests/test_engine.py > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
 if [ $? -ne 0 ]
 then
   echo "Engine tests failed"
@@ -44,7 +45,7 @@ fi
 echo "Running API tests."
 error_file_loc=../log/pytest_api_errors_$datestamp.txt
 out_file_loc=../log/pytest_api_log_$datestamp.txt
-pytest ../../api/tests/  > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+#pytest ../../api/tests/  > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
 if [ $? -ne 0 ]
 then
   echo "API tests failed"
@@ -53,19 +54,23 @@ fi
 
 # Make a copy (Dump) the newly built local engine db
 echo "Copying the engine database."
-mkdir -p ../backup
-db_dump_file_loc=../backup/ais_engine.dump
-pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
+#mkdir -p ../backup
+#db_dump_file_loc=../backup/ais_engine.dump
+#pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
 
 # Update (Restore) AWS RDS instance
 
 # Get AWS staging environment
 echo "Finding the staging environment"
-source ../../../bin/eb_env_utils.sh
-get_staging_env EB_STAGING_ENV || {
+eb_staging_env=$(get_staging_env EB_STAGING_ENV || {
   echo "Could not find the staging environment" ;
   exit 1 ;
-}
-# Get dsn of staging RDS
-db_uri=$(get_db_uri $EB_STAGING_ENV)
+})
+echo "Staging environment is: "$eb_staging_env
 
+# Get dsn of staging RDS
+db_uri=$(get_db_uri $eb_staging_env || {
+  echo "Could not find the db uri" ;
+  exit 1 ;
+})  
+echo $db_uri
