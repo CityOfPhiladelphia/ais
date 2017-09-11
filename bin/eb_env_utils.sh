@@ -76,3 +76,12 @@ get_test_env() {
   # If no environment is found, return with an error.
   return 1
 }
+
+get_db_uri() {
+    trimmed_env=$(echo $1 | tr -d '\r')
+    vars=$(eb printenv $trimmed_env)
+    uri=$(echo $vars | grep -Po '@.*?:')
+    uri=$(echo "${uri//:}")
+    uri=$(echo "${test//@}")
+    return $uri
+}
