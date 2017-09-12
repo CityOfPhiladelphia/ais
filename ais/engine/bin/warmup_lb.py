@@ -52,7 +52,7 @@ def query_address(address):
         query_errors[url] = error
 
 
-read_conn = psycopg2.connect("dbname=ais_engine_test user=ais_engine")
+read_conn = psycopg2.connect("dbname=ais_engine user=ais_engine")
 address_count = etl.fromdb(read_conn, 'select count(*) as N from {}'.format(warmup_address_table_name))
 n = list(address_count.values('n'))[0]
 warmup_rows = etl.fromdb(read_conn, 'select {address_field} from {table} OFFSET floor(random()*{n}) limit {limit}'.format(address_field=warmup_address_field, table=warmup_address_table_name, n=n, limit=warmup_row_limit))
