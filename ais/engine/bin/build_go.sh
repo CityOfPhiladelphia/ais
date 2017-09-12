@@ -4,6 +4,9 @@ datestamp=$(date +%Y%m%d)
 start_dt=$(date +%Y%m%d%T)
 echo "Started: "$start_dt
 
+echo "Activating virtual environment"
+source ../../../env/bin/activate
+
 # GET LATEST CODE FROM GIT REPO
 git fetch origin && git pull
 
