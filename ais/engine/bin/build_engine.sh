@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 echo "Activating virtual environment"
-
 source ../../../env/bin/activate
+
 echo "Running the engine"
 
 echo "Loading Streets"
