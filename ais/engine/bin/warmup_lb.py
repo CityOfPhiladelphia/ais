@@ -8,7 +8,7 @@ base_path = 'http://api.phila.gov/ais_staging/v1/addresses/'
 gatekeeper_key = 'gatekeeperKey=4b1dba5f602359a4c6d5c3ed731bfb5b'
 warmup_address_table_name = 'address_summary'
 warmup_address_field = 'street_address'
-warmup_row_limit = 50
+warmup_row_limit = 4000
 warmup_fraction_success = .9
 rate_limit = 3
 query_errors = {}
