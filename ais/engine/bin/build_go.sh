@@ -99,9 +99,20 @@ then
   exit 1;
 fi
 
+# Warm up load balancer
+echo "Warming up the load balancer."
+python warmup_lb.py
+if [ $? -ne 0 ]
+then
+  echo "Warmup failed"
+  exit 1;
+fi
+
+# Set staging environment to swap
 echo "Marking the $eb_staging_env environment as ready for testing (swap)"
 eb setenv -e $eb_staging_env EB_BLUEGREEN_STATUS=Swap
 
+# Deploy latest code and swap
 echo "Restarting the latest master branch build (requires travis CLI)"
 if ! hash travis ; then
   echo "This step requires the Travis-CI CLI. To install and configure, see:
