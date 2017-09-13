@@ -110,7 +110,7 @@ fi
 
 # Set staging environment to swap
 echo "Marking the $eb_staging_env environment as ready for testing (swap)"
-eb setenv -e $eb_staging_env EB_BLUEGREEN_STATUS=Swap
+eb setenv -e $eb_staging_env SWAP=True
 
 # Deploy latest code and swap
 echo "Restarting the latest master branch build (requires travis CLI)"
