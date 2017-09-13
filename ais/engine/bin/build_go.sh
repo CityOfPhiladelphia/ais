@@ -93,11 +93,11 @@ psql -U ais_engine -h $db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
 psql -U ais_engine -h $db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
 pg_restore -h $db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc
 
-if [ $? -ne 0 ]
-then
-  echo "DB restore failed"
-  exit 1;
-fi
+#if [ $? -ne 0 ]
+#then
+#  echo "DB restore failed"
+#  exit 1;
+#fi
 
 # Warm up load balancer
 echo "Warming up the load balancer."
