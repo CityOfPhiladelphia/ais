@@ -84,6 +84,6 @@ print('Creating indexes...')
 alias_table.create_index('seg_id')
 
 db.save()
-source_db.close()
+#source_db.close()
 db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))

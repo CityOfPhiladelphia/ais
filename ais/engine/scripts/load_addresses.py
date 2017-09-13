@@ -369,7 +369,7 @@ for source in sources:
         source_address_table.write(source_addresses, chunk_size=150000)
         source_addresses = []
 
-    source_db.close()
+    #source_db.close()
 
 insert_rows = [dict(x) for x in addresses]
 

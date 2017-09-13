@@ -250,6 +250,6 @@ if WRITE_OUT:
 	line_single_table.create_index('seg_id')
 	line_dual_table.create_index('seg_id')
 
-source_db.close()
+#source_db.close()
 db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))

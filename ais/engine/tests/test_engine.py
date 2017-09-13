@@ -1,3 +1,4 @@
+import subprocess
 import datum
 import pytest
 from ais import app
@@ -7,8 +8,18 @@ db = datum.connect(config['DATABASES']['engine'])
 @pytest.fixture
 def startup():
     """Startup fixture: make database connections and define tables to ignore"""
+    new_db_map = {
+        'ais-api-broad':     'engine_broad',
+        'ais-api-market':    'engine_market',
+    }
+    proc = subprocess.Popen(['bash', '-c', '. ../../../bin/eb_env_utils.sh; get_prod_env'], stdout=subprocess.PIPE)
+    output = proc.stdout.read()
+    old_prod_env = output.rstrip()
+    old_prod_env = old_prod_env.decode('utf-8')
+    #old_prod_env = str(argv[1])
+    old_db = datum.connect(config['DATABASES'][new_db_map[old_prod_env]])
     new_db = datum.connect(config['DATABASES']['engine'])
-    old_db = datum.connect(config['DATABASES']['engine_staging'])
+#    old_db = datum.connect(config['DATABASES']['engine_staging'])
     unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
     changed_tables = ('address_error',)
     ignore_tables = unused_tables + changed_tables

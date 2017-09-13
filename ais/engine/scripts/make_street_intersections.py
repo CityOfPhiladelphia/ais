@@ -287,6 +287,6 @@ db.save()
 FINISH
 '''
 
-source_db.close()
+#source_db.close()
 db.close()
 print('Finished in {} seconds'.format(datetime.now() - start))
