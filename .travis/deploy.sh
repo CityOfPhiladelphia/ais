@@ -40,7 +40,7 @@ get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
 echo "Pushing code to $EB_BLUEGREEN_STATUS environment $EB_ENV"
 git checkout "$TRAVIS_BRANCH"
 
-avoid_timeout & eb deploy $EB_ENV --timeout 20
+avoid_timeout & eb deploy $EB_ENV --timeout 30
 
 if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
   EB_NEW_PROD_ENV=$EB_ENV
@@ -51,10 +51,10 @@ if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
 
   echo "Setting deployment environment variables"
   # Start as background processes in parallel
-  eb setenv --environment $EB_OLD_PROD_ENV SWAP=False --timeout 20 &
-  eb setenv --environment $EB_NEW_PROD_ENV SWAP=False --timeout 20 &
+  eb setenv --environment $EB_OLD_PROD_ENV SWAP=False --timeout 30 &
+  eb setenv --environment $EB_NEW_PROD_ENV SWAP=False --timeout 30 #&
   # Wait for both
-  wait $(jobs -p)
+#  wait $(jobs -p)
 
   echo "Swapping out $EB_OLD_PROD_ENV for $EB_NEW_PROD_ENV"
   eb swap --destination_name $EB_OLD_PROD_ENV $EB_NEW_PROD_ENV
@@ -63,3 +63,5 @@ if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
   # NOTE: SNAPSHOT AND TERMINATE OLD PRODUCTION ENVIRONMENT NOW.
   #
 fi
+
+exit $?
