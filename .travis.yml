@@ -21,7 +21,7 @@ after_script: .travis/clean_up.sh
 
 deploy:
   provider: script
-  script: .travis/deploy.sh
+  script: travis_wait 50 .travis/deploy.sh
   on:
     branch:
       - master
