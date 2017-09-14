@@ -89,3 +89,10 @@ get_db_uri() {
     echo $uri
     return 0
 }
+
+avoid_timeout() {
+    while true; do
+        echo -e "\a"
+        sleep 60
+    done
+}
