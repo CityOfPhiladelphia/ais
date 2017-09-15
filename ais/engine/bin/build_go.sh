@@ -6,6 +6,7 @@ echo "Started: "$start_dt
 
 echo "Activating virtual environment"
 source ../../../env/bin/activate
+source ../../../bin/eb_env_utils.sh
 
 # GET LATEST CODE FROM GIT REPO
 git fetch origin && git pull
@@ -19,7 +20,9 @@ out_file_loc=../log/$out_file$datestamp.txt
 
 # RUN BUILD ENGINE
 echo "Building the engine."
+send_slack "Starting new engine build."
 bash build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+send_slack "Engine build has completed."
 end_dt=$(date +%Y%m%d%T)
 echo "Time Summary: "
 echo "Started: "$start_dt
@@ -27,7 +30,6 @@ echo "Finished: "$end_dt
 
 # Get AWS production environment
 echo "Finding the production environment"
-source ../../../bin/eb_env_utils.sh
 eb_prod_env=$(get_prod_env EB_PROD_ENV || {
   echo "Could not find the production environment" ;
   exit 1 ;
@@ -36,14 +38,17 @@ echo "Production environment is: "$eb_prod_env
 
 # Run tests
 echo "Running engine tests."
+send_slack "Running tests."
 error_file_loc=../log/pytest_engine_errors_$datestamp.txt
 out_file_loc=../log/pytest_engine_log_$datestamp.txt
 pytest ../tests/test_engine.py > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
 if [ $? -ne 0 ]
 then
   echo "Engine tests failed"
+  send_slack "Engine tests have failed."
   exit 1;
 fi
+send_slack "Engine tests have passed."
 
 echo "Running API tests."
 error_file_loc=../log/pytest_api_errors_$datestamp.txt
@@ -52,13 +57,16 @@ pytest ../../api/tests/  > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >
 if [ $? -ne 0 ]
 then
   echo "API tests failed"
+  send_slack "API tests failed."
   exit 1;
 fi
+send_slack "API tests passed."
 
 # Update (Restore) AWS RDS instance
 
 # Make a copy (Dump) the newly built local engine db
 echo "Copying the engine database."
+send_slack "Copying the engine database."
 mkdir -p ../backup
 db_dump_file_loc=../backup/ais_engine.dump
 pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
@@ -84,7 +92,7 @@ db_uri=$(get_db_uri $eb_staging_env || {
 echo "Staging database uri: "$db_uri
 
 echo "Restoring the engine DB into the $eb_staging_env environment "
-
+send_slack "Restoring the engine DB into the "$eb_staging_env" environment."
 psql -U ais_engine -h $db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
 psql -U ais_engine -h $db_uri -d ais_engine -c "CREATE SCHEMA public;"
 psql -U ais_engine -h $db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
@@ -101,19 +109,23 @@ pg_restore -h $db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc
 
 # Warm up load balancer
 echo "Warming up the load balancer."
+send_slack "Warming up the load balancer."
 python warmup_lb.py
 if [ $? -ne 0 ]
 then
   echo "Warmup failed"
+  send_slack "AIS load balanacer warmup failed.\nEngine build has been pushed but not deployed."
   exit 1;
 fi
 
 # Set staging environment to swap
-echo "Marking the $eb_staging_env environment as ready for testing (swap)"
+echo "Marking the $eb_staging_env environment as ready for deploy (swap)"
+send_slack "Marking the "$eb_staging_env" environment as ready for deploy (swap)."
 eb setenv -e $eb_staging_env SWAP=True --timeout 30
 
 # Deploy latest code and swap
 echo "Restarting the latest master branch build (requires travis CLI)"
+#send_slack "Restarting the latest master branch build."
 if ! hash travis ; then
   echo "This step requires the Travis-CI CLI. To install and configure, see:
   https://github.com/travis-ci/travis.rb#installation"
@@ -127,3 +139,5 @@ travis restart $LAST_BUILD
 
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
+send_slack "New AIS build has been deployed."
+
