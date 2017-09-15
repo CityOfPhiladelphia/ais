@@ -1,6 +1,7 @@
 import petl as etl
 import psycopg2
 import time
+from datetime import datetime
 import requests
 import geopetl
 
@@ -12,6 +13,9 @@ warmup_row_limit = 4000
 warmup_fraction_success = .9
 rate_limit = 3
 query_errors = {}
+datestring = datetime.today().strftime('%Y-%m-%d')
+error_file = '../log/warmup_lb_errors_{}.csv'.format(datestring)
+
 
 def RateLimited(maxPerSecond):
     minInterval = 1.0 / float(maxPerSecond)
@@ -63,6 +67,14 @@ eval = responses.aggregate('response_status', len)
 print(etl.look(eval))
 f_200 = [(count/warmup_row_limit) for status, count in eval[1:] if status == 200][0]
 print(f_200)
+###########################
+# WRITE ERRORS OUT TO FILE #
+############################
+print("Writing errors to file...")
+error_table = []
+for url, error_vals in query_errors.items():
+    error_table.append([url, error_vals[0], error_vals[1]])
+etl.tocsv(error_table, error_file)
 exit(0) if f_200 > warmup_fraction_success else exit(1)
 
 
