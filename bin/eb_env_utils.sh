@@ -99,7 +99,7 @@ avoid_timeout() {
 
 send_slack() {
         message=$(echo $1)
-        payload='payload={"channel": "#ais", "username": "webhookbot", "text": "'"$message"'", "icon_emoji": ":ghost:"}'
+        payload='payload={"channel": "#ais_log", "username": "webhookbot", "text": "'"$message"'", "icon_emoji": ":ghost:"}'
         curl -X POST --data-urlencode "${payload}" $SLACK_WEBHOOK_URL
 }
 
