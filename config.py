@@ -379,7 +379,6 @@ ADDRESSES = {
                 },
             ],
         },
-
         # {
         #     'name': 'rtt',
         #     'table': 'gis_dor_rttmapping.cris_properties',
@@ -1163,6 +1162,31 @@ SERVICE_AREAS = {
                     'table':                'gis_ppr.PPR_FRIENDS_ADDR_WEBONLY',
                     'value_field':          'friendsnam',
                     'method':               'nearest',
+                },
+            },
+        },
+        # GIS_FIRE
+        {
+            'layer_id':                     'engine_local',
+            'name':                         'Engine Local',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_fire.ENGINE_LOCAL',
+                    'value_field':          'engine_num',
+                },
+            },
+        },
+        {
+            'layer_id':                     'ladder_local',
+            'name':                         'Ladder Local',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_fire.LADDER_LOCAL',
+                    'value_field':          'ladder_num',
                 },
             },
         },
