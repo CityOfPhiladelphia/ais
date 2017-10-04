@@ -217,7 +217,8 @@ for i, street_name in enumerate(street_names):
             # 			generic_unit_tags[parent_unit_address][field_name].append('')
             # else:
 
-            values = list(set(values)) # only use distinct values
+            # values = list(set(values)) # only use distinct values
+            values = list(set(filter(None, values)))
             if len(values) > 0:
                 value = '|'.join(values[:max_values])
             else:
