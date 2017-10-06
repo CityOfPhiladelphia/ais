@@ -136,8 +136,13 @@ LAST_BUILD=$(travis history --branch master --limit 1 | cut --fields=1 --delimit
 # it off.
 LAST_BUILD=${LAST_BUILD:1}
 travis restart $LAST_BUILD
-
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
+if [ $? -ne 0 ]
+then
+  echo "Travis build failed"
+  send_slack "Travis build failed.\nEngine build has been pushed but not deployed."
+  exit 1;
+fi
 send_slack "New AIS build has been deployed."
 
