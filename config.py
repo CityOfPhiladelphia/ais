@@ -1147,7 +1147,7 @@ SERVICE_AREAS = {
                 'polygon': {
                     'db': 'gis_sa',
                     'table':                'gis_ohcd.NEIGHBORHOODADVISORYCOMMITTEES',
-                    'value_field':          'organization',
+                    'value_field':          'organizati',
                 },
             },
         },
