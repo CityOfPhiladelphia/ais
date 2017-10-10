@@ -1,13 +1,13 @@
-"""inital migration
+"""New initial migration.
 
-Revision ID: e270c833a1bc
+Revision ID: 745254fd8094
 Revises: None
-Create Date: 2017-04-20 20:11:59.650312
+Create Date: 2017-10-10 13:19:04.573036
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'e270c833a1bc'
+revision = '745254fd8094'
 down_revision = None
 
 from alembic import op
@@ -106,13 +106,16 @@ def upgrade():
     sa.Column('info_companies', sa.Text(), nullable=True),
     sa.Column('pwd_account_nums', sa.Text(), nullable=True),
     sa.Column('li_address_key', sa.Text(), nullable=True),
+    sa.Column('eclipse_location_id', sa.Text(), nullable=True),
+    sa.Column('zoning_document_ids', sa.Text(), nullable=True),
     sa.Column('voters', sa.Text(), nullable=True),
     sa.Column('geocode_type', sa.Text(), nullable=True),
     sa.Column('geocode_x', sa.Float(), nullable=True),
     sa.Column('geocode_y', sa.Float(), nullable=True),
     sa.Column('geocode_street_x', sa.Float(), nullable=True),
     sa.Column('geocode_street_y', sa.Float(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('street_address')
     )
     op.create_index('address_summary_sort_idx', 'address_summary', ['street_name', 'street_suffix', 'street_predir', 'street_postdir', 'address_low', 'address_high', 'unit_num'], unique=False, postgresql_using='btree')
     op.create_index(op.f('ix_address_summary_dor_parcel_id'), 'address_summary', ['dor_parcel_id'], unique=False)
@@ -161,6 +164,45 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_dor_parcel_parcel_id'), 'dor_parcel', ['parcel_id'], unique=False)
+    op.create_table('dor_parcel_address_analysis',
+    sa.Column('objectid', sa.Integer(), nullable=False),
+    sa.Column('mapreg', sa.Text(), nullable=True),
+    sa.Column('stcod', sa.Integer(), nullable=True),
+    sa.Column('house', sa.Integer(), nullable=True),
+    sa.Column('suf', sa.Text(), nullable=True),
+    sa.Column('unit', sa.Text(), nullable=True),
+    sa.Column('stex', sa.Integer(), nullable=True),
+    sa.Column('stdir', sa.Text(), nullable=True),
+    sa.Column('stnam', sa.Text(), nullable=True),
+    sa.Column('stdes', sa.Text(), nullable=True),
+    sa.Column('stdessuf', sa.Text(), nullable=True),
+    sa.Column('concatenated_address', sa.Text(), nullable=True),
+    sa.Column('std_street_address', sa.Text(), nullable=True),
+    sa.Column('std_address_low', sa.Integer(), nullable=True),
+    sa.Column('std_address_low_suffix', sa.Text(), nullable=True),
+    sa.Column('std_high_num', sa.Integer(), nullable=True),
+    sa.Column('std_street_predir', sa.Text(), nullable=True),
+    sa.Column('std_street_name', sa.Text(), nullable=True),
+    sa.Column('std_street_suffix', sa.Text(), nullable=True),
+    sa.Column('std_address_postdir', sa.Text(), nullable=True),
+    sa.Column('std_unit_type', sa.Text(), nullable=True),
+    sa.Column('std_unit_num', sa.Text(), nullable=True),
+    sa.Column('std_street_code', sa.Integer(), nullable=True),
+    sa.Column('std_seg_id', sa.Integer(), nullable=True),
+    sa.Column('cl_addr_match', sa.Text(), nullable=True),
+    sa.Column('change_stcod', sa.Integer(), nullable=True),
+    sa.Column('change_house', sa.Integer(), nullable=True),
+    sa.Column('change_suf', sa.Integer(), nullable=True),
+    sa.Column('change_unit', sa.Integer(), nullable=True),
+    sa.Column('change_stex', sa.Integer(), nullable=True),
+    sa.Column('change_stdir', sa.Integer(), nullable=True),
+    sa.Column('change_stnam', sa.Integer(), nullable=True),
+    sa.Column('change_stdes', sa.Integer(), nullable=True),
+    sa.Column('change_stdessuf', sa.Integer(), nullable=True),
+    sa.Column('no_address', sa.Integer(), nullable=True),
+    sa.Column('shape', geoalchemy2.types.Geometry(geometry_type='MULTIPOLYGON', srid=2272), nullable=True),
+    sa.PrimaryKeyConstraint('objectid')
+    )
     op.create_table('dor_parcel_error',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('objectid', sa.Integer(), nullable=True),
@@ -295,6 +337,15 @@ def upgrade():
     sa.Column('value', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('service_area_point',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('layer_id', sa.Text(), nullable=True),
+    sa.Column('source_object_id', sa.Integer(), nullable=True),
+    sa.Column('seg_id', sa.Integer(), nullable=True),
+    sa.Column('value', sa.Text(), nullable=True),
+    sa.Column('geom', geoalchemy2.types.Geometry(geometry_type='MULTIPOINT', srid=2272), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('service_area_polygon',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('layer_id', sa.Text(), nullable=True),
@@ -388,6 +439,7 @@ def downgrade():
     op.drop_table('street_alias')
     op.drop_table('source_address')
     op.drop_table('service_area_polygon')
+    op.drop_table('service_area_point')
     op.drop_table('service_area_line_single')
     op.drop_table('service_area_line_dual')
     op.drop_table('service_area_layer')
@@ -401,6 +453,7 @@ def downgrade():
     op.drop_table('geocode')
     op.drop_table('dor_parcel_error_polygon')
     op.drop_table('dor_parcel_error')
+    op.drop_table('dor_parcel_address_analysis')
     op.drop_index(op.f('ix_dor_parcel_parcel_id'), table_name='dor_parcel')
     op.drop_table('dor_parcel')
     op.drop_table('curb')
