@@ -647,7 +647,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon': {
                     'db':                   'gis_sa',
-                    'table':                'gis_planning.Commercial_Corridors',
+                    'table':                'gis_service_areas.VW_Commercial_Corridors',
                     'value_field':          'name',
                     'method':               'yes_or_no',
                 },
