@@ -146,3 +146,15 @@ then
 fi
 send_slack "New AIS build has been deployed."
 
+echo "Making engine reports."
+error_file_loc=../log/reports_errors_$datestamp.txt
+out_file_loc=../log/reports_log_$datestamp.txt
+python make_reports.py  > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+if [ $? -ne 0 ]
+then
+  echo "Reports failed"
+  send_slack "Engine reports did not complete."
+  exit 1;
+fi
+send_slack "Engine reports have completed."
+
