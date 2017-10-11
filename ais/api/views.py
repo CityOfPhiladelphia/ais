@@ -308,6 +308,7 @@ def addresses(query):
             val = val[:val.index(';')]
         requestargs[arg] = val
     # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
+    search_type=normalized_address= ''
     try:
         parsed = PassyunkParser().parse(query)
         search_type = parsed['type']
