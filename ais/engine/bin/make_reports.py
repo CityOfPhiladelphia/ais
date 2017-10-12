@@ -243,8 +243,8 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
+print("Writing spatial reports to Oracle.")
 import subprocess
-
 oracle_dsn_gis_ais = config['ORACLE_DSN_GIS_AIS']
 postgis_dsn = config['POSTGIS_DSN']
 subprocess.check_call(['output_spatial_tables.sh', str(oracle_dsn_gis_ais), str(postgis_dsn)])
