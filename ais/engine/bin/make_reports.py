@@ -72,7 +72,8 @@ etl.tooraclesde(true_range_in_table, write_dsn, true_range_write_table_name)
 # # SERVICE AREA SUMMARY #
 # ########################
 print("Writing service_area_summary table")
-service_area_summary_in_table = etl.fromdb(read_conn, 'select * from service_area_summary')
+service_area_summary_in_table = etl.fromdb(read_conn, 'select * from service_area_summary')\
+    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
 # print(etl.look(service_area_summary_in_table))
 etl.tooraclesde(service_area_summary_in_table, write_dsn, service_area_summary_write_table_name)
 ########################
