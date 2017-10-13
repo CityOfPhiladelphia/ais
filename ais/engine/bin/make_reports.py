@@ -245,6 +245,6 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 ###########################################################
 print("Writing spatial reports to Oracle.")
 import subprocess
-oracle_dsn_gis_ais = config['ORACLE_DSN_GIS_AIS']
-postgis_dsn = config['POSTGIS_DSN']
-subprocess.check_call(['output_spatial_tables.sh', str(oracle_dsn_gis_ais), str(postgis_dsn)])
+oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
+postgis_conn = config['POSTGIS_CONN']
+subprocess.check_call(['output_spatial_tables.sh', str(oracle_conn_gis_ais), str(postgis_conn)])
