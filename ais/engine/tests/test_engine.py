@@ -20,7 +20,7 @@ def startup():
     old_db = datum.connect(config['DATABASES'][new_db_map[old_prod_env]])
     new_db = datum.connect(config['DATABASES']['engine'])
 #    old_db = datum.connect(config['DATABASES']['engine_staging'])
-    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
+    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range', 'dor_parcel_address_analysis')
     changed_tables = ('address_error',)
     ignore_tables = unused_tables + changed_tables
 
