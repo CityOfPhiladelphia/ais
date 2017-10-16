@@ -280,6 +280,39 @@ for sa_layer_def in sa_layer_defs:
 		db.execute(stmt)
 		db.save()
 
+#################
+# NEAREST POLY	#
+#################
+print('Finding nearest service area polygon to each address...')
+for sa_layer_def in sa_layer_defs:
+	layer_id = sa_layer_def['layer_id']
+	if 'polygon' in sa_layer_def['sources'] and sa_layer_def['sources']['polygon'].get('method') and sa_layer_def['sources']['polygon']['method'] == 'nearest_poly':
+		print('Updating from {}...'.format(layer_id))
+		stmt = '''
+				with sap_layer as
+				(
+					select sap.*
+					from service_area_point sap
+					where sap.layer_id = '{layer_id}'
+				)
+				update service_area_summary sas
+				set {layer_id} = sapf.value
+				from
+					(
+					select ads.street_address, saplv.value
+					from address_summary ads 
+					cross join lateral
+					(
+						select sap_layer.value
+						from sap_layer
+						order by st_setsrid(st_point(ads.geocode_x, ads.geocode_y), 2272) <-> sap_layer.geom limit 1
+					) as saplv
+					) sapf
+				where sas.street_address = sapf.street_address
+			'''.format(layer_id=layer_id)
+		db.execute(stmt)
+		db.save()
+################################
 db.close()
 
 print('Finished in {}'.format(datetime.now() - start))
