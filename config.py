@@ -379,6 +379,21 @@ ADDRESSES = {
                 },
             ],
         },
+        {
+            'name': 'building_footprints',
+            'table': 'gis_lni.li_building_footprints_working',
+            'db':    'gis',
+            'address_fields': {
+                'street_address': 'address',
+            },
+            'tag_fields': [
+                {
+                    'key': 'bin',
+                    # 'source_field': 'water1_acc_no',
+                    'source_fields': ['bin'],
+                },
+            ],
+        },
         # {
         #     'name': 'rtt',
         #     'table': 'gis_dor_rttmapping.cris_properties',
@@ -1350,6 +1365,12 @@ ADDRESS_SUMMARY = {
         {
             'name':                 'zoning_document_ids',
             'tag_key':              'zoning_document_id',
+            'type':                 'text',
+            'traverse_links':       'true',
+        },
+        {
+            'name':                 'bin',
+            'tag_key':              'bin',
             'type':                 'text',
             'traverse_links':       'true',
         },
