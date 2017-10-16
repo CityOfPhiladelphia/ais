@@ -12,7 +12,7 @@ ALTER TABLE address_summary ADD COLUMN shape geometry(Point,2272);
 UPDATE address_summary SET shape = st_setsrid(st_makepoint(geocode_x, geocode_y), 2272);
 EOF
 echo "reading address_summary"
-the_el read address_summary --connection-string $postgis_dsn --output-file address_summary.csv --geometry-support postgis --from_srid=2272 --to_srid=2272  
+the_el read address_summary --connection-string $postgis_dsn --output-file address_summary.csv --geometry-support postgis --from_srid 2272 --to_srid 2272  
 echo "cleaning address_summary"
 python remove_special_characters.py "address_summary.csv" "address_summary_cleaned.csv"
 echo "describing address_summary"
@@ -36,7 +36,7 @@ echo "finished updating address_summary"
 
 #DOR_PARCEL_ADDRESS_COMP_ANALYSIS
 echo "Updating dor_parcel_address_analysis"
-the_el read dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_analysis.csv --geometry-support postgis --from_srid=2272 --to_srid=2272
+the_el read dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_analysis.csv --geometry-support postgis --from_srid 2272 --to_srid 2272
 the_el describe_table dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_analysis_schema.json --geometry-support postgis
 #the_el create_table TEMP_DOR_PARCEL_ADDRESS_COMP_ANALYSIS --connection-string $oracle_dsn_gis_dor dor_parcel_address_comp_analysis_schema.json --geometry-support sde
 python create_table_from_schema.py "dor_parcel_address_analysis"
