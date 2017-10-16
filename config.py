@@ -1157,11 +1157,11 @@ SERVICE_AREAS = {
             'name':                         'PPR Friends',
             'description': '',
             'sources': {
-                'point': {
+                'polygon': {
                     'db':                   'gis_sa',
-                    'table':                'gis_ppr.PPR_FRIENDS_ADDR_WEBONLY',
-                    'value_field':          'friendsnam',
-                    'method':               'nearest',
+                    'table':                'gis_ppr.PPR_FriendsGroup_WebOnly',
+                    'value_field':          'groupname',
+                    'method':               'nearest_poly',
                 },
             },
         },
