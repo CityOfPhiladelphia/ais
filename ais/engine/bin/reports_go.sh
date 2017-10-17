@@ -9,7 +9,6 @@ source ../../../env/bin/activate
 source ../../../bin/eb_env_utils.sh
 
 echo "Starting reporting."
-#python make_reports.py
 python make_reports.py
 if [ $? -ne 0 ]
 then
