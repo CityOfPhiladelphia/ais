@@ -52,12 +52,12 @@ WRITE_OUT = True
 
 """MAIN"""
 
-# if WRITE_OUT:
-# 	print('Dropping service area summary table...')
-# 	db.drop_table('service_area_summary')
-#
-# 	print('Creating service area summary table...')
-# 	db.create_table('service_area_summary', sa_summary_fields)
+if WRITE_OUT:
+	print('Dropping service area summary table...')
+	db.drop_table('service_area_summary')
+
+	print('Creating service area summary table...')
+	db.create_table('service_area_summary', sa_summary_fields)
 
 sa_summary_table = db['service_area_summary']
 
