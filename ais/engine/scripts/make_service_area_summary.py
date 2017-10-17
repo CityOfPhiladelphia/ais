@@ -235,18 +235,71 @@ if WRITE_OUT:
 #############################################################################
 # SERVICE AREA POINTS
 #############################################################################
-print('Finding nearest service area point to each address...')
-for sa_layer_def in sa_layer_defs:
-	layer_id = sa_layer_def['layer_id']
-	if 'point' in sa_layer_def['sources']:
-		print('Updating from {}...'.format(layer_id))
-		method = sa_layer_def['sources']['point']['method']
-		if method == 'nearest':
+if WRITE_OUT:
+	print('Finding nearest service area point to each address...')
+	for sa_layer_def in sa_layer_defs:
+		layer_id = sa_layer_def['layer_id']
+		if 'point' in sa_layer_def['sources']:
+			method = sa_layer_def['sources']['point']['method']
+			if method == 'nearest':
+				print('Updating from {}...'.format(layer_id))
+				stmt = '''
+						with sap_layer as
+						(
+							select sap.*
+							from service_area_point sap
+							where sap.layer_id = '{layer_id}'
+						)
+						update service_area_summary sas
+						set {layer_id} = sapf.value
+						from
+							(
+							select ads.street_address, saplv.value
+							from address_summary ads
+							cross join lateral
+							(
+								select sap_layer.value
+								from sap_layer
+								order by st_setsrid(st_point(ads.geocode_x, ads.geocode_y), 2272) <-> sap_layer.geom limit 1
+							) as saplv
+							) sapf
+						where sas.street_address = sapf.street_address
+					'''.format(layer_id=layer_id)
+				db.execute(stmt)
+				db.save()
+
+			elif method == 'seg_id':
+				print('Updating from {}...'.format(layer_id))
+				stmt = '''
+						UPDATE service_area_summary sas
+						SET {layer_id} = sap.value
+						FROM address_summary ads, service_area_point sap
+						WHERE
+							sas.street_address = ads.street_address AND
+							sap.seg_id = ads.seg_id AND
+							sap.layer_id = '{layer_id}' AND
+							sap.value <> ''
+					'''.format(layer_id=layer_id)
+				db.execute(stmt)
+				db.save()
+
+#################
+# NEAREST POLY	#
+#################
+if WRITE_OUT:
+	print('Finding nearest service area polygon to each address...')
+	for sa_layer_def in sa_layer_defs:
+		layer_id = sa_layer_def['layer_id']
+		if 'polygon' in sa_layer_def['sources']:
+			method = sa_layer_def['sources']['polygon'].get('method')
+			if method != 'nearest_poly':
+				continue
+			print('Updating from {}...'.format(layer_id))
 			stmt = '''
 					with sap_layer as
 					(
 						select sap.*
-						from service_area_point sap
+						from service_area_polygon sap
 						where sap.layer_id = '{layer_id}'
 					)
 					update service_area_summary sas
@@ -264,22 +317,9 @@ for sa_layer_def in sa_layer_defs:
 						) sapf
 					where sas.street_address = sapf.street_address
 				'''.format(layer_id=layer_id)
-
-		elif method == 'seg_id':
-			stmt = '''
-					UPDATE service_area_summary sas
-					SET {layer_id} = sap.value
-					FROM address_summary ads, service_area_point sap
-					WHERE
-						sas.street_address = ads.street_address AND
-						sap.seg_id = ads.seg_id AND
-						sap.layer_id = '{layer_id}' AND
-						sap.value <> ''
-				'''.format(layer_id=layer_id)
-
-		db.execute(stmt)
-		db.save()
-
+			db.execute(stmt)
+			db.save()
+################################
 db.close()
 
 print('Finished in {}'.format(datetime.now() - start))
