@@ -127,6 +127,8 @@ responses:
               type: string
             eclipse_location_id:
               type: string
+            bin:
+              type: string
             pwd_account_nums:
               type: array
               items:
