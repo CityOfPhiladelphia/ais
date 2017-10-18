@@ -500,11 +500,26 @@ class AddressTag(db.Model):
     """
     Current tags in the database are:
     * li_address_key
+    * eclipse location id
+    * bin
+    * zoning document ids
     * info_resident (private)
     * info_company (private)
     * voter_name (private?)
     * pwd_account_num
-
+    * opa account num
+    * opa owners
+    * opa address
+    * dor parcel id
+    * pwd parcel id
+    * election block id
+    * election precinct
+    * zip code
+    * zip4
+    * usps bldgfirm
+    * usps type
+    * seg id
+    * seg side
     """
     query_class = AddressTagQuery
 
@@ -1128,6 +1143,7 @@ class AddressSummary(db.Model):
     pwd_account_nums = db.Column(db.Text)
     li_address_key = db.Column(db.Text)
     eclipse_location_id = db.Column(db.Text)
+    bin = db.Column(db.Text)
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
 
