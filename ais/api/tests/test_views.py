@@ -612,6 +612,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['dor_parcel_id'], str)
     assert isinstance(feature['properties']['li_address_key'], str)
     assert isinstance(feature['properties']['eclipse_location_id'], str)
+    assert isinstance(feature['properties']['bin'], str)
     assert isinstance(feature['properties']['pwd_account_nums'], list)
     assert isinstance(feature['properties']['opa_account_num'], str)
     assert isinstance(feature['properties']['opa_owners'], list)
