@@ -199,6 +199,7 @@ The root of the `FeatureCollection` contains:
   * `dor_parcel_id` (Dept. of Records)
   * `li_address_key` (Licenses & Inspections)
   * `eclipse_location_id` (Licenses & Inspections)
+  * `bin` (Licenses & Inspections)
   * `opa_account_num` (Office of Prop. Assessment)
   * `opa_owners`
   * `opa_address` (Official address, according to OPA)
