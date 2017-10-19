@@ -230,7 +230,6 @@ db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
 pg_db = psycopg2.connect(
     'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
                                                                              db_pw=db_pw))
-
 source_field_map = source_def['field_map']
 # source_table_name = source_def['table']
 source_table_name = 'PARCEL'
@@ -282,7 +281,6 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
     .addfield('change_stdessuf',
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
                   standardize_nulls(a['std_address_postdir'])) else 0) \
-    .progress(10000) \
     .topostgis(pg_db, 'dor_parcel_address_analysis')
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
