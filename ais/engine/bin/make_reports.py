@@ -1,8 +1,8 @@
+from collections import OrderedDict
 from functools import partial
 import petl as etl
 import cx_Oracle
 import psycopg2
-import geopetl
 from shapely.wkt import loads
 from shapely.ops import transform
 import pyproj
@@ -22,7 +22,7 @@ true_range_write_table_name = 'TRUE_RANGE'
 read_conn = psycopg2.connect(
     "dbname={db_name} user={user}".format(db_name=parsed_read_db_string['db_name'], user=parsed_read_db_string['user']))
 #########################################################################################################################
-## Read in files, format and write to tables
+## UTILS
 #########################################################################################################################
 def make_address_full(comps):
     address_low = comps['address_low']
@@ -47,7 +47,6 @@ def transform_coords(comps):
     x_coord = comps['geocode_x']
     y_coord = comps['geocode_y']
     point = loads('POINT({x} {y})'.format(x=x_coord, y=y_coord))
-    shape = point.wkt
 
     project = partial(
         pyproj.transform,
@@ -58,71 +57,50 @@ def transform_coords(comps):
     x = transformed_point.x
     y = transformed_point.y
 
-    return [x, y, shape]
+    return [x, y]
 
-
-########################
-# TRUE RANGE #
-########################
-print("Writing true_range table.")
-true_range_in_table = etl.fromdb(read_conn, 'select * from true_range')
-# print(etl.look(true_range_in_table))
-etl.tooraclesde(true_range_in_table, write_dsn, true_range_write_table_name)
-# ########################
-# # SERVICE AREA SUMMARY #
-# ########################
-print("Writing service_area_summary table")
-service_area_summary_in_table = etl.fromdb(read_conn, 'select * from service_area_summary')\
-    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
-# print(etl.look(service_area_summary_in_table))
-etl.tooraclesde(service_area_summary_in_table, write_dsn, service_area_summary_write_table_name)
-########################
-# DOR PARCEL ADDRESS ANALYSIS
-########################
-print("Performing dor_parcel address analysis")
-import re
-from passyunk.parser import PassyunkParser
-
-street_name_re = re.compile('^[A-Z0-9 ]+$')
-unit_num_re = re.compile('^[A-Z0-9\-]+$')
-parser = PassyunkParser(MAX_RANGE=9999999)
-
-print('Reading streets...')
-street_rows = etl.fromdb(read_conn,
-                         'select street_full, seg_id, street_code, left_from, left_to, right_from, right_to from street_segment')
-street_code_map = {}  # street_full => street_code
-street_full_map = {}  # street_code => street_full
-seg_map = {}  # street_full => [seg rows]
-street_headers = street_rows[0]
-for street_row in street_rows[1:]:
-    street_row = dict(zip(street_headers, street_row))
-    street_code = street_row['street_code']
-    street_full = street_row['street_full']
-
-    seg_map.setdefault(street_full, [])
-    seg_map[street_full].append(street_row)
-
-    street_code_map[street_full] = street_code
-    street_full_map[street_code] = street_full
-
-street_code_map.update({
-    'VINE ST': 80120,
-    'MARKET ST': 53560,
-    'COMMERCE ST': 24500,
-})
-street_full_map.update({
-    80120: 'VINE ST',
-    53560: 'MARKET ST',
-    24500: 'COMMERCE ST',
-})
-
+mapping = OrderedDict([
+    ('id', 'id'),
+    ('address', 'address_low'),
+    ('address_suffix', 'address_low_suffix'),
+    ('address_fractional', 'address_low_frac'),
+    ('address_high', 'address_high'),
+    ('address_full', 'address_full'),
+    ('street_predir', 'street_predir'),
+    ('street_name', 'street_name'),
+    ('street_suffix', 'street_suffix'),
+    ('street_postdir', 'street_postdir'),
+    ('unit_type', 'unit_type'),
+    ('unit_num', 'unit_num'),
+    ('zip_code', 'zip_code'),
+    ('zip_4', 'zip_4'),
+    ('street_address', 'street_address'),
+    ('opa_account_num', 'opa_account_num'),
+    ('opa_owners', 'opa_owners'),
+    ('opa_address', 'opa_address'),
+    ('info_companies', 'info_companies'),
+    ('info_residents', 'info_residents'),
+    ('voters', 'voters'),
+    ('pwd_account_nums', 'pwd_account_nums'),
+    ('li_address_key', 'li_address_key'),
+    ('seg_id', 'seg_id'),
+    ('seg_side', 'seg_side'),
+    ('dor_parcel_id', 'dor_parcel_id'),
+    ('pwd_parcel_id', 'pwd_parcel_id'),
+    ('geocode_type', 'geocode_type'),
+    ('geocode_x', 'geocode_x'),
+    ('geocode_y', 'geocode_y'),
+    ('geocode_lat', 'geocode_lat'),
+    ('geocode_lon', 'geocode_lon'),
+    ('eclipse_location_id', 'eclipse_location_id'),
+    ('zoning_document_ids', 'zoning_document_ids')
+])
 
 def standardize_nulls(val):
     if type(val) == str:
         return None if val.strip() == '' else val
     else:
         return None if val == 0 else val
-
 
 def concatenate_dor_address(source_comps):
     # Get attributes
@@ -172,7 +150,73 @@ def concatenate_dor_address(source_comps):
         source_address = ' '.join([x for x in source_address_comps if x])
 
     return source_address if source_address != None else ''
+#############################################
+# Read in files, format and write to tables #
+#############################################
+##############
+# TRUE RANGE #
+##############
+print("Writing true_range table.")
+etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+# ########################
+# # SERVICE AREA SUMMARY #
+# ########################
+print("Writing service_area_summary table")
+etl.fromdb(read_conn, 'select * from service_area_summary')\
+    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+    .tooraclesde(write_dsn, service_area_summary_write_table_name)
+# # ########################
+# # ADDRESS AREA SUMMARY #
+# ########################
+print("Creating transformed address_summary table")
+address_summary_in_table = etl.fromdb(read_conn, 'select * from address_summary')
+address_summary_out_table = address_summary_in_table \
+    .addfield('address_full', (lambda a: make_address_full({'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'], 'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
+    .addfield('temp_lonlat', (lambda a: transform_coords({'geocode_x': a['geocode_x'], 'geocode_y': a['geocode_y']}))) \
+    .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
+    .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
+    .cutout('temp_lonlat') \
+    .fieldmap(mapping) \
+    .todb(read_conn, "address_summary_transformed", create=True, sample=0, drop=True)
+########################
+# DOR PARCEL ADDRESS ANALYSIS
+########################
+print("Performing dor_parcel address analysis")
+import re
+from passyunk.parser import PassyunkParser
 
+street_name_re = re.compile('^[A-Z0-9 ]+$')
+unit_num_re = re.compile('^[A-Z0-9\-]+$')
+parser = PassyunkParser(MAX_RANGE=9999999)
+
+print('Reading streets...')
+street_rows = etl.fromdb(read_conn,
+                         'select street_full, seg_id, street_code, left_from, left_to, right_from, right_to from street_segment')
+street_code_map = {}  # street_full => street_code
+street_full_map = {}  # street_code => street_full
+seg_map = {}  # street_full => [seg rows]
+street_headers = street_rows[0]
+for street_row in street_rows[1:]:
+    street_row = dict(zip(street_headers, street_row))
+    street_code = street_row['street_code']
+    street_full = street_row['street_full']
+
+    seg_map.setdefault(street_full, [])
+    seg_map[street_full].append(street_row)
+
+    street_code_map[street_full] = street_code
+    street_full_map[street_code] = street_full
+
+street_code_map.update({
+    'VINE ST': 80120,
+    'MARKET ST': 53560,
+    'COMMERCE ST': 24500,
+})
+street_full_map.update({
+    80120: 'VINE ST',
+    53560: 'MARKET ST',
+    24500: 'COMMERCE ST',
+})
 
 source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
 source_db_name = source_def['db']
@@ -243,8 +287,8 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
-print("Writing spatial reports to Oracle.")
+print("Writing spatial reports to DataBridge.")
 import subprocess
 oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
-subprocess.check_call(['output_spatial_tables.sh', str(oracle_conn_gis_ais), str(postgis_conn)])
+subprocess.check_call(['output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
