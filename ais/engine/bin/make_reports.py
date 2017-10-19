@@ -1,8 +1,10 @@
+import subprocess
 from collections import OrderedDict
 from functools import partial
 import petl as etl
 import cx_Oracle
 import psycopg2
+import geopetl
 from shapely.wkt import loads
 from shapely.ops import transform
 import pyproj
@@ -59,6 +61,7 @@ def transform_coords(comps):
 
     return [x, y]
 
+
 mapping = OrderedDict([
     ('id', 'id'),
     ('address', 'address_low'),
@@ -96,11 +99,13 @@ mapping = OrderedDict([
     ('zoning_document_ids', 'zoning_document_ids')
 ])
 
+
 def standardize_nulls(val):
     if type(val) == str:
         return None if val.strip() == '' else val
     else:
         return None if val == 0 else val
+
 
 def concatenate_dor_address(source_comps):
     # Get attributes
@@ -158,16 +163,16 @@ def concatenate_dor_address(source_comps):
 ##############
 print("Writing true_range table.")
 etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
-# ########################
-# # SERVICE AREA SUMMARY #
-# ########################
+########################
+# SERVICE AREA SUMMARY #
+########################
 print("Writing service_area_summary table")
 etl.fromdb(read_conn, 'select * from service_area_summary')\
     .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
     .tooraclesde(write_dsn, service_area_summary_write_table_name)
-# # ########################
-# # ADDRESS AREA SUMMARY #
-# ########################
+########################
+# ADDRESS AREA SUMMARY #
+########################
 print("Creating transformed address_summary table")
 address_summary_in_table = etl.fromdb(read_conn, 'select * from address_summary')
 address_summary_out_table = address_summary_in_table \
@@ -177,10 +182,10 @@ address_summary_out_table = address_summary_in_table \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
     .fieldmap(mapping) \
-    .todb(read_conn, "address_summary_transformed", create=True, sample=0, drop=True)
-########################
-# DOR PARCEL ADDRESS ANALYSIS
-########################
+    .todb(read_conn, "address_summary_transformed", create=True, sample=0)
+###############################
+# DOR PARCEL ADDRESS ANALYSIS #
+###############################
 print("Performing dor_parcel address analysis")
 import re
 from passyunk.parser import PassyunkParser
@@ -200,10 +205,8 @@ for street_row in street_rows[1:]:
     street_row = dict(zip(street_headers, street_row))
     street_code = street_row['street_code']
     street_full = street_row['street_full']
-
     seg_map.setdefault(street_full, [])
     seg_map[street_full].append(street_row)
-
     street_code_map[street_full] = street_code
     street_full_map[street_code] = street_full
 
@@ -231,9 +234,9 @@ pg_db = psycopg2.connect(
     'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
                                                                              db_pw=db_pw))
 source_field_map = source_def['field_map']
-# source_table_name = source_def['table']
+ source_table_name = source_def['table']
 source_table_name = 'PARCEL'
-# print(source_table_name)
+ print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
 
@@ -286,7 +289,13 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
 print("Writing spatial reports to DataBridge.")
-import subprocess
 oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
+
+print("Cleaning up.")
+cur = read_conn.cursor()
+cur.execute('DROP TABLE "address_summary_transformed";')
+read_conn.commit()
+read_conn.close()
+
