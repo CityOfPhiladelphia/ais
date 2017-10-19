@@ -289,4 +289,4 @@ print("Writing spatial reports to DataBridge.")
 import subprocess
 oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
-subprocess.check_call(['output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
+subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
