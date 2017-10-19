@@ -17,7 +17,6 @@ echo "cleaning address_summary"
 python remove_special_characters.py "address_summary.csv" "address_summary_cleaned.csv"
 echo "describing address_summary"
 the_el describe_table address_summary_transformed --connection-string $postgis_dsn --output-file address_summary_schema.json --geometry-support postgis
->>>>>>> Read/describe transformed address_summary table.
 echo "creating temp table"
 python create_table_from_schema.py "address_summary"
 echo "writing to temp table"
