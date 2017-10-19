@@ -315,7 +315,7 @@ def test_opa_query_returns_child_address(client):
 
     feature = data['features'][0]
     # TODO: reconcile exception
-    if parent_address != '1501-53 N 24TH ST':
+    if parent_address not in ('1501-53 N 24TH ST', '514-32 N CREIGHTON ST'):
         assert_opa_address(feature, parent_address)
 
 def test_block_can_exclude_non_opa(client):
