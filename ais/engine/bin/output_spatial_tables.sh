@@ -2,6 +2,8 @@
 
 postgis_dsn=$1
 oracle_dsn_gis_ais=$2
+source ../../../env/bin/activate
+source ../../../bin/eb_env_utils.sh
 
 # ADDRESS_SUMMARY
 echo "updating address_summary"
@@ -26,14 +28,23 @@ then
   echo "Writing to temp address_summary table failed. Exiting."
   psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN objectid;"
   psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN shape;"
+  send_slack "Writing to temp address_summary table failed. Exiting."
   exit 1;
 fi
-echo "swapping table"
+echo "Swapping table"
 the_el swap_table t_address_summary test_address_summary --connection-string $oracle_dsn_gis_ais
-echo "removing extra columns"
+if [ $? -ne 0 ]
+then
+  echo "Address summary table swap failed."
+  send_slack "Address summary swap failed."
+  exit 1;
+fi
+echo "Completed updating address summary in DataBridge."
+send_slack "Completed updating address summary in DataBridge."
+
+echo "Cleaning up."
 psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN objectid;"
 psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN shape;"
-echo "finished updating address_summary"
 
 #DOR_PARCEL_ADDRESS_COMP_ANALYSIS
 echo "Updating dor_parcel_address_analysis"
@@ -44,7 +55,16 @@ the_el write t_dor_parcel_address_analysis --connection-string $oracle_dsn_gis_a
 if [ $? -ne 0 ]
 then
   echo "Writing to temp dor_parcel_address_analysis table failed. Exiting."
+  send_slack "Writing to dor_parcel_address_analysis table failed. Exiting."
   exit 1;
 fi
 the_el swap_table t_dor_parcel_address_analysis dor_parcel_address_analysis --connection-string $oracle_dsn_gis_ais
+if [ $? -ne 0 ]
+then
+  echo "dor_parcel_address_analysis table swap failed. Exiting"
+  send_slack "dor_parcel_address_analysis table swap failed. Exiting."
+  exit 1;
+fi
+echo "Completed updating dor_parcel_address_analysis in DataBridge."
+send_slack "Completed updating dor_parcel_address_analysis in DataBridge."
 
