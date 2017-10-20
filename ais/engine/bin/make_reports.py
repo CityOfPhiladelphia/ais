@@ -234,7 +234,7 @@ pg_db = psycopg2.connect(
     'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
                                                                              db_pw=db_pw))
 source_field_map = source_def['field_map']
- source_table_name = source_def['table']
+source_table_name = source_def['table']
 source_table_name = 'PARCEL'
  print(source_table_name)
 field_map = source_def['field_map']
