@@ -236,7 +236,7 @@ pg_db = psycopg2.connect(
 source_field_map = source_def['field_map']
 source_table_name = source_def['table']
 source_table_name = 'PARCEL'
- print(source_table_name)
+print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
 
