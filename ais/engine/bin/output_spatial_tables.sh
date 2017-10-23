@@ -48,24 +48,24 @@ psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_tr
 psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN shape;"
 
 #DOR_PARCEL_ADDRESS_COMP_ANALYSIS
-#echo "Updating dor_parcel_address_check"
-#the_el read dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_check.csv --geometry-support postgis
-#the_el describe_table dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_check_schema.json --geometry-support postgis
-#python create_table_from_schema.py "dor_parcel_address_check"
-#the_el write t_dor_parcel_address_check --connection-string $oracle_dsn_gis_ais --table-schema-path dor_parcel_address_check_schema.json --geometry-support sde --from-srid 2272 --input-file dor_parcel_address_check.csv --skip-headers
-#if [ $? -ne 0 ]
-#then
-#  echo "Writing to temp dor_parcel_address_check table failed. Exiting."
-#  send_slack "Writing to dor_parcel_address_check table failed. Exiting."
-#  exit 1;
-#fi
-#the_el swap_table t_dor_parcel_address_check dor_parcel_address_check --connection-string $oracle_dsn_gis_ais
-#if [ $? -ne 0 ]
-#then
-#  echo "dor_parcel_address_check table swap failed. Exiting"
-#  send_slack "dor_parcel_address_check table swap failed. Exiting."
-#  exit 1;
-#fi
-#echo "Completed updating dor_parcel_address_check in DataBridge."
-#send_slack "Completed updating dor_parcel_address_check in DataBridge."
+echo "Updating dor_parcel_address_check"
+the_el read dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_check.csv --geometry-support postgis
+the_el describe_table dor_parcel_address_analysis --connection-string $postgis_dsn --output-file dor_parcel_address_check_schema.json --geometry-support postgis
+python create_table_from_schema.py "dor_parcel_address_check"
+the_el write t_dor_parcel_address_check --connection-string $oracle_dsn_gis_ais --table-schema-path dor_parcel_address_check_schema.json --geometry-support sde --from-srid 2272 --input-file dor_parcel_address_check.csv --skip-headers
+if [ $? -ne 0 ]
+then
+  echo "Writing to temp dor_parcel_address_check table failed. Exiting."
+  send_slack "Writing to dor_parcel_address_check table failed. Exiting."
+  exit 1;
+fi
+the_el swap_table t_dor_parcel_address_check dor_parcel_address_check --connection-string $oracle_dsn_gis_ais
+if [ $? -ne 0 ]
+then
+  echo "dor_parcel_address_check table swap failed. Exiting"
+  send_slack "dor_parcel_address_check table swap failed. Exiting."
+  exit 1;
+fi
+echo "Completed updating dor_parcel_address_check in DataBridge."
+send_slack "Completed updating dor_parcel_address_check in DataBridge."
 
