@@ -145,25 +145,9 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		for x in sa_rows:
 			if x['layer_id'] != 'zoning_rco':
 				update_dict[x['layer_id']] = x['value']
-				# if x['layer_id'] != 'commercial_corridors':
-				# 	update_dict[x['layer_id']] = x['value']
-				# else:
-				# 	update_dict[x['layer_id']] = 'yes' if x['value'] else 'no'
 			else:
 				update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
 		sa_summary_row.update(update_dict)
-
-		# Override poly values with values from lines
-		# if seg_id:
-		# 	# Line single
-		# 	for layer_id in line_single_map:
-		# 		if seg_id in line_single_map[layer_id]:
-		# 			value = line_single_map[layer_id][seg_id]
-		# 			sa_summary_row[layer_id] = value
-
-		# 	# Line dual
-		# 	for layer_id in line_dual_map:
-		# 		if
 
 		sa_summary_rows.append(sa_summary_row)
 
@@ -183,6 +167,23 @@ if WRITE_OUT:
 	sa_summary_table.write(sa_summary_rows)
 	del sa_summary_rows
 
+# Update where method = yes_or_no:
+for sa_layer_def in sa_layer_defs:
+	layer_id = sa_layer_def['layer_id']
+	if 'polygon' in sa_layer_def['sources']:
+		method = sa_layer_def['sources']['polygon'].get('method')
+		if method == 'yes_or_no':
+			stmt = '''
+					UPDATE service_area_summary sas
+					SET {layer_id} = (
+					CASE 
+					WHEN {layer_id} != '' THEN 'yes'
+					ELSE 'no'
+					END);
+					'''.format(layer_id=layer_id)
+			db.execute(stmt)
+			# print(ais_db.c.rowcount)
+			db.save()
 ################################################################################
 # SERVICE AREA LINES
 ################################################################################
@@ -240,7 +241,7 @@ if WRITE_OUT:
 	for sa_layer_def in sa_layer_defs:
 		layer_id = sa_layer_def['layer_id']
 		if 'point' in sa_layer_def['sources']:
-			method = sa_layer_def['sources']['point']['method']
+			method = sa_layer_def['sources']['point'].get('method')
 			if method == 'nearest':
 				print('Updating from {}...'.format(layer_id))
 				stmt = '''

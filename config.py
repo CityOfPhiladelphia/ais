@@ -664,10 +664,35 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'gis_service_areas.VW_Commercial_Corridors',
                     'value_field':          'name',
-                    'method':               'yes_or_no',
                 },
             },
         },
+        {
+            'layer_id': 'historic_district',
+            'name': 'Historic Districts',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db': 'gis_sa',
+                    'table': 'gis_planning.HistoricDistricts_Local',
+                    'value_field': 'name',
+                },
+            },
+        },
+        {
+            'layer_id': 'historic_site',
+            'name': 'Historic Sites',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db': 'gis_sa',
+                    'table': 'gis_planning.Historic_sites_PhilReg',
+                    'value_field': 'loc',
+                    'method': 'yes_or_no'
+                },
+            },
+        },
+
         # STEEP SLOPE PROTECTION AREAS
         # {
         #     'layer_id':             'zoning_steepslopeprotectionarea',
@@ -1060,6 +1085,20 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'gis_streets.Street_Light_Routes',
                     'value_field':          'route',
+                },
+            },
+        },
+        {
+            'layer_id': 'lane_closure',
+            'name': 'Lane Closure',
+            'description': '',
+            'sources': {
+                'line_single': {
+                    'db': 'gis_sa',
+                    'table': 'gis_streets.LaneClosure_Master',
+                    'seg_id_field': 'seg_id',
+                    'value_field': 'permitnumber',
+                    'object_id_field': 'objectid',
                 },
             },
         },
