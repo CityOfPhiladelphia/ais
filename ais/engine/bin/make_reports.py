@@ -298,4 +298,3 @@ cur = read_conn.cursor()
 cur.execute('DROP TABLE "address_summary_transformed";')
 read_conn.commit()
 read_conn.close()
-
