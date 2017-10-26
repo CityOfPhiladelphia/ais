@@ -1,13 +1,13 @@
-"""New initial migration.
+"""new initial migration
 
-Revision ID: 745254fd8094
+Revision ID: 112f42c5fd48
 Revises: None
-Create Date: 2017-10-10 13:19:04.573036
+Create Date: 2017-10-26 15:19:13.759396
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '745254fd8094'
+revision = '112f42c5fd48'
 down_revision = None
 
 from alembic import op
@@ -107,6 +107,7 @@ def upgrade():
     sa.Column('pwd_account_nums', sa.Text(), nullable=True),
     sa.Column('li_address_key', sa.Text(), nullable=True),
     sa.Column('eclipse_location_id', sa.Text(), nullable=True),
+    sa.Column('bin', sa.Text(), nullable=True),
     sa.Column('zoning_document_ids', sa.Text(), nullable=True),
     sa.Column('voters', sa.Text(), nullable=True),
     sa.Column('geocode_type', sa.Text(), nullable=True),
