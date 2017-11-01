@@ -125,7 +125,6 @@ eb setenv -e $eb_staging_env SWAP=True --timeout 30
 
 # Deploy latest code and swap
 echo "Restarting the latest master branch build (requires travis CLI)"
-#send_slack "Restarting the latest master branch build."
 if ! hash travis ; then
   echo "This step requires the Travis-CI CLI. To install and configure, see:
   https://github.com/travis-ci/travis.rb#installation"
@@ -135,6 +134,7 @@ LAST_BUILD=$(travis history --branch master --limit 1 | cut --fields=1 --delimit
 # The build number has a number sign as the first character. We need to strip
 # it off.
 LAST_BUILD=${LAST_BUILD:1}
+send_slack "Restarting the latest master branch build."
 travis restart $LAST_BUILD
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
