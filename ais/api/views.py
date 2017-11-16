@@ -329,33 +329,55 @@ def addresses(query):
     base_address_no_num_suffix = '{} {}'.format(low_num, street_full) # TODO: handle ranged addresses with num suffixes
     search_type = parsed['type']
 
-    loose_filters = NotNoneDict(
-        seg_id=int(parsed['components']['cl_seg_id']),
-        street_name=parsed['components']['street']['name'],
-        address_low=low_num if low_num is not None
-            else full_num,
-        address_low_suffix=parsed['components']['address']['addr_suffix'],
-        address_low_frac=parsed['components']['address']['fractional'],
-        street_predir=parsed['components']['street']['predir'],
-        street_postdir=parsed['components']['street']['postdir'],
-        street_suffix=parsed['components']['street']['suffix'],
-    )
+    # loose_filters = NotNoneDict(
+    #     seg_id=int(parsed['components']['cl_seg_id']),
+    #     street_name=parsed['components']['street']['name'],
+    #     address_low=low_num if low_num is not None
+    #         else full_num,
+    #     address_low_suffix=parsed['components']['address']['addr_suffix'],
+    #     address_low_frac=parsed['components']['address']['fractional'],
+    #     street_predir=parsed['components']['street']['predir'],
+    #     street_postdir=parsed['components']['street']['postdir'],
+    #     street_suffix=parsed['components']['street']['suffix'],
+    # )
+    # strict_filters = dict(
+    #     address_high=high_num,
+    #     unit_num=unit_num or '',
+    # )
+
+    loose_filters = OrderedDict([
+                                # ('seg_id',int(parsed['components']['cl_seg_id'])),
+                                 ('street_name',parsed['components']['street']['name']),
+                                 ('address_low',low_num if low_num is not None else full_num),
+                                 ('address_low_suffix',parsed['components']['address']['addr_suffix']),
+                                 ('address_low_frac',parsed['components']['address']['fractional']),
+                                 ('street_predir',parsed['components']['street']['predir']),
+                                 ('street_postdir',parsed['components']['street']['postdir']),
+                                 ('street_suffix',parsed['components']['street']['suffix']),
+    ])
+    # print(loose_filters)
     strict_filters = dict(
         address_high=high_num,
         unit_num=unit_num or '',
     )
+    # print(loose_filters)
+    filters = loose_filters.copy()
+    for key, value in loose_filters.items():
+        if value is None:
+            del filters[key]
 
     if unit_num == '':
         strict_filters.update(dict(unit_type=unit_type or '', ))
-
-    # if search_type != 'address' or low_num is None:
+    filters.update(strict_filters)
+    print(filters)
     if search_type not in ('address', 'street') or low_num is None:
         error = json_error(404, 'Not a valid address.',
                            {'query': query, 'normalized': normalized_address,'search_type': search_type})
         return json_response(response=error, status=404)
 
-    filters = strict_filters.copy()
-    filters.update(loose_filters)
+    # filters = strict_filters.copy()
+    # filters.update(loose_filters)
+    # print(filters)
     range = None
 
     def query_addresses(filters):
