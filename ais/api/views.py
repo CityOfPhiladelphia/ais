@@ -266,8 +266,8 @@ def unknown_cascade_view(**kwargs):
 
 
 @app.route('/addresses/<path:query>')
-@cache_for(hours=1)
-@swag_from('docs/addresses.yml')
+# @cache_for(hours=1)
+# @swag_from('docs/addresses.yml')
 def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -364,22 +364,94 @@ def addresses(query):
                 .filter_by_unit_type(unit_type) #\
         return addresses
 
+    def process_query(addresses, match_type):
+
+        addresses = addresses.include_child_units(
+            'include_units' in request.args and request.args['include_units'].lower() != 'false',
+            is_range=False if range else high_num is not None,
+            is_unit=unit_type is not None,
+            request=request) \
+            .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+            .get_address_geoms(request) \
+            .order_by_address()
+
+        # Get tag data
+        try:
+            all_tags = get_tag_data(addresses)
+        except:
+            error = json_error(404, 'Invalid query.',
+                               {'query': query, 'normalized': normalized_address, 'search_type': search_type,
+                                'search_params': requestargs, })
+            return json_response(response=error, status=404)
+
+        # Get pagination
+        paginator = QueryPaginator(addresses)
+
+        # Ensure that we have results
+        addresses_count = paginator.collection_size
+
+        # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
+        if addresses_count == 0:
+
+            if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+                error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+                return json_response(response=error, status=404)
+            else:  # Try to cascade to street centerline segment
+                return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type,
+                                            parsed=parsed)
+
+        # Validate the pagination
+        page_num, error = validate_page_param(request, paginator)
+        if error:
+            return json_response(response=error, status=404)
+
+        srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+
+        crs = {'type': 'link',
+               'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
+        # Serialize the response
+        addresses_page = paginator.get_page(page_num)
+        serializer = AddressJsonSerializer(
+            metadata={'query': query, 'normalized': normalized_address, 'search_type': search_type,
+                      'search_params': requestargs, 'crs': crs},
+            pagination=paginator.get_page_info(page_num),
+            srid=srid,
+            normalized_address=normalized_address,
+            base_address=base_address,
+            tag_data=all_tags,
+            match_type=match_type,
+            ref_addr=normalized_address,
+        )
+        try:
+            result = serializer.serialize_many(addresses_page)
+            return json_response(response=result, status=200)
+        except:
+            error = json_error(404, 'Invalid query.',
+                               {'query': query, 'normalized': normalized_address, 'search_type': search_type,
+                                'search_params': requestargs})
+            return json_response(response=error, status=404)
+
+
     addresses = query_addresses(filters=filters)
-    match_type = 'exact'
+    if addresses.all():
+        match_type = 'exact'
+        return process_query(addresses, match_type)
     # if no matches, try base_address
-    if not addresses.all() and normalized_address != base_address and not high_num:
+    if normalized_address != base_address and not high_num:
         #print(1)
         if 'unit_num' in filters:
             filters_copy = filters
             filters_copy['unit_num'] = ''
             unit_type = None  # more elegant approach involving filter_by_unit_type preferred
         addresses = query_addresses(filters=filters_copy)
-        match_type = 'has_base'
-    # else:
-    #     print(0)
+        if addresses.all():
+            match_type = 'has_base'
+            return process_query(addresses, match_type)
 
     # # If no matches and is ranged address, try non-ranged low_num address
-    if not addresses.all() and high_num:
+    if high_num:
         #print(2)
         # TODO: handle overlapping addresses
         #high_num = None
@@ -388,26 +460,33 @@ def addresses(query):
         range = True
         #filters['address_high'] = None
         addresses = query_addresses(filters=filters_copy)
-        match_type = 'in_range'
+        if addresses.all():
+            match_type = 'in_range'
+            return process_query(addresses, match_type)
 
-    if not addresses.all() and normalized_address != base_address and high_num:
+    if normalized_address != base_address and high_num:
         #print(3)
         if 'unit_num' in filters:
             filters_copy = filters
             filters_copy['unit_num'] = ''
             unit_type = None  # more elegant approach involving filter_by_unit_type preferred
         addresses = query_addresses(filters=filters_copy)
-        match_type = 'has_base'
+        if addresses.all():
+            match_type = 'has_base'
+            return process_query(addresses, match_type)
 
     # if no matches, try base_address_no_num_suffix
-    if not addresses.all() and base_address != base_address_no_num_suffix:
+    if base_address != base_address_no_num_suffix:
         #print(4)
         if 'address_low_suffix' in filters:
             del filters['address_low_suffix']
         if 'address_low_frac' in filters:
             del filters['address_low_frac']
         addresses = query_addresses(filters=filters)
-        match_type = 'has_base_no_suffix'
+        if addresses.all():
+            match_type = 'has_base_no_suffix'
+            return process_query(addresses, match_type)
+
 
     if not addresses.all(): # TODO: Decide what to do here!
 
@@ -418,68 +497,68 @@ def addresses(query):
         else: # Try to cascade to street centerline segment
             return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
 
-    addresses = addresses.include_child_units(
-            'include_units' in request.args and request.args['include_units'].lower() != 'false',
-            is_range=False if range else high_num is not None,
-            is_unit=unit_type is not None,
-            request=request) \
-            .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-            .get_address_geoms(request) \
-            .order_by_address()
+    # addresses = addresses.include_child_units(
+    #         'include_units' in request.args and request.args['include_units'].lower() != 'false',
+    #         is_range=False if range else high_num is not None,
+    #         is_unit=unit_type is not None,
+    #         request=request) \
+    #         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+    #         .get_address_geoms(request) \
+    #         .order_by_address()
+    #
+    # # Get tag data
+    # try:
+    #     all_tags = get_tag_data(addresses)
+    # except:
+    #     error = json_error(404, 'Invalid query.',
+    #                        {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs,})
+    #     return json_response(response=error, status=404)
+    #
+    # # Get pagination
+    # paginator = QueryPaginator(addresses)
+    #
+    # # Ensure that we have results
+    # addresses_count = paginator.collection_size
+    #
+    # # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
+    # if addresses_count == 0:
+    #
+    #     if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+    #         error = json_error(404, 'Could not find any opa addresses matching the query.',
+    #                                 {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+    #         return json_response(response=error, status=404)
+    #     else: # Try to cascade to street centerline segment
+    #         return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
+    #
+    # # Validate the pagination
+    # page_num, error = validate_page_param(request, paginator)
+    # if error:
+    #     return json_response(response=error, status=404)
+    #
+    # srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    #
+    # crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    #
+    # # Serialize the response
+    # addresses_page = paginator.get_page(page_num)
+    # serializer = AddressJsonSerializer(
+    #     metadata={'query': query, 'normalized': normalized_address,'search_type': search_type, 'search_params': requestargs, 'crs': crs},
+    #     pagination=paginator.get_page_info(page_num),
+    #     srid=srid,
+    #     normalized_address=normalized_address,
+    #     base_address=base_address,
+    #     tag_data=all_tags,
+    #     match_type=match_type,
+    #     ref_addr=normalized_address,
+    # )
+    # try:
+    #     result = serializer.serialize_many(addresses_page)
+    # except:
+    #     error = json_error(404, 'Invalid query.',
+    #                        {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs})
+    #     return json_response(response=error, status=404)
 
-    # Get tag data
-    try:
-        all_tags = get_tag_data(addresses)
-    except:
-        error = json_error(404, 'Invalid query.',
-                           {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs,})
-        return json_response(response=error, status=404)
-
-    # Get pagination
-    paginator = QueryPaginator(addresses)
-
-    # Ensure that we have results
-    addresses_count = paginator.collection_size
-
-    # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
-    if addresses_count == 0:
-
-        if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
-            error = json_error(404, 'Could not find any opa addresses matching the query.',
-                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
-            return json_response(response=error, status=404)
-        else: # Try to cascade to street centerline segment
-            return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type, parsed=parsed)
-
-    # Validate the pagination
-    page_num, error = validate_page_param(request, paginator)
-    if error:
-        return json_response(response=error, status=404)
-
-    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
-
-    # Serialize the response
-    addresses_page = paginator.get_page(page_num)
-    serializer = AddressJsonSerializer(
-        metadata={'query': query, 'normalized': normalized_address,'search_type': search_type, 'search_params': requestargs, 'crs': crs},
-        pagination=paginator.get_page_info(page_num),
-        srid=srid,
-        normalized_address=normalized_address,
-        base_address=base_address,
-        tag_data=all_tags,
-        match_type=match_type,
-        ref_addr=normalized_address,
-    )
-    try:
-        result = serializer.serialize_many(addresses_page)
-    except:
-        error = json_error(404, 'Invalid query.',
-                           {'query': query, 'normalized': normalized_address, 'search_type': search_type, 'search_params': requestargs})
-        return json_response(response=error, status=404)
-
-    return json_response(response=result, status=200)
+    # return json_response(response=result, status=200)
 
 
 @app.route('/block/<path:query>')
@@ -1118,10 +1197,16 @@ def street(query):
                        {'query': query})
     return json_response(response=error, status=404)
 
+# from flask_sqlalchemy import get_debug_queries
+# @app.after_request
+# def after_request(response):
+#     for query in get_debug_queries():
+#         app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
+#     return response
 
 @app.route('/search/<path:query>')
-@cache_for(hours=1)
-@swag_from('docs/search.yml')
+# @cache_for(hours=1)
+# @swag_from('docs/search.yml')
 def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)
