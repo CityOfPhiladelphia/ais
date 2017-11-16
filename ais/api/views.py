@@ -267,7 +267,7 @@ def unknown_cascade_view(**kwargs):
 
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
-# @swag_from('docs/addresses.yml')
+@swag_from('docs/addresses.yml')
 def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -330,6 +330,7 @@ def addresses(query):
     search_type = parsed['type']
 
     loose_filters = NotNoneDict(
+        seg_id=int(parsed['components']['cl_seg_id']),
         street_name=parsed['components']['street']['name'],
         address_low=low_num if low_num is not None
             else full_num,
@@ -1141,8 +1142,8 @@ def street(query):
 #     return response
 
 @app.route('/search/<path:query>')
-# @cache_for(hours=1)
-# @swag_from('docs/search.yml')
+@cache_for(hours=1)
+@swag_from('docs/search.yml')
 def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)
