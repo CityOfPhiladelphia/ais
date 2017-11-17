@@ -440,12 +440,6 @@ def test_unit_type_siblings_match_exact(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert match_type == 'generic_unit_sibling'
-    response = client.get('/search/1769 frankford ave # 2')
-    data = json.loads(response.get_data().decode())
-    assert_status(response, 200)
-    feature = data['features'][0]
-    match_type = feature['match_type']
-    assert match_type == 'exact'
 
 def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
     response = client.get('/search/2100 KITTY HAWK AVE')
