@@ -58,17 +58,19 @@ class GeoJSONSerializer (BaseSerializer):
 
 
     def get_address_response_relationships(self, address=None, **kwargs):
+        # TODO: assign in include_units fct?
 
         #print("normalized: ", self.normalized_address)
         #print(self.ref_addr)
         ref_address = Address(self.ref_addr)
         address = Address(address.street_address)
+        # print(ref_address, address)
         ref_base_address = ' '.join([ref_address.address_full, ref_address.street_full])
         ref_base_address_no_suffix = '{} {}'.format(ref_address.address_full_num, ref_address.street_full)
         base_address = ' '.join([address.address_full, address.street_full])
         base_address_no_suffix = '{} {}'.format(address.address_full_num, address.street_full)
         match_type = None
-
+        unit_type_variations = ["APT", "UNIT", "#"]
         street_address_variations = [address.street_address,
                                      address.street_address.replace(address.unit_type, "APT"),
                                      address.street_address.replace(address.unit_type, "UNIT"),
@@ -85,14 +87,21 @@ class GeoJSONSerializer (BaseSerializer):
                 if ref_address.unit_type is not None:
                     # Reference address has unit type
                     if ref_address.unit_num == address.unit_num:
+                        if ref_address.unit_type == address.unit_type:
+                            match_type = 'exact' if not ref_address.address_high else 'in_range'
                         # Reference and address have same unit num
-                        match_type = 'unit_sibling' if not ref_address.address_high else 'in_range' #TODO: verify
-                        if ref_address.street_address in street_address_variations:
-                            # Unit type is a generic unit type
-                            # match_type = 'generic_unit_sibling'
-                            match_type = 'exact'
+                        elif all(unit_type in unit_type_variations for unit_type in [ref_address.unit_type, address.unit_type]):
+                            match_type = 'generic_unit_sibling' if not ref_address.address_high else 'in_range_generic_unit_sibling'
+                        # if ref_address.street_address in street_address_variations:
+                        #     # Unit type is a generic unit type
+                        #     # match_type = 'generic_unit_sibling'
+                        #     match_type = 'exact'
+                        else:
+                            match_type = 'unit_sibling' if not ref_address.address_high else 'in_range_unit_sibling'
                     elif base_address == ref_base_address:
                         match_type = 'has_base_unit_child'
+                    elif ref_address.address_high:
+                        match_type = 'in_range_unit_sibling'
                 elif ref_address.address_high is not None:
                     # Ref address has no unit type but has high_num:
                     if ref_address.unit_type is not None:
@@ -111,12 +120,20 @@ class GeoJSONSerializer (BaseSerializer):
                 if ref_address.unit_type is not None:
                     # Unit type is a generic unit type
                     if ref_address.street_address in street_address_variations:
+                        print(3)
                         if ref_address.address_high is None:
                             match_type = 'unit_sibling'
                         else:
                             match_type = 'unit_child'
                     else:
-                        pass
+                        print(4)
+                        if ref_address.address_high is None:
+                            if all(unit_type in unit_type_variations for unit_type in [ref_address.unit_type, address.unit_type]):
+                                match_type = 'range_parent_unit_sibling'
+                            else:
+                                match_type = 'range_parent_unit_child'
+                        else:
+                            match_type = 'unit_sibling' if ref_address.address_low == address.address_low and ref_address.address_high == address.address_high else 'overlapping_unit_sibling'
                 else:
                     if ref_address.address_high is None:
                         match_type = 'range_parent_unit_child'
