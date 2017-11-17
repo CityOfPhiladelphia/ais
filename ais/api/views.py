@@ -403,6 +403,10 @@ def addresses(query):
                 error = json_error(404, 'Could not find any opa addresses matching the query.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
+            elif 'estimate' in request.args and request.args['estimate'].lower() == 'false':
+                error = json_error(404, 'Could not find any known addresses matching the query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+                return json_response(response=error, status=404)
             else:  # Try to cascade to street centerline segment
                 return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type,
                                             parsed=parsed)
@@ -499,6 +503,10 @@ def addresses(query):
     if not addresses.all(): # TODO: Decide what to do here!
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+            return json_response(response=error, status=404)
+        elif 'estimate' in request.args and request.args['estimate'].lower() == 'false':
+            error = json_error(404, 'Could not find any known addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
         else: # Try to cascade to street centerline segment
