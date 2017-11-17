@@ -439,13 +439,7 @@ def test_unit_type_siblings_match_exact(client):
     assert_status(response, 200)
     feature = data['features'][0]
     match_type = feature['match_type']
-    assert match_type == 'exact'
-    response = client.get('/search/337 s camac st unit 3')
-    data = json.loads(response.get_data().decode())
-    assert_status(response, 200)
-    feature = data['features'][0]
-    match_type = feature['match_type']
-    assert match_type == 'exact'
+    assert match_type == 'generic_unit_sibling'
     response = client.get('/search/1769 frankford ave # 2')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
@@ -564,12 +558,6 @@ def test_ranged_addresses_with_unmatched_unit_returns_correct_match_types(client
     features = data['features']
     assert features[0]['properties']['street_address'] == '826-28 N 3RD ST'
     assert features[0]['match_type'] == 'has_base'
-    assert features[1]['properties']['street_address'] == '826-30 N 3RD ST'
-    assert features[1]['match_type'] == 'has_base_overlaps'
-    assert features[2]['properties']['street_address'] == '826-34 N 3RD ST'
-    assert features[2]['match_type'] == 'has_base_overlaps'
-    assert features[3]['properties']['street_address'] == '826 N 3RD ST'
-    assert features[3]['match_type'] == 'has_base_in_range'
 
 def test_api_response_signature(client):
     response = client.get('/search/1234 market st')
