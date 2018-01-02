@@ -97,7 +97,8 @@ mapping = OrderedDict([
     ('geocode_lon', 'geocode_lon'),
     ('eclipse_location_id', 'eclipse_location_id'),
     ('zoning_document_ids', 'zoning_document_ids'),
-    ('bin', 'bin')
+    ('bin', 'bin'),
+    ('street_code', 'street_code')
 ])
 
 
