@@ -327,12 +327,12 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
                 ('seg_id', address.seg_id),
-                ('zip_code', ''),
-                ('zip_4', ''),
-                ('usps_bldgfirm', ''),
-                ('usps_type', ''),
-                ('election_block_id', ''),
-                ('election_precinct', ''),
+                ('zip_code', address.zip_code),
+                ('zip_4', address.zip_4),
+                ('usps_bldgfirm', address.usps_bldgfirm),
+                ('usps_type', address.usps_type),
+                ('election_block_id', address.election_block_id),
+                ('election_precinct', address.election_precinct),
                 ('pwd_parcel_id', ''),
                 ('dor_parcel_id', ''),
                 ('li_address_key', ''),
@@ -386,7 +386,6 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
     def model_to_data(self, intersection):
 
         if intersection.geom is not None:
-            from shapely.geometry import Point
             shape = to_shape(intersection.geom)
             shape = self.project_shape(shape)
             geom_data = self.shape_to_geodict(shape)
