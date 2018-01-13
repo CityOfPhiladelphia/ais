@@ -38,14 +38,17 @@ if [ $? -ne 0 ]
 then
   echo "Address summary table swap failed."
   send_slack "Address summary swap failed."
+  psql -U ais_engine -h localhost -d ais_engine -c "DROP TABLE address_summary_transformed;"
   exit 1;
 fi
 echo "Completed updating address summary in DataBridge."
 send_slack "Completed updating address summary in DataBridge."
 
 echo "Cleaning up."
-psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN objectid;"
-psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN shape;"
+#psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN objectid;"
+#psql -U ais_engine -h localhost -d ais_engine -c "ALTER TABLE address_summary_transformed DROP COLUMN shape;"
+psql -U ais_engine -h localhost -d ais_engine -c "DROP TABLE address_summary_transformed;"
+
 
 #DOR_PARCEL_ADDRESS_COMP_ANALYSIS
 echo "Updating dor_parcel_address_check"

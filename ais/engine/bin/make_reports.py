@@ -296,7 +296,7 @@ postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
 
 print("Cleaning up.")
-cur = read_conn.cursor()
-cur.execute('DROP TABLE "address_summary_transformed";')
-read_conn.commit()
+# cur = read_conn.cursor()
+# cur.execute('DROP TABLE "address_summary_transformed";')
+# read_conn.commit()
 read_conn.close()
