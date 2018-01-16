@@ -309,9 +309,12 @@ def addresses(query):
         requestargs[arg] = val
     # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
     search_type=normalized_address= ''
+    max_range = requestargs.get('max_range', 200)
+    print(max_range)
     try:
-        parsed = PassyunkParser().parse(query)
+        parsed = PassyunkParser(MAX_RANGE=int(max_range)).parse(query)
         search_type = parsed['type']
+        print(search_type)
         normalized_address = parsed['components']['output_address']
     except:
         error = json_error(404, 'Could not parse query.',
