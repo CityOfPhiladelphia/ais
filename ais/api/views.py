@@ -21,7 +21,6 @@ from .paginator import QueryPaginator, Paginator
 from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, AddressTagSerializer
 
 config = app.config
-parser = PassyunkParser(MAX_RANGE=9999999)
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -311,7 +310,7 @@ def addresses(query):
     # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
     search_type=normalized_address= ''
     try:
-        parsed = parser.parse(query)
+        parsed = PassyunkParser().parse(query)
         search_type = parsed['type']
         normalized_address = parsed['components']['output_address']
     except:
@@ -348,7 +347,6 @@ def addresses(query):
     )
     # Remove keys with null values:
     filters = loose_filters.copy()
-    # print(filters)
     for key, value in loose_filters.items():
         if value is None:
             del filters[key]
@@ -528,7 +526,7 @@ def block(query):
           would go at a new route, like `segment` or `block-face`.
     """
     query = query.strip('/')
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
 
     # search_type = parsed['type']
     # if search_type != 'block':
@@ -663,7 +661,7 @@ def account(query):
     Returns all addresses with opa_account_num matching query.
     """
     query = query.strip('/')
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
 
@@ -786,7 +784,7 @@ def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
     """
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
     normalized_id = parsed['components']['output_address']
     search_type = parsed['type']
     if search_type != 'mapreg':
@@ -845,7 +843,7 @@ def intersection(query):
     Called by search endpoint if search_type == "intersection_addr"
     '''
     query = query.strip('/')
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
     search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
 
     if search_type != 'intersection':
@@ -962,7 +960,7 @@ def intersection(query):
 def reverse_geocode(query):
 
     query = query.strip('/')
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
     search_type_out = 'coordinates'
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
@@ -1004,7 +1002,7 @@ def reverse_geocode(query):
                            {'query': query, 'normalized': normalized, 'search_type': search_type})
         return json_response(response=error, status=404)
 
-    parsed = parser.parse(street_address)
+    parsed = PassyunkParser().parse(street_address)
     normalized_address = parsed['components']['output_address']
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
@@ -1088,7 +1086,7 @@ def reverse_geocode(query):
 def service_areas(query):
 
     query = query.strip('/')
-    parsed = parser.parse(query)
+    parsed = PassyunkParser().parse(query)
     search_type = parsed['type']
 
     if search_type == 'none':
@@ -1196,7 +1194,7 @@ def search(query):
         'street': addresses,
     }
     try:
-        parsed = parser.parse(query)
+        parsed = PassyunkParser().parse(query)
     except:
         error = json_error(404, 'Could not parse query.',
                            {'query': query})
