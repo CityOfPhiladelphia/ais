@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from shapely.wkt import loads
 import datum
 import petl as etl
 import cx_Oracle
@@ -206,11 +207,12 @@ for layer in layers:
 		if source_type == 'point':
 			value_field = source['value_field']
 			seg_id_field = source.get('seg_id_field', '')
-			source_fields = [value_field, object_id_field]
+			method = source.get('method', '')
+			source_fields = [value_field, object_id_field] if method != 'seg_id' else [value_field]
 			if seg_id_field:
 				source_fields.append(seg_id_field)
 			source_rows = source_table.read(fields=source_fields, \
-											geom_field=geom_field)
+											geom_field=geom_field) if method != 'seg_id' else source_table.read(fields=source_fields)
 
 			for i, source_row in enumerate(source_rows):
 				# Transform if necessary
@@ -226,10 +228,10 @@ for layer in layers:
 
 				point = {
 					'layer_id': layer_id,
-					'source_object_id': source_row[object_id_field],
+					'source_object_id': source_row[object_id_field] if method != 'seg_id' else None,
 					'seg_id': source_row[seg_id_field] if seg_id_field else None,
 					'value': value or '',
-					'geom': source_row[source_geom_field],
+					'geom': source_row[source_geom_field] if method != 'seg_id' else loads('POINT(0 0)').wkt,
 				}
 				points.append(point)
 

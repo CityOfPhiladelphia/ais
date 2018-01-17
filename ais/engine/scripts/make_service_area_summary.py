@@ -51,7 +51,7 @@ WRITE_OUT = True
 # xy_map = {}  # x => y => [sa_poly_rows]
 
 """MAIN"""
-
+#
 if WRITE_OUT:
 	print('Dropping service area summary table...')
 	db.drop_table('service_area_summary')
@@ -102,7 +102,7 @@ sa_summary_rows = []
 last_x = None
 last_y = None
 last_sa_rows = None
-
+#
 print('Intersecting addresses and service area polygons...')
 for i, address_summary_row in enumerate(address_summary_rows):
 	try:
@@ -167,23 +167,23 @@ if WRITE_OUT:
 	sa_summary_table.write(sa_summary_rows)
 	del sa_summary_rows
 
-# Update where method = yes_or_no:
-for sa_layer_def in sa_layer_defs:
-	layer_id = sa_layer_def['layer_id']
-	if 'polygon' in sa_layer_def['sources']:
-		method = sa_layer_def['sources']['polygon'].get('method')
-		if method == 'yes_or_no':
-			stmt = '''
-					UPDATE service_area_summary sas
-					SET {layer_id} = (
-					CASE 
-					WHEN {layer_id} != '' THEN 'yes'
-					ELSE 'no'
-					END);
-					'''.format(layer_id=layer_id)
-			db.execute(stmt)
-			# print(ais_db.c.rowcount)
-			db.save()
+# # Update where method = yes_or_no:
+# for sa_layer_def in sa_layer_defs:
+# 	layer_id = sa_layer_def['layer_id']
+# 	if 'polygon' in sa_layer_def['sources']:
+# 		method = sa_layer_def['sources']['polygon'].get('method')
+# 		if method == 'yes_or_no':
+# 			stmt = '''
+# 					UPDATE service_area_summary sas
+# 					SET {layer_id} = (
+# 					CASE
+# 					WHEN {layer_id} != '' THEN 'yes'
+# 					ELSE 'no'
+# 					END);
+# 					'''.format(layer_id=layer_id)
+# 			db.execute(stmt)
+# 			# print(ais_db.c.rowcount)
+# 			db.save()
 ################################################################################
 # SERVICE AREA LINES
 ################################################################################
@@ -308,7 +308,7 @@ if WRITE_OUT:
 					from
 						(
 						select ads.street_address, saplv.value
-						from address_summary ads 
+						from address_summary ads
 						cross join lateral
 						(
 							select sap_layer.value
@@ -321,6 +321,24 @@ if WRITE_OUT:
 			db.execute(stmt)
 			db.save()
 ################################
+# Update where method = yes_or_no:
+print("Updating service_area_summary values where method = 'yes_or_no'")
+for sa_layer_def in sa_layer_defs:
+	layer_id = sa_layer_def['layer_id']
+	method = sa_layer_def.get('value_method')
+	if method == 'yes_or_no':
+		stmt = '''
+				UPDATE service_area_summary sas
+				SET {layer_id} = (
+				CASE 
+				WHEN {layer_id} != '' THEN 'yes'
+				ELSE 'no'
+				END);
+				'''.format(layer_id=layer_id)
+		db.execute(stmt)
+		db.save()
+#################################
+# Clean up:
 db.close()
 
 print('Finished in {}'.format(datetime.now() - start))

@@ -691,6 +691,7 @@ SERVICE_AREAS = {
                     'method': 'yes_or_no'
                 },
             },
+            'value_method': 'yes_or_no',
         },
 
         # STEEP SLOPE PROTECTION AREAS
@@ -931,14 +932,17 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'point': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.CleanPhilly_Block_Captains',
+                    'db':                   'gis',
+                    # 'table':                'gis_streets.CleanPhilly_Block_Captains',
+                    'table':                'VW_CLEANPHL_BLOCK_CAPTAINS',
                     'seg_id_field':         'seg_id',
-                    'value_field':          'address',
-                    'object_id_field':      'objectid',
+                    # 'value_field':          'address',
+                    'value_field':          'match_addr',
+                    # 'object_id_field':      'objectid',
                     'method':               'seg_id',
                 },
             },
+            'value_method': 'yes_or_no',
         },
         {
             'layer_id':                     'historic_street',
