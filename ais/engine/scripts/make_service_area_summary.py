@@ -331,8 +331,8 @@ for sa_layer_def in sa_layer_defs:
 				UPDATE service_area_summary sas
 				SET {layer_id} = (
 				CASE 
-				WHEN {layer_id} != '' THEN 'yes'
-				ELSE 'no'
+				WHEN {layer_id} != '' THEN 'Yes'
+				ELSE 'No'
 				END);
 				'''.format(layer_id=layer_id)
 		db.execute(stmt)
