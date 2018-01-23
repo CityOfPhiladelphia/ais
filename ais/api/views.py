@@ -210,7 +210,7 @@ def unknown_cascade_view(**kwargs):
         distance_ratio = (address.address_low - cascadedseg.right_from) / side_delta
 
     shape = to_shape(cascadedseg.geom)
-
+    cascade_geocode_type = 'out_of_range' if to_num < address.address_low or from_num > address.address_low else cascade_geocode_type
     # New method: interpolate buffered
     seg_xsect_xy=util.interpolate_buffered(shape, distance_ratio, centerline_end_buffer)
     seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
