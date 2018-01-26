@@ -382,6 +382,18 @@ def addresses(query):
             .order_by_address()
 
         # Get tag data
+        # if not addresses.all():
+        # if addresses.all():
+        if not addresses.all():
+            if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
+                error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+                return json_response(response=error, status=404)
+            else:
+                error = json_error(404, 'Invalid query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type,
+                                    'search_params': requestargs, })
+                return json_response(response=error, status=404)
         try:
             all_tags = get_tag_data(addresses)
         except:
@@ -408,8 +420,12 @@ def addresses(query):
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:  # Try to cascade to street centerline segment
-                return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type,
-                                            parsed=parsed)
+                error = json_error(404, 'Invalid query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type,
+                                    'search_params': requestargs, })
+                return json_response(response=error, status=404)
+                # return unknown_cascade_view(query=query, normalized_address=normalized_address, search_type=search_type,
+                #                             parsed=parsed)
 
         # Validate the pagination
         page_num, error = validate_page_param(request, paginator)
