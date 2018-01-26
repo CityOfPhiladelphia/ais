@@ -178,14 +178,14 @@ The root of the `FeatureCollection` contains:
      * `unmatched`: Address cannot be matched. Location is estimated from query components. Overlaying service areas are found for estimated location. 
 * The following list of `properties`:
   * `street_address` (Full address)
-  * `address_low`
-  * `address_low_suffix`
-  * `address_low_frac`
-  * `address_high`
+  * `address_low` (**1234** MARKET ST)
+  * `address_low_suffix` (e.g. 4131**R** RIDGE AVE)
+  * `address_low_frac`  (e.g. 503 **1/2** FITZWATER ST)
+  * `address_high` (e.g. 1608-**16** POPLAR ST)
   * `street_predir` (e.g., **N** BROAD ST)
   * `street_name` (e.g., N **BROAD** ST)
   * `street_suffix` (e.g., N BROAD **ST**)
-  * `street_postdir`
+  * `street_postdir` (e.g. 190 N INDEPENDENCE MALL **W**)
   * `unit_type` (APT, STE, FL, #, UNIT, etc.)
   * `unit_num`
   * `street_full` (e.g., **N BROAD ST**)
