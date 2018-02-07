@@ -15,8 +15,8 @@ parser = Parser()
 config = app.config
 ENGINE_SRID = config['ENGINE_SRID']
 default_SRID = 4326
-OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
-OWNER_PARTS_THRESHOLD = config['OWNER_PARTS_THRESHOLD']
+# OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
+# OWNER_PARTS_THRESHOLD = config['OWNER_PARTS_THRESHOLD']
 ###########
 # STREETS #
 ###########
@@ -761,6 +761,18 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.address_low_suffix.nullsfirst(),
                              AddressSummary.address_high)
 
+    def order_by_owner_address(self, query):
+        return self.order_by(desc(func.similarity(AddressSummary.opa_owners, '{}'.format(query))),
+                             AddressSummary.street_name,
+                             AddressSummary.street_suffix,
+                             AddressSummary.street_predir,
+                             AddressSummary.street_postdir,
+                             AddressSummary.address_low,
+                             AddressSummary.unit_type.nullsfirst(),
+                             AddressSummary.unit_num.nullsfirst(),
+                             AddressSummary.address_low_suffix.nullsfirst(),
+                             AddressSummary.address_high)
+
     def sort_by_source_address_from_search_type(self, search_type):
 
         sort = self
@@ -812,19 +824,26 @@ class AddressSummaryQuery(BaseQuery):
 
     def filter_by_owner(self, *owner_parts):
         query = self
-        tot_len = sum(len(s) for s in owner_parts)
-        if tot_len > OWNER_PARTS_THRESHOLD:
-            for part in owner_parts:
-                query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
-        else:
-            for part in owner_parts:
-                query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
-                    OWNER_RESPONSE_LIMIT).from_self()
-            if not query.all():
-                query = self
-                for part in reversed(owner_parts):
-                    query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
-                        OWNER_RESPONSE_LIMIT).from_self()
+        owner_parts = list(owner_parts)
+        # Sort owner_parts by length of each part to optimize filtering
+        owner_parts = sorted(owner_parts, key = lambda s: len(s), reverse=True)
+        # Match to opa_owners by part
+        for part in owner_parts:
+            query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        # query = query.order_by(desc(func.similarity(AddressSummary.opa_owners, '{}'.format(owner_full))))
+        # tot_len = sum(len(s) for s in owner_parts)
+        # if tot_len > OWNER_PARTS_THRESHOLD:
+        #     for part in owner_parts:
+        #         query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        # else:
+        #     for part in owner_parts:
+        #         query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+        #             OWNER_RESPONSE_LIMIT).from_self()
+        #     if not query.all():
+        #         query = self
+        #         for part in reversed(owner_parts):
+        #             query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+        #                 OWNER_RESPONSE_LIMIT).from_self()
         return query
 
     def filter_by_unit_type(self, unit_type):

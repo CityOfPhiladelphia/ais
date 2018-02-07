@@ -21,6 +21,7 @@ from .paginator import QueryPaginator, Paginator
 from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, AddressTagSerializer
 
 config = app.config
+OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -624,15 +625,20 @@ def block(query):
 @swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
-
     owner_parts = query.upper().split()
-
+    # Require owner searches to be more than 1 character in length (total or at least one part > 1 character)
+    if len(query) < 2 or all(len(part) < 2 for part in owner_parts):
+        error = json_error(404, 'Query too short, please be more descriptive.',
+                           {'query': query})
+        return json_response(response=error, status=404)
     # Match a set of addresses
     addresses = AddressSummary.query\
-        .filter_by_owner(*owner_parts)\
+        .filter_by_owner(*owner_parts) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
         .get_address_geoms(request) \
-        .order_by_address()
+        .order_by_owner_address(query) \
+        .limit(OWNER_RESPONSE_LIMIT)
+        # .order_by_address()
 
     # Get pagination
     paginator = QueryPaginator(addresses)
