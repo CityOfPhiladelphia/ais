@@ -685,6 +685,11 @@ def test_address_low_suffix_include_units_matches_on_base_for_ranged_address(cli
     assert data['features'][1]['match_type'] == 'unit_child'
     assert data['features'][1]['properties']['street_address'] == '5431R-39 WESTFORD RD # A'
 
-def test_match_type_has_base_no_suffix_unit_child(client):
-    pass
-    #TODO: find appropriate test case (i.e. 742 S Darien St?include_units) and write test
+# def test_match_type_has_base_no_suffix_unit_child(client):
+#     pass
+#   TODO: find appropriate test case (i.e. 742 S Darien St?include_units) and write test
+
+def test_nearest_seg_in_service_areas_response(client):
+    response = client.get('/service_areas/-75.171331,40.000819')
+    data = json.loads(response.get_data().decode())
+    assert data['service_areas']['nearest_seg'] == 521774
