@@ -452,6 +452,8 @@ class ServiceAreaSerializer ():
         try:
             rate = float(data['service_areas']['recycling_diversion_rate'])
             data['service_areas']['recycling_diversion_rate'] = round(rate/100, 3)
+            data['service_areas']['nearest_seg'] = int(data['service_areas']['nearest_seg'])
+
         except:
             pass
         # Change all nulls to empty strings:
@@ -467,14 +469,12 @@ class ServiceAreaSerializer ():
         sa_data_obj = {'service_areas': self.sa_data}
         data.update(self.metadata)
         data.update(sa_data_obj)
-        #data.update({'seg_id': self.seg_id})
         return data
 
     def render(self, data):
         final_data = []
         if self.metadata:
             final_data += sorted(self.metadata.items(),reverse=True)
-
         # Render as a feature collection if in a list
         if isinstance(data, list):
             # if self.pagination:

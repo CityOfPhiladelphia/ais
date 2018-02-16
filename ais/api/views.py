@@ -1133,16 +1133,24 @@ def service_areas(query):
     search_type_out = 'coordinates'
 
     sa_stmt = '''
-                with foo as
-                (
-                SELECT layer_id, value
-                from service_area_polygon
-                where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}))
-                )
-                SELECT DISTINCT ON (cols.layer_id) cols.layer_id, foo.value
-                from service_area_layer cols
-                left join foo on foo.layer_id = cols.layer_id
-            '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
+    with foo as
+    (
+    SELECT layer_id, value
+    from service_area_polygon
+    where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}))
+     )
+    SELECT DISTINCT ON (cols.layer_id) cols.layer_id, foo.value
+    from service_area_layer cols
+    left join foo on foo.layer_id = cols.layer_id
+    union
+    (
+    select 'nearest_seg'::text as layer_id, cast(ss.seg_id as text) as value
+    from street_segment ss
+    order by st_distance(ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),ss.geom) asc
+    limit 1
+    )
+    order by layer_id 
+    '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
 
     result = db.engine.execute(sa_stmt)
     for item in result.fetchall():
