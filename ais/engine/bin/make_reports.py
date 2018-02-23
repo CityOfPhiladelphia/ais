@@ -177,14 +177,17 @@ etl.fromdb(read_conn, 'select * from service_area_summary')\
 ########################
 print("Creating transformed address_summary table")
 address_summary_in_table = etl.fromdb(read_conn, 'select * from address_summary')
-address_summary_out_table = address_summary_in_table \
+address_summary_in_table \
     .addfield('address_full', (lambda a: make_address_full({'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'], 'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
     .addfield('temp_lonlat', (lambda a: transform_coords({'geocode_x': a['geocode_x'], 'geocode_y': a['geocode_y']}))) \
     .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
     .fieldmap(mapping) \
-    .todb(read_conn, "address_summary_transformed", create=True, sample=0)
+    .tocsv("address_summary_transformed.csv", write_headers=True)
+
+address_summary_out_table = etl.fromcsv("address_summary_transformed.csv")
+address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
@@ -242,13 +245,12 @@ print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
 
-dor_table_address_analysis = etl.fromoraclesde(read_dsn, source_table_name) \
+etl.fromoraclesde(read_dsn, source_table_name) \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
          'stdes', 'stdessuf', 'shape') \
     .addfield('concatenated_address', lambda c: concatenate_dor_address(
     {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
-     'stdes': c['stdes'],
-     'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
+     'stdes': c['stdes'], 'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
     .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
     .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
     .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
@@ -286,7 +288,51 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
     .addfield('change_stdessuf',
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
                   standardize_nulls(a['std_address_postdir'])) else 0) \
-    .topostgis(pg_db, 'dor_parcel_address_analysis')
+    .tocsv('dor_parcel_address_analysis.csv', write_headers=True)
+
+# get address_summary rows with dor_parcel_id as array:
+address_summary_rows = address_summary_out_table \
+    .addfield('DOR_PARCEL_ID_ARRAY', lambda d: d.DOR_PARCEL_ID.split('|') if d.DOR_PARCEL_ID else [])
+
+dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
+mapreg_count_map = {}
+address_count_map = {}
+dor_parcel_header = dor_parcel_address_analysis[0]
+
+# count_maps
+for row in dor_parcel_address_analysis[1:]:
+    dict_row = dict(zip(dor_parcel_header, row))
+    mapreg = dict_row['MAPREG']
+    std_street_address = dict_row['STD_STREET_ADDRESS']
+    if mapreg not in mapreg_count_map:
+        mapreg_count_map[mapreg] = 1
+    else:
+        mapreg_count_map[mapreg] += 1
+    if std_street_address not in address_count_map:
+        address_count_map[std_street_address] = 1
+    else:
+        address_count_map[std_street_address] += 1
+
+# mapreg_opa_map
+mapreg_opa_map = {}
+address_summary_header = address_summary_rows[0]
+for i, row in enumerate(address_summary_rows[1:]):
+    if i % 1000 == 0:
+        print(i)
+    dict_row = dict(zip(address_summary_header, row))
+    opa_account_num = dict_row['OPA_ACCOUNT_NUM']
+    dor_parcel_ids = dict_row['DOR_PARCEL_ID_ARRAY']
+    for dor_parcel_id in dor_parcel_ids:
+        if dor_parcel_id in mapreg_opa_map and opa_account_num not in mapreg_opa_map[dor_parcel_id]:
+            mapreg_opa_map[dor_parcel_id].append(opa_account_num)
+
+dor_report_rows = dor_parcel_address_analysis\
+    .addfield('OPA_ACCOUNT_NUMS', lambda o: mapreg_opa_map.get(o.MAPREG,[])) \
+    .addfield('NUM_PARCELS_W_MAPREG', lambda o: mapreg_count_map.get(o.MAPREG, 0)) \
+    .addfield('NUM_PARCELS_W_ADDRESS', lambda o: address_count_map.get(o.STD_STREET_ADDRESS, 0))
+
+# Write to local db
+dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################

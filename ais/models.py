@@ -1345,4 +1345,7 @@ class DorParcelAddressAnalysis(db.Model):
     change_stdes = db.Column(db.Integer)
     change_stdessuf = db.Column(db.Integer)
     no_address = db.Column(db.Integer)
+    opa_account_nums = db.Column(db.Text)
+    num_parcels_w_mapreg = db.Column(db.Integer)
+    num_parcels_w_address = db.Column(db.Integer)
     shape = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
