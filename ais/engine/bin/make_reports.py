@@ -164,14 +164,14 @@ def concatenate_dor_address(source_comps):
 # TRUE RANGE #
 ##############
 print("Writing true_range table.")
-etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
 print("Writing service_area_summary table")
-etl.fromdb(read_conn, 'select * from service_area_summary')\
-    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-    .tooraclesde(write_dsn, service_area_summary_write_table_name)
+#etl.fromdb(read_conn, 'select * from service_area_summary')\
+#    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+#    .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
@@ -292,7 +292,7 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 
 # get address_summary rows with dor_parcel_id as array:
 address_summary_rows = address_summary_out_table \
-    .addfield('DOR_PARCEL_ID_ARRAY', lambda d: d.DOR_PARCEL_ID.split('|') if d.DOR_PARCEL_ID else [])
+    .addfield('dor_parcel_id_array', lambda d: d.DOR_PARCEL_ID.split('|') if d.DOR_PARCEL_ID else [])
 
 dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
 mapreg_count_map = {}
@@ -302,8 +302,8 @@ dor_parcel_header = dor_parcel_address_analysis[0]
 # count_maps
 for row in dor_parcel_address_analysis[1:]:
     dict_row = dict(zip(dor_parcel_header, row))
-    mapreg = dict_row['MAPREG']
-    std_street_address = dict_row['STD_STREET_ADDRESS']
+    mapreg = dict_row['mapreg']
+    std_street_address = dict_row['std_street_address']
     if mapreg not in mapreg_count_map:
         mapreg_count_map[mapreg] = 1
     else:
@@ -320,16 +320,16 @@ for i, row in enumerate(address_summary_rows[1:]):
     if i % 1000 == 0:
         print(i)
     dict_row = dict(zip(address_summary_header, row))
-    opa_account_num = dict_row['OPA_ACCOUNT_NUM']
-    dor_parcel_ids = dict_row['DOR_PARCEL_ID_ARRAY']
+    opa_account_num = dict_row['opa_account_num']
+    dor_parcel_ids = dict_row['dor_parcel_id_array']
     for dor_parcel_id in dor_parcel_ids:
         if dor_parcel_id in mapreg_opa_map and opa_account_num not in mapreg_opa_map[dor_parcel_id]:
             mapreg_opa_map[dor_parcel_id].append(opa_account_num)
 
 dor_report_rows = dor_parcel_address_analysis\
-    .addfield('OPA_ACCOUNT_NUMS', lambda o: mapreg_opa_map.get(o.MAPREG,[])) \
-    .addfield('NUM_PARCELS_W_MAPREG', lambda o: mapreg_count_map.get(o.MAPREG, 0)) \
-    .addfield('NUM_PARCELS_W_ADDRESS', lambda o: address_count_map.get(o.STD_STREET_ADDRESS, 0))
+    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.MAPREG,[])) \
+    .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.MAPREG, 0)) \
+    .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.STD_STREET_ADDRESS, 0))
 
 # Write to local db
 dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
