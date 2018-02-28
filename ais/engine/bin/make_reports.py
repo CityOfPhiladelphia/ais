@@ -292,7 +292,7 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 
 # get address_summary rows with dor_parcel_id as array:
 address_summary_rows = address_summary_out_table \
-    .addfield('dor_parcel_id_array', lambda d: d.DOR_PARCEL_ID.split('|') if d.DOR_PARCEL_ID else [])
+    .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else [])
 
 dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
 mapreg_count_map = {}
@@ -327,9 +327,9 @@ for i, row in enumerate(address_summary_rows[1:]):
             mapreg_opa_map[dor_parcel_id].append(opa_account_num)
 
 dor_report_rows = dor_parcel_address_analysis\
-    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.MAPREG,[])) \
-    .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.MAPREG, 0)) \
-    .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.STD_STREET_ADDRESS, 0))
+    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,[])) \
+    .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
+    .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
 
 # Write to local db
 dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
@@ -337,7 +337,7 @@ dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
 print("Writing spatial reports to DataBridge.")
-oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
+oracle_conn_gis_ais = config['ORACLE_CONN_GIS_T_AIS']
 postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
 
