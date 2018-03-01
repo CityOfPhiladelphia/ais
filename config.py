@@ -570,6 +570,42 @@ SERVICE_AREAS = {
             },
         },
         {
+            'layer_id':                     'state_house_rep_2012',
+            'name':                         'State House Rep 2012',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.state_house_rep_2012',
+                    'value_field':          'district_number',
+                },
+            },
+        },
+        {
+            'layer_id':                     'state_senate_2012',
+            'name':                         'State Senate 2012',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.state_senate_2012',
+                    'value_field':          'district_number',
+                },
+            },
+        },
+        {
+            'layer_id':                     'us_congressional_2012',
+            'name':                         'US Congressional 2012',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.us_congressional_2012',
+                    'value_field':          'district_number',
+                },
+            },
+        },
+        {
             'layer_id':                     'planning_district',
             'name':                         'Planning District',
             'description':                  '',
@@ -668,30 +704,30 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id': 'historic_district',
-            'name': 'Historic Districts',
-            'description': '',
+            'layer_id':                     'historic_district',
+            'name':                         'Historic Districts',
+            'description':                  '',
             'sources': {
                 'polygon': {
-                    'db': 'gis_sa',
-                    'table': 'gis_planning.HistoricDistricts_Local',
-                    'value_field': 'name',
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.HistoricDistricts_Local',
+                    'value_field':          'name',
                 },
             },
         },
         {
-            'layer_id': 'historic_site',
-            'name': 'Historic Sites',
-            'description': '',
+            'layer_id':                     'historic_site',
+            'name':                         'Historic Sites',
+            'description':                  '',
             'sources': {
                 'polygon': {
-                    'db': 'gis_sa',
-                    'table': 'gis_planning.Historic_sites_PhilReg',
-                    'value_field': 'loc',
-                    'method': 'yes_or_no'
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Historic_sites_PhilReg',
+                    'value_field':          'loc',
+                    'method':               'yes_or_no'
                 },
             },
-            'value_method': 'yes_or_no',
+            'value_method':                 'yes_or_no',
         },
 
         # STEEP SLOPE PROTECTION AREAS
