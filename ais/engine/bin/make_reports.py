@@ -164,14 +164,14 @@ def concatenate_dor_address(source_comps):
 # TRUE RANGE #
 ##############
 print("Writing true_range table.")
-#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
 print("Writing service_area_summary table")
-#etl.fromdb(read_conn, 'select * from service_area_summary')\
-#    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-#    .tooraclesde(write_dsn, service_area_summary_write_table_name)
+etl.fromdb(read_conn, 'select * from service_area_summary')\
+  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+  .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
@@ -184,10 +184,10 @@ address_summary_in_table \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
     .fieldmap(mapping) \
-    .tocsv("address_summary_transformed.csv", write_headers=True)
+    .tocsv("address_summary_transformed.csv", write_header=True)
 
 address_summary_out_table = etl.fromcsv("address_summary_transformed.csv")
-address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
+# address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
@@ -244,7 +244,7 @@ source_table_name = 'PARCEL'
 print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
-
+#
 etl.fromoraclesde(read_dsn, source_table_name) \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
          'stdes', 'stdessuf', 'shape') \
@@ -288,12 +288,15 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
     .addfield('change_stdessuf',
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
                   standardize_nulls(a['std_address_postdir'])) else 0) \
-    .tocsv('dor_parcel_address_analysis.csv', write_headers=True)
+    .tocsv('dor_parcel_address_analysis.csv', write_header=True)
 
 # get address_summary rows with dor_parcel_id as array:
 address_summary_rows = address_summary_out_table \
-    .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else [])
-
+    .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
+    .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
+#
+print(etl.look(address_summary_rows))
+#
 dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
 mapreg_count_map = {}
 address_count_map = {}
@@ -320,14 +323,20 @@ for i, row in enumerate(address_summary_rows[1:]):
     if i % 1000 == 0:
         print(i)
     dict_row = dict(zip(address_summary_header, row))
-    opa_account_num = dict_row['opa_account_num']
+    opa_account_nums = dict_row['opa_account_num_array']
     dor_parcel_ids = dict_row['dor_parcel_id_array']
     for dor_parcel_id in dor_parcel_ids:
-        if dor_parcel_id in mapreg_opa_map and opa_account_num not in mapreg_opa_map[dor_parcel_id]:
-            mapreg_opa_map[dor_parcel_id].append(opa_account_num)
+        if dor_parcel_id not in mapreg_opa_map:
+            mapreg_opa_map[dor_parcel_id] = []
+        for opa_account_num in opa_account_nums:
+            if opa_account_num not in mapreg_opa_map[dor_parcel_id]:
+                mapreg_opa_map[dor_parcel_id].append(opa_account_num)
+
+for k in mapreg_opa_map:
+    mapreg_opa_map[k] = '|'.join(mapreg_opa_map[k])
 
 dor_report_rows = dor_parcel_address_analysis\
-    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,[])) \
+    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,'')) \
     .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
     .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
 
