@@ -176,17 +176,17 @@ etl.fromdb(read_conn, 'select * from service_area_summary')\
 # ADDRESS AREA SUMMARY #
 ########################
 print("Creating transformed address_summary table")
-address_summary_in_table = etl.fromdb(read_conn, 'select * from address_summary')
-address_summary_in_table \
-    .addfield('address_full', (lambda a: make_address_full({'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'], 'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
+address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
+    .addfield('address_full', (lambda a: make_address_full(
+    {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
+     'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
     .addfield('temp_lonlat', (lambda a: transform_coords({'geocode_x': a['geocode_x'], 'geocode_y': a['geocode_y']}))) \
     .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
-    .fieldmap(mapping) \
-    .tocsv("address_summary_transformed.csv", write_header=True)
+    .fieldmap(mapping)
 
-address_summary_out_table = etl.fromcsv("address_summary_transformed.csv")
+address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
 address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
