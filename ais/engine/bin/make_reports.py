@@ -187,7 +187,7 @@ address_summary_in_table \
     .tocsv("address_summary_transformed.csv", write_header=True)
 
 address_summary_out_table = etl.fromcsv("address_summary_transformed.csv")
-# address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
+address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
@@ -244,7 +244,7 @@ source_table_name = 'PARCEL'
 print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
-#
+
 etl.fromoraclesde(read_dsn, source_table_name) \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
          'stdes', 'stdessuf', 'shape') \
@@ -294,9 +294,6 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
 address_summary_rows = address_summary_out_table \
     .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
     .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
-#
-print(etl.look(address_summary_rows))
-#
 dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
 mapreg_count_map = {}
 address_count_map = {}
@@ -346,10 +343,9 @@ dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
 print("Writing spatial reports to DataBridge.")
-oracle_conn_gis_ais = config['ORACLE_CONN_GIS_T_AIS']
+oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
-
 print("Cleaning up.")
 # cur = read_conn.cursor()
 # cur.execute('DROP TABLE "address_summary_transformed";')
