@@ -170,21 +170,24 @@ etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_ra
 ########################
 print("Writing service_area_summary table")
 etl.fromdb(read_conn, 'select * from service_area_summary')\
-    .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-    .tooraclesde(write_dsn, service_area_summary_write_table_name)
+  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+  .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
 print("Creating transformed address_summary table")
-address_summary_in_table = etl.fromdb(read_conn, 'select * from address_summary')
-address_summary_out_table = address_summary_in_table \
-    .addfield('address_full', (lambda a: make_address_full({'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'], 'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
+address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
+    .addfield('address_full', (lambda a: make_address_full(
+    {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
+     'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
     .addfield('temp_lonlat', (lambda a: transform_coords({'geocode_x': a['geocode_x'], 'geocode_y': a['geocode_y']}))) \
     .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
-    .fieldmap(mapping) \
-    .todb(read_conn, "address_summary_transformed", create=True, sample=0)
+    .fieldmap(mapping)
+
+address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
+address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
@@ -242,13 +245,12 @@ print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
 
-dor_table_address_analysis = etl.fromoraclesde(read_dsn, source_table_name) \
+etl.fromoraclesde(read_dsn, source_table_name) \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
          'stdes', 'stdessuf', 'shape') \
     .addfield('concatenated_address', lambda c: concatenate_dor_address(
     {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
-     'stdes': c['stdes'],
-     'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
+     'stdes': c['stdes'], 'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
     .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
     .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
     .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
@@ -286,7 +288,57 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
     .addfield('change_stdessuf',
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
                   standardize_nulls(a['std_address_postdir'])) else 0) \
-    .topostgis(pg_db, 'dor_parcel_address_analysis')
+    .tocsv('dor_parcel_address_analysis.csv', write_header=True)
+
+# get address_summary rows with dor_parcel_id as array:
+address_summary_rows = address_summary_out_table \
+    .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
+    .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
+dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
+mapreg_count_map = {}
+address_count_map = {}
+dor_parcel_header = dor_parcel_address_analysis[0]
+
+# count_maps
+for row in dor_parcel_address_analysis[1:]:
+    dict_row = dict(zip(dor_parcel_header, row))
+    mapreg = dict_row['mapreg']
+    std_street_address = dict_row['std_street_address']
+    if mapreg not in mapreg_count_map:
+        mapreg_count_map[mapreg] = 1
+    else:
+        mapreg_count_map[mapreg] += 1
+    if std_street_address not in address_count_map:
+        address_count_map[std_street_address] = 1
+    else:
+        address_count_map[std_street_address] += 1
+
+# mapreg_opa_map
+mapreg_opa_map = {}
+address_summary_header = address_summary_rows[0]
+for i, row in enumerate(address_summary_rows[1:]):
+    if i % 1000 == 0:
+        print(i)
+    dict_row = dict(zip(address_summary_header, row))
+    opa_account_nums = dict_row['opa_account_num_array']
+    dor_parcel_ids = dict_row['dor_parcel_id_array']
+    for dor_parcel_id in dor_parcel_ids:
+        if dor_parcel_id not in mapreg_opa_map:
+            mapreg_opa_map[dor_parcel_id] = []
+        for opa_account_num in opa_account_nums:
+            if opa_account_num not in mapreg_opa_map[dor_parcel_id]:
+                mapreg_opa_map[dor_parcel_id].append(opa_account_num)
+
+for k in mapreg_opa_map:
+    mapreg_opa_map[k] = '|'.join(mapreg_opa_map[k])
+
+dor_report_rows = dor_parcel_address_analysis\
+    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,'')) \
+    .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
+    .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
+
+# Write to local db
+dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
@@ -294,7 +346,6 @@ print("Writing spatial reports to DataBridge.")
 oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
-
 print("Cleaning up.")
 # cur = read_conn.cursor()
 # cur.execute('DROP TABLE "address_summary_transformed";')
