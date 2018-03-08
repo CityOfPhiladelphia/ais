@@ -8,6 +8,7 @@ import datum
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from ais import app
+from config import VALID_ADDRESS_LOW_SUFFIXES
 # DEV
 from pprint import pprint
 import traceback
@@ -237,7 +238,7 @@ for i, source_parcel in enumerate(source_parcels):
             address_high = None
 
         address_low_fractional = None
-        if address_low_suffix not in ('F', 'R', 'A', 'S', 'M', 'P', 'G', 'B', 'C', 'D', 'L', 'Q', '2'):
+        if address_low_suffix not in VALID_ADDRESS_LOW_SUFFIXES:
             address_low_suffix = None
         if address_low_suffix == '2':
             address_low_fractional = '1/2'
