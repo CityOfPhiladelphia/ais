@@ -237,10 +237,11 @@ for i, source_parcel in enumerate(source_parcels):
             address_high = None
 
         address_low_fractional = None
+        if address_low_suffix not in ('F', 'R', 'A', 'S', 'M', 'P', 'G', 'B', 'C', 'D', 'L', 'Q', '2'):
+            address_low_suffix = None
         if address_low_suffix == '2':
             address_low_fractional = '1/2'
             address_low_suffix = None
-        
         # Handle ranges
         if address_low and address_high:
             address_low_str = str(address_low)
