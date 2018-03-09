@@ -309,6 +309,28 @@ if WRITE_OUT:
     db.execute(stcode_stmt)
     db.save()
 
+    # Update street codes for ranged addresses with overlapping street segs
+    rstcode_stmt = '''
+        with scnulls as (
+        select street_address, address_low, address_low_suffix, address_low_frac, street_predir, street_name, street_suffix, street_postdir
+        from address_summary asm 
+        where street_code is null and address_high is not null
+        )
+        update address_summary asm
+        set street_code = final.street_code
+        from
+        (
+        select asm.street_address, asmj.street_code 
+        from scnulls asm
+        inner join address_summary asmj on asmj.street_code is not null and asmj.address_low = asm.address_low and asmj.address_low_suffix = asm.address_low_suffix and asmj.address_low_frac = asm.address_low_frac
+        and asm.street_predir = asmj.street_predir and asm.street_name = asmj.street_name and asmj.street_suffix = asm.street_suffix and asmj.street_postdir = asm.street_postdir
+        group by asm.street_address, asmj.street_code
+        )final
+        where final.street_address = asm.street_address    
+    '''
+    db.execute(rstcode_stmt)
+    db.save()
+
     # print('Populating PWD parcel IDs...')
     # # parcel_stmt = '''
     # # 	update address_summary asm
