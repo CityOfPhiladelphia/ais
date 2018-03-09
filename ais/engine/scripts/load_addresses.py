@@ -590,9 +590,9 @@ if WRITE_OUT:
 
 del links
 
+insert_rows = [dict(x) for x in new_addresses]
 if WRITE_OUT:
     print("Writing {} new addresses... ".format(len(new_addresses)))
-    insert_rows = [dict(x) for x in new_addresses]
     address_table.write(insert_rows, chunk_size=150000)
 
     print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
@@ -671,7 +671,6 @@ for address in addresses:
     try:
         street_address = address.street_address
         base_address = address.base_address
-
         # If the base address already had an error, raise it again
         if base_address in street_error_map:
             error = street_error_map[base_address]
@@ -762,7 +761,6 @@ for address in addresses:
                                              notes=notes)
                         # Match it
                         matching_seg = seg
-
                         # If the high num is out of range
                         if check_to < address_high:
                             # Warn
@@ -792,7 +790,6 @@ for address in addresses:
 
             # Store the match
             if matching_seg:
-                print(matching_seg)
                 match = {
                     'seg_id': matching_seg['seg_id'],
                     'seg_side': matching_side,
@@ -814,7 +811,6 @@ for address in addresses:
         if had_alias:
             # TODO: check against aliases; raise warning if alias used
             pass
-
         seg_id = match['seg_id']
         seg_side = match['seg_side']
 
