@@ -62,14 +62,14 @@ address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '4700-26 ALDEN WALK'
+DEV_ADDRESS = '18-20 W GIRARD AVE'
 DEV_ADDRESS_COMPS = {
     # 'address_low':      '4700',
     # 'address_high':     '4726',
     # 'street_name':      'ALDEN',
     # 'street_suffix':    'WALK',
 }
-DEV_STREET_NAME = 'ALDEN'
+DEV_STREET_NAME = 'GIRARD'
 
 # Logging stuff.
 address_errors = []
@@ -378,7 +378,7 @@ if WRITE_OUT:
     address_table.write(insert_rows, chunk_size=150000)
 del insert_rows
 
-print('Writing {} parser_address_tags...'.format(len(parsed_addresses)))
+print('Making {} parser_address_tags...'.format(len(parsed_addresses)))
 for source_address, comps in parsed_addresses.items():
     for tag_field, path in parser_tags.items():
         value = comps['components']
@@ -392,6 +392,7 @@ for source_address, comps in parsed_addresses.items():
         parser_address_tags.append(parser_address_tag)
 
 if WRITE_OUT:
+    print("Writing tags")
     address_tag_table.write(parser_address_tags, chunk_size=150000)
 del parser_address_tags
 
@@ -589,16 +590,15 @@ if WRITE_OUT:
 
 del links
 
-print("Writing {} new addresses... ".format(len(new_addresses)))
 insert_rows = [dict(x) for x in new_addresses]
-
-print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
-source_address_table.write(source_addresses, chunk_size=150000)
-source_addresses = []
-
 if WRITE_OUT:
+    print("Writing {} new addresses... ".format(len(new_addresses)))
     address_table.write(insert_rows, chunk_size=150000)
+
+    print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
     source_address_table.write(source_addresses, chunk_size=150000)
+    source_addresses = []
+
 source_addresses = []
 del insert_rows
 del street_addresses_seen
@@ -671,7 +671,6 @@ for address in addresses:
     try:
         street_address = address.street_address
         base_address = address.base_address
-
         # If the base address already had an error, raise it again
         if base_address in street_error_map:
             error = street_error_map[base_address]
@@ -762,7 +761,6 @@ for address in addresses:
                                              notes=notes)
                         # Match it
                         matching_seg = seg
-
                         # If the high num is out of range
                         if check_to < address_high:
                             # Warn
@@ -813,7 +811,6 @@ for address in addresses:
         if had_alias:
             # TODO: check against aliases; raise warning if alias used
             pass
-
         seg_id = match['seg_id']
         seg_side = match['seg_side']
 
