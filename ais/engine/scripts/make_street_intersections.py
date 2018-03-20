@@ -12,8 +12,6 @@ from datum import Database
 from ais.models import StreetIntersection
 
 
-
-
 print('Starting...')
 start = datetime.now()
 
@@ -45,6 +43,10 @@ con_db = con_dsn[con_dsn.index("@") + 1:]
 con = cx_Oracle.connect(con_user, con_pw, con_db)
 # Get table references
 source_db = Database(source_db_url)
+# Temp source tables until prod versions are fixed:
+nodes_table_name = 'GIS_AIS_SOURCES.Street_Nodes_0309'
+centerline_table_name = 'GIS_AIS_SOURCES.Street_Centerline_0309'
+#############
 centerline_table = source_db[centerline_table_name]
 node_table = source_db[nodes_table_name]
 source_geom_field = centerline_table.geom_field
@@ -85,6 +87,7 @@ st_node_stmt = '''
     CREATE TABLE public.street_nodes
     (
       objectid numeric(10,0),
+      streetcl_ numeric(10,0),
       node_id numeric(10,0),
       int_id numeric(10,0),
       intersecti character varying(50),
@@ -177,7 +180,7 @@ print(nodes_table)
 WRITE
 '''
 print("Copying temporary street_nodes table...")
-etl.fromoraclesde(con, 'GIS_STREETS.Street_Nodes', fields=['objectid', 'node_id', 'int_id', 'intersecti'])\
+etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
     .rename({'shape': 'geom'})\
     .topostgis(pg_db, 'street_nodes')
 
@@ -197,11 +200,11 @@ with distinct_st1scns as
 	with scsn as (
 	select sn.*, sc.street_code
 	from street_nodes sn
-	left join street_centerlines sc on sc.tnode = sn.objectid
+	left join street_centerlines sc on sc.tnode = sn.streetcl_
 	union
 	select sn.*, sc.street_code
 	from street_nodes sn
-	left join street_centerlines sc on sc.fnode = sn.objectid
+	left join street_centerlines sc on sc.fnode = sn.streetcl_
 	)
 	,
 	scsn_distinct as
