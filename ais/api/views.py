@@ -177,7 +177,7 @@ def unknown_cascade_view(**kwargs):
         #                           search_type=search_type, address=address)
 
     # Get address side of street centerline segment
-    seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 else "L"
+    seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 and cascadedseg.right_to != 0 else "L"
     # Check if address low num is within centerline seg full address range with parity:
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
     if not from_num <= address.address_low <= to_num:
