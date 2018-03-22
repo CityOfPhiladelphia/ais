@@ -326,13 +326,29 @@ def addresses(query):
     high_num_full = parsed['components']['address']['high_num_full']
     high_num = parsed['components']['address']['high_num']
     street_full = parsed['components']['street']['full']
+    seg_id = parsed['components']['cl_seg_id']
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
     addr_num = str(low_num) + '-' + str(high_num) if high_num else low_num
     base_address_no_num_suffix = '{} {}'.format(addr_num, street_full)
     search_type = parsed['type']
+    # loose_filters = OrderedDict([
+    #                             # ('seg_id',int(parsed['components']['cl_seg_id'])),
+    #                              ('street_name',parsed['components']['street']['name']),
+    #                              ('address_low',low_num if low_num is not None else full_num),
+    #                              ('address_low_suffix',parsed['components']['address']['addr_suffix']),
+    #                              ('address_low_frac',parsed['components']['address']['fractional']),
+    #                              ('street_predir',parsed['components']['street']['predir']),
+    #                              ('street_postdir',parsed['components']['street']['postdir']),
+    #                              ('street_suffix',parsed['components']['street']['suffix']),
+    # ])
     loose_filters = OrderedDict([
                                 # ('seg_id',int(parsed['components']['cl_seg_id'])),
+                                 ('seg_id',seg_id),
+                                 ('address_low',low_num if low_num is not None else full_num),
+                                 ('address_low_suffix',parsed['components']['address']['addr_suffix']),
+                                 ('address_low_frac',parsed['components']['address']['fractional']),
+    ]) if seg_id else OrderedDict([
                                  ('street_name',parsed['components']['street']['name']),
                                  ('address_low',low_num if low_num is not None else full_num),
                                  ('address_low_suffix',parsed['components']['address']['addr_suffix']),
