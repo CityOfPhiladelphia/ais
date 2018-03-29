@@ -148,6 +148,8 @@ class GeoJSONSerializer (BaseSerializer):
                 else:
                     if ref_address.address_high != address.address_high or ref_address.address_low != address.address_low:
                         match_type = 'overlaps' if not ref_address.unit_type else "has_base_overlaps"
+                    elif address.base_address_no_suffix == ref_address.street_address:
+                        match_type = 'has_base_no_suffix'
                     else:
                         match_type = 'has_base'
             elif ref_address.address_high:
