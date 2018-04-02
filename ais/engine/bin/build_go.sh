@@ -10,6 +10,9 @@ source ../../../bin/eb_env_utils.sh
 
 # GET LATEST CODE FROM GIT REPO
 git fetch origin && git pull
+cd ../../../env/src/passyunk
+git fetch origin && git pull
+cd -
 
 # CREATE ENGINE LOG FILES
 mkdir -p ../log
