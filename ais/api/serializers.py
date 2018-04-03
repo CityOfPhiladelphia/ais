@@ -80,11 +80,17 @@ class GeoJSONSerializer (BaseSerializer):
         if address.street_address == ref_address.street_address:
             # Address is same as reference address
             match_type = self.match_type
+        # elif address.base_address == ref_address.base_address:
+        #     # 1769 FRANKFORD AVE UNIT 99
+        #     match_type = 'has_base'
+        # elif address.base_address_no_suffix == ref_address.base_address or address.base_address == ref_address.base_address_no_suffix:
+        #     #6037 N 17TH ST #A or 6037B N 17TH ST #A
+        #     match_type = 'has_base_no_suffix'
         elif address.unit_type not in ('', None):
             # Address is different from ref address and has unit type
             if address.address_high is None:
                 # Address also doesn't have a high num
-                if ref_address.unit_type is not None:
+                if ref_address.unit_type not in ('', None):
                     # Reference address has unit type
                     if ref_address.unit_num == address.unit_num:
                         if ref_address.unit_type == address.unit_type:
@@ -92,23 +98,43 @@ class GeoJSONSerializer (BaseSerializer):
                         # Reference and address have same unit num
                         elif all(unit_type in unit_type_variations for unit_type in [ref_address.unit_type, address.unit_type]):
                             match_type = 'generic_unit_sibling' if not ref_address.address_high else 'in_range_generic_unit_sibling'
-                        # if ref_address.street_address in street_address_variations:
-                        #     # Unit type is a generic unit type
-                        #     # match_type = 'generic_unit_sibling'
-                        #     match_type = 'exact'
                         else:
                             match_type = 'unit_sibling' if not ref_address.address_high else 'in_range_unit_sibling'
                     elif base_address == ref_base_address:
                         match_type = 'has_base_unit_child'
+                    elif base_address_no_suffix == ref_base_address_no_suffix:
+                        match_type = 'has_base_no_suffix_unit_child'
                     elif ref_address.address_high:
-                        match_type = 'in_range_unit_sibling'
+                        if ref_address.address_low_suffix == address.address_low_suffix:
+                            if address.unit_num == ref_address.unit_num:
+                                match_type = 'in_range'
+                            elif not address.unit_num:
+                                match_type = 'has_base_in_range'
+                            else:
+                                # 1769-71 FRANKFORD AVE UNIT 8?include_units
+                                match_type = 'has_base_in_range_unit_child'
+                        elif address.address_low_suffix:
+                            if ref_address.address_low_suffix:
+                                match_type = 'has_base_no_suffix_in_range_suffix_child_unit_child'
+                            else:
+                                match_type = 'has_base_in_range'
+                        else:
+                            if ref_address.address_low_suffix:
+                                match_type = 'has_base_no_suffix_in_range_unit_child'
+                            else:
+                                match_type = 'has_base_in_range_unit_child'
                 elif ref_address.address_high is not None:
                     # Ref address has no unit type but has high_num:
-                    if ref_address.unit_type is not None:
-                        # Ref address has unit type
-                        match_type = 'in_range'
-                    else:
+                    if ref_address.address_low_suffix == address.address_low_suffix:
                         match_type = 'in_range_unit_child'
+                    elif ref_address.address_low_suffix:
+                        if address.address_low_suffix:
+                            match_type = 'has_base_no_suffix_in_range_suffix_child_unit_child'
+                        else:
+                            match_type = 'has_base_no_suffix_in_range_unit_child'
+                    else:
+                        match_type = 'in_range_suffix_child_unit_child'
+
                 else:
                     # ref address has no unit type or address high num
                     if address.address_low_suffix is not None and address.base_address_no_suffix == ref_address.base_address:
@@ -120,13 +146,8 @@ class GeoJSONSerializer (BaseSerializer):
                 if ref_address.unit_type is not None:
                     # Unit type is a generic unit type
                     if ref_address.street_address in street_address_variations:
-                        print(3)
-                        if ref_address.address_high is None:
-                            match_type = 'unit_sibling'
-                        else:
-                            match_type = 'unit_child'
+                        match_type = 'generic_unit_sibling'
                     else:
-                        print(4)
                         if ref_address.address_high is None:
                             if all(unit_type in unit_type_variations for unit_type in [ref_address.unit_type, address.unit_type]):
                                 match_type = 'range_parent_unit_sibling'
@@ -147,18 +168,70 @@ class GeoJSONSerializer (BaseSerializer):
                     match_type = 'range_parent'
                 else:
                     if ref_address.address_high != address.address_high or ref_address.address_low != address.address_low:
-                        match_type = 'overlaps' if not ref_address.unit_type else "has_base_overlaps"
+                        if not ref_address.unit_type and ref_address.address_low_suffix == address.address_low_suffix:
+                            match_type = 'overlaps'
+                        elif ref_base_address == base_address:
+                            match_type =  'has_base_overlaps'
+                        else:
+                            if address.address_low_suffix:
+                                # 4923-49 N 16TH ST
+                                match_type = 'overlapping_suffix_child'
+                            else:
+                                match_type = 'has_base_no_suffix_overlaps'
                     else:
-                        match_type = 'has_base'
+                        if ref_address.address_low_suffix == address.address_low_suffix:
+                            match_type = 'has_base'
+                        else:
+                            # 4923-47 N 16TH ST
+                            match_type = 'has_base_no_suffix'
             elif ref_address.address_high:
                 # no address.address_high but ref_address.address_high
-                 match_type = 'in_range' if not ref_address.unit_type else 'has_base_in_range'
-            elif address.base_address_no_suffix == ref_address.street_address:
+                if ref_address.unit_type:
+                    if ref_address.address_low_suffix == address.address_low_suffix:
+                        if not ref_address.unit_num:
+                            match_type = 'in_range'
+                        else:
+                            # 902A-4 N 3RD ST UNIT 2
+                            match_type = 'has_base_in_range'
+
+                    elif address.address_low_suffix:
+                        # 902-4 N 3RD ST UNIT 2
+                        if not ref_address.address_low_suffix:
+                            match_type = 'in_range_suffix_child'
+                        else:
+                            match_type = 'has_base_no_suffix_in_range_suffix_child'
+                    else:
+                        # 902R-4 N 3RD ST UNIT 2
+                        match_type = 'has_base_no_suffix_in_range'
+                else:
+                    if ref_address.address_low_suffix == address.address_low_suffix:
+                        if not ref_address.unit_num:
+                            # 901A-4 N 3RD ST
+                            match_type = 'in_range'
+                        else:
+                            match_type = 'in_range_unit_sibling'
+                    elif address.address_low_suffix:
+                        # 902-4 N 3RD ST UNIT 2
+                        match_type = 'in_range_suffix_child'
+                    else:
+                        # 902R-4 N 3RD ST
+                        match_type = 'has_base_no_suffix_in_range'
+            elif ref_address.base_address == address.street_address:
+                # 1769 FRANKFORD AVE UNIT 8
+                match_type = 'has_base'
+            elif ref_address.base_address_no_suffix == address.street_address:
+                # 1769R FRANKFORD AVE
                 match_type = 'has_base_no_suffix'
+            elif address.base_address_no_suffix == ref_address.base_address:
+                # 902 N 3RD ST UNIT 2
+                match_type = 'has_base_suffix_child'
+            elif address.base_address_no_suffix == ref_address.base_address_no_suffix:
+                # 902 N 3RD ST UNIT 2
+                match_type = 'has_base_no_suffix_suffix_child'
             else:
                 match_type = 'has_base'
 
-        return match_type#, related_addresses
+        return match_type
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
