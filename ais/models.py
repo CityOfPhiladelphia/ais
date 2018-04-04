@@ -1150,7 +1150,7 @@ class AddressSummary(db.Model):
 
     # Foreign keys
     street_code = db.Column(db.Integer)
-    seg_id = db.Column(db.Integer)
+    seg_id = db.Column(db.Integer, index=True)
     seg_side = db.Column(db.Text)
     pwd_parcel_id = db.Column(db.Text, index=True)
     dor_parcel_id = db.Column(db.Text, index=True)
