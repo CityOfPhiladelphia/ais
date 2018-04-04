@@ -1130,16 +1130,16 @@ SERVICE_AREAS = {
             },
         },
         {
-            'layer_id': 'lane_closure',
-            'name': 'Lane Closure',
+            'layer_id':                     'lane_closure',
+            'name':                         'Lane Closure',
             'description': '',
             'sources': {
                 'line_single': {
-                    'db': 'gis_sa',
-                    'table': 'gis_streets.LaneClosure_Master',
-                    'seg_id_field': 'seg_id',
-                    'value_field': 'permitnumber',
-                    'object_id_field': 'objectid',
+                    'db':                   'gis_sa',
+                    'table':                'gis_streets.LaneClosure_Master',
+                    'seg_id_field':         'seg_id',
+                    'value_field':          'permitnumber',
+                    'object_id_field':      'objectid',
                 },
             },
         },
@@ -1221,18 +1221,18 @@ SERVICE_AREAS = {
             },
         },
         # GIS_GSG
-        {
-            'layer_id':                     'litter_schema_test',
-            'name':                         'Litter Schema Test',
-            'description':                  '',
-            'sources': {
-                'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_gsg.LITTER_SCHEMA_TEST',
-                    'value_field':          'score',
-                },
-            },
-        },
+        # {
+        #     'layer_id':                     'litter_schema_test',
+        #     'name':                         'Litter Schema Test',
+        #     'description':                  '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_gsg.LITTER_SCHEMA_TEST',
+        #             'value_field':          'score',
+        #         },
+        #     },
+        # },
         # GIS_OHCD
         {
             'layer_id':                     'neighborhood_advisory_committee',
