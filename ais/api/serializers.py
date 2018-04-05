@@ -361,7 +361,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             else:
                 sa_data = self.sa_data
             # if self.metadata['search_type'] == 'address':
-            if self.metadata['search_type'] in ('address', 'street'):
+            if self.metadata['search_type'] in ('address', 'street', 'landmark'):
                 match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
             else:
                 match_type_key = {
