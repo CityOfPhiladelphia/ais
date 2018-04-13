@@ -18,8 +18,8 @@ def startup():
     old_prod_env = old_prod_env.decode('utf-8')
     old_db = datum.connect(config['DATABASES'][new_db_map[old_prod_env]])
     new_db = datum.connect(config['DATABASES']['engine'])
-    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range', 'dor_parcel_address_analysis')
-    changed_tables = ('address_error', 'dor_parcel_address_analysis')
+    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
+    changed_tables = ()
     ignore_tables = unused_tables + changed_tables
 
     return {'new_db': new_db, 'old_db': old_db, 'unused_tables': unused_tables, 'changed_tables': changed_tables, 'ignore_tables': ignore_tables}
