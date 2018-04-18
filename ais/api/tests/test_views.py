@@ -693,3 +693,14 @@ def test_nearest_seg_in_service_areas_response(client):
     response = client.get('/service_areas/-75.171331,40.000819')
     data = json.loads(response.get_data().decode())
     assert data['service_areas']['nearest_seg'] == 521774
+
+def test_distinct_opa_addresses_in_opa_only_query(client):
+    response = client.get('/search/1737-39 Chestnut Street?include_units&opa_only')
+    data = json.loads(response.get_data().decode())
+    opa_address_count = {}
+    for feature in data['features']:
+        if feature['properties']['opa_address'] not in opa_address_count:
+            opa_address_count['opa_address'] = 0
+        opa_address_count['opa_address'] += 1
+    for opa_address in opa_address_count:
+        assert opa_address_count[opa_address] == 1
