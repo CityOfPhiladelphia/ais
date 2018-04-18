@@ -3,7 +3,7 @@ import re
 from flask.ext.sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_, or_, cast, String, Integer, desc
+from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -963,6 +963,7 @@ class AddressSummaryQuery(BaseQuery):
 
 
     def exclude_non_opa(self, should_exclude=True):
+
         if should_exclude:
             # Filter for addresses that have OPA numbers. As a result of
             # aggressive assignment of OPA numbers to units of a property,
@@ -971,8 +972,8 @@ class AddressSummaryQuery(BaseQuery):
 
             BaseAddressSummary = aliased(AddressSummary)
 
-            return self\
-                .filter(AddressSummary.opa_account_num != '')\
+            query = self\
+                .filter(AddressSummary.opa_account_num != '') \
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
                 .outerjoin(BaseAddressSummary, AddressLink.address_2 == BaseAddressSummary.street_address, from_joinpoint=True)\
                 .filter(~(
@@ -981,8 +982,11 @@ class AddressSummaryQuery(BaseQuery):
                     # address does not have a base, the base num will be None.
                     (AddressSummary.unit_type != '') &
                     (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
-                ))
-
+                )) \
+                .order_by(AddressSummary.opa_address, desc(AddressSummary.street_address == AddressSummary.opa_address)) \
+                .distinct(AddressSummary.opa_address)
+                # The order_by and distinct functions are for ensuring no duplicate OPA_addresses are returned
+            return query
         else:
             return self
 
