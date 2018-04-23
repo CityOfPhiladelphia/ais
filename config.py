@@ -89,6 +89,19 @@ BASE_DATA_SOURCES = {
             'where':            'status in (1, 3)',
         },
     },
+    'condos': {
+        'dor': {
+            'db':               'gis',
+            'table':            'GIS_DOR.CONDOMINIUM',
+            'field_map': {
+                'source_object_id':     'objectid',
+                'parcel_id':            'mapref',
+                'unit_num':             'condounit',
+            },
+            # Query only active condos
+            'where':            'status in (1, 3)',
+        }
+    },
     'properties': {
         'db':               'brtprod',
         'table':            'brt_admin.properties',
@@ -257,6 +270,20 @@ ADDRESSES = {
         {
             'name':                 'dor_parcels',
             'table':                'dor_parcel',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
+            },
+            'tag_fields': [
+                {
+                    'key':              'dor_parcel_id',
+                    'source_fields':     ['parcel_id'],
+                },
+            ],
+        },
+        {
+            'name':                 'dor_condos',
+            'table':                'dor_condominium',
             'db':                   'engine',
             'address_fields': {
                 'street_address':       'street_address',
