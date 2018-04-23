@@ -59,7 +59,7 @@ print(etl.look(joined))
 
 # Write to engine db
 print('Writing condos...')
-# joined.todb(pg_db, 'dor_condominium')
+joined.todb(pg_db, 'dor_condominium')
 
 # Calculate errors
 joined_ids = joined.cut('source_object_id')
