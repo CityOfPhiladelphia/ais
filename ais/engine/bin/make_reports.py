@@ -189,9 +189,9 @@ address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary
 
 address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
 address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
-###############################
-# DOR PARCEL ADDRESS ANALYSIS #
-###############################
+#########################
+# DOR CONDOMINIUM ERROR #
+#########################
 print("Writing dor_condominium_error table...")
 dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error') \
     .rename({'parcel_id': 'mapref', 'unit_num': 'condounit',}) \
