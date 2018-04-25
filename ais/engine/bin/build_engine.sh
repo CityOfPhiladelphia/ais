@@ -20,6 +20,9 @@ ais engine run load_opa_properties
 echo "Loading DOR parcels"
 ais engine run load_dor_parcels
 
+echo "Loading DOR condos"
+ais engine run load_dor_condos
+
 echo "Loading PWD Parcels"
 ais engine run load_pwd_parcels
 

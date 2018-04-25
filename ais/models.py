@@ -159,6 +159,26 @@ class DorParcel(db.Model):
     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
 
+##########
+# CONDOS #
+##########
+
+class DorCondominium(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    parcel_id = db.Column(db.Text, index=True)
+    street_address = db.Column(db.Text)
+    address_low = db.Column(db.Integer)
+    address_low_suffix = db.Column(db.Text)
+    address_low_frac = db.Column(db.Text)
+    address_high = db.Column(db.Integer)
+    street_predir = db.Column(db.Text)
+    street_name = db.Column(db.Text)
+    street_suffix = db.Column(db.Text)
+    street_postdir = db.Column(db.Text)
+    unit_num = db.Column(db.Text)
+    street_full = db.Column(db.Text)
+    source_object_id = db.Column(db.Integer)
+
 ##############
 # PROPERTIES #
 ##############
@@ -1353,3 +1373,10 @@ class DorParcelAddressAnalysis(db.Model):
     num_parcels_w_mapreg = db.Column(db.Integer)
     num_parcels_w_address = db.Column(db.Integer)
     shape = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
+
+class DorCondominiumError(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    parcel_id = db.Column(db.Text, index=True)
+    unit_num = db.Column(db.Text)
+    source_object_id = db.Column(db.Integer)
+    reason = db.Column(db.Text)
