@@ -45,7 +45,7 @@ for i, alias_row in enumerate(source_rows):
 		street_fields = ['street_' + x for x in ['predir', 'name', 'suffix', 'postdir']]
 		source_comps = [alias_row[field_map[x]] for x in street_fields]
 		source_comps = [x if x else '' for x in source_comps]
-		source_street_full = ' '.join([x for x in source_comps if x])
+		source_street_full = ' '.join([x.strip() for x in source_comps if x])
 
 		# Make sure attrs are standardizable
 		invalid_predir = (predir and not predir in DIRS_STD)
@@ -66,6 +66,7 @@ for i, alias_row in enumerate(source_rows):
 			'street_name': name,
 			'street_suffix': suffix or '',
 			'street_postdir': postdir or '',
+			'street_full': source_street_full or '',
 		})
 
 	except ValueError:
