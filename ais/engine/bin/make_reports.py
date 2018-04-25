@@ -20,6 +20,7 @@ write_dsn = parsed_write_db_string['user'] + '/' + parsed_write_db_string['passw
     'host']
 address_summary_write_table_name = 'ADDRESS_SUMMARY'
 service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
+dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
 true_range_write_table_name = 'TRUE_RANGE'
 read_conn = psycopg2.connect(
     "dbname={db_name} user={user}".format(db_name=parsed_read_db_string['db_name'], user=parsed_read_db_string['user']))
@@ -163,19 +164,19 @@ def concatenate_dor_address(source_comps):
 ##############
 # TRUE RANGE #
 ##############
-print("Writing true_range table.")
+print("Writing true_range table...")
 etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print("Writing service_area_summary table")
+print("Writing service_area_summary table...")
 etl.fromdb(read_conn, 'select * from service_area_summary')\
   .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
   .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
-print("Creating transformed address_summary table")
+print("Creating transformed address_summary table...")
 address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
     .addfield('address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
@@ -191,7 +192,14 @@ address_summary_out_table.todb(read_conn, "address_summary_transformed", create=
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
-print("Performing dor_parcel address analysis")
+print("Writing dor_condominium_error table...")
+dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error') \
+    .rename({'parcel_id': 'mapref', 'unit_num': 'condounit',}) \
+    .tooraclesde(write_dsn, dor_condo_error_table_name)
+###############################
+# DOR PARCEL ADDRESS ANALYSIS #
+###############################
+print("Performing dor_parcel address analysis...")
 import re
 from passyunk.parser import PassyunkParser
 
@@ -342,11 +350,11 @@ dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
-print("Writing spatial reports to DataBridge.")
+print("Writing spatial reports to DataBridge...")
 oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
 postgis_conn = config['POSTGIS_CONN']
 subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
-print("Cleaning up.")
+print("Cleaning up...")
 # cur = read_conn.cursor()
 # cur.execute('DROP TABLE "address_summary_transformed";')
 # read_conn.commit()
