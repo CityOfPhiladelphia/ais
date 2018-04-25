@@ -49,12 +49,12 @@ BASE_DATA_SOURCES = {
     },
     'street_aliases': {
         'db':               'gis',
-        'table':            'GIS_STREETS.alias_list',
+        'table':            'GIS_AIS_SOURCES.alias_list_ais',
         'field_map': {
             'seg_id':                   'seg_id',
             'street_predir':            'pre_dir',
             'street_name':              'name',
-            'street_suffix':            'type',
+            'street_suffix':            'type_',
             'street_postdir':           'suf_dir',
         },
     },
