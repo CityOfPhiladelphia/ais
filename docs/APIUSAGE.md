@@ -125,7 +125,7 @@ A pagination object is returned in the [response envelope](#Envelope) detailing 
 
 The root of the `FeatureCollection` contains:
 * **Metadata** information.
-  * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, or owner) 
+  * `search_type`: The query type recognized by Passyunk (address, block, intersection, opa_account, mapreg, pwd_parcel_id, or owner) 
   * `search_params`: The querystring parameters or flags and their values included in query
   * `query`: The querystring
   * `normalized`: The querystring normalized by the Passyunk, the AIS backend address parser
