@@ -706,3 +706,8 @@ def test_distinct_opa_addresses_in_opa_only_query(client):
         opa_address_count['opa_address'] += 1
     for opa_address in opa_address_count:
         assert opa_address_count[opa_address] == 1
+
+def test_opa_alias_address(client):
+    response = client.get('36 w gowen')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['opa_account_num'] == '092125100'
