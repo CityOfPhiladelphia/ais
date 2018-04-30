@@ -707,6 +707,7 @@ def test_distinct_opa_addresses_in_opa_only_query(client):
     for opa_address in opa_address_count:
         assert opa_address_count[opa_address] == 1
 
+@pytest.mark.skip(reason="hold off until alias branch is merged")
 def test_opa_alias_address(client):
     response = client.get('36 w gowen')
     data = json.loads(response.get_data().decode())
