@@ -709,6 +709,11 @@ def test_distinct_opa_addresses_in_opa_only_query(client):
 
 @pytest.mark.skip(reason="hold off until alias branch is merged")
 def test_opa_alias_address(client):
-    response = client.get('36 w gowen')
+    response = client.get('/search/36 w gowen')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['opa_account_num'] == '092125100'
+
+def test_seg_based_zip_code(client):
+    response = client.get('/search/2342 W HUNTING PARK AVE')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['zip_code'] == '19140'
