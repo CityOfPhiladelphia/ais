@@ -326,7 +326,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return data
 
     def model_to_data(self, address):
-        # print(address)
 
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
@@ -339,7 +338,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             address, geocode_response_type, geom = address
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
-
+            # print("SERIALIZED: ", vars(address))
         #cascade_geocode_type = self.estimated if self.estimated else None
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
             if not self.estimated else {'geocode_type': self.estimated}
@@ -355,7 +354,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             if not self.estimated:
                 #print(address.street_address, address.service_areas)
                 for col in address.service_areas.__table__.columns:
-                    if col.name in ('id', 'street_address'):
+                    if col.name in ('id', 'street_address', 'zip_code'):
                         continue
                     sa_data[col.name] = getattr(address.service_areas, col.name)
             else:
