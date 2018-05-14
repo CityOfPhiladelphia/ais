@@ -129,6 +129,23 @@ BASE_DATA_SOURCES = {
             'street_address':           'street_address',
         },
     },
+    'address_points': {
+        'ng911_validated': {
+            'db': 'gis',
+            'table': 'GIS_AIS_SOURCES.NG911_SITEADDRESSES',
+            'field_map': {
+                'guid':                 'guid',
+                'status':               'status',
+                'flag':                 'flag',
+                'comment':              'comment_',
+                'place_type':           'place_type',
+                'placement':            'placement',
+                'street_address':       'street_address',
+                'shape':                'geom'
+            },
+            'where':                    'status in (0, 1)',
+        }
+    }
 }
 
 def multi_strip(str_):
@@ -250,6 +267,20 @@ ADDRESSES = {
                 {
                     'key':              'opa_address',
                     'source_fields':     ['street_address'],
+                },
+            ],
+        },
+        {
+            'name':                 'ng911',
+            'table':                'ng911',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
+            },
+            'tag_fields': [
+                {
+                    'key':              'ng911_guid',
+                    'source_fields':     ['guid'],
                 },
             ],
         },
