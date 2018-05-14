@@ -158,7 +158,6 @@ class DorParcel(db.Model):
     source_address = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
-
 ##########
 # CONDOS #
 ##########
@@ -202,6 +201,20 @@ class OpaProperty(db.Model):
     tencode = db.Column(db.Text)
     owners = db.Column(db.Text)
 
+#############
+# NG911     #
+#############
+
+class Ng911(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    guid = db.Column(db.Text)
+    status = db.Column(db.Integer)
+    flag = db.Column(db.Text)
+    comment = db.Column(db.Text)
+    place_type = db.Column(db.Text)
+    placement = db.Column(db.Text)
+    street_address = db.Column(db.Text, index=True)
+    geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
 
 #############
 # ADDRESSES #
