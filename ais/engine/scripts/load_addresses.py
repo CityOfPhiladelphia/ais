@@ -292,7 +292,7 @@ for source in sources:
                 address_tag_string = '|'.join([str(x) for x in \
                                                address_tag_string_vals])
 
-                if not address_tag_string in address_tag_strings:
+                if str(value).strip() and not address_tag_string in address_tag_strings:
                     address_tag = {
                         'street_address': street_address,
                         # 'key':              tag_field['key'],
@@ -382,20 +382,30 @@ print('Making {} parser_address_tags...'.format(len(parsed_addresses)))
 for source_address, comps in parsed_addresses.items():
     for tag_field, path in parser_tags.items():
         value = comps['components']
+        street_address = value['output_address']
         for item in path:
             value = value.get(item)
-        parser_address_tag = {
-            'street_address': source_address,
-            'key': tag_field,
-            'value': value
-        }
-        parser_address_tags.append(parser_address_tag)
+        parser_address_tag_string_vals = [
+            street_address,
+            key,
+            value,
+        ]
+        parser_address_tag_string = '|'.join([str(x) for x in \
+                                              parser_address_tag_string_vals])
+        if str(value).strip() and not parser_address_tag_string in address_tag_strings:
+            parser_address_tag = {
+                'street_address': street_address,
+                'key': tag_field,
+                'value': value
+            }
+            address_tag_strings.add(parser_address_tag_string)
+            parser_address_tags.append(parser_address_tag)
 
 if WRITE_OUT:
     print("Writing tags")
     address_tag_table.write(parser_address_tags, chunk_size=150000)
 del parser_address_tags
-
+address_tag_strings = set()
 ###############################################################################
 # ADDRESS LINKS
 ###############################################################################
