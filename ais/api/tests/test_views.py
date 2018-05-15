@@ -526,7 +526,7 @@ def test_overlap_link_respects_parity(client):
     features = data['features']
     assert features[0]['properties']['dor_parcel_id'] == ''
 
-@pytest.mark.skip(reason="temporarily skip until engine builds with dor_condos")
+# @pytest.mark.skip(reason="temporarily skip until engine builds with dor_condos")
 def test_related_addresses_returned_with_include_units(client):
     response = client.get('/search/1708%20chestnut%20st?include_units')
     data = json.loads(response.get_data().decode())
@@ -537,7 +537,7 @@ def test_related_addresses_returned_with_include_units(client):
     assert features[1]['properties']['street_address'] == '1708-14 CHESTNUT ST # A'
     assert features[1]['match_type'] == 'range_parent_unit_child'
 
-@pytest.mark.skip(reason="temporarily skip until engine builds with dor_condos")
+# @pytest.mark.skip(reason="temporarily skip until engine builds with dor_condos")
 def test_ranged_address_returns_related_addresses_with_includes_units(client):
     response = client.get('/search/1708-14%20chestnut%20st?include_units')
     data = json.loads(response.get_data().decode())
@@ -707,7 +707,7 @@ def test_distinct_opa_addresses_in_opa_only_query(client):
     for opa_address in opa_address_count:
         assert opa_address_count[opa_address] == 1
 
-@pytest.mark.skip(reason="hold off until alias branch is merged")
+# @pytest.mark.skip(reason="hold off until alias branch is merged")
 def test_opa_alias_address(client):
     response = client.get('/search/36 w gowen')
     data = json.loads(response.get_data().decode())
