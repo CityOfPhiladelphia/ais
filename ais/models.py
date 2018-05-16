@@ -205,7 +205,7 @@ class OpaProperty(db.Model):
 # NG911     #
 #############
 
-class Ng911(db.Model):
+class Ng911AddressPoints(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     guid = db.Column(db.Text)
     status = db.Column(db.Integer)
