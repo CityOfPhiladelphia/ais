@@ -141,7 +141,7 @@ BASE_DATA_SOURCES = {
                 'place_type':           'place_type',
                 'placement':            'placement',
                 'street_address':       'street_address',
-                'geom':                 'shape',
+                'geom':                 'shape'
             },
             'where':                    'status in (0, 1)',
         }
