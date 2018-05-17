@@ -492,6 +492,11 @@ if WRITE_OUT:
 
     print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
 
+########################
+# NG911 address points #
+########################
+print('Geocoding NG911 address points...')
+
 
 print('Creating index...')
 geocode_table.create_index('street_address')
