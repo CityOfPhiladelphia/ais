@@ -34,7 +34,7 @@ for geocode_row in geocode_rows:
 
 print('Reading address tags...')
 tag_map = {}
-where = "linked_address != '' and key in ('pwd_parcel_id', 'dor_parcel_id')"
+where = "linked_address != '' and key in ('pwd_parcel_id', 'dor_parcel_id', 'ng911_guid')"
 tag_rows = address_tag_table.read(where=where)
 print('Mapping address tags...')
 for tag_row in tag_rows:
@@ -54,7 +54,7 @@ for key, value in tag_map.items():
     for tag in tags:
         linked_address = tag['linked_address']
         linked_key = tag['key']
-        if linked_key == 'pwd_parcel_id' and 1 in geocode_types or linked_key == 'dor_parcel_id' and 2 in geocode_types:
+        if linked_key == 'pwd_parcel_id' and 1 in geocode_types or linked_key == 'dor_parcel_id' and 2 in geocode_types or linked_key == 'ng911_guid' and 11 in geocode_types:
             continue
         try:
             linked_geocode_rows = geocode_map[linked_address]
