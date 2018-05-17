@@ -271,8 +271,8 @@ ADDRESSES = {
             ],
         },
         {
-            'name':                 'ng911',
-            'table':                'ng911',
+            'name':                 'ng911_address_points',
+            'table':                'ng911_address_points',
             'db':                   'engine',
             'address_fields': {
                 'street_address':       'street_address',
@@ -1377,7 +1377,8 @@ ADDRESS_SUMMARY = {
         'dor_parcel': 2,
         'centerline': 6,
         'pwd_parcel_spatial': 9,
-        'dor_parcel_spatial': 10
+        'dor_parcel_spatial': 10,
+        'ng911_address_point': 11
     },
 
     # Max number of attribute values to pipe-delimit
