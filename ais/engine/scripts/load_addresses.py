@@ -380,11 +380,18 @@ del insert_rows
 
 print('Making {} parser_address_tags...'.format(len(parsed_addresses)))
 for source_address, comps in parsed_addresses.items():
+    comps = comps.get('components')
+    street_address = comps.get('output_address', '')
+    if comps and comps.get('address') and comps.get('address')['addrnum_type'] == 'Range':
+        continue
     for tag_field, path in parser_tags.items():
-        value = comps['components']
-        street_address = value['output_address']
+        value = comps
+        key = tag_field
         for item in path:
-            value = value.get(item)
+            if __name__ == '__main__':
+                value = value.get(item)
+        value = str(value).strip()
+        value = '' if value == 'None' else value
         parser_address_tag_string_vals = [
             street_address,
             key,
@@ -392,10 +399,10 @@ for source_address, comps in parsed_addresses.items():
         ]
         parser_address_tag_string = '|'.join([str(x) for x in \
                                               parser_address_tag_string_vals])
-        if str(value).strip() and not parser_address_tag_string in address_tag_strings:
+        if value and not parser_address_tag_string in address_tag_strings:
             parser_address_tag = {
                 'street_address': street_address,
-                'key': tag_field,
+                'key': key,
                 'value': value
             }
             address_tag_strings.add(parser_address_tag_string)
