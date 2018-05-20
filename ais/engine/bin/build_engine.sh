@@ -50,7 +50,16 @@ then
   exit 1;
 fi
 
-echo "Loading DOR condos"
+echo "Loading DOR Parcels"
+ais engine run load_dor_parcels
+
+if [ $? -ne 0 ]
+then
+  echo "Loading table failed. Exiting."
+  exit 1;
+fi
+
+echo "Loading DOR Condos"
 ais engine run load_dor_condos
 
 if [ $? -ne 0 ]
@@ -62,6 +71,14 @@ fi
 echo "Loading PWD Parcels"
 ais engine run load_pwd_parcels
 
+if [ $? -ne 0 ]
+then
+  echo "Loading table failed. Exiting."
+  exit 1;
+fi
+
+echo "Loading NG911 Address Points"
+ais engine run load_ng911_address_points
 
 if [ $? -ne 0 ]
 then
