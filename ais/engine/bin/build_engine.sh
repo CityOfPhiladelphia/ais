@@ -17,14 +17,17 @@ ais engine run make_street_intersections
 echo "Loading OPA Properties"
 ais engine run load_opa_properties
 
-echo "Loading DOR parcels"
+echo "Loading DOR Parcels"
 ais engine run load_dor_parcels
 
-echo "Loading DOR condos"
+echo "Loading DOR Condos"
 ais engine run load_dor_condos
 
 echo "Loading PWD Parcels"
 ais engine run load_pwd_parcels
+
+echo "Loading NG911 Address Points"
+ais engine run load_ng911_address_points
 
 echo "Loading Curbs"
 ais engine run load_curbs
