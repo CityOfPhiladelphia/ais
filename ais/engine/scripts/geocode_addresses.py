@@ -496,7 +496,25 @@ if WRITE_OUT:
 # NG911 address points #
 ########################
 print('Geocoding NG911 address points...')
-
+stmt = '''
+  with ng911_addresses as (
+      select street_address, source_address
+      from source_address where source_name = 'ng911_address_points'
+    )
+    ,
+    ng911_inserts as (
+    select na.street_address, ng.geom
+    from ng911_addresses na
+    inner join ng911_address_points ng on ng.street_address = na.source_address
+    )
+    insert into geocode (street_address, geocode_type, geom)
+    (
+      select street_address, {ng911_address_point_priority}, geom
+      from ng911_inserts
+    )
+'''.format(ng911_address_point_priority=geocode_priority_map['ng911_address_point'],)
+db.execute(stmt)
+db.save()
 
 print('Creating index...')
 geocode_table.create_index('street_address')
