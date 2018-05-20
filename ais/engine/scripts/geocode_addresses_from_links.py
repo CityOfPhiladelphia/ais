@@ -18,7 +18,8 @@ geocode_table = db['geocode']
 address_tag_table = db['address_tag']
 geocode_tag_map = {
     'pwd_parcel_id': (1, 3, 7),
-    'dor_parcel_id': (2, 4, 8)
+    'dor_parcel_id': (2, 4, 8),
+    'ng911_guid': (11,)
 }
 new_geocode_rows = []
 
