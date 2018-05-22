@@ -220,7 +220,24 @@ for i, street_name in enumerate(street_names):
             # values = list(set(values)) # only use distinct values
             values = list(set(filter(None, values)))
             if len(values) > 0:
-                value = '|'.join(values[:max_values])
+                # Hack to supersede generic unit parser tags over base address parser tags
+                # TODO: handle in Passyunk / standardize '#' unit_types to generic type (APT or UNIT) / fix source addresses
+                if 'usps' in tag_key:
+                    value_address_map = {}
+                    generic_usps_value = ''
+                    for tag_row in tag_rows:
+                        if tag_row['key'] == tag_key:
+                            tag_address = tag_row['street_address']
+                            if tag_address not in value_address_map:
+                                value_address_map[tag_address] = [] #make list just in case there's more than one generic unit address with a unique value
+                            value = tag_row['value'].upper()
+                            value_address_map[tag_address].append(value)
+                    for address in value_address_map:
+                        if address != street_address:
+                            generic_usps_value = value_address_map[address][0] # arbitrarily choose first value
+                    value = generic_usps_value
+                else:
+                    value = '|'.join(values[:max_values])
             else:
                 if field_type == 'number':
                     value = None
