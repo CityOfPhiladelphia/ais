@@ -1378,7 +1378,7 @@ ADDRESS_SUMMARY = {
         'centerline': 6,
         'pwd_parcel_spatial': 9,
         'dor_parcel_spatial': 10,
-        'ng911_address_point': 11
+        'ng911_address_point': 0
     },
 
     # Max number of attribute values to pipe-delimit
