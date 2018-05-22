@@ -1367,6 +1367,7 @@ SERVICE_AREAS = {
 ADDRESS_SUMMARY = {
     # Order in which to look for geocode XYs
     'geocode_types': [
+        'ng911_address_point'
         'pwd_parcel',
         'dor_parcel',
         # 'pwd_parcel_spatial',
