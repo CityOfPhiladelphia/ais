@@ -1537,6 +1537,12 @@ ADDRESS_SUMMARY = {
             'type':                 'text',
             'traverse_links':       'false',
         },
+        {
+            'name':                 'ng911_guid',
+            'tag_key':              'ng911_guid',
+            'type':                 'text',
+            'traverse_links':       'true',
+        },
     ],
 }
 
