@@ -1204,6 +1204,7 @@ class AddressSummary(db.Model):
     bin_parcel_id = db.Column(db.Text)
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
+    ng911_guid = db.Column(db.Text)
 
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
