@@ -1336,6 +1336,7 @@ class DorParcelAddressAnalysis(db.Model):
     '''
     objectid = db.Column(db.Integer, primary_key=True)
     mapreg = db.Column(db.Text)
+    status = db.Column(db.Integer)
     stcod = db.Column(db.Integer)
     house = db.Column(db.Integer)
     suf = db.Column(db.Text)
