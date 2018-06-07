@@ -233,9 +233,11 @@ for i, street_name in enumerate(street_names):
                             value = tag_row['value'].upper()
                             value_address_map[tag_address].append(value)
                     for address in value_address_map:
-                        if address != street_address:
+                        if '#' not in address:
+                            value = value_address_map[address][0] # arbitrarily choose first value
+                        else:
                             generic_usps_value = value_address_map[address][0] # arbitrarily choose first value
-                    value = generic_usps_value
+                    value = value if value else generic_usps_value
                 else:
                     value = '|'.join(values[:max_values])
             else:
