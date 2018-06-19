@@ -717,3 +717,14 @@ def test_seg_based_zip_code(client):
     response = client.get('/search/2342 W HUNTING PARK AVE')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['zip_code'] == '19140'
+
+def test_usps_tag_not_null(client):
+    response = client.get('/search/1234 market st')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['zip_4'] != ''
+
+def test_null_usps_zip_populated_from_service_area(client):
+    response = client.get('/search/1319 N LEE ST')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['zip_code'] == '19125'
+
