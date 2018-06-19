@@ -160,7 +160,7 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		sys.exit()
 
 # Clear out XY map
-xy_map = {}
+# xy_map = {}
 
 if WRITE_OUT:
 	print('Writing service area summary rows...')
@@ -330,13 +330,60 @@ for sa_layer_def in sa_layer_defs:
 		stmt = '''
 				UPDATE service_area_summary sas
 				SET {layer_id} = (
-				CASE 
+				CASE
 				WHEN {layer_id} != '' THEN 'Yes'
 				ELSE 'No'
 				END);
 				'''.format(layer_id=layer_id)
 		db.execute(stmt)
 		db.save()
+#################################
+# TODO Update address summary zip_code with point-in-poly value where USPS seg-based is Null (parameterize field to update, set in config, and execute in for loop)
+print("Updating null address_summary zip_codes from service_areas...")
+stmt = '''
+DROP INDEX public.address_summary_opa_owners_trigram_idx;
+DROP INDEX public.address_summary_sort_idx;
+DROP INDEX public.address_summary_street_address_idx;
+DROP INDEX public.ix_address_summary_dor_parcel_id;
+DROP INDEX public.ix_address_summary_opa_account_num;
+DROP INDEX public.ix_address_summary_pwd_parcel_id;
+DROP INDEX public.ix_address_summary_seg_id;
+
+UPDATE address_summary asum
+SET zip_code = sas.zip_code
+from service_area_summary sas
+where sas.street_address = asum.street_address and (asum.zip_code is Null or asum.zip_code in ('', null));
+
+CREATE INDEX ix_address_summary_seg_id
+    ON public.address_summary USING btree
+    (seg_id);
+    
+CREATE INDEX address_summary_opa_owners_trigram_idx
+    ON public.address_summary USING gin
+    (opa_owners gin_trgm_ops);
+
+CREATE INDEX address_summary_sort_idx
+    ON public.address_summary USING btree
+    (street_name, street_suffix, street_predir, street_postdir, address_low, address_high, unit_num);
+	
+CREATE INDEX address_summary_street_address_idx
+    ON public.address_summary USING btree
+    (street_address);
+
+CREATE INDEX ix_address_summary_dor_parcel_id
+    ON public.address_summary USING btree
+    (dor_parcel_id);
+
+CREATE INDEX ix_address_summary_opa_account_num
+    ON public.address_summary USING btree
+    (opa_account_num);
+
+CREATE INDEX ix_address_summary_pwd_parcel_id
+    ON public.address_summary USING btree
+    (pwd_parcel_id);
+'''
+db.execute(stmt)
+db.save()
 #################################
 # Clean up:
 db.close()
