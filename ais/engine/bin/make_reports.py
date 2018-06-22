@@ -166,16 +166,16 @@ def concatenate_dor_address(source_comps):
 ##############
 print("Writing true_range table...")
 etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
-# ########################
-# # SERVICE AREA SUMMARY #
-# ########################
+########################
+# SERVICE AREA SUMMARY #
+########################
 print("Writing service_area_summary table...")
 etl.fromdb(read_conn, 'select * from service_area_summary')\
   .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
   .tooraclesde(write_dsn, service_area_summary_write_table_name)
-# ########################
-# # ADDRESS AREA SUMMARY #
-# ########################
+########################
+# ADDRESS AREA SUMMARY #
+########################
 print("Creating transformed address_summary table...")
 address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
     .addfield('address_full', (lambda a: make_address_full(
@@ -189,9 +189,9 @@ address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary
 
 address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
 address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
-# #########################
-# # DOR CONDOMINIUM ERROR #
-# #########################
+#########################
+# DOR CONDOMINIUM ERROR #
+#########################
 print("Writing dor_condominium_error table...")
 dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error') \
     .rename({'parcel_id': 'mapref', 'unit_num': 'condounit',}) \
@@ -253,7 +253,7 @@ print(source_table_name)
 field_map = source_def['field_map']
 print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
 
-etl.fromoraclesde(read_dsn, source_table_name) \
+etl.fromoraclesde(read_dsn, source_table_name, where="SDE.ST_ISEMPTY(SHAPE)=0") \
     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
          'stdes', 'stdessuf', 'status', 'shape') \
     .addfield('concatenated_address', lambda c: concatenate_dor_address(
@@ -297,7 +297,6 @@ a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']
               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
                   standardize_nulls(a['std_address_postdir'])) else 0) \
     .tocsv('dor_parcel_address_analysis.csv', write_header=True)
-
 # get address_summary rows with dor_parcel_id as array:
 address_summary_rows = address_summary_out_table \
     .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
