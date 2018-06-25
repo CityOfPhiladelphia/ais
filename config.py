@@ -103,11 +103,11 @@ BASE_DATA_SOURCES = {
         }
     },
     'properties': {
-        'db':               'brtprod',
-        'table':            'brt_admin.properties',
+        'db':               'gis',
+        'table':            'GIS_AIS_SOURCES.PROPERTY_SUMMARY',
         'field_map': {
-            'account_num':          'parcelno',
-            'tencode':              'propertyid',
+            'account_num':          'parcel_number',
+            'tencode':              'property_id',
             'source_address':       'location',
             'address_suffix':       'suffix',
             'unit':                 'unit',
