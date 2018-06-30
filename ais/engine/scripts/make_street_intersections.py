@@ -86,7 +86,7 @@ st_node_stmt = '''
       streetcl_ numeric(10,0),
       node_id numeric(10,0),
       int_id numeric(10,0),
-      intersecti character varying(50),
+      intersecti character varying(255),
       geom geometry(Point,2272),
       CONSTRAINT street_nodes_pkey PRIMARY KEY (objectid)
 );
