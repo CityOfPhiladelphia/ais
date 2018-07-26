@@ -1,6 +1,7 @@
 import json
 from collections import OrderedDict, Iterable
 from geoalchemy2.shape import to_shape
+from shapely.geometry import mapping, asShape
 from ais import app, util #, app_db as db
 from ais.models import Address, ENGINE_SRID
 #from itertools import chain
@@ -267,7 +268,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
             shape, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def shape_to_geodict(self, shape):
-        from shapely.geometry import mapping
         data = mapping(shape)
         return OrderedDict([
             ('type', data['type']),
@@ -360,17 +360,18 @@ class AddressJsonSerializer (GeoJSONSerializer):
             else:
                 sa_data = self.sa_data
             # if self.metadata['search_type'] == 'address':
-            if self.metadata['search_type'] in ('address', 'street'):
+            if self.metadata['search_type'] in ('address'):
                 match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
             else:
                 match_type_key = {
-                    'block': 'on block',
-                    'owner': 'contains query string',
-                    'coordinates': 'exact location',
-                    'stateplane': 'exact location',
+                    'block': 'on_block',
+                    'owner': 'contains_query_string',
+                    'coordinates': 'exact_location',
+                    'stateplane': 'exact_location',
                     'mapreg': 'exact_key',
                     'pwd_parcel_id': 'exact_key',
-                    'opa_account': 'exact_key'
+                    'opa_account': 'exact_key',
+                    'landmark': 'place_name_match'
                 }
                 match_type = match_type_key[self.metadata['search_type']]
 
@@ -448,7 +449,6 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
             shape, from_srid=ENGINE_SRID, to_srid=self.srid)
 
     def shape_to_geodict(self, shape):
-        from shapely.geometry import mapping
         data = mapping(shape)
         return OrderedDict([
             ('type', data['type']),
@@ -503,6 +503,98 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
         ])
 
         return data
+
+
+
+class StreetJsonSerializer ():
+    def __init__(self, metadata=None, match_type=None, geom=None, name=None, full=None, is_centerline_match=None, post=None,
+                 postdir=None, predir=None, street_code=None, suffix=None, srid=None, **kwargs):
+        self.metadata = metadata
+        self.match_type = match_type
+        self.geom = geom,
+        self.name = name,
+        self.full = full,
+        self.is_centerline_match = is_centerline_match,
+        self.post = post,
+        self.postdir = postdir,
+        self.predir = predir,
+        self.street_code = street_code,
+        self.suffix = suffix
+        self.srid = srid
+        super().__init__()
+
+
+    def geodict_to_shape(self, geodict):
+        pass
+
+    def project_shape(self, shape):
+        return util.project_shape(
+            shape, from_srid=ENGINE_SRID, to_srid=self.srid)
+
+    def model_to_data(self):
+        if self.geom is not None:
+            # shape = self.geom_to_shape(self.geom)
+            # shape = asShape(shape)
+            geom_data = self.geom[0]
+            geom_type = {'geocode_type': 'midpoint'}
+            geom_data.update(geom_type)
+        else:
+            geom_data = OrderedDict([
+                ('geocode_type', None),
+                ('type', None),
+                ('coordinates', None)
+            ])
+        # Build the intersection feature, then attach properties
+        #num_ints = intersection.int_ids.count('|') + 1
+        data = OrderedDict([
+            ('type', 'Feature'),
+            ('ais_feature_type', 'street'),
+            ('match_type', self.match_type),
+            ('properties', OrderedDict([
+                ('street_code', self.street_code),
+                ('street_full', self.full),
+                ('street_name', self.name),
+                ('street_predir', self.predir),
+                ('street_postdir', self.postdir),
+                ('street_suffix', self.suffix),
+                # ('is_centerline_match', self.is_centerline_match)
+                ]),
+            ),
+            ('geometry', geom_data),
+        ])
+
+        return data
+
+    def render(self, data):
+        final_data = []
+        if self.metadata:
+            final_data += sorted(self.metadata.items(),reverse=True)
+        # Render as a feature collection if in a list
+        if isinstance(data, list):
+            # if self.pagination:
+            #     final_data += self.pagination.items()
+            final_data += [
+                ('type', 'FeatureCollection'),
+                ('features', data),
+            ]
+
+        # Render as a feature otherwise
+        else:
+            final_data += data.items()
+
+        final_data = OrderedDict(final_data)
+        # geom_data = OrderedDict([
+        #     ('geocode_type', 'input'),
+        #     ('type', 'Point'),
+        #     ('coordinates', self.coordinates)
+        # ])
+        # final_data.update({'geometry': geom_data})
+        return json.dumps(final_data)
+
+    def serialize(self):
+        data = self.model_to_data()
+        # data = self.transform_exceptions(data)
+        return self.render(data)
 
 
 class ServiceAreaSerializer ():

@@ -18,7 +18,7 @@ from ais.models import Address, AddressSummary, StreetIntersection, StreetSegmen
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, AddressTagSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, StreetJsonSerializer, AddressTagSerializer
 
 config = app.config
 OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
@@ -187,7 +187,7 @@ def unknown_cascade_view(**kwargs):
 
     # Get geom from true_range view item with same seg_id
     true_range_stmt = '''
-                    Select true_left_from, true_left_to, true_right_from, true_right_to
+                     select true_left_from, true_left_to, true_right_from, true_right_to
                      from true_range
                      where seg_id = {seg_id}
                 '''.format(seg_id=cascadedseg.seg_id)
@@ -373,7 +373,7 @@ def addresses(query):
 
     filters.update(strict_filters)
 
-    if search_type not in ('address', 'street') or low_num is None:
+    if search_type not in ('address', 'landmark') or low_num is None:
         error = json_error(404, 'Not a valid address.',
                            {'query': query, 'normalized': normalized_address,'search_type': search_type})
         return json_response(response=error, status=404)
@@ -884,7 +884,7 @@ def intersection(query):
     parsed = PassyunkParser().parse(query)
     search_type = 'intersection' if parsed['type'] == 'intersection_addr' else parsed['type']
 
-    if search_type != 'intersection':
+    if search_type not in ('intersection', 'landmark'):
         error = json_error(404, 'Not a valid intersection query.',
                            {'query': query})
         return json_response(response=error, status=404)
@@ -1188,12 +1188,49 @@ def service_areas(query):
     return json_response(response=result, status=200)
 
 
-#@app.route('/street/<path:query>')
-#@cache_for(hours=1)
+@app.route('/street/<path:query>')
+@cache_for(hours=1)
 def street(query):
-    error = json_error(404, 'Could not find any addresses matching query.',
-                       {'query': query})
-    return json_response(response=error, status=404)
+    parsed = PassyunkParser().parse(query)
+    comps = parsed.get('components')
+    normalized = comps.get('output_address')
+    search_type = parsed.get('type')
+    street_comps = comps.get('street')
+    name = street_comps.get('name')
+    full = street_comps.get('full')
+    is_centerline_match = street_comps.get('is_centerline_match')
+    post = street_comps.get('post')
+    postdir = street_comps.get('postdir')
+    predir = street_comps.get('predir')
+    street_code = street_comps.get('street_code')
+    suffix = street_comps.get('suffix')
+    geometry = comps.get('geometry')
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    if not geometry:
+        error = json_error(404, 'Could not find any streets matching query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
+    else:
+        # Use ServiceAreaSerializer
+        serializer = StreetJsonSerializer(
+            metadata={'search_type': search_type, 'query': query,
+                      'search_params': request.args, 'normalized': normalized, 'crs': crs},
+            geom=geometry,
+            name=name,
+            full = full,
+            is_centerline_match = is_centerline_match,
+            post = post,
+            postdir = postdir,
+            predir = predir,
+            street_code = street_code,
+            suffix = suffix,
+            srid = srid
+        )
+        result = serializer.serialize()
+
+        return json_response(response=result, status=200)
 
 # from flask_sqlalchemy import get_debug_queries
 # @app.after_request
@@ -1201,6 +1238,11 @@ def street(query):
 #     for query in get_debug_queries():
 #         app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
 #     return response
+
+def landmark(query):
+    error = json_error(404, 'Landmark response not yet implemented.',
+                       {'query': query})
+    return json_response(response=error, status=404)
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
@@ -1237,7 +1279,7 @@ def search(query):
         'block': block,
         'latlon': reverse_geocode,
         'stateplane': reverse_geocode,
-        'street': addresses,
+        'street': street
     }
     try:
         parsed = PassyunkParser().parse(query)
@@ -1248,6 +1290,16 @@ def search(query):
     search_type = parsed['type']
     normalized_address = parsed['components']['output_address']
     # TODO: Pass search_type (or parsed) to view function to avoid reparsing
+    if search_type == 'landmark':
+        street_1_full = parsed['components']['street']['full']
+        street_2_full = parsed['components']['street_2']['full']
+        if street_1_full:
+            if street_2_full:
+                return intersection(query)
+            else:
+                return addresses(query)
+        else:
+            return landmark(query)
     if search_type != 'none':
         # get the corresponding view function
         try:
