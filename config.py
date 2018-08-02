@@ -634,6 +634,18 @@ SERVICE_AREAS = {
             },
         },
         {
+            'layer_id':                     'us_congressional_2018',
+            'name':                         'US Congressional 2018',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.us_congressional_2018',
+                    'value_field':          'id',
+                },
+            },
+        },
+        {
             'layer_id':                     'planning_district',
             'name':                         'Planning District',
             'description':                  '',
