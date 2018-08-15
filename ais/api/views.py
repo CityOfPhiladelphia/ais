@@ -18,7 +18,7 @@ from ais.models import Address, AddressSummary, StreetIntersection, StreetSegmen
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
-from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, StreetJsonSerializer, AddressTagSerializer
+from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, ServiceAreaSerializer, StreetJsonSerializer, LandmarkJsonSerializer
 
 config = app.config
 OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
@@ -1191,7 +1191,8 @@ def service_areas(query):
 @app.route('/street/<path:query>')
 @cache_for(hours=1)
 def street(query):
-    parsed = PassyunkParser().parse(query)
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    parsed = PassyunkParser().parse(query, output_srid=srid)
     comps = parsed.get('components')
     normalized = comps.get('output_address')
     search_type = parsed.get('type')
@@ -1205,10 +1206,9 @@ def street(query):
     street_code = street_comps.get('street_code')
     suffix = street_comps.get('suffix')
     geometry = comps.get('geometry')
-    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
-    if not geometry:
+    if not geometry or search_type not in ('street', 'block', 'address'):
         error = json_error(404, 'Could not find any streets matching query.',
                            {'query': query})
         return json_response(response=error, status=404)
@@ -1238,11 +1238,39 @@ def street(query):
 #     for query in get_debug_queries():
 #         app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
 #     return response
-
+@app.route('/landmark/<path:query>')
 def landmark(query):
-    error = json_error(404, 'Landmark response not yet implemented.',
-                       {'query': query})
-    return json_response(response=error, status=404)
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    if 'landmark_centroid' in request.args:
+        landmark_centroid = True if request.args['landmark_centroid'].lower() != 'false' else False
+    else:
+        landmark_centroid = config['DEFAULT_LANDMARK_CENTROID']
+    parsed = PassyunkParser().parse(query, output_srid=srid, landmark_centroid=landmark_centroid)
+    comps = parsed.get('components')
+    normalized = comps.get('output_address')
+    search_type = parsed.get('type')
+    geometry = comps.get('geometry')
+    crs = {'type': 'link',
+           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
+    if not geometry:
+        error = json_error(404, 'Could not find any landmarks matching query.',
+                           {'query': query})
+        return json_response(response=error, status=404)
+    else:
+        # Use ServiceAreaSerializer
+        serializer = LandmarkJsonSerializer(
+            metadata={'search_type': search_type, 'query': query,
+                      'search_params': request.args, 'normalized': normalized, 'crs': crs},
+            geom=geometry,
+            srid = srid
+        )
+        result = serializer.serialize()
+
+        return json_response(response=result, status=200)
+    # error = json_error(404, 'Landmark response not yet implemented.',
+    #                    {'query': query})
+    # return json_response(response=error, status=404)
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
@@ -1260,7 +1288,6 @@ def search(query):
     if request.args:
         for arg in request.args:
             arg_len += len(arg)
-        entry_length = entry_length + arg_len
     if not entry_length < 80:
         error = json_error(404, 'Query exceeds character limit.',
                            {'query': query})
@@ -1289,17 +1316,27 @@ def search(query):
         return json_response(response=error, status=404)
     search_type = parsed['type']
     normalized_address = parsed['components']['output_address']
+
     # TODO: Pass search_type (or parsed) to view function to avoid reparsing
-    if search_type == 'landmark':
+    if search_type == 'landmark': # TODO: Refine
         street_1_full = parsed['components']['street']['full']
         street_2_full = parsed['components']['street_2']['full']
         if street_1_full:
             if street_2_full:
+                entry_length = entry_length + arg_len
                 return intersection(query)
             else:
                 return addresses(query)
         else:
             return landmark(query)
+
+    if search_type == 'block':
+        if 'hundred_block' in request.args:
+            hundred_block = True if request.args['hundred_block'].lower() != 'false' else False
+        else:
+            hundred_block = config['DEFAULT_HUNDRED_BLOCK']
+        if hundred_block:
+            return(street(query))
     if search_type != 'none':
         # get the corresponding view function
         try:
