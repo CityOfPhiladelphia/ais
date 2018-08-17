@@ -507,20 +507,21 @@ class IntersectionJsonSerializer (GeoJSONSerializer):
 
 class StreetJsonSerializer ():
     def __init__(self, metadata=None, match_type=None, geom=None, name=None, full=None, is_centerline_match=None, post=None,
-                 postdir=None, predir=None, street_code=None, suffix=None, srid=None, **kwargs):
+                 postdir=None, predir=None, street_code=None, suffix=None, street_name_matches=None, srid=None, **kwargs):
         self.metadata = metadata
         self.match_type = match_type
-        self.geom = geom,
-        self.name = name,
-        self.full = full,
-        self.is_centerline_match = is_centerline_match,
-        self.post = post,
-        self.postdir = postdir,
-        self.predir = predir,
-        self.street_code = street_code,
+        self.geom = geom
+        self.name = name
+        self.full = full
+        self.is_centerline_match = is_centerline_match
+        self.post = post
+        self.postdir = postdir
+        self.predir = predir
+        self.street_code = street_code
         self.suffix = suffix
+        self.street_name_matches = street_name_matches
         self.srid = srid
-        super().__init__()
+        # super().__init__()
 
 
     def geodict_to_shape(self, geodict):
@@ -534,7 +535,7 @@ class StreetJsonSerializer ():
         if self.geom is not None:
             # shape = self.geom_to_shape(self.geom)
             # shape = asShape(shape)
-            geom_data = self.geom[0]
+            geom_data = self.geom
             geom_type = {'geocode_type': 'midpoint'}
             geom_data.update(geom_type)
         else:
@@ -549,6 +550,7 @@ class StreetJsonSerializer ():
             ('type', 'Feature'),
             ('ais_feature_type', 'street'),
             ('match_type', self.match_type),
+            ('street_name_matches', self.street_name_matches),
             ('properties', OrderedDict([
                 ('street_code', self.street_code),
                 ('street_full', self.full),
@@ -600,7 +602,7 @@ class LandmarkJsonSerializer ():
     def __init__(self, metadata=None, match_type='exact', geom=None, srid=None, **kwargs):
         self.metadata = metadata
         self.match_type = match_type
-        self.geom = geom,
+        self.geom = geom
         self.srid = srid
         super().__init__()
 

@@ -6,6 +6,7 @@ Does three primary things:
 """
 from collections import OrderedDict
 from itertools import chain
+from math import floor
 from flask import Response, request, redirect, url_for
 from flask_cachecontrol import cache_for
 from flasgger.utils import swag_from
@@ -1194,11 +1195,25 @@ def street(query):
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
     parsed = PassyunkParser().parse(query, output_srid=srid)
     comps = parsed.get('components')
-    normalized = comps.get('output_address')
     search_type = parsed.get('type')
     street_comps = comps.get('street')
+    address_comps = comps.get('address')
     name = street_comps.get('name')
     full = street_comps.get('full')
+    address_number = address_comps.get('low_num')
+    hundred_number = floor(address_number / 100) * 100
+    # Handle hundred_block arg by reparsing with formed block address
+    if search_type == 'address':
+        hundred_block = '''{hundred_number} block of {full}'''.format(hundred_number=str(hundred_number), full=full)
+        parsed = PassyunkParser().parse(hundred_block, output_srid=srid)
+        comps = parsed.get('components')
+        search_type = parsed.get('type')
+        street_comps = comps.get('street')
+        name = street_comps.get('name')
+        full = street_comps.get('full')
+    # print(comps)
+    normalized = comps.get('output_address')
+    street_name_matches = comps.get('street_name_matches')
     is_centerline_match = street_comps.get('is_centerline_match')
     post = street_comps.get('post')
     postdir = street_comps.get('postdir')
@@ -1226,6 +1241,7 @@ def street(query):
             predir = predir,
             street_code = street_code,
             suffix = suffix,
+            street_name_matches = street_name_matches,
             srid = srid
         )
         result = serializer.serialize()
@@ -1323,13 +1339,15 @@ def search(query):
         street_2_full = parsed['components']['street_2']['full']
         if street_1_full:
             if street_2_full:
-                entry_length = entry_length + arg_len
                 return intersection(query)
             else:
                 return addresses(query)
         else:
             return landmark(query)
 
+    # TODO: Discuss how to handle this:
+    if 'hundred_block' in request.args:
+        search_type = 'block'
     if search_type == 'block':
         if 'hundred_block' in request.args:
             hundred_block = True if request.args['hundred_block'].lower() != 'false' else False
