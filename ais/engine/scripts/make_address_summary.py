@@ -351,85 +351,49 @@ if WRITE_OUT:
     db.save()
 
     # print('Populating PWD parcel IDs...')
-    # # parcel_stmt = '''
-    # # 	update address_summary asm
-    # # 	set pwd_parcel_id = p.parcel_id
-    # # 	from
-    # # 		address_parcel ap,
-    # # 		pwd_parcel p
-    # # 	where
-    # # 		ap.parcel_source = 'pwd' and
-    # # 		ap.match_type != 'spatial' and
-    # # 		ap.street_address = asm.street_address and
-    # # 		p.id = ap.parcel_row_id
-    # # '''
     # parcel_stmt = '''
-    # update address_summary asm
-		# set pwd_parcel_id = t.parcel_id
-		# from address_tag t
-		# where t.street_address = asm.street_address and t.key = 'pwd_parcel_id'
+    # 	update address_summary asm
+    # 	set pwd_parcel_id = p.parcel_id
+    # 	from
+    # 		address_parcel ap,
+    # 		pwd_parcel p
+    # 	where
+    # 		ap.parcel_source = 'pwd' and
+    # 		ap.match_type != 'spatial' and
+    # 		ap.street_address = asm.street_address and
+    # 		p.id = ap.parcel_row_id
     # '''
     # db.execute(parcel_stmt)
     # db.save()
     #
     # print('Populating DOR parcel IDs...')
-    # # parcel_stmt = '''
-    # # 	update address_summary asm
-    # # 	set dor_parcel_id = d.parcel_id
-    # # 	from
-    # # 		address_parcel ap,
-    # # 		dor_parcel d
-    # # 	where
-    # # 		ap.parcel_source = 'dor' and
-    # # 		ap.match_type != 'spatial' and
-    # # 		ap.street_address = asm.street_address and
-    # # 		d.id = ap.parcel_row_id
-    # # '''
     # parcel_stmt = '''
-    #     update address_summary asm
-    #     set dor_parcel_id = t.dor_parcel_id
-		# from address_tag t
-		# where t.street_address = asm.street_address and t.key = 'dor_parcel_id'
+    # 	update address_summary asm
+    # 	set dor_parcel_id = d.parcel_id
+    # 	from
+    # 		address_parcel ap,
+    # 		dor_parcel d
+    # 	where
+    # 		ap.parcel_source = 'dor' and
+    # 		ap.match_type != 'spatial' and
+    # 		ap.street_address = asm.street_address and
+    # 		d.id = ap.parcel_row_id
     # '''
     # db.execute(parcel_stmt)
     # db.save()
     #
-    # print('Populating OPA accounts...')
-    # # prop_stmt = '''
-    # # 	update address_summary asm
-    # # 	set opa_account_num = op.account_num,
-    # # 		opa_owners = op.owners,
-    # # 		opa_address = op.source_address
-    # # 	from address_property ap, opa_property op
-    # # 	where asm.street_address = ap.street_address and
-    # # 		ap.opa_account_num = op.account_num
-    # # '''
-    # prop_stmt = '''
-    #     update address_summary asm
-    # 	opa_owners = t.opa_owner
-    # 	from address_tag t
-    # 	where t.street_address = asm.street_address and t.key = 'opa_owner'
-    # '''
-    # db.execute(prop_stmt)
-    # db.save()
-    #
-    # prop_stmt = '''
-    #     update address_summary asm
-    # 	opa_address = t.opa_address
-    # 	from address_tag t
-    # 	where t.street_address = asm.street_address and t.key = 'opa_address'
-    # '''
-    # db.execute(prop_stmt)
-    # db.save()
-    #
-    # prop_stmt = '''
-    #     update address_summary asm
-    # 	opa_account_num = t.opa_account_num
-    # 	from address_tag t
-    # 	where t.street_address = asm.street_address and t.key = 'opa_account_num'
-    # '''
-    # db.execute(prop_stmt)
-    # db.save()
+    print('Populating OPA accounts...')
+    prop_stmt = '''
+    	update address_summary asm
+    	set opa_account_num = op.account_num,
+    		opa_owners = op.owners,
+    		opa_address = op.source_address
+    	from address_property ap, opa_property op
+    	where asm.street_address = ap.street_address and
+    		ap.opa_account_num = op.account_num
+    '''
+    db.execute(prop_stmt)
+    db.save()
 
 # This is depreciated in favor of Zip Codes/Zip4s read from Passyunk Components (address_tag table)
 # print('Populating ZIP codes...')
