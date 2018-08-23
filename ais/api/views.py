@@ -327,6 +327,7 @@ def addresses(query):
     high_num = parsed['components']['address']['high_num']
     street_full = parsed['components']['street']['full']
     seg_id = parsed['components']['cl_seg_id']
+    cl_addr_match = parsed['components']['cl_addr_match']
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
     addr_num = str(low_num) + '-' + str(high_num) if high_num else low_num
@@ -348,7 +349,7 @@ def addresses(query):
                                  ('address_low',low_num if low_num is not None else full_num),
                                  ('address_low_suffix',parsed['components']['address']['addr_suffix']),
                                  ('address_low_frac',parsed['components']['address']['fractional']),
-    ]) if seg_id else OrderedDict([
+    ]) if seg_id and 'RANGE:' not in cl_addr_match else OrderedDict([
                                  ('street_name',parsed['components']['street']['name']),
                                  ('address_low',low_num if low_num is not None else full_num),
                                  ('address_low_suffix',parsed['components']['address']['addr_suffix']),
