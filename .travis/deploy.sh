@@ -12,10 +12,10 @@ echo "Installing AWS Elastic Beanstalk CLI"
 # pip install awsebcli
 # new version isn't working - install older version:
 pip install awsebcli==3.8.8 --force-reinstall
-eb_version=eb --version
-echo "AWSEBCLI Version: "$eb_version
 # 3. Configure eb
 echo "Installing configuration for eb tool"
+eb_version=eb --version
+echo "AWSEBCLI Version: "$eb_version
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
 [phila]
