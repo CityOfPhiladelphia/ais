@@ -12,7 +12,8 @@ echo "Installing AWS Elastic Beanstalk CLI"
 # pip install awsebcli
 # new version isn't working - install older version:
 pip install awsebcli==3.8.8 --force-reinstall
-
+eb_version=eb --version
+echo "AWSEBCLI Version: "$eb_version
 # 3. Configure eb
 echo "Installing configuration for eb tool"
 mkdir -p ~/.aws
@@ -21,7 +22,11 @@ cat > ~/.aws/credentials <<EOF
 aws_secret_access_key = $AWS_SECRET
 aws_access_key_id = $AWS_ID
 EOF
-
+cat > ~/.aws/config <<EOF
+[profile eb-cli]
+aws_secret_access_key = $AWS_SECRET
+aws_access_key_id = $AWS_ID
+EOF
 
 if [ $TRAVIS_BRANCH = "develop" ] || [ $TRAVIS_BRANCH = "develop_test" ]; then
     eb deploy ais-api-develop
