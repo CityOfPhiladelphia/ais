@@ -346,7 +346,7 @@ ADDRESSES = {
             'table':                'gis_lni.eclipse_addressobjectid_mvw',
             'db':                   'gislni',
             'address_fields':       {
-                'base_address':       'licenseaddress1',
+                'base_address':       'street_address',
                 'unit_num':           'unit',
             },
             'preprocessor':         make_eclipse_address,
