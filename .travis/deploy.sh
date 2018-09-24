@@ -35,6 +35,7 @@ fi
 
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
+echo $TRAVIS_BRANCH
 source bin/eb_env_utils.sh
 echo $EB_ENVS
 get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
