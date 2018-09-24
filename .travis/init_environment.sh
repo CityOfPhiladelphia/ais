@@ -16,3 +16,4 @@ virtualenv env -p python3.5 || echo 'Virtual environment already created.'
 
 echo 'Writing Travis instance IP info:'
 ip a
+curl ipinfo.io/ip
