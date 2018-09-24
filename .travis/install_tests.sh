@@ -9,9 +9,8 @@ source env/bin/activate
 # 2. Install the awsebcli
 echo "Installing AWS Elastic Beanstalk CLI"
 # pip install awsebcli
-pip install awsebcli==3.14.6 --ignore-installed
 # new version isn't working - install older version:
-#pip install awsebcli==3.8.8 --force-reinstall
+pip install awsebcli==3.14.6 --force-reinstall
 
 # 3. Configure eb
 echo "Installing configuration for eb tool"

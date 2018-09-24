@@ -2,8 +2,6 @@
 
 set -e
 
-echo "Testing travis branch: "
-echo $TRAVIS_BRANCH
 # 1. Create a virtual environment
 echo "Creating a virtual environment"
 .travis/init_environment.sh
@@ -13,23 +11,17 @@ source env/bin/activate
 echo "Installing AWS Elastic Beanstalk CLI"
 # pip install awsebcli
 # new version isn't working - install older version:
-#pip install awsebcli==3.8.8 --force-reinstall
-pip install awsebcli==3.14.6 --ignore-installed
+pip install awsebcli==3.14.6 --force-reinstall
+
 # 3. Configure eb
 echo "Installing configuration for eb tool"
-eb_version=eb --version
-echo "AWSEBCLI Version: "$eb_version
 mkdir -p ~/.aws
 cat > ~/.aws/credentials <<EOF
 [phila]
 aws_secret_access_key = $AWS_SECRET
 aws_access_key_id = $AWS_ID
 EOF
-cat > ~/.aws/config <<EOF
-[profile eb-cli]
-aws_secret_access_key = $AWS_SECRET
-aws_access_key_id = $AWS_ID
-EOF
+
 
 if [ $TRAVIS_BRANCH = "develop" ] || [ $TRAVIS_BRANCH = "develop_test" ]; then
     eb deploy ais-api-develop
