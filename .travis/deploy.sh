@@ -36,6 +36,7 @@ fi
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
 source bin/eb_env_utils.sh
+echo $EB_ENVS
 get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
   echo "Could not find a production or swap environment" ;
   exit 1 ;
