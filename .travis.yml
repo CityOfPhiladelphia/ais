@@ -12,10 +12,6 @@ addons:
     - libgeos-dev
     - unzip
     - nginx
-    - iproute2
-
-script:
-  - ip a
 
 install:
   - .travis/install_tests.sh
@@ -32,5 +28,3 @@ deploy:
       - develop
       - develop_test
 after_deploy: .travis/clean_up.sh
-
-
