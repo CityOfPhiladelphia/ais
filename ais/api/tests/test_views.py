@@ -530,7 +530,7 @@ def test_overlap_link_respects_parity(client):
 def test_related_addresses_returned_with_include_units(client):
     response = client.get('/search/1708%20chestnut%20st?include_units')
     data = json.loads(response.get_data().decode())
-    assert data['total_size'] == 6
+    assert data['total_size'] == 5
     features = data['features']
     assert features[0]['properties']['street_address'] == '1708 CHESTNUT ST'
     assert features[0]['match_type'] == 'exact'
@@ -541,7 +541,7 @@ def test_related_addresses_returned_with_include_units(client):
 def test_ranged_address_returns_related_addresses_with_includes_units(client):
     response = client.get('/search/1708-14%20chestnut%20st?include_units')
     data = json.loads(response.get_data().decode())
-    assert data['total_size'] == 6
+    assert data['total_size'] == 5
     features = data['features']
     assert features[0]['properties']['street_address'] == '1708-14 CHESTNUT ST'
     assert features[0]['match_type'] == 'exact'
