@@ -3,13 +3,13 @@ alembic==1.0.0
 #-e git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
 flasgger==0.5.14
-Flask==0.10.1
-Flask-Migrate==1.8.0
-Flask-Script==2.0.5
-Flask-SQLAlchemy==2.1
-Flask-Cors==2.1.2
-Flask-CacheControl==0.1.2
-GeoAlchemy2==0.2.6
+Flask==1.0.2
+Flask-Migrate
+Flask-Script
+Flask-SQLAlchemy
+Flask-Cors
+Flask-CacheControl
+GeoAlchemy2
 itsdangerous==0.24
 Jinja2==2.8
 Mako==1.0.3
@@ -21,9 +21,9 @@ python-editor==0.5
 PyYAML==3.11
 raven[flask]==5.21.0
 Shapely>=1.5.13
-SQLAlchemy==1.1.14
-Werkzeug==0.11.4
-zope.interface==4.1.3
+SQLAlchemy
+Werkzeug
+zope.interface
 petl==1.1.1
 -e git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
 

@@ -1,6 +1,6 @@
 #import copy
 import re
-from flask.ext.sqlalchemy import BaseQuery
+from flask_sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
 from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct

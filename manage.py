@@ -1,5 +1,5 @@
 import os
-from flask.ext.script import Command, Option
+from flask_script import Command, Option
 from ais import manager
 
 class EngineCommand(Command):
