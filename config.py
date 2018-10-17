@@ -216,7 +216,7 @@ def make_dor_parcel_id(comps):
 def make_eclipse_address(comps):
     base_address = comps['base_address']
     unit_num = comps['unit_num']
-    return base_address + ' # ' + unit_num if unit_num else base_address
+    return base_address + ' # ' + unit_num if unit_num and base_address else base_address
 
 
 ADDRESSES = {
