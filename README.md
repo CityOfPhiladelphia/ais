@@ -2,6 +2,8 @@
 
 AIS provides a unified view of City data for an address.
 
+[API usage documentation](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md).
+
 ## Goals
 
 - Simplify relationships between land records, real estate properties, streets, and addresses
