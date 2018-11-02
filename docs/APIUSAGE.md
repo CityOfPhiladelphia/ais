@@ -36,7 +36,7 @@ The API endpoints are:
 
 
 ### <a name="Search"></a>**Search**
-`\search` is a resource which handles a variety of query types, including:
+`/search` is a resource which handles a variety of query types, including:
 
    * **address** - Represents a particular address - 
     [http://api.phila.gov/ais/v1/search/1234 market st](http://api.phila.gov/ais_doc/v1/search/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
@@ -68,7 +68,7 @@ The API endpoints are:
 
 
 ### <a name="Owner"></a>__**Owner**__ 
-`\owner` is a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. 
+`/owner` is a resource which handles queries of owner names, retrieving addresses that have owner names matching the query. 
 * Queries are treated as substrings of owner names:
  * Request properties owned by anyone whose first or last name contains "Poe" - [http://api.phila.gov/ais/v1/owner/Poe](http://api.phila.gov/ais_doc/v1/owner/Poe?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 * You can search for multiple substrings by separating search terms by spaces:
@@ -76,7 +76,7 @@ The API endpoints are:
 
 
 ### <a name="Addresses"></a>__**Addresses**__ 
-`\addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/): 
+`/addresses` is the original AIS endpoint designed to work with [Property Search](http://property.phila.gov/): 
 * [http://api.phila.gov/ais/v1/addresses/1234 market st](http://api.phila.gov/ais_doc/v1/search/1234%20market%20st?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
 
@@ -328,7 +328,7 @@ A `404 status` is returned when:
 
 ## <a name="Additional Resources"></a>Additional Resources
 ### <a name="ServiceAreas"></a>__**Service Areas**__ 
-`\service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
+`/service_areas` is a resource which returns service areas that overlay the queried location. To search by coordinates, please enter in x, y format, either as:
 * Geographic WG84 coordinates (srid=4326): [http://api.phila.gov/ais/v1/service_areas/-75.16097658476633, 39.951661655671955](http://api.phila.gov/ais_doc/v1/service_areas/-75.16097658476633,%2039.951661655671955?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf), or
 * Projected NAD83 / Pennsylvania South (ftUS) (srid=2272): [http://api.phila.gov/ais/v1/service_areas/2694253.78730206, 235887.921013063](http://api.phila.gov/ais_doc/v1/service_areas/2694253.78730206,%20235887.921013063?gatekeeperKey=6ba4de64d6ca99aa4db3b9194e37adbf)
 
