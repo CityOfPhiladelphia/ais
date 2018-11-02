@@ -84,13 +84,13 @@ print("Getting addresses for autocomplete...")
 autocomplete_addresses = etl.fromdb(dbo, stmt)
 autocomplete_addresses.tocsv(autocomplete_addresses_path)
 
-s3 = boto3.resource('s3', profile_name=aws_profile)
-session = boto3.Session(profile_name='dev')
+session = boto3.session.Session(profile_name=aws_profile)
+s3 = session.resource('s3')
 print("Renaming old address list in s3...")
 s3.meta.client.copy_object(Bucket=s3_bucket, CopySource=s3_bucket + '/' + autocomplete_addresses_path, Key=autocomplete_addresses_old_path)
 print("Writing autocomplete addresses to s3...")
 s3.meta.client.upload_file(autocomplete_addresses_path, s3_bucket, autocomplete_addresses_path)
-
+print("Completed writing autocomplete addresses to s3..."
 # TODO: From here activate script on ec2 instance (alex-test) in same VPC as ElastiCache that will diff and update ElastiCache:
 
 

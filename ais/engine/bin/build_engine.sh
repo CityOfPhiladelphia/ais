@@ -32,6 +32,9 @@ ais engine run load_curbs
 echo "Loading Addresses"
 ais engine run load_addresses
 
+echo "Exporting Autocomplete Addresses"
+python export_autocomplete_addresses.py
+
 echo "Geocoding Addresses"
 ais engine run geocode_addresses
 
