@@ -11,10 +11,9 @@ Welcome to the documentation for AIS API Version 1.0. This document explains how
 Currently AIS is only designated for internal use.  Please request an API key so we can monitor your application's API usage to make sure your needs are being met.
 
 ### To obtain a key: 
- 1.  Email IT Help to create a new support ticket.
- 2.  Copy maps@phila.gov on the email.
- 3.  Request that IT Help route the ticket to GSG.
- 4.  Describe the application that will be using AIS and provide a URL if possible.
+ 1.  Email ithelp@phila.gov to create a new support ticket, and copy maps@phila.gov on the email.
+ 2.  Request that IT Help route the ticket to CityGeo.
+ 3.  Describe the application that will be using AIS and provide a URL if possible.
  
 ### To use a key:
  * Add the querystring parameter ```gatekeeperKey=#```, where # is the api key:
