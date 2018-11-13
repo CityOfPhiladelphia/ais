@@ -728,3 +728,7 @@ def test_null_usps_zip_populated_from_service_area(client):
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['zip_code'] == '19125'
 
+def test_lni_address_keys(client):
+    response = client.get('/search/1234 MARKET ST')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['li_address_key'] == '410516'
