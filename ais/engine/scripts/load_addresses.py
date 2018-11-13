@@ -187,6 +187,10 @@ for source in sources:
             source_rows = source_table.read(fields=source_fields, \
                                             aliases=aliases, where=where, return_geom=False)
 
+    if not source_rows or len(source_rows) < 2:
+        print("Exiting because source table {source_table} is empty.".format(source_table=source_table))
+        break
+        
     # Loop over addresses
     for i, source_row in enumerate(source_rows):
         if i % 100000 == 0:
