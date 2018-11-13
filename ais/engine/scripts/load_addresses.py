@@ -1,4 +1,4 @@
-# import sys
+import sys
 # import os
 # import csv
 # from copy import deepcopy
@@ -189,8 +189,8 @@ for source in sources:
 
     if not source_rows or len(source_rows) < 2:
         print("Exiting because source table {source_table} is empty.".format(source_table=source_table))
-        break
-        
+        sys.exit(1)
+
     # Loop over addresses
     for i, source_row in enumerate(source_rows):
         if i % 100000 == 0:
