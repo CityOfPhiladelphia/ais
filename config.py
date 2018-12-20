@@ -505,6 +505,8 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'GIS_LNI.DISTRICTS',
                     'value_field':          'district',
+                    'object_id_field':      'objectid_1',
+
                 },
             },
         },
