@@ -18,7 +18,8 @@ normality==0.2.4
 psycopg2==2.7.5
 pyproj==1.9.5.1
 python-editor==0.5
-PyYAML==3.11
+#PyYAML==3.11
+pyyaml>=4.2b1
 raven[flask]==5.21.0
 Shapely>=1.5.13
 SQLAlchemy
