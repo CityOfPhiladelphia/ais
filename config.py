@@ -417,8 +417,11 @@ ADDRESSES = {
             'tag_fields': [
                 {
                     'key': 'bin',
-                    # 'source_field': 'water1_acc_no',
                     'source_fields': ['bin'],
+                },
+                {
+                    'key': 'bin_parcel_id',
+                    'source_fields': ['parcel_id_num'],
                 },
             ],
         },
@@ -1492,6 +1495,12 @@ ADDRESS_SUMMARY = {
         {
             'name':                 'bin',
             'tag_key':              'bin',
+            'type':                 'text',
+            'traverse_links':       'true',
+        },
+        {
+            'name':                 'bin_parcel_id',
+            'tag_key':              'bin_parcel_id',
             'type':                 'text',
             'traverse_links':       'true',
         },

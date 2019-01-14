@@ -522,6 +522,7 @@ class AddressTag(db.Model):
     * li_address_key
     * eclipse location id
     * bin
+    * bin_parcel_id
     * zoning document ids
     * info_resident (private)
     * info_company (private)
@@ -1187,6 +1188,7 @@ class AddressSummary(db.Model):
     li_address_key = db.Column(db.Text)
     eclipse_location_id = db.Column(db.Text)
     bin = db.Column(db.Text)
+    bin_parcel_id = db.Column(db.Text)
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
 
