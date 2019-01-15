@@ -409,7 +409,7 @@ ADDRESSES = {
         },
         {
             'name': 'building_footprints',
-            'table': 'gis_lni.li_building_footprints',
+            'table': 'gis_lni.li_building_footprints_rev',
             'db':    'gis',
             'address_fields': {
                 'street_address': 'address',
