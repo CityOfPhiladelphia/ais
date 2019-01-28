@@ -1502,7 +1502,7 @@ ADDRESS_SUMMARY = {
             'name':                 'bin_parcel_id',
             'tag_key':              'bin_parcel_id',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
     ],
 }
