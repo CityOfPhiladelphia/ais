@@ -36,6 +36,7 @@ echo "Loading OPA Properties"
 ais engine run load_opa_properties
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 if [ $? -ne 0 ]
 then
   echo "Loading table failed. Exiting."
