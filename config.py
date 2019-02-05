@@ -409,7 +409,7 @@ ADDRESSES = {
         },
         {
             'name': 'building_footprints',
-            'table': 'gis_lni.li_building_footprints_rev',
+            'table': 'gis_ais_sources.li_building_footprints_rev_fmt',
             'db':    'gis',
             'address_fields': {
                 'street_address': 'address',
@@ -1502,7 +1502,7 @@ ADDRESS_SUMMARY = {
             'name':                 'bin_parcel_id',
             'tag_key':              'bin_parcel_id',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
     ],
 }
