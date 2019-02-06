@@ -326,38 +326,38 @@ ADDRESSES = {
                 },
             ],
         },
-        {
-            'name':                 'info_commercial',
-            #'table':                'gis_gsg.infogroup_commercial',
-            'table':                'gis_ais_sources.infogroup_commercial_2017_07',
-            'db':                   'gis',
-            'address_fields':       {
-                'street_address':       'primary_address',
-            },
-            'tag_fields': [
-                {
-                    'key':              'info_company',
-                    'source_fields':     ['company_name'],
-                },
-            ],
-        },
-        {
-            'name':                 'info_residents',
-            #'table':                'gis_gsg.infogroup_residential',
-            'table':                'gis_ais_sources.infogroup_residential_2017_07',
-            'db':                   'gis',
-            'address_fields':       {
-                #'street_address':       'caddr',
-                'street_address':       'address',
-            },
-            'tag_fields': [
-                {
-                    'key':              'info_resident',
-                    # 'source_field':     'name',
-                    'source_fields':     ['contact_name'],
-                },
-            ],
-        },
+#        {
+#            'name':                 'info_commercial',
+#            #'table':                'gis_gsg.infogroup_commercial',
+#            'table':                'gis_ais_sources.infogroup_commercial_2017_07',
+#            'db':                   'gis',
+#            'address_fields':       {
+#                'street_address':       'primary_address',
+#            },
+#            'tag_fields': [
+#                {
+#                    'key':              'info_company',
+#                    'source_fields':     ['company_name'],
+#                },
+#            ],
+#        },
+#        {
+#            'name':                 'info_residents',
+#            #'table':                'gis_gsg.infogroup_residential',
+#            'table':                'gis_ais_sources.infogroup_residential_2017_07',
+#            'db':                   'gis',
+#            'address_fields':       {
+#                #'street_address':       'caddr',
+#                'street_address':       'address',
+#            },
+#            'tag_fields': [
+#                {
+#                    'key':              'info_resident',
+#                    # 'source_field':     'name',
+#                    'source_fields':     ['contact_name'],
+#                },
+#            ],
+#        },
         {
             'name':                 'li_address_keys',
             'table':                'gis_lni.parsed_addr',
