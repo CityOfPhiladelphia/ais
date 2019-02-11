@@ -405,8 +405,8 @@ def test_cascade_to_true_range(client):
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'true_range'
-    assert feature['match_type'] == 'unmatched'
+    assert feature['geometry']['geocode_type'] == 'ng911_address_point'
+    assert feature['match_type'] == 'exact'
 
 def test_cascade_to_full_range(client):
     #response = client.get('/search/3551 ashfield lane')
@@ -445,7 +445,7 @@ def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
     response = client.get('/search/2100 KITTY HAWK AVE')
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'true_range'
+    assert feature['geometry']['geocode_type'] == 'ng911_address_point'
 
 def test_address_without_seg_match_returns_404(client):
     response = client.get('/search/2100 SITTY TAWK AVE')
