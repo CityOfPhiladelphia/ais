@@ -1188,7 +1188,7 @@ class AddressSummary(db.Model):
     li_address_key = db.Column(db.Text)
     eclipse_location_id = db.Column(db.Text)
     bin = db.Column(db.Text)
-    bin_parcel_id = db.Column(db.Text)
+    li_parcel_id = db.Column(db.Text)
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
 

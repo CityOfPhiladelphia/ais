@@ -395,6 +395,20 @@ if WRITE_OUT:
     db.execute(prop_stmt)
     db.save()
 
+    print('Populating li_parcel_id')
+    li_pin_stmt = '''
+        update address_summary asm
+        set li_parcel_id = 
+            case
+                when pwd_parcel_id != '' then pwd_parcel_id
+                when bin_parcel_id != '' then bin_parcel_id 
+		when opa_account_num != '' then '-' || opa_account_num
+		else ''
+	    end
+    '''
+    db.execute(li_pin_stmt)
+    db.save()
+
 # This is depreciated in favor of Zip Codes/Zip4s read from Passyunk Components (address_tag table)
 # print('Populating ZIP codes...')
 # zip_stmt = '''
