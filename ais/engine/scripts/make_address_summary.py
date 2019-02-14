@@ -21,6 +21,7 @@ start = datetime.now()
 config = app.config
 db = datum.connect(config['DATABASES']['engine'])
 tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
+non_summary_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
 geocode_table = db['geocode']
 address_table = db['address']
 max_values = config['ADDRESS_SUMMARY']['max_values']
@@ -191,6 +192,8 @@ for i, street_name in enumerate(street_names):
 
         for tag_field in tag_fields:
             field_name = tag_field['name']
+            if field_name in non_summary_tags:
+                continue
             tag_key = tag_field['tag_key']
             field_type = tag_field['type']
             values = []

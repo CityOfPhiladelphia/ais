@@ -1505,6 +1505,7 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
     ],
+    'non_summary_tags': ['bin_parcel_id'],
 }
 
 SWAGGER = {
