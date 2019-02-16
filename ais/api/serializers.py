@@ -410,7 +410,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('li_address_key', ''),
                 ('eclipse_location_id', ''),
                 ('bin', ''),
-                ('bin_parcel_id', ''),
+                ('li_parcel_id', ''),
                 ('zoning_document_ids', ''),
                 ('pwd_account_nums', ''),
                 ('opa_account_num', ''),

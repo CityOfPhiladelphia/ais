@@ -21,6 +21,7 @@ start = datetime.now()
 config = app.config
 db = datum.connect(config['DATABASES']['engine'])
 tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
+non_summary_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
 geocode_table = db['geocode']
 address_table = db['address']
 max_values = config['ADDRESS_SUMMARY']['max_values']
@@ -191,6 +192,8 @@ for i, street_name in enumerate(street_names):
 
         for tag_field in tag_fields:
             field_name = tag_field['name']
+            if field_name in non_summary_tags:
+                continue
             tag_key = tag_field['tag_key']
             field_type = tag_field['type']
             values = []
@@ -393,6 +396,42 @@ if WRITE_OUT:
     		ap.opa_account_num = op.account_num
     '''
     db.execute(prop_stmt)
+    db.save()
+
+    print('Populating li_parcel_id')
+    li_pin_stmt = '''
+        with bpis as 
+        (
+            select street_address, max(value) as bin_parcel_id from 
+            (
+                select street_address, value from address_tag where key = 'bin_parcel_id'
+            ) foo
+            group by street_address
+        
+        )
+        ,
+        choices as (
+            select asum.street_address, asum.pwd_parcel_id, asum.opa_account_num, bpis.bin_parcel_id
+            from address_summary asum
+            left join bpis on bpis.street_address = asum.street_address
+        )
+        ,
+        final as (
+        select street_address, 
+                case 
+                when pwd_parcel_id != '' then pwd_parcel_id
+                when  bin_parcel_id != '' then bin_parcel_id
+                when opa_account_num != '' then '-' || opa_account_num
+                else ''
+            end as li_parcel_id
+            from choices
+        )
+        update address_summary asm
+        set li_parcel_id = final.li_parcel_id
+        from final
+        where final.street_address = asm.street_address
+    '''
+    db.execute(li_pin_stmt)
     db.save()
 
 # This is depreciated in favor of Zip Codes/Zip4s read from Passyunk Components (address_tag table)

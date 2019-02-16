@@ -409,7 +409,7 @@ ADDRESSES = {
         },
         {
             'name': 'building_footprints',
-            'table': 'gis_lni.li_building_footprints_rev',
+            'table': 'gis_ais_sources.vw_li_bldg_ftprnts_rev_fmt',
             'db':    'gis',
             'address_fields': {
                 'street_address': 'address',
@@ -1505,6 +1505,7 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
     ],
+    'non_summary_tags': ['bin_parcel_id'],
 }
 
 SWAGGER = {

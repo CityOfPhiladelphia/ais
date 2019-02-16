@@ -23,23 +23,23 @@ def run(script):
         if not os.path.isfile(path):
             raise FileNotFoundError('Script not found: {}'.format(script))
         paths.append(path)
-        
+ 
     for path in paths:
         subprocess.call([sys.executable, path], env=os.environ.copy())
 
 # ACTIVATE BELOW WHEN running "ais db migrate"
 #Import database models with app context
-from flask_migrate import Migrate, MigrateCommand
+#from flask_migrate import Migrate, MigrateCommand
 #from ais import app, app_db as db
-# with app.app_context():
-#   from ais.models import *
+#with app.app_context():
+#  from ais.models import *
 
-# migrate = Migrate(app, db)
+#migrate = Migrate(app, db)
 
-# manager = Manager(app)
-# manager.add_command('db', MigrateCommand)
+#manager = Manager(app)
+#manager.add_command('db', MigrateCommand)
 
-# if __name__ == '__main__':
-#     manager.run()
+#if __name__ == '__main__':
+#    manager.run()
 
 #app.config['DEBUG'] = True
