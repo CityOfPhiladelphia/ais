@@ -235,7 +235,8 @@ class GeoJSONSerializer (BaseSerializer):
 
 
 class AddressJsonSerializer (GeoJSONSerializer):
-    excluded_tags = ('info_resident', 'info_company', 'voter_name')
+    # excluded_tags = ('info_resident', 'info_company', 'voter_name', 'bin_parcel_id')
+    excluded_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
 
     def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
@@ -410,7 +411,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('li_address_key', ''),
                 ('eclipse_location_id', ''),
                 ('bin', ''),
-                ('li_parcel_id', ''),
+                ('li_parcel_id', address.li_parcel_id),
                 ('zoning_document_ids', ''),
                 ('pwd_account_nums', ''),
                 ('opa_account_num', ''),
@@ -658,7 +659,6 @@ class AddressTagSerializer():
                 ('li_address_key', {'source': '', 'value': ''}),
                 ('eclipse_location_id', {'source': '', 'value': ''}),
                 ('bin', {'source': '', 'value': ''}),
-                ('bin_parcel_id', {'source': '', 'value': ''}),
                 ('zoning_document_ids', {'source': '', 'value': ''}),
                 ('pwd_account_nums', {'source': '', 'value': ''}),
                 ('opa_account_num', {'source': '', 'value': ''}),
