@@ -155,6 +155,7 @@ def unknown_cascade_view(**kwargs):
     address.election_precinct = parsed['components']['election']['precinct']
     address.li_address_key = None
     address.pwd_account_nums = None
+    address.li_parcel_id = None
 
     if not seg_id:
         error = json_error(404, 'Could not find any addresses matching query.',
