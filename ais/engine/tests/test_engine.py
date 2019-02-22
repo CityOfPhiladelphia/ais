@@ -18,7 +18,7 @@ def startup():
     old_prod_env = old_prod_env.decode('utf-8')
     old_db = datum.connect(config['DATABASES'][new_db_map[old_prod_env]])
     new_db = datum.connect(config['DATABASES']['engine'])
-    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range')
+    unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range', 'dor_parcel_address_analysis')
     changed_tables = ()
     ignore_tables = unused_tables + changed_tables
 
@@ -57,7 +57,6 @@ def test_num_rows_bt_db_tables(startup):
     # new_db_tables = startup['new_db'].tables
     for ntable in new_db_tables:
         table_name = ntable['table_name']
-
         if table_name in startup['ignore_tables']:
             continue
 
