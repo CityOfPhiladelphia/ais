@@ -59,7 +59,8 @@ for i, source_row in enumerate(source_rows):
 		# Parse street name
 		source_street_full_comps = [str(source_row[x]).strip() for x in \
 			source_street_full_fields]
-		source_street_full_comps = [x for x in source_street_full_comps if x != '']
+		# source_street_full_comps = [x for x in source_street_full_comps if x != '']
+		source_street_full_comps = [x for x in source_street_full_comps if x not in ('', None, 'None')]
 		source_street_full = ' '.join(source_street_full_comps)
 		seg_id = source_row[field_map['seg_id']]
 		try:
