@@ -359,7 +359,7 @@ ADDRESSES = {
         },
         {
             'name':                 'voters',
-            'table':                'gis_elections.voters_2018_10',
+            'table':                'gis_elections.voters_2019_03',
             'db':                   'gis',
             'address_fields':       {
                 'address_low':          'house__',
@@ -1496,7 +1496,7 @@ ADDRESS_SUMMARY = {
             'name':                 'bin',
             'tag_key':              'bin',
             'type':                 'text',
-            'traverse_links':       'true',
+            'traverse_links':       'false',
         },
         {
             'name':                 'bin_parcel_id',
