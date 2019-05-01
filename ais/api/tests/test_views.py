@@ -137,11 +137,11 @@ def test_child_address_has_opa_units(client):
     assert_num_results(data, 1, op=gt)
 
 def test_child_address_has_all_units_in_ranged_address(client):
-    response = client.get('/addresses/1801 N 10th St')
+    response = client.get('/addresses/1801 N 11th St')
     assert_status(response, 200)
     child_data = json.loads(response.get_data().decode())
 
-    response = client.get('/addresses/1801-23 N 10th St')
+    response = client.get('/addresses/1801-59 N 11th St')
     assert_status(response, 200)
     ranged_data = json.loads(response.get_data().decode())
 
@@ -311,7 +311,7 @@ def test_opa_query_returns_child_address(client):
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST']
+    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST']
     if parent_address not in ignore_addresses:
         assert_num_results(data, 1)
 
@@ -330,7 +330,7 @@ def test_block_can_exclude_non_opa(client):
             LEFT OUTER JOIN address_summary AS base_address_summary ON address_link.address_2 = base_address_summary.street_address
 
           WHERE address_summary.street_predir = 'N'
-            AND address_summary.street_name = '10TH'
+            AND address_summary.street_name = '11TH'
             AND address_summary.street_suffix = 'ST'
             AND address_summary.address_low >= 1800
             AND address_summary.address_low < 1900
@@ -344,7 +344,7 @@ def test_block_can_exclude_non_opa(client):
     block_count = result.first()[0]
 
     # Ensure that no join collisions happen
-    response = client.get('/block/1800 N 10th St?opa_only')
+    response = client.get('/block/1800 N 11th St?opa_only')
     assert_status(response, 200)
 
     # Ensure it has the right number of results
