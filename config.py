@@ -1496,7 +1496,7 @@ ADDRESS_SUMMARY = {
             'name':                 'bin',
             'tag_key':              'bin',
             'type':                 'text',
-            'traverse_links':       'false',
+            'traverse_links':       'true',
         },
         {
             'name':                 'bin_parcel_id',
