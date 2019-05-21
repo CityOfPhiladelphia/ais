@@ -11,7 +11,7 @@ Flask-Cors
 Flask-CacheControl
 GeoAlchemy2
 itsdangerous==0.24
-Jinja2==2.8
+Jinja2==2.10.1
 Mako==1.0.3
 MarkupSafe==0.23
 normality==0.2.4
