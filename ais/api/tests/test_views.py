@@ -732,3 +732,10 @@ def test_lni_address_keys(client):
     response = client.get('/search/1234 MARKET ST')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['li_address_key'] == '410516'
+
+def test_bin_inheritance(client):
+    response = client.get('/search/1769 FRANKFORD AVE?include_units')
+    data = json.loads(response.get_data().decode())
+    bin = data['features'][0]['properties']['bin']
+    for feature in data['features']:
+        assert feature['properties']['bin'] == bin
