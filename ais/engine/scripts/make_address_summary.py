@@ -242,6 +242,7 @@ for i, street_name in enumerate(street_names):
                             generic_usps_value = value_address_map[address][0] # arbitrarily choose first value
                     value = value if value else generic_usps_value
                 else:
+                    values = sorted(values)
                     value = '|'.join(values[:max_values])
             else:
                 if field_type == 'number':
