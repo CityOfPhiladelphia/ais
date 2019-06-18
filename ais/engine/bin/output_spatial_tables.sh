@@ -33,7 +33,7 @@ then
   exit 1;
 fi
 echo "Swapping table"
-the_el swap_table t_address_summary address_summary --connection-string $oracle_dsn_gis_ais
+the_el swap_table t_test_address_summary address_summary_test --connection-string $oracle_dsn_gis_ais
 if [ $? -ne 0 ]
 then
   echo "Address summary table swap failed."
