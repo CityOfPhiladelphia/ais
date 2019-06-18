@@ -416,21 +416,30 @@ if WRITE_OUT:
             from address_summary asum
             left join bpis on bpis.street_address = asum.street_address
         )
-        ,
+		,
+		address_sources as
+		(
+			select street_address, string_agg(source_name,'|') as sources
+			from (select distinct street_address, source_name from source_address order by street_address, source_name) foo
+			group by street_address
+		)
+		,
         final as (
-        select street_address, 
+        select ch.street_address, 
                 case 
-                when pwd_parcel_id != '' then pwd_parcel_id
-                when  bin_parcel_id != '' then bin_parcel_id
-                when opa_account_num != '' then '-' || opa_account_num
+                when ch.pwd_parcel_id != '' then ch.pwd_parcel_id
+                when  ch.bin_parcel_id != '' then ch.bin_parcel_id
+                when ch.opa_account_num != '' then '-' || ch.opa_account_num
                 else ''
-            end as li_parcel_id
-            from choices
+            end as li_parcel_id,
+			s.sources
+            from choices ch
+			left join address_sources s on s.street_address = ch.street_address
         )
         update address_summary asm
         set li_parcel_id = final.li_parcel_id
         from final
-        where final.street_address = asm.street_address
+        where final.street_address = asm.street_address and sources != 'AIS'
     '''
     db.execute(li_pin_stmt)
     db.save()
