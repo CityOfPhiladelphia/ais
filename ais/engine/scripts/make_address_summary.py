@@ -243,7 +243,9 @@ for i, street_name in enumerate(street_names):
                     value = value if value else generic_usps_value
                 else:
                     values = sorted(values)
-                    value = '|'.join(values[:max_values])
+                    # value = '|'.join(values[:max_values])
+                    value = '|'.join(values)
+                    value = value[:2000]
             else:
                 if field_type == 'number':
                     value = None
