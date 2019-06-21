@@ -38,34 +38,34 @@ def test_single_address_has_single_result(client):
     assert_num_results(data, 1)
 
 def test_range_address_has_single_result(client):
-    response = client.get('/addresses/523-25 N Broad St')
+    response = client.get('/addresses/919-21 S 7TH ST')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
 
     feature = data['features'][0]
-    assert_opa_address(feature, '523-25 N BROAD ST')
+    assert_opa_address(feature, '919-21 S 7TH ST')
 
 def test_child_beginning_range_has_single_result(client):
-    response = client.get('/addresses/523 N Broad St')
+    response = client.get('/addresses/919 S 7TH ST')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
 
     feature = data['features'][0]
-    assert_opa_address(feature, '523-25 N BROAD ST')
+    assert_opa_address(feature, '919-21 S 7TH ST')
 
 def test_child_end_range_has_single_result(client):
-    response = client.get('/addresses/525 N Broad St')
+    response = client.get('/addresses/921 S 7TH ST')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
 
     feature = data['features'][0]
-    assert_opa_address(feature, '523-25 N BROAD ST')
+    assert_opa_address(feature, '919-21 S 7TH ST')
 
 def test_child_inside_range_has_single_result(client):
     response = client.get('/addresses/1307 S 6th St')
