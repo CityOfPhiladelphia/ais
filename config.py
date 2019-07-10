@@ -506,7 +506,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'gis_sa',
-                    'table':                'GIS_LNI.DISTRICTS',
+                    'table':                'GIS_LNI.LI_DISTRICTS',
                     'value_field':          'district',
                     'object_id_field':      'objectid_1',
 
