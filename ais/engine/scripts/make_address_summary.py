@@ -422,7 +422,7 @@ if WRITE_OUT:
 		address_sources as
 		(
 			select street_address, string_agg(source_name,'|') as sources
-			from (select distinct street_address, source_name from source_address order by street_address, source_name) foo
+			from (select distinct street_address, source_name from source_address where source_name not in ('AIS', 'voters', 'info_commercial', 'info_residents') order by street_address, source_name) foo
 			group by street_address
 		)
 		,
@@ -441,7 +441,7 @@ if WRITE_OUT:
         update address_summary asm
         set li_parcel_id = final.li_parcel_id
         from final
-        where final.street_address = asm.street_address and sources != 'AIS'
+        where final.street_address = asm.street_address and sources is not null
     '''
     db.execute(li_pin_stmt)
     db.save()
