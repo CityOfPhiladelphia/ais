@@ -739,3 +739,11 @@ def test_bin_inheritance(client):
     bin = data['features'][0]['properties']['bin']
     for feature in data['features']:
         assert feature['properties']['bin'] == bin
+
+def test_li_parcel_id_not_populated_for_non_authoritative_addresses(client):
+    response = client.get('/search/2429-41 LOCUST ST APT 201')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['li_parcel_id'] != ''
+    response = client.get('/search/2429 LOCUST ST APT 201')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['li_parcel_id'] == ''
