@@ -343,7 +343,7 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'gis_lni.eclipse_addressobjectid_mvw',
+            'table':                'gis_lni.eclipse_lni_addr_xy',
             'db':                   'gislni',
             'address_fields':       {
                 'base_address':       'street_address',
