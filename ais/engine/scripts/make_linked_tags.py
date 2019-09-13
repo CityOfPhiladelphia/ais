@@ -200,7 +200,7 @@ tag_sel_stmt = '''
       where unit_num != '')
       a
     left join address_tag t on t.street_address = a.street_address
-    order by a.street_address
+    order by a.street_address, t.key, t.value
 '''
 tag_rows = db.execute(tag_sel_stmt)
 for tag_row in tag_rows:
