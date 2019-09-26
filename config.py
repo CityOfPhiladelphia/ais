@@ -24,6 +24,7 @@ ENGINE_SRID = 2272
 DEFAULT_API_SRID = 4326
 DEFAULT_SEARCH_RADIUS = 300
 MAXIMUM_SEARCH_RADIUS = 10000
+DEFAULT_AIS_MAX_RANGE = 0 # How far away an address_low number can be from a valid street range to return an umatched response; overridden by query argument MAX_RANGE=xxx
 OWNER_RESPONSE_LIMIT = 999
 OWNER_PARTS_THRESHOLD = 10
 VALID_ADDRESS_LOW_SUFFIXES = ('F', 'R', 'A', 'S', 'M', 'P', 'G', 'B', 'C', 'D', 'L', 'Q', '2')

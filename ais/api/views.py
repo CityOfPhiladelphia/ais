@@ -22,6 +22,7 @@ from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, Serv
 
 config = app.config
 OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
+DEFAULT_AIS_MAX_RANGE = config['DEFAULT_AIS_MAX_RANGE']
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -312,7 +313,7 @@ def addresses(query):
         requestargs[arg] = val
     # TODO: Passyunk should handle '5249 GERMANTOWN AVE REAR UNIT REAR'
     search_type=normalized_address= ''
-    max_range = requestargs.get('max_range', 200)
+    max_range = requestargs.get('max_range', DEFAULT_AIS_MAX_RANGE)
 
     try:
         parsed = PassyunkParser(MAX_RANGE=int(max_range)).parse(query)
