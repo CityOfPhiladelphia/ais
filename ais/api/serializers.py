@@ -60,11 +60,8 @@ class GeoJSONSerializer (BaseSerializer):
     def get_address_response_relationships(self, address=None, **kwargs):
         # TODO: assign in include_units fct?
 
-        #print("normalized: ", self.normalized_address)
-        #print(self.ref_addr)
         ref_address = Address(self.ref_addr)
         address = Address(address.street_address)
-        # print(ref_address, address)
         ref_base_address = ' '.join([ref_address.address_full, ref_address.street_full])
         ref_base_address_no_suffix = '{} {}'.format(ref_address.address_full_num, ref_address.street_full)
         base_address = ' '.join([address.address_full, address.street_full])
@@ -76,7 +73,6 @@ class GeoJSONSerializer (BaseSerializer):
                                      address.street_address.replace(address.unit_type, "UNIT"),
                                      address.street_address.replace(address.unit_type, "#")] if address.unit_type else []
 
-        #print(address.unit_type, ref_address.unit_type)
         if address.street_address == ref_address.street_address:
             # Address is same as reference address
             match_type = self.match_type
@@ -269,7 +265,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
     def shape_to_geodict(self, shape):
         from shapely.geometry import mapping
-        data = mapping(shape)
+        #data = mapping(shape)
+        data = mapping(shape) if shape  else {'type': None, 'coordinates': None,}
         return OrderedDict([
             ('type', data['type']),
             ('coordinates', data['coordinates'])
@@ -334,12 +331,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
         # creating an iterable object
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
-            # print(address)
-            # print(len(address))
             address, geocode_response_type, geom = address
+            if not geocode_response_type:
+                geocode_response_type = 99
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
-            # print("SERIALIZED: ", vars(address))
         #cascade_geocode_type = self.estimated if self.estimated else None
         geom_type = {'geocode_type': geocode_response_type} if geocode_response_type else {'geocode_type': address.geocode_type} \
             if not self.estimated else {'geocode_type': self.estimated}
@@ -353,7 +349,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
             # Build the set of associated service areas
             sa_data = OrderedDict()
             if not self.estimated:
-                #print(address.street_address, address.service_areas)
                 for col in address.service_areas.__table__.columns:
                     if col.name in ('id', 'street_address', 'zip_code'):
                         continue
@@ -612,7 +607,6 @@ class AddressTagSerializer():
 
         # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
         render_source = OrderedDict()
-        #print("tag_data: ", tag_data)
         for rel_address in tag_data:
             render_tag_data = {}
             tags = tag_data[rel_address]

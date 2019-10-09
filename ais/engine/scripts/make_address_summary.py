@@ -111,6 +111,15 @@ for address_row in address_rows_all:
 
 address_map = {x['street_address']: x for x in address_rows_all}
 
+print('Reading ungeocoded OPA addresses...')
+ungeocoded_opa_addresses_stmt = '''
+    select street_address from opa_property
+    except
+    select street_address from geocode
+'''
+ungeocoded_opa_address_dicts = db.execute(ungeocoded_opa_addresses_stmt)
+ungeocoded_opa_addresses = [row['street_address'] for row in ungeocoded_opa_address_dicts]
+
 print('Reading unit children...')
 unit_child_stmt = '''
 	select address_1, address_2
@@ -293,6 +302,17 @@ for i, street_name in enumerate(street_names):
         if geocode_vals:
             summary_row.update(geocode_vals)
             summary_rows.append(summary_row)
+        elif street_address in ungeocoded_opa_addresses:
+            geocode_vals = {
+                    'geocode_type': 'unable_to_geocode',
+                    'geocode_x': None,
+                    'geocode_y': None,
+                    'geocode_street_x': None,
+                    'geocode_street_y': None,
+                }
+            summary_row.update(geocode_vals)
+            summary_rows.append(summary_row)
+
 
 """WRITE OUT"""
 

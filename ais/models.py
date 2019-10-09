@@ -1129,9 +1129,9 @@ class AddressSummaryQuery(BaseQuery):
                 .subquery()
 
             geocode_xy_join = self \
-                .join(geo_subq, geo_subq.c.street_address == AddressSummary.street_address)\
+                .outerjoin(geo_subq, geo_subq.c.street_address == AddressSummary.street_address)\
                 .add_columns(geo_subq.c.geocode_type)\
-                .join(Geocode, and_(Geocode.street_address == AddressSummary.street_address, Geocode.geocode_type == geo_subq.c.geocode_type)) \
+                .outerjoin(Geocode, and_(Geocode.street_address == AddressSummary.street_address, Geocode.geocode_type == geo_subq.c.geocode_type)) \
                 .add_columns(ST_Transform(Geocode.geom, srid))
 
             return geocode_xy_join
