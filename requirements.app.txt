@@ -27,6 +27,7 @@ Werkzeug
 zope.interface
 petl==1.1.1
 -e git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
+pathlib2
 
 # For passyunk
 fuzzywuzzy==0.11.1
