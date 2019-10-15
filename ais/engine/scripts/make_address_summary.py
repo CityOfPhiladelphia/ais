@@ -37,7 +37,6 @@ address_summary_table = db['address_summary']
 # DEV
 WRITE_OUT = True
 
-
 def wkt_to_xy(wkt):
     xy = wkt.replace('POINT(', '')
     xy = xy.replace(')', '')
@@ -481,6 +480,16 @@ if WRITE_OUT:
 # db.execute(zip_stmt)
 # db.save()
 
+# Insert ungeocoded opa addresses into geocode table with null geoms:
+print("Inserting ungeocoded opa addresses into geocode table with null geom...")
+stmt = '''
+    insert into geocode (street_address, geocode_type) values ('{street_address}', 99)
+'''
+for street_address in ungeocoded_opa_addresses:
+    db.execute(stmt.format(street_address=street_address))
+db.save()
+
 db.close()
+
 print('{} geocode errors'.format(geocode_errors))
 print('Finished in {} seconds'.format(datetime.now() - start))
