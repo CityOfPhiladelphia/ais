@@ -49,6 +49,10 @@ def make_address_full(comps):
 def transform_coords(comps):
     x_coord = comps['geocode_x']
     y_coord = comps['geocode_y']
+
+    if any(x_coord, y_coord) is None:
+        return [None, None]
+
     point = loads('POINT({x} {y})'.format(x=x_coord, y=y_coord))
 
     project = partial(
