@@ -747,3 +747,9 @@ def test_li_parcel_id_not_populated_for_non_authoritative_addresses(client):
     response = client.get('/search/2429 LOCUST ST APT 201')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['li_parcel_id'] == ''
+
+def test_ungeocoded_opa_address_returns_response(client):
+    response = client.get('/search/3600 PINE ST?include_units&opa_only')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['street_address'] == '3600 PINE ST'
+    
