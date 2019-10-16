@@ -204,153 +204,153 @@ dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condomini
 ###############################
 # DOR PARCEL ADDRESS ANALYSIS #
 ###############################
-print("Performing dor_parcel address analysis...")
-import re
-from passyunk.parser import PassyunkParser
-
-street_name_re = re.compile('^[A-Z0-9 ]+$')
-unit_num_re = re.compile('^[A-Z0-9\-]+$')
-parser = PassyunkParser(MAX_RANGE=9999999)
-
-print('Reading streets...')
-street_rows = etl.fromdb(read_conn,
-                         'select street_full, seg_id, street_code, left_from, left_to, right_from, right_to from street_segment')
-street_code_map = {}  # street_full => street_code
-street_full_map = {}  # street_code => street_full
-seg_map = {}  # street_full => [seg rows]
-street_headers = street_rows[0]
-for street_row in street_rows[1:]:
-    street_row = dict(zip(street_headers, street_row))
-    street_code = street_row['street_code']
-    street_full = street_row['street_full']
-    seg_map.setdefault(street_full, [])
-    seg_map[street_full].append(street_row)
-    street_code_map[street_full] = street_code
-    street_full_map[street_code] = street_full
-
-street_code_map.update({
-    'VINE ST': 80120,
-    'MARKET ST': 53560,
-    'COMMERCE ST': 24500,
-})
-street_full_map.update({
-    80120: 'VINE ST',
-    53560: 'MARKET ST',
-    24500: 'COMMERCE ST',
-})
-
-source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
-source_db_name = source_def['db']
-source_db_url = config['DATABASES']['doroem']
-parsed_dor_db_string = parse_url(source_db_url)
-read_dsn = parsed_dor_db_string['user'] + '/' + parsed_dor_db_string['password'] + '@' + parsed_dor_db_string['host']
-dsn = config['DATABASES']['engine']
-db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
-db_pw = dsn[dsn.index(":", dsn.index(db_user)) + 1:dsn.index("@")]
-db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-pg_db = psycopg2.connect(
-    'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
-                                                                             db_pw=db_pw))
-source_field_map = source_def['field_map']
-source_table_name = source_def['table']
-source_table_name = 'PARCEL'
-print(source_table_name)
-field_map = source_def['field_map']
-print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
-
-etl.fromoraclesde(read_dsn, source_table_name, where="SDE.ST_ISEMPTY(SHAPE)=0") \
-    .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
-         'stdes', 'stdessuf', 'status', 'shape') \
-    .addfield('concatenated_address', lambda c: concatenate_dor_address(
-    {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
-     'stdes': c['stdes'], 'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
-    .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
-    .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
-    .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
-a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']['components']['address']['fractional']) \
-    .addfield('std_high_num', lambda a: a['parsed_comps']['components']['address']['high_num']) \
-    .addfield('std_street_predir', lambda a: a['parsed_comps']['components']['street']['predir']) \
-    .addfield('std_street_name', lambda a: a['parsed_comps']['components']['street']['name']) \
-    .addfield('std_street_suffix', lambda a: a['parsed_comps']['components']['street']['suffix']) \
-    .addfield('std_address_postdir', lambda a: a['parsed_comps']['components']['street']['postdir']) \
-    .addfield('std_unit_type', lambda a: a['parsed_comps']['components']['address_unit']['unit_type']) \
-    .addfield('std_unit_num', lambda a: a['parsed_comps']['components']['address_unit']['unit_num']) \
-    .addfield('std_street_address', lambda a: a['parsed_comps']['components']['output_address']) \
-    .addfield('std_street_code', lambda a: a['parsed_comps']['components']['street']['street_code']) \
-    .addfield('std_seg_id', lambda a: a['parsed_comps']['components']['cl_seg_id']) \
-    .addfield('cl_addr_match', lambda a: a['parsed_comps']['components']['cl_addr_match']) \
-    .cutout('parsed_comps') \
-    .addfield('no_address',
-              lambda a: 1 if standardize_nulls(a['stnam']) is None or standardize_nulls(a['house']) is None else None) \
-    .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(
-    standardize_nulls(a['std_street_code'])) else None) \
-    .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(
-    standardize_nulls(a['std_address_low'])) else None) \
-    .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(
-    standardize_nulls(a['std_address_low_suffix'])) else None) \
-    .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(
-    standardize_nulls(a['std_unit_num'])) else None) \
-    .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(
-    standardize_nulls(a['std_high_num'])) else None) \
-    .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(
-    standardize_nulls(a['std_street_predir'])) else None) \
-    .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(
-    standardize_nulls(a['std_street_name'])) else None) \
-    .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(
-    standardize_nulls(a['std_street_suffix'])) else None) \
-    .addfield('change_stdessuf',
-              lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
-                  standardize_nulls(a['std_address_postdir'])) else 0) \
-    .tocsv('dor_parcel_address_analysis.csv', write_header=True)
-# get address_summary rows with dor_parcel_id as array:
-address_summary_rows = address_summary_out_table \
-    .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
-    .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
-dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
-mapreg_count_map = {}
-address_count_map = {}
-dor_parcel_header = dor_parcel_address_analysis[0]
-
-# count_maps
-for row in dor_parcel_address_analysis[1:]:
-    dict_row = dict(zip(dor_parcel_header, row))
-    mapreg = dict_row['mapreg']
-    std_street_address = dict_row['std_street_address']
-    if mapreg not in mapreg_count_map:
-        mapreg_count_map[mapreg] = 1
-    else:
-        mapreg_count_map[mapreg] += 1
-    if std_street_address not in address_count_map:
-        address_count_map[std_street_address] = 1
-    else:
-        address_count_map[std_street_address] += 1
-
-# mapreg_opa_map
-mapreg_opa_map = {}
-address_summary_header = address_summary_rows[0]
-for i, row in enumerate(address_summary_rows[1:]):
-    if i % 1000 == 0:
-        print(i)
-    dict_row = dict(zip(address_summary_header, row))
-    opa_account_nums = dict_row['opa_account_num_array']
-    dor_parcel_ids = dict_row['dor_parcel_id_array']
-    for dor_parcel_id in dor_parcel_ids:
-        if dor_parcel_id not in mapreg_opa_map:
-            mapreg_opa_map[dor_parcel_id] = []
-        for opa_account_num in opa_account_nums:
-            if opa_account_num not in mapreg_opa_map[dor_parcel_id]:
-                mapreg_opa_map[dor_parcel_id].append(opa_account_num)
-
-for k in mapreg_opa_map:
-    mapreg_opa_map[k] = '|'.join(mapreg_opa_map[k])
-
-dor_report_rows = dor_parcel_address_analysis\
-    .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,'')) \
-    .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
-    .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
-
-# Write to local db
-dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
+# print("Performing dor_parcel address analysis...")
+# import re
+# from passyunk.parser import PassyunkParser
+#
+# street_name_re = re.compile('^[A-Z0-9 ]+$')
+# unit_num_re = re.compile('^[A-Z0-9\-]+$')
+# parser = PassyunkParser(MAX_RANGE=9999999)
+#
+# print('Reading streets...')
+# street_rows = etl.fromdb(read_conn,
+#                          'select street_full, seg_id, street_code, left_from, left_to, right_from, right_to from street_segment')
+# street_code_map = {}  # street_full => street_code
+# street_full_map = {}  # street_code => street_full
+# seg_map = {}  # street_full => [seg rows]
+# street_headers = street_rows[0]
+# for street_row in street_rows[1:]:
+#     street_row = dict(zip(street_headers, street_row))
+#     street_code = street_row['street_code']
+#     street_full = street_row['street_full']
+#     seg_map.setdefault(street_full, [])
+#     seg_map[street_full].append(street_row)
+#     street_code_map[street_full] = street_code
+#     street_full_map[street_code] = street_full
+#
+# street_code_map.update({
+#     'VINE ST': 80120,
+#     'MARKET ST': 53560,
+#     'COMMERCE ST': 24500,
+# })
+# street_full_map.update({
+#     80120: 'VINE ST',
+#     53560: 'MARKET ST',
+#     24500: 'COMMERCE ST',
+# })
+#
+# source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
+# source_db_name = source_def['db']
+# source_db_url = config['DATABASES']['doroem']
+# parsed_dor_db_string = parse_url(source_db_url)
+# read_dsn = parsed_dor_db_string['user'] + '/' + parsed_dor_db_string['password'] + '@' + parsed_dor_db_string['host']
+# dsn = config['DATABASES']['engine']
+# db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
+# db_pw = dsn[dsn.index(":", dsn.index(db_user)) + 1:dsn.index("@")]
+# db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
+# pg_db = psycopg2.connect(
+#     'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
+#                                                                              db_pw=db_pw))
+# source_field_map = source_def['field_map']
+# source_table_name = source_def['table']
+# source_table_name = 'PARCEL'
+# print(source_table_name)
+# field_map = source_def['field_map']
+# print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
+#
+# etl.fromoraclesde(read_dsn, source_table_name, where="SDE.ST_ISEMPTY(SHAPE)=0") \
+#     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
+#          'stdes', 'stdessuf', 'status', 'shape') \
+#     .addfield('concatenated_address', lambda c: concatenate_dor_address(
+#     {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
+#      'stdes': c['stdes'], 'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
+#     .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
+#     .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
+#     .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
+# a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']['components']['address']['fractional']) \
+#     .addfield('std_high_num', lambda a: a['parsed_comps']['components']['address']['high_num']) \
+#     .addfield('std_street_predir', lambda a: a['parsed_comps']['components']['street']['predir']) \
+#     .addfield('std_street_name', lambda a: a['parsed_comps']['components']['street']['name']) \
+#     .addfield('std_street_suffix', lambda a: a['parsed_comps']['components']['street']['suffix']) \
+#     .addfield('std_address_postdir', lambda a: a['parsed_comps']['components']['street']['postdir']) \
+#     .addfield('std_unit_type', lambda a: a['parsed_comps']['components']['address_unit']['unit_type']) \
+#     .addfield('std_unit_num', lambda a: a['parsed_comps']['components']['address_unit']['unit_num']) \
+#     .addfield('std_street_address', lambda a: a['parsed_comps']['components']['output_address']) \
+#     .addfield('std_street_code', lambda a: a['parsed_comps']['components']['street']['street_code']) \
+#     .addfield('std_seg_id', lambda a: a['parsed_comps']['components']['cl_seg_id']) \
+#     .addfield('cl_addr_match', lambda a: a['parsed_comps']['components']['cl_addr_match']) \
+#     .cutout('parsed_comps') \
+#     .addfield('no_address',
+#               lambda a: 1 if standardize_nulls(a['stnam']) is None or standardize_nulls(a['house']) is None else None) \
+#     .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(
+#     standardize_nulls(a['std_street_code'])) else None) \
+#     .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(
+#     standardize_nulls(a['std_address_low'])) else None) \
+#     .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(
+#     standardize_nulls(a['std_address_low_suffix'])) else None) \
+#     .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(
+#     standardize_nulls(a['std_unit_num'])) else None) \
+#     .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(
+#     standardize_nulls(a['std_high_num'])) else None) \
+#     .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(
+#     standardize_nulls(a['std_street_predir'])) else None) \
+#     .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(
+#     standardize_nulls(a['std_street_name'])) else None) \
+#     .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(
+#     standardize_nulls(a['std_street_suffix'])) else None) \
+#     .addfield('change_stdessuf',
+#               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
+#                   standardize_nulls(a['std_address_postdir'])) else 0) \
+#     .tocsv('dor_parcel_address_analysis.csv', write_header=True)
+# # get address_summary rows with dor_parcel_id as array:
+# address_summary_rows = address_summary_out_table \
+#     .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
+#     .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
+# dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
+# mapreg_count_map = {}
+# address_count_map = {}
+# dor_parcel_header = dor_parcel_address_analysis[0]
+#
+# # count_maps
+# for row in dor_parcel_address_analysis[1:]:
+#     dict_row = dict(zip(dor_parcel_header, row))
+#     mapreg = dict_row['mapreg']
+#     std_street_address = dict_row['std_street_address']
+#     if mapreg not in mapreg_count_map:
+#         mapreg_count_map[mapreg] = 1
+#     else:
+#         mapreg_count_map[mapreg] += 1
+#     if std_street_address not in address_count_map:
+#         address_count_map[std_street_address] = 1
+#     else:
+#         address_count_map[std_street_address] += 1
+#
+# # mapreg_opa_map
+# mapreg_opa_map = {}
+# address_summary_header = address_summary_rows[0]
+# for i, row in enumerate(address_summary_rows[1:]):
+#     if i % 1000 == 0:
+#         print(i)
+#     dict_row = dict(zip(address_summary_header, row))
+#     opa_account_nums = dict_row['opa_account_num_array']
+#     dor_parcel_ids = dict_row['dor_parcel_id_array']
+#     for dor_parcel_id in dor_parcel_ids:
+#         if dor_parcel_id not in mapreg_opa_map:
+#             mapreg_opa_map[dor_parcel_id] = []
+#         for opa_account_num in opa_account_nums:
+#             if opa_account_num not in mapreg_opa_map[dor_parcel_id]:
+#                 mapreg_opa_map[dor_parcel_id].append(opa_account_num)
+#
+# for k in mapreg_opa_map:
+#     mapreg_opa_map[k] = '|'.join(mapreg_opa_map[k])
+#
+# dor_report_rows = dor_parcel_address_analysis\
+#     .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,'')) \
+#     .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
+#     .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
+#
+# # Write to local db
+# dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
