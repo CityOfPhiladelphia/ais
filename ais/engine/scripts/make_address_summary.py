@@ -37,7 +37,6 @@ address_summary_table = db['address_summary']
 # DEV
 WRITE_OUT = True
 
-
 def wkt_to_xy(wkt):
     xy = wkt.replace('POINT(', '')
     xy = xy.replace(')', '')
@@ -110,6 +109,15 @@ for address_row in address_rows_all:
     street_map[street_name].append(address_row)
 
 address_map = {x['street_address']: x for x in address_rows_all}
+
+print('Reading ungeocoded OPA addresses...')
+ungeocoded_opa_addresses_stmt = '''
+    select street_address from opa_property
+    except
+    select street_address from geocode
+'''
+ungeocoded_opa_address_dicts = db.execute(ungeocoded_opa_addresses_stmt)
+ungeocoded_opa_addresses = [row['street_address'] for row in ungeocoded_opa_address_dicts]
 
 print('Reading unit children...')
 unit_child_stmt = '''
@@ -293,6 +301,17 @@ for i, street_name in enumerate(street_names):
         if geocode_vals:
             summary_row.update(geocode_vals)
             summary_rows.append(summary_row)
+        elif street_address in ungeocoded_opa_addresses:
+            geocode_vals = {
+                    'geocode_type': 'unable_to_geocode',
+                    'geocode_x': None,
+                    'geocode_y': None,
+                    'geocode_street_x': None,
+                    'geocode_street_y': None,
+                }
+            summary_row.update(geocode_vals)
+            summary_rows.append(summary_row)
+
 
 """WRITE OUT"""
 
@@ -461,6 +480,16 @@ if WRITE_OUT:
 # db.execute(zip_stmt)
 # db.save()
 
+# Insert ungeocoded opa addresses into geocode table with null geoms:
+print("Inserting ungeocoded opa addresses into geocode table with null geom...")
+stmt = '''
+    insert into geocode (street_address, geocode_type) values ('{street_address}', 99)
+'''
+for street_address in ungeocoded_opa_addresses:
+    db.execute(stmt.format(street_address=street_address))
+db.save()
+
 db.close()
+
 print('{} geocode errors'.format(geocode_errors))
 print('Finished in {} seconds'.format(datetime.now() - start))

@@ -129,7 +129,7 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		if last_x and (last_x == x and last_y == y):
 			sa_rows = last_sa_rows
 
-		if sa_rows is None:
+		if sa_rows is None and None not in (x,y):
 			# Get intersecting service areas
 			where = 'ST_Intersects(geom, ST_SetSrid(ST_Point({}, {}), 2272))'.format(x, y)
 			sa_rows = poly_table.read(fields=['layer_id', 'value'], where=where, return_geom=False)
@@ -142,12 +142,13 @@ for i, address_summary_row in enumerate(address_summary_rows):
 		sa_summary_row = deepcopy(sa_summary_row_template)
 		sa_summary_row['street_address'] = street_address
 		update_dict = {}
-		for x in sa_rows:
-			if x['layer_id'] != 'zoning_rco':
-				update_dict[x['layer_id']] = x['value']
-			else:
-				update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
-		sa_summary_row.update(update_dict)
+		if sa_rows is not None:
+		    for x in sa_rows:
+		        if x['layer_id'] != 'zoning_rco':
+		            update_dict[x['layer_id']] = x['value']
+		        else:
+		            update_dict[x['layer_id']] = x['value'] if not x['layer_id'] in update_dict else update_dict[x['layer_id']] + '|' + x['value']
+		    sa_summary_row.update(update_dict)
 
 		sa_summary_rows.append(sa_summary_row)
 

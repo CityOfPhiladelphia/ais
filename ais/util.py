@@ -97,7 +97,7 @@ def project_shape(shape, from_srid, to_srid):
 
 def geom_to_shape(geom, from_srid, to_srid):
     from geoalchemy2.shape import to_shape
-    shape = to_shape(geom)
+    shape = to_shape(geom) if geom is not None else None
     return shape
 	#return project_shape(shape, from_srid, to_srid)
 
