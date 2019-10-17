@@ -311,7 +311,7 @@ def test_opa_query_returns_child_address(client):
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST']
+    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST']
     if parent_address not in ignore_addresses:
         assert_num_results(data, 1)
 
