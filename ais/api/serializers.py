@@ -266,7 +266,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
     def shape_to_geodict(self, shape):
         from shapely.geometry import mapping
         #data = mapping(shape)
-        data = mapping(shape) if shape  else {'type': None, 'coordinates': None,}
+        #data = mapping(shape) if shape  else {'type': None, 'coordinates': None,}
+        data = mapping(shape) if shape else {'type': 'Point', 'coordinates': [None, None],}
         return OrderedDict([
             ('type', data['type']),
             ('coordinates', data['coordinates'])
