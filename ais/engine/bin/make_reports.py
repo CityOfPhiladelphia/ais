@@ -50,7 +50,7 @@ def transform_coords(comps):
     x_coord = comps['geocode_x']
     y_coord = comps['geocode_y']
 
-    if any(x_coord, y_coord) is None:
+    if x_coord is None or y_coord is None:
         return [None, None]
 
     point = loads('POINT({x} {y})'.format(x=x_coord, y=y_coord))
@@ -169,19 +169,20 @@ def concatenate_dor_address(source_comps):
 ##############
 # TRUE RANGE #
 ##############
-print("Writing true_range table...")
-etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+#print("Writing true_range table...")
+#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print("Writing service_area_summary table...")
-etl.fromdb(read_conn, 'select * from service_area_summary')\
-  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-  .tooraclesde(write_dsn, service_area_summary_write_table_name)
+#print("Writing service_area_summary table...")
+#etl.fromdb(read_conn, 'select * from service_area_summary')\
+#  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+#  .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
 print("Creating transformed address_summary table...")
+# only export rows that have been geocoded:
 address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
     .addfield('address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
@@ -190,7 +191,9 @@ address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary
     .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
     .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
     .cutout('temp_lonlat') \
-    .fieldmap(mapping)
+    .select(lambda s: s.geocode_x is not None) \
+    .fieldmap(mapping) 
+
 
 address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
 address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
