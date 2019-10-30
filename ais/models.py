@@ -780,7 +780,9 @@ class AddressSummaryQuery(BaseQuery):
                              AddressSummary.unit_type.nullsfirst(),
                              AddressSummary.unit_num.nullsfirst(),
                              AddressSummary.address_low_suffix.nullsfirst(),
-                             AddressSummary.address_high)
+                             AddressSummary.address_high,
+                             AddressSummary.address_low_frac.nullsfirst()
+)
 
     def order_by_owner_address(self, query):
         return self.order_by(desc(func.similarity(AddressSummary.opa_owners, '{}'.format(query))),
