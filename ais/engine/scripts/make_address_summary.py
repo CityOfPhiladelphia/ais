@@ -432,10 +432,24 @@ if WRITE_OUT:
         
         )
         ,
+		pwd_parcel_ids as (
+			select pp.street_address, pp.parcel_id::text as pwd_parcel_id
+			from pwd_parcel pp
+			inner join (select street_address from address_summary) asum on asum.street_address = pp.street_address
+		)
+		,
+		opa_account_nums as (
+			select op.street_address, op.account_num as opa_account_num
+			from opa_property op
+			inner join (select street_address from address_summary) asum on asum.street_address = op.street_address
+		)
+		,
         choices as (
-            select asum.street_address, asum.pwd_parcel_id, asum.opa_account_num, bpis.bin_parcel_id
+            select distinct asum.street_address, ppis.pwd_parcel_id, ops.opa_account_num, bpis.bin_parcel_id
             from address_summary asum
             left join bpis on bpis.street_address = asum.street_address
+			left join pwd_parcel_ids ppis on ppis.street_address = asum.street_address
+			left join opa_account_nums ops on ops.street_address = asum.street_address
         )
 		,
 		address_sources as
@@ -457,7 +471,7 @@ if WRITE_OUT:
             from choices ch
 			left join address_sources s on s.street_address = ch.street_address
         )
-        update address_summary asm
+		update address_summary asm
         set li_parcel_id = final.li_parcel_id
         from final
         where final.street_address = asm.street_address and sources is not null
