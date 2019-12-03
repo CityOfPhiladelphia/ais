@@ -8,7 +8,7 @@ from collections import OrderedDict
 from itertools import chain
 from flask import Response, request, redirect, url_for
 from flask_cachecontrol import cache_for
-from flasgger.utils import swag_from
+# from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
 from sqlalchemy import func, desc
@@ -271,7 +271,7 @@ def unknown_cascade_view(**kwargs):
 
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/addresses.yml')
+# @swag_from('docs/addresses.yml')
 def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -555,7 +555,7 @@ def addresses(query):
 
 @app.route('/block/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/block.yml')
+# @swag_from('docs/block.yml')
 def block(query):
     """
     Looks up information about the 100-range that the given address falls
@@ -645,7 +645,7 @@ def block(query):
 
 @app.route('/owner/<query>')
 @cache_for(hours=1)
-@swag_from('docs/owner.yml')
+# @swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
     owner_parts = query.upper().split()
@@ -699,7 +699,7 @@ def owner(query):
 
 @app.route('/account/<query>')
 @cache_for(hours=1)
-@swag_from('docs/account.yml')
+# @swag_from('docs/account.yml')
 def account(query):
     """
     Looks up information about the property with the given OPA account number.
@@ -762,7 +762,7 @@ def account(query):
 
 @app.route('/pwd_parcel/<query>')
 @cache_for(hours=1)
-@swag_from('docs/pwd_parcel.yml')
+# @swag_from('docs/pwd_parcel.yml')
 def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
@@ -824,7 +824,7 @@ def pwd_parcel(query):
 
 @app.route('/dor_parcel/<query>')
 @cache_for(hours=1)
-@swag_from('docs/mapreg.yml')
+# @swag_from('docs/mapreg.yml')
 def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
@@ -882,7 +882,7 @@ def dor_parcel(query):
 
 @app.route('/intersection/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/intersection.yml')
+# @swag_from('docs/intersection.yml')
 def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
@@ -1001,7 +1001,7 @@ def intersection(query):
 
 @app.route('/reverse_geocode/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/reverse_geocode.yml')
+# @swag_from('docs/reverse_geocode.yml')
 def reverse_geocode(query):
 
     query = query.strip('/')
@@ -1127,7 +1127,7 @@ def reverse_geocode(query):
 
 @app.route('/service_areas/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/service_areas.yml')
+# @swag_from('docs/service_areas.yml')
 def service_areas(query):
 
     query = query.strip('/')
@@ -1211,7 +1211,7 @@ def street(query):
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1)
-@swag_from('docs/search.yml')
+# @swag_from('docs/search.yml')
 def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)

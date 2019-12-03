@@ -45,5 +45,5 @@ manager.add_command('engine', engine_manager)
 # Init migration extension
 migrate = Migrate(app, app_db)
 
-# Swaggerify App
-Swagger(app, sanitizer=MK_SANITIZER)
+# # Swaggerify App
+# Swagger(app, sanitizer=MK_SANITIZER)
