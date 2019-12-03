@@ -2,7 +2,7 @@ alembic==1.0.0
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
 #-e git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
-flasgger==0.5.14
+# flasgger==0.5.14
 Flask==1.0.2
 Flask-Migrate
 Flask-Script
@@ -10,7 +10,6 @@ Flask-SQLAlchemy
 Flask-Cors
 Flask-CacheControl
 GeoAlchemy2
-importlib-metadata==0.23
 itsdangerous==0.24
 Jinja2==2.10.1
 Mako==1.0.3
