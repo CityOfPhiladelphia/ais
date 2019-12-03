@@ -4,7 +4,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-from flasgger import Swagger, MK_SANITIZER
+# from flasgger import Swagger, MK_SANITIZER
 
 
 # Create app instance
