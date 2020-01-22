@@ -344,7 +344,7 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'gis_lni.eclipse_addressobjectid_mvw',
+            'table':                'gis_lni.eclipse_parsed_addr',
             'db':                   'gislni',
             'address_fields':       {
                 'base_address':       'street_address',
