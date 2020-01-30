@@ -347,7 +347,7 @@ ADDRESSES = {
             'table':                'gis_lni.eclipse_parsed_addr',
             'db':                   'gislni',
             'address_fields':       {
-                'base_address':       'street_address',
+                'base_address':       'base_address',
                 'unit_num':           'unit',
             },
             'preprocessor':         make_eclipse_address,
