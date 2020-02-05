@@ -47,6 +47,7 @@ def test_compare_num_tables(startup):
     old_table_count = old_db.execute(table_count_stmt)
     assert new_table_count == old_table_count
 
+@pytest.mark.skip(reason="temp change of eclipse_location_ids source table with more rows")
 def test_num_rows_bt_db_tables(startup):
     """"Test #2: Check if all tables within 10% of rows as old version"""
     new_db = startup['new_db']
