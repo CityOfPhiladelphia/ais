@@ -174,10 +174,10 @@ def concatenate_dor_address(source_comps):
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-#print("Writing service_area_summary table...")
-#etl.fromdb(read_conn, 'select * from service_area_summary')\
-#  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-#  .tooraclesde(write_dsn, service_area_summary_write_table_name)
+print("Writing service_area_summary table...")
+etl.fromdb(read_conn, 'select * from service_area_summary')\
+  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
+  .tooraclesde(write_dsn, service_area_summary_write_table_name)
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
