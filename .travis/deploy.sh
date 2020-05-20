@@ -40,7 +40,10 @@ get_test_env EB_ENV EB_BLUEGREEN_STATUS || {
 echo "Pushing code to $EB_BLUEGREEN_STATUS environment $EB_ENV"
 git checkout "$TRAVIS_BRANCH"
 
-avoid_timeout & eb deploy $EB_ENV --timeout 30
+avoid_timeout & eb deploy $EB_ENV --timeout 30 || {
+  echo "Deploy failed, exiting..." ;
+  exit 1 ;
+}
 
 if [ "$EB_BLUEGREEN_STATUS" = "Swap" ] ; then
   EB_NEW_PROD_ENV=$EB_ENV
