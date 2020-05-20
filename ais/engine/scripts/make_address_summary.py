@@ -424,25 +424,25 @@ if WRITE_OUT:
     li_pin_stmt = '''
         with bpis as 
         (
-            select street_address, max(value) as bin_parcel_id from 
+            select street_address, max(value) as bin_parcel_id from
             (
                 select street_address, value from address_tag where key = 'bin_parcel_id'
             ) foo
             group by street_address
-        
+
         )
         ,
-		pwd_parcel_ids as (
-			select pp.street_address, pp.parcel_id::text as pwd_parcel_id
-			from pwd_parcel pp
-			inner join (select street_address from address_summary) asum on asum.street_address = pp.street_address
-		)
-		,
-		opa_account_nums as (
-			select op.street_address, op.account_num as opa_account_num
-			from opa_property op
-			inner join (select street_address from address_summary) asum on asum.street_address = op.street_address
-		)
+        pwd_parcel_ids as (
+                select asum.street_address, asum.pwd_parcel_id
+                from address_summary asum
+                inner join pwd_parcel pp on asum.pwd_parcel_id = pp.parcel_id::text
+        )
+        ,
+        opa_account_nums as (
+                select op.street_address, op.account_num as opa_account_num
+                from opa_property op
+                inner join (select street_address from address_summary) asum on asum.street_address = op.street_address
+        )
 		,
         choices as (
             select distinct asum.street_address, ppis.pwd_parcel_id, ops.opa_account_num, bpis.bin_parcel_id
