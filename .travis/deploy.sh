@@ -28,11 +28,6 @@ if [ $TRAVIS_BRANCH = "develop" ] || [ $TRAVIS_BRANCH = "develop_test" ]; then
     exit 0
 fi
 
-if [ $TRAVIS_BRANCH = "staging" ]; then
-    eb deploy ais-api-staging
-    exit 0
-fi
-
 # 4. Determine whether the current branch is configured for an environment
 echo "Checking for environment corresponding to current branch"
 source bin/eb_env_utils.sh
