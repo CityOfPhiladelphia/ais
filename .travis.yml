@@ -27,4 +27,5 @@ deploy:
       - master
       - develop
       - develop_test
+      - staging
 after_deploy: .travis/clean_up.sh
