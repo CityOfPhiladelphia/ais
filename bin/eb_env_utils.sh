@@ -62,7 +62,7 @@ get_test_env() {
 
   # If none is marked to swap, then use the environment marked as production (unless on branch staging):
   target_url="ais-api-prod.us-east-1.elasticbeanstalk.com"
-  target_env_status = "Production"
+  target_env_status="Production"
   if [ $TRAVIS_BRANCH = "staging" ]; then
     target_url="ais-api-staging.us-east-1.elasticbeanstalk.com"
     target_env_status="Staging"
