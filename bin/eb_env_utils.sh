@@ -60,15 +60,23 @@ get_test_env() {
     fi
   done
 
-  # If none is marked to swap, then use the environment marked as production.
+  # If none is marked to swap, then use the environment marked as production (unless on branch staging):
+  target_url="ais-api-prod.us-east-1.elasticbeanstalk.com"
+  target_env_status = "Production"
+  if [ $TRAVIS_BRANCH = "staging" ]; then
+    target_url="ais-api-staging.us-east-1.elasticbeanstalk.com"
+    target_env_status="Staging"
+  fi
+
   for env in $EB_ENVS ; do
     trimmed_env=$(echo $env | tr -d '\r')
     url=$(eb status $trimmed_env)
     vars=$(eb printenv $trimmed_env)
-    echo "$url" | grep --quiet "ais-api-prod.us-east-1.elasticbeanstalk.com"
+
+    echo "$url" | grep --quiet $target_url
     if [ $? -eq 0 ] ; then
       eval "export $__ENV_VAR_NAME=$trimmed_env"
-      eval "export $__ENV_STATUS_NAME=Production"
+      eval "export $__ENV_STATUS_NAME=$target_env_status"
       return 0
     fi
   done
