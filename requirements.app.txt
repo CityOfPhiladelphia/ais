@@ -26,7 +26,7 @@ SQLAlchemy
 Werkzeug
 zope.interface
 petl==1.1.1
--e git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
+-e git+https://github.com/CityOfPhiladelphia/geopetl.git@4d77021c164d5b6fd8db62c30d44106a93204a72a#egg=geopetl
 pathlib2
 
 # For passyunk
