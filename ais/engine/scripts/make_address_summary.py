@@ -455,7 +455,7 @@ if WRITE_OUT:
 		address_sources as
 		(
 			select street_address, string_agg(source_name,'|') as sources
-			from (select distinct street_address, source_name from source_address where source_name not in ('AIS', 'voters', 'info_commercial', 'info_residents') order by street_address, source_name) foo
+			from (select distinct street_address, source_name from source_address where source_name not in ('AIS', 'voters', 'info_commercial', 'info_residents', 'li_eclipse_location_ids', 'li_address_keys') order by street_address, source_name) foo
 			group by street_address
 		)
 		,
