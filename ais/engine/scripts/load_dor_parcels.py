@@ -165,6 +165,7 @@ for i, source_parcel in enumerate(source_parcels):
         object_id = source_parcel[field_map['source_object_id']]
         address_low = source_parcel[field_map['address_low']]
         address_low_suffix = source_parcel[field_map['address_low_suffix']]
+        address_low_fractional = source_parcel[field_map]['address_low_frac']]
         address_high = source_parcel[field_map['address_high']]
         street_predir = source_parcel[field_map['street_predir']]
         street_name = source_parcel[field_map['street_name']]
@@ -196,6 +197,12 @@ for i, source_parcel in enumerate(source_parcels):
         if unit_num and unit_num_re and not unit_num_re.match(unit_num):
             had_warning('Invalid unit num')
             should_check_street_full = False
+        if address_low_frac and address_low_fractional not in ('1/4', '1/3', '1/2'):
+            had_warning('Invalid address_low_frac')
+            should_check_street_full = False
+
+
+
 
         # QC: Check street components
         if street_name is None:
@@ -237,7 +244,7 @@ for i, source_parcel in enumerate(source_parcels):
         if address_high == 0:
             address_high = None
 
-        address_low_fractional = None
+#        address_low_fractional = None
         if address_low_suffix not in VALID_ADDRESS_LOW_SUFFIXES:
             address_low_suffix = None
         if address_low_suffix == '2':

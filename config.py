@@ -71,13 +71,14 @@ BASE_DATA_SOURCES = {
         },
         'dor': {
             'db':               'gis',
-            'table':            'GIS_DOR.DOR_Parcel',
+            'table':            'GIS_DOR.DOR_Parcel_Rev',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapreg',
                 'street_code':          'stcod',
                 'address_low':          'house',
                 'address_low_suffix':   'suf',
+                'address_low_frac':     'frac',
                 'address_high':         'stex',
                 'street_predir':        'stdir',
                 'street_name':          'stnam',
