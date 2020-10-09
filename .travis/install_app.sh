@@ -5,7 +5,7 @@ set -e
 
 # Install python requirements on python3 with library paths
 echo 'Installing other application Python requirements'
-pip install --requirement requirements.app.txt
+pip-3.6 install --requirement requirements.app.txt
 
 # Create empty config.py
 echo 'Initializing the configuration'
