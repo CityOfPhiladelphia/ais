@@ -6,7 +6,7 @@ class EngineCommand(Command):
     """Management command for engine scripts."""
     def run(self):
         print('ok')
-        
+
 manager.add_command('engine', EngineCommand)
 
 
