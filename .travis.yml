@@ -5,7 +5,7 @@ addons:
   apt:
     packages:
     - python-virtualenv
-    - python3.6-dev
+    - python3-dev
     - build-essential
     - libaio1
     - libpq-dev
