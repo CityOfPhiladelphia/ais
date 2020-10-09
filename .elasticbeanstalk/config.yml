@@ -1,7 +1,7 @@
 global:
   application_name: ais-api
   default_ec2_keyname: ais-api-dev
-  default_platform: Python 3.4
+  default_platform: Python 3.6
   default_region: us-east-1
   profile: phila
   sc: git
