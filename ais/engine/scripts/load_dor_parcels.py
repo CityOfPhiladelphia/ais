@@ -197,7 +197,7 @@ for i, source_parcel in enumerate(source_parcels):
         if unit_num and unit_num_re and not unit_num_re.match(unit_num):
             had_warning('Invalid unit num')
             should_check_street_full = False
-        if address_low_fracactional and address_low_fractional not in ('1/4', '1/3', '1/2'):
+        if address_low_fractional and address_low_fractional not in ('1/4', '1/3', '1/2'):
             had_warning('Invalid address_low_frac')
             should_check_street_full = False
 
