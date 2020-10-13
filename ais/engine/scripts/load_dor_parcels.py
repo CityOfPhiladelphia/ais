@@ -165,7 +165,7 @@ for i, source_parcel in enumerate(source_parcels):
         object_id = source_parcel[field_map['source_object_id']]
         address_low = source_parcel[field_map['address_low']]
         address_low_suffix = source_parcel[field_map['address_low_suffix']]
-        address_low_fractional = source_parcel[field_map]['address_low_frac']]
+        address_low_fractional = source_parcel[field_map['address_low_frac']]
         address_high = source_parcel[field_map['address_high']]
         street_predir = source_parcel[field_map['street_predir']]
         street_name = source_parcel[field_map['street_name']]
