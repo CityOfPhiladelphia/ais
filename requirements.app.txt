@@ -30,4 +30,5 @@ pathlib2==2.3.5
 
 # For passyunk
 fuzzywuzzy==0.11.1
-python-levenshtein
+python-levenshtein==0.12.0
+
