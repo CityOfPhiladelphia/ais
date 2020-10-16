@@ -71,7 +71,7 @@ BASE_DATA_SOURCES = {
         },
         'dor': {
             'db':               'gis',
-            'table':            'GIS_DOR.DOR_Parcel_Rev',
+            'table':            'GIS_DOR.DOR_Parcel',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapreg',
