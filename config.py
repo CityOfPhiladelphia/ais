@@ -78,6 +78,7 @@ BASE_DATA_SOURCES = {
                 'street_code':          'stcod',
                 'address_low':          'house',
                 'address_low_suffix':   'suf',
+                'address_low_frac':     'frac',
                 'address_high':         'stex',
                 'street_predir':        'stdir',
                 'street_name':          'stnam',

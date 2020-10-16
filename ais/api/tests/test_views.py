@@ -663,7 +663,7 @@ def test_0_address_low_addresses_return_404(client):
     assert_status(response, 404)
 
 def test_dor_parcel_search_works_for_multiples_in_address_summary(client):
-    response = client.get('/search/016S080346')
+    response = client.get('/search/063N150112')
     assert_status(response, 200)
 
 def test_block_search_includes_all_opa_addresses(client):

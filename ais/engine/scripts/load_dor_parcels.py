@@ -35,6 +35,7 @@ street_table = db['street_segment']
 parcel_table = db['dor_parcel']
 parcel_error_table = db['dor_parcel_error']
 parcel_error_polygon_table = db['dor_parcel_error_polygon']
+error_exempt_fields = ['frac',]
 WRITE_OUT = True
 
 # Regex
@@ -99,6 +100,7 @@ source_where = source_def['where']
 # source_table += ' SAMPLE(1)'
 # source_where += " AND mapreg = '001S050134'"
 # source_where += " AND objectid = 540985"
+#source_where += " AND rownum < 100"
 
 source_fields = list(field_map.values())
 source_parcels = source_table.read(where=source_where)
@@ -165,6 +167,7 @@ for i, source_parcel in enumerate(source_parcels):
         object_id = source_parcel[field_map['source_object_id']]
         address_low = source_parcel[field_map['address_low']]
         address_low_suffix = source_parcel[field_map['address_low_suffix']]
+        address_low_fractional = source_parcel[field_map['address_low_frac']]
         address_high = source_parcel[field_map['address_high']]
         street_predir = source_parcel[field_map['street_predir']]
         street_name = source_parcel[field_map['street_name']]
@@ -196,6 +199,12 @@ for i, source_parcel in enumerate(source_parcels):
         if unit_num and unit_num_re and not unit_num_re.match(unit_num):
             had_warning('Invalid unit num')
             should_check_street_full = False
+        #if address_low_fractional and address_low_fractional not in ('1/4', '1/3', '1/2'):
+        #    had_warning('Invalid address_low_frac')
+        #    should_check_street_full = False
+
+
+
 
         # QC: Check street components
         if street_name is None:
@@ -237,7 +246,6 @@ for i, source_parcel in enumerate(source_parcels):
         if address_high == 0:
             address_high = None
 
-        address_low_fractional = None
         if address_low_suffix not in VALID_ADDRESS_LOW_SUFFIXES:
             address_low_suffix = None
         if address_low_suffix == '2':
@@ -481,7 +489,6 @@ if WRITE_OUT:
 
     for level in ['error', 'warning']:
         issue_map = error_map if level == 'error' else warning_map
-        
         for object_id, issues in issue_map.items():
             for issue in issues:
                 reason = issue['reason']
@@ -490,7 +497,7 @@ if WRITE_OUT:
                 
                 # Make error row
                 error = {x: source_parcel[x] if source_parcel[x] is not None \
-                    else '' for x in source_non_geom_fields}
+                    else '' for x in source_non_geom_fields if x not in error_exempt_fields}
 
                 # Make this work for integer fields
                 if error['house'] == '':
@@ -503,6 +510,7 @@ if WRITE_OUT:
                     'reason':   reason,
                     'notes':    note,
                 })
+
                 errors.append(error)
 
     parcel_error_table.write(errors, chunk_size=150000)
@@ -527,8 +535,8 @@ if WRITE_OUT:
             source_parcel = source_parcel_map[object_id]
             
             # Make error row
-            error_polygon = {x: source_parcel[x] if source_parcel[x] is not None \
-                else '' for x in source_fields}
+            error_polygon = {x: source_parcel[x] if x is not None \
+                else '' for x in source_fields if x not in error_exempt_fields}
 
             # Add/clean up fields
             if error_polygon['house'] == '':
