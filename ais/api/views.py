@@ -1011,7 +1011,7 @@ def reverse_geocode(query):
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     try:
-        srid = str(srid_map[search_type])
+        srid = srid_map[search_type]
     except:
         error = json_error(404, 'Please format your query in State Plane or latitude longitude coordinates separated by a space or comma.',
                            {'search_type': search_type, 'query': query, 'normalized': normalized})
