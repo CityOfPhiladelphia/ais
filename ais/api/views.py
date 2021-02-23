@@ -1298,3 +1298,16 @@ def base_landing():
     #
     #   </ul>
     # """
+
+
+# Quick and dirty health check,
+@app.route("/api/health-check")
+def health():
+    try:
+        check_geocode_db = 'select * from geocode limit 1;'
+        result = db.engine.execute(check_geocode_db).fetchall()
+        return 'All okay!', 200
+    except Exception as e:
+        #return 'DB failure!: {}'.format(str(e)), 504
+        return 'DB failure!', 504
+
