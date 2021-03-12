@@ -1016,7 +1016,6 @@ def reverse_geocode(query):
         error = json_error(404, 'Please format your query in State Plane or latitude longitude coordinates separated by a space or comma.',
                            {'search_type': search_type, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
-    engine_srid = str(ENGINE_SRID)  # check if necessary
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
     x, y = normalized.split(",", 1)
@@ -1033,7 +1032,7 @@ def reverse_geocode(query):
             geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
             length(street_address) asc
         LIMIT 1
-        '''.format(x=x, y=y, srid=srid, engine_srid=engine_srid, pwd_curb=7, dor_curb=8, true_range=5, centerline=6,
+        '''.format(x=x, y=y, srid=srid, engine_srid=ENGINE_SRID, pwd_curb=7, dor_curb=8, true_range=5, centerline=6,
                    search_radius=search_radius)
 
     results = db.engine.execute(reverse_geocode_stmt)
@@ -1142,12 +1141,11 @@ def service_areas(query):
     normalized = parsed['components']['output_address']
     srid_map = {'stateplane': 2272, 'latlon': 4326}
     try:
-        srid = str(srid_map[search_type])
+        srid = srid_map[search_type]
     except:
         error = json_error(404, 'Not a valid service_area query.',
                            {'query': query, 'search_type': search_type})
         return json_response(response=error, status=404)
-    engine_srid = str(ENGINE_SRID)
     crs = {'type': 'link',
            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
     x, y = normalized.split(",", 1)
@@ -1173,7 +1171,7 @@ def service_areas(query):
     limit 1
     )
     order by layer_id 
-    '''.format(srid=srid, engine_srid=engine_srid,x=x, y=y)
+    '''.format(srid=srid, engine_srid=ENGINE_SRID,x=x, y=y)
 
     result = db.engine.execute(sa_stmt)
     for item in result.fetchall():

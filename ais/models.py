@@ -13,8 +13,8 @@ from ais.util import *
 Parser = app.config['PARSER']
 parser = Parser()
 config = app.config
-ENGINE_SRID = config['ENGINE_SRID']
-default_SRID = 4326
+ENGINE_SRID = int(config['ENGINE_SRID'])
+DEFAULT_API_SRID = int(config['DEFAULT_API_SRID'])
 # OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
 # OWNER_PARTS_THRESHOLD = config['OWNER_PARTS_THRESHOLD']
 ###########
@@ -1013,7 +1013,7 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
-    def get_all_parcel_geocode_locations(self, srid=default_SRID, request=None):
+    def get_all_parcel_geocode_locations(self, srid=DEFAULT_API_SRID, request=None):
 
         geocode_xy_join = self \
             .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address) \
@@ -1028,7 +1028,7 @@ class AddressSummaryQuery(BaseQuery):
             # return result of query without flag (set i=1 so all geocode_location flags are ignored)
             return self.get_address_geoms(request=request, i=1)
 
-    def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=default_SRID, request=None):
+    def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=DEFAULT_API_SRID, request=None):
         if self.first():
             # If request arg parcel_geocode_location is included (and if on_street arg is not),
             # get address geom_data from geocode table where geocode_type = value specified in request arg.
@@ -1056,7 +1056,7 @@ class AddressSummaryQuery(BaseQuery):
             return self
 
 
-    def get_parcel_geocode_on_street(self, on_street=True, srid=default_SRID, request=None):
+    def get_parcel_geocode_on_street(self, on_street=True, srid=DEFAULT_API_SRID, request=None):
         # If request arg "on_street" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_on_street is selected
         if self.first() and on_street and request.args['on_street'].lower() != 'false':
@@ -1080,11 +1080,11 @@ class AddressSummaryQuery(BaseQuery):
             # call get_address_geoms but skip get_parcel_geocode_on_street method by setting i=1:
             return self.get_address_geoms(request=request, i=1)
 
-    def get_parcel_geocode_on_curb(self, on_curb=True, srid=default_SRID, request=None):
+    def get_parcel_geocode_on_curb(self, on_curb=True, srid=DEFAULT_API_SRID, request=None):
         # If request arg "on_curb" is included, get address geom_data from geocode table where
         # highest available priority geocode_types_on_street is selected
         if self.first() and on_curb and request.args['on_curb'].lower() != 'false':
-            
+
             geocode_xy_join = self \
                 .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)
 
@@ -1109,7 +1109,15 @@ class AddressSummaryQuery(BaseQuery):
 
         if self.first():
 
-            srid = request.args.get('srid') if 'srid' in request.args else default_SRID
+            #srid = request.args.get('srid') if 'srid' in request.args else DEFAULT_API_SRID
+            # Make sure srid is an integer for request to work with postgres 9.6 + postgis 2.4 +
+            if 'srid' in request.args:
+                try:
+                    srid = int(request.args.get('srid'))
+                except ValueError:
+                    srid = DEFAULT_API_SRID
+            else:
+                srid = DEFAULT_API_SRID
 
             if 'parcel_geocode_location' in request.args and i==0:
                 parcel_geocode_location = request.args.get('parcel_geocode_location')

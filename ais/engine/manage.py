@@ -27,9 +27,9 @@ def run(script):
     for path in paths:
         subprocess.call([sys.executable, path], env=os.environ.copy())
 
-# ACTIVATE BELOW WHEN running "ais db migrate"
+## ACTIVATE BELOW WHEN running "ais db migrate"
 #Import database models with app context
-from flask_migrate import Migrate, MigrateCommand
+#from flask_migrate import Migrate, MigrateCommand
 #from ais import app, app_db as db
 # with app.app_context():
 #   from ais.models import *
