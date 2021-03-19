@@ -1,3 +1,4 @@
+setuptools==54.1.2
 alembic==1.0.0
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
