@@ -138,7 +138,7 @@ LAST_BUILD=$(travis history --branch master --limit 1 | cut --fields=1 --delimit
 # it off.
 LAST_BUILD=${LAST_BUILD:1}
 send_slack "Restarting the latest master branch build."
-travis restart $LAST_BUILD
+travis restart $LAST_BUILD --com
 # NOTE: Travis-CI will take over from here. Check in the .travis/deploy script
 # for further step.
 if [ $? -ne 0 ]
