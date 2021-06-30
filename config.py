@@ -105,14 +105,12 @@ BASE_DATA_SOURCES = {
         }
     },
     'properties': {
-        'db':               'brtprod',
-        'table':            'brt_admin.properties',
+        'db':               'gis',
+        'table':            'GIS_AIS_SOURCES.VW_CAMA_ADDRESS_SOURCE_FOR_AIS',
         'field_map': {
-            'account_num':          'parcelno',
-            'tencode':              'propertyid',
-            'source_address':       'location',
-            'address_suffix':       'suffix',
-            'unit':                 'unit',
+            'account_num':          'opa_account_num',
+            'tencode':              'property_id',
+            'source_address':       'street_address',
         },
     },
     'curbs': {
@@ -125,7 +123,7 @@ BASE_DATA_SOURCES = {
     },
     'opa_owners': {
         'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.VW_OPA_OWNERS',
+        'table':            'GIS_AIS_SOURCES.VW_OPA_OWNERS_CAMA',
         'field_map': {
             'account_num':              'account_num',
             'street_address':           'street_address',

@@ -33,8 +33,8 @@ source_fields = list(field_map.values())
 source_tencode_field = field_map['tencode']
 source_account_num_field = field_map['account_num']
 source_address_field = field_map['source_address']
-source_address_suffix_field = field_map['address_suffix']
-source_unit_field = field_map['unit']
+#source_address_suffix_field = field_map['address_suffix']
+#source_unit_field = field_map['unit']
 
 print('Dropping index...')
 prop_table.drop_index('street_address')
@@ -43,12 +43,15 @@ print('Deleting existing properties...')
 prop_table.delete()
 
 print('Reading owners from source...')
+#owner_stmt = """
+#	select
+#		account_num,
+#		listagg(trim(name), '|') within group(order by account_num) as owners
+#	from gis_ais_sources.vw_opa_owners
+#	group by account_num
+#"""
 owner_stmt = """
-	select
-		account_num,
-		listagg(trim(name), '|') within group(order by account_num) as owners
-	from gis_ais_sources.vw_opa_owners
-	group by account_num
+select * from vw_opa_owners_cama
 """
 owner_rows = ais_source_db.execute(owner_stmt)
 owner_map = {x[0]: x[1] for x in owner_rows}
@@ -66,25 +69,25 @@ for i, source_prop in enumerate(source_props):
 		tencode = source_prop[source_tencode_field]
 		account_num = source_prop[source_account_num_field]
 		location = source_prop[source_address_field]
-		unit = source_prop[source_unit_field]
-		address_suffix = source_prop[source_address_suffix_field]
+		#unit = source_prop[source_unit_field]
+		#address_suffix = source_prop[source_address_suffix_field]
 
 		# Handle address
 		source_address = location.strip()
-		if unit:
-			unit = unit.lstrip('0')  # Remove leading zeros from unis
-			source_address = '{} #{}'.format(source_address, unit)
+		#if unit:
+	#		unit = unit.lstrip('0')  # Remove leading zeros from unis
+	#		source_address = '{} #{}'.format(source_address, unit)
 
-		# Append address suffix (e.g. 101A)
-		if address_suffix and address_suffix.isalpha():
-			if not re.match('\d+[A-Z]', source_address):
-				# FEEDBACK: missing suffix
-				if '-' in source_address:
-					insert_i = source_address.index('-')
-				else:
-					insert_i = source_address.index(' ')
-				source_address = source_address[:insert_i] + address_suffix + \
-					source_address[insert_i:]
+		## Append address suffix (e.g. 101A)
+		#if address_suffix and address_suffix.isalpha():
+		#	if not re.match('\d+[A-Z]', source_address):
+	#			# FEEDBACK: missing suffix
+	#			if '-' in source_address:
+	#				insert_i = source_address.index('-')
+	#			else:
+	#				insert_i = source_address.index(' ')
+	#			source_address = source_address[:insert_i] + address_suffix + \
+	#				source_address[insert_i:]
 
 		# Parse
 		try:
