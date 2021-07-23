@@ -133,7 +133,10 @@ if ! hash travis ; then
   https://github.com/travis-ci/travis.rb#installation"
   exit 1
 fi
-LAST_BUILD=$(travis history --branch master --limit 1 | cut --fields=1 --delimiter=" ")
+
+# Get last Travis build ID:
+LAST_BUILD=$(travis history --com --branch master --limit 1 | cut --fields=1 --delimiter=" ")
+
 # The build number has a number sign as the first character. We need to strip
 # it off.
 LAST_BUILD=${LAST_BUILD:1}
