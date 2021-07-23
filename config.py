@@ -125,7 +125,7 @@ BASE_DATA_SOURCES = {
     },
     'opa_owners': {
         'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.VW_OPA_OWNERS',
+        'table':            'GIS_AIS_SOURCES.VW_OPA_OWNERS_UPDATES',
         'field_map': {
             'account_num':              'account_num',
             'street_address':           'street_address',
