@@ -15,7 +15,7 @@ start = datetime.now()
 """SET UP"""
 
 config = app.config
-opa_owners_source_table = config['BASE_DATA_SOURCES']['owners']['table']
+opa_owners_source_table = config['BASE_DATA_SOURCES']['opa_owners']['table']
 source_def = config['BASE_DATA_SOURCES']['properties']
 source_db = datum.connect(config['DATABASES'][source_def['db']])
 ais_source_db = datum.connect(config['DATABASES']['gis'])
@@ -48,7 +48,7 @@ owner_stmt = """
 	select
 		account_num,
 		listagg(trim(name), '|') within group(order by account_num) as owners
-	from {source_ownersr_table}
+	from {source_owners_table}
 	group by account_num
 """.format(source_owners_table=opa_owners_source_table)
 owner_rows = ais_source_db.execute(owner_stmt)
