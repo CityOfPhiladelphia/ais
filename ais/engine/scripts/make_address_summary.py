@@ -504,7 +504,30 @@ for street_address in ungeocoded_opa_addresses:
     db.execute(stmt.format(street_address=street_address))
 db.save()
 
+# Update address_summary pwd_parcel_id for manual matches to OPA properties:
+# TODO: fix to identify rows to update from opa rows with null pwd_parcel_id and pwd parcel geocodes:
+manual_pwd_parcel_update_stmt = '''
+update address_summary asum
+set pwd_parcel_id = (
+	select prep.pwd_parcel_id from (
+	select string_agg(updates.parcel_id::text, '|') as pwd_parcel_id, updates.street_address
+	from (
+		select asum.street_address, ap.parcel_row_id, pp.parcel_id 
+		from address_summary asum
+		inner join address_parcel ap on asum.street_address = asum.opa_address and asum.pwd_parcel_id = '' and 
+		ap.parcel_source = 'pwd' and ap.street_address = asum.street_address
+		inner join pwd_parcel pp on pp.id = ap.parcel_row_id
+		) updates
+		group by street_address
+	) prep
+		where asum.street_address = prep.street_address
+)
+'''
+db.execute(manual_pwd_parcel_update_stmt)
+db.save()
+
 db.close()
 
 print('{} geocode errors'.format(geocode_errors))
 print('Finished in {} seconds'.format(datetime.now() - start))
+

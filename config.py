@@ -115,6 +115,16 @@ BASE_DATA_SOURCES = {
             'unit':                 'unit',
         },
     },
+    'opa_active_accounts': {
+        'db':               'gis',
+        'table':            'GIS_OPA.OPA_ACTIVE_ACCOUNTS',
+        'field_map': {
+            'account_num':          'opa_act',
+            'source_address':       'address',
+            'unit_num':             'unit',
+            'geom':                 'shape',
+        },
+    }, 
     'curbs': {
         'db':               'gis',
         'table':            'GIS_STREETS.Curbs_No_Cartways',
