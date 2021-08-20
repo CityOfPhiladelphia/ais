@@ -12,16 +12,14 @@ config = app.config
 source_def = config['BASE_DATA_SOURCES']['opa_active_accounts']
 source_db_name = source_def['db']
 source_db_url = config['DATABASES'][source_db_name]
+source_table = source_def['table']
 source_field_map = source_def['field_map']
-#source_fields = '{}'.format(','.join(list(source_field_map.values()))).upper()
 source_fields = [field for field in list(source_field_map.values()) if field != 'shape']
-print(source_fields)
 conn_dsn = source_db_url[source_db_url.index("//") + 2:]
 conn_user = conn_dsn[:conn_dsn.index(":")]
 conn_pw = conn_dsn[conn_dsn.index(":") + 1 : conn_dsn.index("@")]
 conn_db = conn_dsn[conn_dsn.index("@") + 1:]
 source_conn = cx_Oracle.connect(conn_user, conn_pw, conn_db)
-source_table_schema_name = 'GIS_OPA.OPA_ACTIVE_ACCOUNTS'
 
 target_dsn = config['DATABASES']['engine']
 target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
@@ -30,14 +28,12 @@ target_name = target_dsn[target_dsn.index("/", target_dsn.index("@")) + 1:]
 target_conn = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=target_name, db_user=target_user, db_pw=target_pw))
 target_cur = target_conn.cursor()
 target_table_name = 'public.t_opa_active_accounts'
-print("target_table_name: ", target_table_name)
 
 # Read source table:
-rows = etl.fromoraclesde(source_conn, source_table_schema_name, fields=source_fields)
-print(etl.look(rows))
+print("Reading rows from {}".format(source_table))
+rows = etl.fromoraclesde(source_conn, source_table, fields=source_fields)
 # Format fields
 rows = rows.rename({v:k for k,v in source_field_map.items()})
-print(etl.look(rows))
 
 drop_stmt = '''drop table if exists {}'''.format(target_table_name)
 create_stmt = '''create table {} (
@@ -47,10 +43,13 @@ create_stmt = '''create table {} (
                geom geometry(Point,2272)
 )'''.format(target_table_name)
 # Create temp target table:
+print("Dropping temp table '{}' if already exists...".format(target_table_name))
 target_cur.execute(drop_stmt)
+print("Creating temp table '{}'...".format(target_table_name))
 target_cur.execute(create_stmt)
 target_conn.commit()
 # Write rows to target:
+print("Writing to temp table '{}'".format(target_table_name))
 rows.topostgis(target_conn, target_table_name)
 
 # Update address_parcel by selecting address from opa_property associated with opa_account_num for opa_active_accounts record where opa_address doesn't have pwd_parcel in table, \
@@ -76,12 +75,13 @@ from
 ) opanopp inner join pwd_parcel pp on st_intersects(opanopp.geom, pp.geom)
 '''
 
+print("Updating address_parcel table with manaual opa property geocodes intersecting pwd parcels...")
 target_cur.execute(update_stmt)
 target_conn.commit()
 
+print("Cleaning up...")
 # drop temp table:
 target_cur.execute(drop_stmt)
 target_conn.commit()
-
 # close db connection:
 target_conn.close()

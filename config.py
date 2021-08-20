@@ -117,7 +117,7 @@ BASE_DATA_SOURCES = {
     },
     'opa_active_accounts': {
         'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.OPA_ACTIVE_ACCOUNTS',
+        'table':            'GIS_OPA.OPA_ACTIVE_ACCOUNTS',
         'field_map': {
             'account_num':          'opa_act',
             'source_address':       'address',
