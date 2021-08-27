@@ -20,6 +20,10 @@ source_db = datum.connect(config['DATABASES'][source_def['db']])
 ais_source_db = datum.connect(config['DATABASES']['gis'])
 source_table = source_db[source_def['table']]
 field_map = source_def['field_map']
+
+owner_source_def = config['BASE_DATA_SOURCES']['opa_owners']
+owner_table_name = owner_source_def['table']
+
 db = datum.connect(config['DATABASES']['engine'])
 prop_table = db['opa_property']
 
@@ -42,8 +46,8 @@ prop_table.delete()
 
 print('Reading owners from source...')
 owner_stmt = """
-select * from vw_opa_owners_cama
-"""
+select * from {}
+""".format(owner_table_name)
 owner_rows = ais_source_db.execute(owner_stmt)
 owner_map = {x[0]: x[1] for x in owner_rows}
 
