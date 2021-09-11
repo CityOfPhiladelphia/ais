@@ -46,7 +46,7 @@ prop_table.delete()
 
 print('Reading owners from source...')
 owner_stmt = """
-select * from {}
+select account_num, owners from {}
 """.format(owner_table_name)
 owner_rows = ais_source_db.execute(owner_stmt)
 owner_map = {x[0]: x[1] for x in owner_rows}
