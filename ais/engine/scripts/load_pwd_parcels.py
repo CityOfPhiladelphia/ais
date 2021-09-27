@@ -40,7 +40,7 @@ opa_source_table = opa_source_def['table']
 opa_field_map = opa_source_def['field_map']
 opa_rows = source_db[opa_source_table].read()
 opa_map = {x[opa_field_map['account_num']]: x[opa_field_map['street_address']] \
-	for x in opa_rows}
+	for x in opa_rows if x['account_num']}
 
 # Make a list of non-unique addresses in PWD parcels. If a parcel has one of 
 # these addresses, use OPA address instead. Case: 421 S 10TH ST appears three
