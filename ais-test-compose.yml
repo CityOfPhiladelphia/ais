@@ -1,0 +1,11 @@
+version: '3'
+services:
+  ais:
+    container_name: ais
+    image: 880708401960.dkr.ecr.us-east-1.amazonaws.com/ais
+    environment:
+      - ENGINE_DB_HOST
+      - ENGINE_DB_PASS
+    ports:
+      - "8080:8080"
+
