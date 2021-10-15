@@ -1,38 +1,17 @@
-name: Build and test Docker Image for PRs
+name: Build and Push Docker image to ECR
 
 # Trigger workflow on changes to these paths in stated branch
-# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
 on:
   pull_request:
     branches:
-      - '**'
-    #types: [opened, edited, repoened, review_requested]
-
-concurrency:
-  group: testing_environment
-  cancel-in-progress: false
-
+      - roland-dev-branch-10-15-21 
 
 jobs:
-
-  # Wait for up ten minutes for previous run to complete, abort if not done by then
-  #pre-build:
-  #  runs-on: IT04GISTINAIS2L
-  #  timeout-minutes: 10
-  #  steps:
-  #    - name: 'Block Concurrent Action Workflow Executions'
-  #      uses: softprops/turnstyle@v1
-  #      with:
-  #        poll-interval-seconds: 10
-  #      env:
-  #      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #        GITHUB-TOKEN: ${{ github.token }}
 
   build:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    #runs-on: IT04GISPINAIS2L
-    runs-on: IT04GISTINAIS2L
+    runs-on: IT04GISPINAIS2L
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
 
@@ -41,8 +20,7 @@ jobs:
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
     - uses: actions/checkout@v2
       with:
-        # pull the HEAD commit from the PR instaed of the HEAD commit
-        ref: ${{ github.event.pull_request.head.sha }}
+        ref: roland-dev-branch-10-15-21
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
@@ -52,8 +30,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Print current working directory
-      run: pwd
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           
+    - name: Set engine hostname based on prod color
+      run: |
+           echo "ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com"
+           echo "ENGINE_HOST=ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com" >> $GITHUB_ENV
+
+    - name: test env var setting
+      run: echo ${{ env.PROD_COLOR }}
 
     - name: Pull private passyunk data
       env:
@@ -76,10 +74,4 @@ jobs:
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: |
           docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
-
-    - name: Confirm nginx configuration is good
-      run: docker exec ais bash -c 'nginx -t'
-
-    - name: Simple curl query check
-      run: curl http://localhost:8080/search/1234%20Market%20Street
 

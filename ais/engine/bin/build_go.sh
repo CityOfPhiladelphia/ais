@@ -10,15 +10,11 @@ echo "Working directory is $WORKING_DIRECTORY"
 
 # Has our send_teams and get_prod_env functions
 source $WORKING_DIRECTORY/ais/engine/bin/ais-utils.sh
-source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
-
 
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
-trap 'echo "Exited prematurely, running reenable_alarm.."; reenable_alarm; echo "\"${last_command}\" command exited with code $?."' EXIT
+trap 'echo "\"${last_command}\" command exited with code $?."' EXIT
 
-# NOTE: postgres connection information is also stored in ~/.pgpass!!!
-# postgres commands should use passwords in there depending on the hostname.
 
 datestamp=$(date +%Y%m%d)
 start_dt=$(date +%Y%m%d%T)
@@ -28,19 +24,16 @@ echo "Started: "$start_dt
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/env ]; then
         echo "Activating/creating venv.."
-        python3.6 -m venv $WORKING_DIRECTORY/env 
+        python3.5 -m venv $WORKING_DIRECTORY/env 
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
-	# used for python3.5, not needed with the pip version that's installed under 3.6
-        # Looks like pip 18.1 works and is what we want.
-        #pip install --upgrade "pip < 21.0"
+        pip install --upgrade "pip < 21.0"
         pip install wheel
-	# used for python3.5
-        #python setup.py bdist_wheel 
+        python setup.py bdist_wheel 
         pip install -r $WORKING_DIRECTORY/requirements.txt
         # Install AIS as a python module, needed in tests.
-        python setup.py develop
+        python setup.py install
     else
         echo "Activating virtual environment"
         source $WORKING_DIRECTORY/env/bin/activate
@@ -78,9 +71,8 @@ setup_log_files() {
 check_load_creds() {
     echo "Loading credentials and passwords into the environment"
     . $WORKING_DIRECTORY/pull-private-passyunkdata.sh
-    cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-    cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-
+    cp $WORKING_DIRECTORY/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+    cp $WORKING_DIRECTORY/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
     file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/config-secrets.sh
     source $WORKING_DIRECTORY/config-secrets.sh
@@ -94,7 +86,7 @@ check_load_creds() {
 build_engine() {
     echo "Starting new engine build"
     send_teams "Starting new engine build."
-    bash $WORKING_DIRECTORY/ais/engine/bin/build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+    bash build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
     send_teams "Engine build has completed."
     end_dt=$(date +%Y%m%d%T)
     echo "Time Summary: "
@@ -131,12 +123,12 @@ identify_prod() {
 }
 
 
+# Run tests, uses PGPASSWORD env var to access it.
 engine_tests() {
     echo "Running engine tests against locally built database."
     cd $WORKING_DIRECTORY
     #send_teams "Running tests."
-    # Note: imports instance/config.py for credentials
-    pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -v
+    pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py
     if [ $? -ne 0 ]
     then
       echo "Engine tests failed"
@@ -148,7 +140,7 @@ engine_tests() {
 
 
 api_tests() {
-    echo "Running api_tests..."
+    echo "Running API tests....."
     cd $WORKING_DIRECTORY
     pytest $WORKING_DIRECTORY/ais/api/tests/
     if [ $? -ne 0 ]
@@ -163,15 +155,11 @@ api_tests() {
 
 # Make a copy (Dump) the newly built local engine db
 dump_local_db() {
-    echo "Running dump_local_db...."
-    # TEMP stop docker to conserve memory
-    docker stop ais || true
-    docker rm ais || true
     echo "Dumping the newly built engine database.."
-    send_teams "Dumping the newly built engine database.."
+    sent_teams "Dumping the newly built engine database.."
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
     db_dump_file_loc=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
-    pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
+    #pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
     if [ $? -ne 0 ]
     then
       echo "DB dump failed"
@@ -182,25 +170,20 @@ dump_local_db() {
 
 # Update (Restore) AWS RDS instance to staging database
 restore_db_to_staging() {
-    echo "Running restore_db_to_staging.."
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
-    export PGPASSWORD=$POSTGRES_PW
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
-    export PGPASSWORD=$AIS_ENGINE_PW
-    pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc || :
+    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
+    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
+    pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc
 }
 
 
 docker_tests() {
-    echo "Running docker_tests, which pulls the docker image from the latest in ECR and runs tests.."
+    echo "Running docker image from the latest in ECR and running tests in them.."
     # export the proper CNAME for the container to run against
     export ENGINE_DB_HOST=$staging_db_uri
     # Spin up docker container from latest AIS image from ECR and test against staging database
@@ -210,29 +193,6 @@ docker_tests() {
 }
 
 
-scale_up_staging() {
-    echo "Running scale_up_stating..."
-    prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
-    echo "Current running tasks in prod: $prod_tasks"
-    if (( $prod_tasks > 2 ))
-    then
-        # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
-        # after switching prod and staging.
-        aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
-        # throw in a sleep, can take a bit for the disable action to take effect.
-        sleep 15
-        aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count ${prod_tasks}
-        # Wait for cluster to be stable, e.g. all the containers are spun up.
-        # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
-        aws ecs wait services-stable --cluster ais-${staging_color-cluster} \
-        --service ais-$staging_color-api-service --region us-east-1 
-        # When we re-enable the alarm at the end of this entire script, the scalein alarm should
-        # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
-    else
-        echo "Staging has 2 running tasks, the minimum. Not running any scaling actions."
-    fi
-}
-
 # Once confirmed good, deploy latest AIS image from ECR to staging
 deploy_to_staging_ecs() {
     echo "Deploying latest AIS image from ECR to $staging_color environment.."
@@ -241,9 +201,10 @@ deploy_to_staging_ecs() {
     aws ecs update-service --cluster ais-$staging_color-cluster \
     --service ais-$staging_color-api-service --force-new-deployment --region us-east-1 \
     1> /dev/null
-    echo "running aws ecs services-stable.."
+    echo "running aws ecs services-stabl.."
     aws ecs wait services-stable --cluster ais-$staging_color-cluster \
-    --service ais-$staging_color-api-service --region us-east-1 
+    --service ais-$staging_color-api-service --region us-east-1 \
+    1> /dev/null
 }
 
 
@@ -256,12 +217,12 @@ check_target_health() {
 
 # Warm up load balancer against staging env?
 warmup_lb() {
-    echo "Warming up the load balancer for staging lb: $staging_color."
-    send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py $staging_color
+    echo "Warming up the load balancer."
+    send_teams "Warming up the load balancer."
+    python warmup_lb.py
     if [ $? -ne 0 ]
     then
-      echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
+      echo "Warmup failed"
       send_teams "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
       exit 1;
     fi
@@ -320,13 +281,6 @@ swap_cnames() {
     send_teams "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
 }
 
-reenable_alarm() {
-    echo "Sleeping for 5 minutes, then running scale-in alarm re-enable command..."
-    sleep 300
-    aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
-    echo "Alarm 'ais-${staging_color}-api-taskin' re-enabled."
-}
-
 
 activate_venv_source_libaries
 
@@ -336,31 +290,27 @@ setup_log_files
 
 check_load_creds
 
-build_engine
+#build_engine
 
 identify_prod
 
-engine_tests
+#engine_tests
 
-api_tests
+#api_tests
 
-dump_local_db
+#dump_local_db
 
-restore_db_to_staging
+#restore_db_to_staging
 
-docker_tests
+#docker_tests
 
-scale_up_staging
-
-deploy_to_staging_ecs
+#deploy_to_staging_ecs
 
 check_target_health
 
-warmup_lb
+#warmup_lb
 
 swap_cnames -c $staging_color
-
-reenable_alarm
 
 echo "Finished successfully!"
 
