@@ -31,3 +31,22 @@ To develop locally:
 6. Create an empty file at `/ais/instance/config.py`. To run engine scripts, you'll need to add dictionary to this called `DATABASE` mapping database names to connection strings. (TODO: commit sample instance config)
 7. Rename `.env.sample` in the root directory to `.env` and add real environment settings. (TODO: commit `.env.sample`)
 8. `honcho start`. This will start start serving over port 5000. Note that this is blocked on CityNet, so you'll have to be on a public network to access `http://0.0.0.0:5000`.
+
+## Docker Container Dev
+
+For building the docker container, you'll need some environment variables first. Copy the example config script and populate it:
+
+1. `cp config-secrets.sh.example config-secrets.sh && chmod +x config-secrets.sh` 
+
+Note that you may need to set ENGINE_DB_HOST to a direct IP instead of a CNAME to get it working in-office.
+Now run the 'pull-private-passyunkdata.sh' script to download CSVs needed in the DockerFile.
+
+2. `chmod +x pull-private-passyunkdata.sh; ./pull-private-passyunkdata.sh` 
+
+Then build and start the container.
+
+3. `docker-compose -f actions-docker-compose.yml up --build -d` 
+
+If the container could successfully contact the DB then it should stay up and running. You may now run tests to confirm functionality.
+
+4. `docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'`

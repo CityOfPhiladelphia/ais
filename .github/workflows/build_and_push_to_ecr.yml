@@ -1,0 +1,157 @@
+name: Build and Push Docker image to ECR
+
+# Trigger workflow on changes to these paths in stated branch
+on:
+  push:
+    branches:
+      - roland-dev-branch-10-15-21
+      #    paths: 
+      #      - './ais/*'
+      #      - './bin/*'
+      #      - './*.py'
+      #      - './requirements*'
+      #      - './.github/workflows/*'
+
+
+jobs:
+#  initial:
+#    name: Some info gathering stuff
+#    if: "!contains(github.event.head_commit.message, 'skip ci')"
+#    runs-on: ubuntu-latest
+#    steps:
+
+#    - name: AWS cli version
+#      run: aws --version
+
+#    - name: OS information
+#      run:  uname -a
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+
+  build:
+    name: Build and push docker container
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ubuntu-latest
+    # https://github.community/t/sharing-a-variable-between-jobs/16967/13
+    # save address for use in other jobs.
+
+    steps:
+    - name: In progress notification
+      uses: toko-bifrost/ms-teams-deploy-card@master
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-start: cozy
+        show-on-start: true
+        show-on-exit: false
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # https://github.com/marketplace/actions/public-ip
+    - name: Get our github runner public IP
+      id: ip
+      uses: haythem/public-ip@v1.2
+
+    - name: Print Public IP
+      id: printip
+      run: |
+          echo "::set-output name=address::${{ steps.ip.outputs.ipv4 }}"
+
+    - name: Add our IP to our github runner security group
+      env:
+        RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
+      run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
+    - uses: actions/checkout@v2
+      with:
+        ref: roland-dev-branch-10-15-21
+
+    - name: Pull private passyunk data
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        REPOSITORY_URL: 880708401960.dkr.ecr.us-east-1.amazonaws.com/ais
+      run: |
+          aws s3 cp s3://ais-static-files/election_block.csv .
+          aws s3 cp s3://ais-static-files/usps_zip4s.csv .
+
+    - name: Build and start the Docker image using docker-compose
+      env:
+        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker-compose -f actions-docker-compose.yml up --build -d
+
+    - name: Run API pytests to ensure image build is good
+      env:
+        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Docker Push to ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        REPOSITORY_URL: 880708401960.dkr.ecr.us-east-1.amazonaws.com/ais
+      run: |
+        docker tag ais:latest $REPOSITORY_URL:latest
+        docker push $REPOSITORY_URL:latest
+
+    # always run, even if previous steps have failed so we don't have a buildup of random ips.
+    - name: Remove our IP from our github runner-specific security group. Still run if an earlier step failed.
+      if: always()
+      env:
+        RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
+      run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+
+
+  deploy:
+    name: Deploy to production ECS cluster
+    # needs prior job of 'build' to not fail.
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+      
+      # Set an env var through the complicated method github actions requires
+      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id Z05945981N60F9XLWFIBR --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+
+    - name: test env var setting
+      run: echo ${{ env.PROD_COLOR }}
+
+    - name: Force deploy to ECS cluster
+      run: |
+          echo "Deploying to $PROD_COLOR"
+          aws ecs update-service --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --force-new-deployment --region us-east-1
+
+          aws ecs wait services-stable --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --region us-east-1
+
