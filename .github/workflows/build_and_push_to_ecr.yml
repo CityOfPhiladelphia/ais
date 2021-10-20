@@ -25,7 +25,6 @@ jobs:
 
 #    - name: OS information
 #      run:  uname -a
-  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
 
   build:
     name: Build and push docker container
@@ -35,14 +34,24 @@ jobs:
     # save address for use in other jobs.
 
     steps:
-    - name: In progress notification
-      uses: toko-bifrost/ms-teams-deploy-card@master
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
+    - uses: actions/checkout@v2
+      with:
+        ref: roland-dev-branch-10-15-21
+
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+    - uses: toko-bifrost/ms-teams-deploy-card@master
+      if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
         WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-start: cozy
+        card-layout-start: complete
         show-on-start: true
         show-on-exit: false
+        custom-facts: |
+          - name: Building and testing, and deploying action started
+            value: Building and testing, and deploying action started.
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
@@ -66,12 +75,6 @@ jobs:
       env:
         RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
       run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
-
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
-    - uses: actions/checkout@v2
-      with:
-        ref: roland-dev-branch-10-15-21
 
     - name: Pull private passyunk data
       env:
@@ -155,3 +158,15 @@ jobs:
           aws ecs wait services-stable --cluster ais-$PROD_COLOR-cluster \
           --service ais-$PROD_COLOR-api-service --region us-east-1
 
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+    - uses: toko-bifrost/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-exit: complete
+        show-on-start: false
+        show-on-exit: true
+        custom-facts: |
+          - name: Build successful, deployed.
+            value: Build successful, deployed.
