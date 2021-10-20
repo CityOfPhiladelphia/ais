@@ -144,7 +144,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id Z05945981N60F9XLWFIBR --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
 
     - name: test env var setting
       run: echo ${{ env.PROD_COLOR }}
