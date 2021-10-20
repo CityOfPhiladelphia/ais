@@ -48,9 +48,9 @@ jobs:
       with:
         GITHUB-TOKEN: ${{ github.token }}
         WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-start: complete
+        card-layout-start: compact
         show-on-start: true
-        show-on-exit: false
+        show-on-exit: true
         custom-facts: |
           - name: Job Progress
             value: Building and testing, and deploying action started.
@@ -174,4 +174,4 @@ jobs:
         show-on-exit: true
         custom-facts: |
           - name: Job Progress
-            value: Build successful, deployed.
+            value: Build successful, deployed to ${{ env.PROD_COLOR }} ECS cluster.
