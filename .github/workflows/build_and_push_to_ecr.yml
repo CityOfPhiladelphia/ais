@@ -41,7 +41,9 @@ jobs:
         ref: roland-dev-branch-10-15-21
 
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
-    - uses: toko-bifrost/ms-teams-deploy-card@master
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
       if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
@@ -50,7 +52,7 @@ jobs:
         show-on-start: true
         show-on-exit: false
         custom-facts: |
-          - name: Building and testing, and deploying action started
+          - name: Job Progress
             value: Building and testing, and deploying action started.
 
     # https://github.com/aws-actions/amazon-ecr-login
@@ -160,7 +162,9 @@ jobs:
           --service ais-$PROD_COLOR-api-service --region us-east-1
 
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
-    - uses: toko-bifrost/ms-teams-deploy-card@master
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
       if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
@@ -169,5 +173,5 @@ jobs:
         show-on-start: false
         show-on-exit: true
         custom-facts: |
-          - name: Build successful, deployed.
+          - name: Job Progress
             value: Build successful, deployed.
