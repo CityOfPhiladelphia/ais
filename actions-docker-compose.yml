@@ -10,5 +10,5 @@ services:
       - ENGINE_DB_HOST
       - ENGINE_DB_PASS
     ports:
-      - "5000:5000"
+      - "8080:8080"
 
