@@ -1,0 +1,113 @@
+name: Build and Deploy to Staging
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  testing:
+    name: Testing docker build against staging engine
+    runs-on: ubuntu-latest
+    steps:
+
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-start: compact
+        show-on-start: true
+        show-on-exit: true
+        custom-facts: |
+          - name: Job Progress
+            value: Building and testing, and deploying action started.
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Build and start the Docker image using docker-compose
+      env:
+        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker-compose -f actions-docker-compose.yml up -d
+
+    - name: Run API pytests to ensure image build is good
+      env:
+        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
+
+    # always run, even if previous steps have failed so we don't have a buildup of random ips.
+    - name: Remove our IP from our github runner-specific security group. Still run if an earlier step failed.
+      if: always()
+      env:
+        RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
+      run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+
+  deploy:
+    name: Deploy to staging ECS cluster
+    # needs prior job of 'testing' to run.
+    needs: testing
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+      
+      # Set an env var through the complicated method github actions requires
+      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+           echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
+           if [[ "$PROD_COLOR" == "green" ]]; then
+             echo STAGING_COLOR="blue" >> $GITHUB_ENV
+           else
+             echo STAGING_COLOR="green" >> $GITHUB_ENV
+           fi
+
+    - name: test env var setting
+      run: echo ${{ env.PROD_COLOR }}
+
+    - name: Force deploy to staging ECS cluster
+      run: |
+          echo "Deploying to $STAGING_COLOR"
+          aws ecs update-service --cluster ais-$STAGING_COLOR-cluster \
+          --service ais-$STAGING_COLOR-api-service --force-new-deployment --region us-east-1
+
+          aws ecs wait services-stable --cluster ais-$STAGING_COLOR-cluster \
+          --service ais-$STAGING_COLOR-api-service --region us-east-1
+    -
+
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-exit: complete
+        show-on-start: false
+        show-on-exit: true
+        custom-facts: |
+          - name: Job Progress
+            value: Testing successful, deploying to ${{ env.STAGING_COLOR }} ECS cluster.

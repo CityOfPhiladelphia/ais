@@ -17,6 +17,7 @@ RUN git clone https://github.com/CityOfPhiladelphia/ais /ais
 RUN cd /ais && \
     python -m venv env && \
     . ./env/bin/activate && \
+    pip install --upgrade pip && \
     pip install -r requirements.txt
 
 COPY election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv

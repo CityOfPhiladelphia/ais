@@ -4,32 +4,14 @@ name: Build and Push Docker image to ECR
 on:
   push:
     branches:
-      - roland-dev-branch-10-15-21
-      #    paths: 
-      #      - './ais/*'
-      #      - './bin/*'
-      #      - './*.py'
-      #      - './requirements*'
-      #      - './.github/workflows/*'
-
+      - roland-dev-branch-10-15-21 
 
 jobs:
-#  initial:
-#    name: Some info gathering stuff
-#    if: "!contains(github.event.head_commit.message, 'skip ci')"
-#    runs-on: ubuntu-latest
-#    steps:
-
-#    - name: AWS cli version
-#      run: aws --version
-
-#    - name: OS information
-#      run:  uname -a
 
   build:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    runs-on: ubuntu-latest
+    runs-on: IT04GISPINAIS2L
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
 
@@ -63,20 +45,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    # https://github.com/marketplace/actions/public-ip
-    - name: Get our github runner public IP
-      id: ip
-      uses: haythem/public-ip@v1.2
-
-    - name: Print Public IP
-      id: printip
-      run: |
-          echo "::set-output name=address::${{ steps.ip.outputs.ipv4 }}"
-
-    - name: Add our IP to our github runner security group
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
       env:
-        RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
-      run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           
+    - name: Set engine hostname based on prod color
+      run: |
+           echo "ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com"
+           echo "ENGINE_HOST=ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com" >> $GITHUB_ENV
+
+    - name: test env var setting
+      run: echo ${{ env.PROD_COLOR }}
 
     - name: Pull private passyunk data
       env:
@@ -89,7 +79,7 @@ jobs:
 
     - name: Build and start the Docker image using docker-compose
       env:
-        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: docker-compose -f actions-docker-compose.yml up --build -d
 
@@ -113,16 +103,9 @@ jobs:
         docker tag ais:latest $REPOSITORY_URL:latest
         docker push $REPOSITORY_URL:latest
 
-    # always run, even if previous steps have failed so we don't have a buildup of random ips.
-    - name: Remove our IP from our github runner-specific security group. Still run if an earlier step failed.
-      if: always()
-      env:
-        RUNNER_SG_GROUP: ${{ secrets.RUNNER_SG_GROUP }}
-      run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.RUNNER_SG_GROUP }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
-
-
 
   deploy:
+
     name: Deploy to production ECS cluster
     # needs prior job of 'build' to not fail.
     needs: build
@@ -137,20 +120,22 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-      
-      # Set an env var through the complicated method github actions requires
-      # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
     - name: Identify production cluster, either blue or green
       id: prod-cluster-color
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-           echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
-          #echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
-
-    - name: test env var setting
-      run: echo ${{ env.PROD_COLOR }}
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+      
 
     - name: Force deploy to ECS cluster
       run: |
@@ -160,6 +145,20 @@ jobs:
 
           aws ecs wait services-stable --cluster ais-$PROD_COLOR-cluster \
           --service ais-$PROD_COLOR-api-service --region us-east-1
+
+    - name: Confirm LB target group health
+      run: |
+        blue_tg_arn=$(aws elbv2 describe-target-groups | grep "blue-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        green_tg_arn=$(aws elbv2 describe-target-groups | grep "green-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+              echo "blue"
+              aws elbv2 describe-target-health --target-group-arn $blue_tg_arn | grep "\"healthy\""
+              echo $?
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+              echo "green"
+              aws elbv2 describe-target-health --target-group-arn $green_tg_arn | grep "\"healthy\""
+              echo $?
+        fi
 
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
   # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
