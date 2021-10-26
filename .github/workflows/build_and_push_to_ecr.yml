@@ -81,13 +81,17 @@ jobs:
       env:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
-      run: docker-compose -f actions-docker-compose.yml up --build -d
+      run: docker-compose -f build-test-compose.yml up --build -d
 
     - name: Run API pytests to ensure image build is good
       env:
-        ENGINE_DB_HOST: ${{ secrets.ENGINE_DB_HOST }}
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
-      run: docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
+      run: |
+          docker exec ais bash -c 'cd /ais && . ./env/bin/activate && \
+            pytest /ais/ais/api/tests/test_models.py && \
+            pytest /ais/ais/api/tests/test_paginator.py && \
+            pytest /ais/ais/api/tests/test_views.py'
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Login to Amazon ECR

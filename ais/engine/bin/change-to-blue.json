@@ -1,0 +1,11 @@
+{
+  "Comment": "Modify ais records to blue",
+  "Changes": [{
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "ais-prod.citygeo.phila.city.",
+        "Type": "CNAME",
+        "TTL": 5,
+        "ResourceRecords": [{ "Value": "ais-blue-api-alb-880240193.us-east-1.elb.amazonaws.com" }]
+    }}]
+}
