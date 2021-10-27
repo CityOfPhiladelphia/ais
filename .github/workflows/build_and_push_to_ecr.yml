@@ -88,10 +88,7 @@ jobs:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: |
-          docker exec ais bash -c 'cd /ais && . ./env/bin/activate && \
-            pytest /ais/ais/api/tests/test_models.py && \
-            pytest /ais/ais/api/tests/test_paginator.py && \
-            pytest /ais/ais/api/tests/test_views.py'
+          docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Login to Amazon ECR
