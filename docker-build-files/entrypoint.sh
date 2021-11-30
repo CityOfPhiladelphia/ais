@@ -16,5 +16,5 @@ nginx
 #gunicorn application --bind unix:/tmp/gunicorn.sock --worker-class=gevent --access-logfile '-' --log-level 'debug'
 #gunicorn application --bind unix:/tmp/gunicorn.sock --workers 4 --worker-class=gevent --access-logfile '-' --log-level 'notice'
 #gunicorn application --bind 0.0.0.0:8080 --workers 5 --threads 2 --worker-class gevent --access-logfile '-' --log-level 'notice'
-gunicorn application --bind unix:/tmp/gunicorn.sock --workers 3 --worker-class gevent --access-logfile '-' --log-level 'notice'
+gunicorn application --bind unix:/tmp/gunicorn.sock --workers 4 --worker-class gevent --access-logfile '-' --log-level 'notice'
 
