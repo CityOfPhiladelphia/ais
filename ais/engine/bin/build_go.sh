@@ -71,8 +71,9 @@ setup_log_files() {
 check_load_creds() {
     echo "Loading credentials and passwords into the environment"
     . $WORKING_DIRECTORY/pull-private-passyunkdata.sh
-    cp $WORKING_DIRECTORY/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-    cp $WORKING_DIRECTORY/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+    cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+    cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+
     file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/config-secrets.sh
     source $WORKING_DIRECTORY/config-secrets.sh
@@ -86,7 +87,7 @@ check_load_creds() {
 build_engine() {
     echo "Starting new engine build"
     send_teams "Starting new engine build."
-    bash build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+    bash $WORKING_DIRECTORY/ais/engine/bin/build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
     send_teams "Engine build has completed."
     end_dt=$(date +%Y%m%d%T)
     echo "Time Summary: "
@@ -290,13 +291,13 @@ setup_log_files
 
 check_load_creds
 
-#build_engine
+build_engine
 
 identify_prod
 
-#engine_tests
+engine_tests
 
-#api_tests
+api_tests
 
 #dump_local_db
 
@@ -304,7 +305,7 @@ identify_prod
 
 #docker_tests
 
-#deploy_to_staging_ecs
+deploy_to_staging_ecs
 
 check_target_health
 
