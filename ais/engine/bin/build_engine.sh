@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
+WORKING_DIRECTORY=/root/ais
+
 echo "Activating virtual environment"
-source ../../../env/bin/activate
+source $WORKING_DIRECTORY/env/bin/activate
+# Add the ais folder with our __init__.py so we can import it as a python module
+export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
+#source ../../../env/bin/activate
 
 echo "Running the engine"
 
