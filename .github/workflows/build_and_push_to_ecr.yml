@@ -95,6 +95,12 @@ jobs:
       run: |
           docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
 
+    - name: Confirm nginx configuration is good
+      run: docker exec ais bash -c 'nginx -t'
+
+    - name: Simple curl query check
+      run: curl http://localhost:8080/search/1234%20Market%20Street
+
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Login to Amazon ECR
       id: login-ecr
