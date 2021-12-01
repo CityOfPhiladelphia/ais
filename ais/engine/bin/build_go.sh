@@ -33,7 +33,7 @@ activate_venv_source_libaries() {
         python setup.py bdist_wheel 
         pip install -r $WORKING_DIRECTORY/requirements.txt
         # Install AIS as a python module, needed in tests.
-        python setup.py install
+        python setup.py develop
     else
         echo "Activating virtual environment"
         source $WORKING_DIRECTORY/env/bin/activate
@@ -295,9 +295,9 @@ build_engine
 
 identify_prod
 
-engine_tests
+#engine_tests
 
-api_tests
+#api_tests
 
 #dump_local_db
 
