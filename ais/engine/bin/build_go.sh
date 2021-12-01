@@ -24,13 +24,16 @@ echo "Started: "$start_dt
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/env ]; then
         echo "Activating/creating venv.."
-        python3.5 -m venv $WORKING_DIRECTORY/env 
+        python3.6 -m venv $WORKING_DIRECTORY/env 
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
-        pip install --upgrade "pip < 21.0"
+	# used for python3.5, not needed with the pip version that's installed under 3.6
+        # Looks like pip 18.1 works and is what we want.
+        #pip install --upgrade "pip < 21.0"
         pip install wheel
-        python setup.py bdist_wheel 
+	# used for python3.5
+        #python setup.py bdist_wheel 
         pip install -r $WORKING_DIRECTORY/requirements.txt
         # Install AIS as a python module, needed in tests.
         python setup.py develop
