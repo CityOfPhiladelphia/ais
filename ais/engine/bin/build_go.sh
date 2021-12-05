@@ -196,6 +196,15 @@ docker_tests() {
     docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
 }
 
+scale_up_staging() {
+    prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
+    echo "Running tasks in prod: $prod_tasks"
+    # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable a five minutes after switching prod and staging.
+    aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
+    sleep 1
+    aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count 5
+    
+}
 
 # Once confirmed good, deploy latest AIS image from ECR to staging
 deploy_to_staging_ecs() {
@@ -285,6 +294,11 @@ swap_cnames() {
     send_teams "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
 }
 
+reenable_alarm() {
+    sleep 300
+    aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
+}
+
 
 activate_venv_source_libaries
 
@@ -308,13 +322,17 @@ identify_prod
 
 #docker_tests
 
-deploy_to_staging_ecs
+scale_up_staging
+
+#deploy_to_staging_ecs
 
 check_target_health
 
 #warmup_lb
 
 swap_cnames -c $staging_color
+
+reenable_alarm
 
 echo "Finished successfully!"
 
