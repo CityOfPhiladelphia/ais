@@ -8,9 +8,24 @@ on:
 
 jobs:
 
+  # Wait for up to a minute for previous run to complete, abort if not done by then
+  pre-build:
+    runs-on: IT04GISTINAIS2L
+    timeout-minutes: 10
+    steps:
+      - name: 'Block Concurrent Action Executions'
+        uses: softprops/turnstyle@v1
+        with:
+          poll-interval-seconds: 10
+        env:
+        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB-TOKEN: ${{ github.token }}
+
+
   build:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
+    needs: pre-build
     runs-on: IT04GISTINAIS2L
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
@@ -36,6 +51,8 @@ jobs:
         custom-facts: |
           - name: Job Progress
             value: Building and testing, and deploying action started.
+
+    
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
@@ -120,7 +137,7 @@ jobs:
 
     name: Deploy to production ECS cluster
     # needs prior job of 'build' to not fail.
-    needs: build
+    needs: [build, pre-build]
     runs-on: ubuntu-latest
 
     steps:
