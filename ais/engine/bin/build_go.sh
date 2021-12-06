@@ -199,11 +199,18 @@ docker_tests() {
 scale_up_staging() {
     prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
     echo "Running tasks in prod: $prod_tasks"
-    # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable a five minutes after switching prod and staging.
+    # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
+    # after switching prod and staging.
     aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
-    sleep 1
-    aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count 5
-    
+    # throw in a sleep, can take a bit for the disable action to take effect.
+    sleep 15
+    aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count ${prod_tasks}
+    # Wait for cluster to be stable, e.g. all the containers are spun up.
+    # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
+    aws ecs wait services-stable --cluster ais-${staging_color-cluster} \
+    --service ais-$staging_color-api-service --region us-east-1 
+    # When we re-enable the alarm at the end of this entire script, the scalein alarm should
+    # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
 }
 
 # Once confirmed good, deploy latest AIS image from ECR to staging
@@ -214,10 +221,9 @@ deploy_to_staging_ecs() {
     aws ecs update-service --cluster ais-$staging_color-cluster \
     --service ais-$staging_color-api-service --force-new-deployment --region us-east-1 \
     1> /dev/null
-    echo "running aws ecs services-stabl.."
+    echo "running aws ecs services-stable.."
     aws ecs wait services-stable --cluster ais-$staging_color-cluster \
-    --service ais-$staging_color-api-service --region us-east-1 \
-    1> /dev/null
+    --service ais-$staging_color-api-service --region us-east-1 
 }
 
 
@@ -295,8 +301,11 @@ swap_cnames() {
 }
 
 reenable_alarm() {
+    echo "Sleeping for 5 minutes while traffic starts hitting the newly prod environment."
+    echo "After which the scale-in alarm will be enabled."
     sleep 300
     aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
+    echo "Alarm 'ais-${staging_color}-api-taskin' re-enabled."
 }
 
 
