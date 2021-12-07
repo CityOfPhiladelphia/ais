@@ -25,3 +25,6 @@ fuzzywuzzy==0.11.1
 python-levenshtein==0.12.0
 
 petl==1.6.8
+
+# For warmup_lb.py
+requests<=2.26.0
