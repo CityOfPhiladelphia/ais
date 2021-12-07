@@ -198,19 +198,27 @@ docker_tests() {
 
 scale_up_staging() {
     prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
-    echo "Running tasks in prod: $prod_tasks"
-    # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
-    # after switching prod and staging.
-    aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
-    # throw in a sleep, can take a bit for the disable action to take effect.
-    sleep 15
-    aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count ${prod_tasks}
-    # Wait for cluster to be stable, e.g. all the containers are spun up.
-    # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
-    aws ecs wait services-stable --cluster ais-${staging_color-cluster} \
-    --service ais-$staging_color-api-service --region us-east-1 
-    # When we re-enable the alarm at the end of this entire script, the scalein alarm should
-    # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
+    if [ ! -z "$prod_tasks" ]; then
+        echo "error, got an empty var for prod_tasks!"; return 1
+    fi
+    echo "Current running tasks in prod: $prod_tasks"
+    if (( $prod_tasks > 2 ))
+    then
+        # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
+        # after switching prod and staging.
+        aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
+        # throw in a sleep, can take a bit for the disable action to take effect.
+        sleep 15
+        aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count ${prod_tasks}
+        # Wait for cluster to be stable, e.g. all the containers are spun up.
+        # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
+        aws ecs wait services-stable --cluster ais-${staging_color-cluster} \
+        --service ais-$staging_color-api-service --region us-east-1 
+        # When we re-enable the alarm at the end of this entire script, the scalein alarm should
+        # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
+    else
+        echo "Staging has 2 running tasks, the minimum. Not running any scaling actions."
+    fi
 }
 
 # Once confirmed good, deploy latest AIS image from ECR to staging
@@ -236,12 +244,12 @@ check_target_health() {
 
 # Warm up load balancer against staging env?
 warmup_lb() {
-    echo "Warming up the load balancer."
-    send_teams "Warming up the load balancer."
-    python warmup_lb.py
+    echo "Warming up the load balancer for staging lb: $staging_color."
+    send_teams "Warming up the load balancer for staging lb: $staging_color."
+    python warmup_lb.py $staging_color
     if [ $? -ne 0 ]
     then
-      echo "Warmup failed"
+      echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
       send_teams "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
       exit 1;
     fi
@@ -318,7 +326,6 @@ setup_log_files
 check_load_creds
 
 build_engine
-
 
 identify_prod
 
