@@ -1,12 +1,25 @@
-name: Build and Push Docker image to ECR
+name: Build and test Docker Image for PRs
 
 # Trigger workflow on changes to these paths in stated branch
 on:
   pull_request:
     branches:
-      - roland-dev-branch-10-15-21 
+      - *
 
 jobs:
+
+  # Wait for up ten minutes for previous run to complete, abort if not done by then
+  pre-build:
+    runs-on: IT04GISTINAIS2L
+    timeout-minutes: 10
+    steps:
+      - name: 'Block Concurrent Action Executions'
+        uses: softprops/turnstyle@v1
+        with:
+          poll-interval-seconds: 10
+        env:
+        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB-TOKEN: ${{ github.token }}
 
   build:
     name: Build and push docker container
@@ -30,29 +43,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    # Set $PROD_COLOR env var through the complicated method github actions requires
-    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
-    - name: Identify production cluster, either blue or green
-      id: prod-cluster-color
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-          # Note: a simple dig doesn't work from in office.
-          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
-          #echo "PROD_COLOR=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")" >> $GITHUB_ENV
-          #dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green"
-          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green"
-          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEO_ZONE_ID }} --query "ResourceRecordSets[?Name == 'ais-prod.citygeo.phila.city.']" | grep -o "blue\|green")" >> $GITHUB_ENV
-           
-    - name: Set engine hostname based on prod color
-      run: |
-           echo "ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com"
-           echo "ENGINE_HOST=ais-engine-${{ env.PROD_COLOR }}.cfuoybzycpox.us-east-1.rds.amazonaws.com" >> $GITHUB_ENV
-
-    - name: test env var setting
-      run: echo ${{ env.PROD_COLOR }}
-
     - name: Pull private passyunk data
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -74,4 +64,10 @@ jobs:
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: |
           docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
+
+    - name: Confirm nginx configuration is good
+      run: docker exec ais bash -c 'nginx -t'
+
+    - name: Simple curl query check
+      run: curl http://localhost:8080/search/1234%20Market%20Street
 
