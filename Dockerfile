@@ -9,9 +9,9 @@ RUN apt-get update -y && \
     apt-get autoremove -y
 
 #RUN git clone https://github.com/CityOfPhiladelphia/ais /ais
-RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
+#RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
-#COPY ./ais /ais
+COPY . /ais
 
 # https://github.com/CityOfPhiladelphia/ais/blob/master/requirements.server.txt
 # Make the AIS cloned into the root, /ais
