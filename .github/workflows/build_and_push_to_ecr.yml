@@ -32,7 +32,7 @@ jobs:
   build:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    needs: pre-build
+    #needs: pre-build
     runs-on: IT04GISTINAIS2L
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
@@ -144,7 +144,8 @@ jobs:
 
     name: Deploy to production ECS cluster
     # needs prior job of 'build' to not fail.
-    needs: [build, pre-build]
+    #needs: [build, pre-build]
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
