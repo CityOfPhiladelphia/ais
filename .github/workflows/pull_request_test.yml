@@ -39,7 +39,8 @@ jobs:
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
     - uses: actions/checkout@v2
       with:
-        ref: roland-dev-branch-10-15-21
+        # pull the HEAD commit from the PR instaed of the HEAD commit
+        ref: ${{ github.event.pull_request.head.sha }}
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
