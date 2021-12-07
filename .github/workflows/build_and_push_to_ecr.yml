@@ -44,6 +44,9 @@ jobs:
       with:
         ref: roland-dev-branch-10-15-21
 
+    - name: debug pwd
+      run: pwd
+
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
   # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
     #- uses: toko-bifrost/ms-teams-deploy-card@master
