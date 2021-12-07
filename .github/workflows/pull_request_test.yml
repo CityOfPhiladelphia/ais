@@ -1,10 +1,11 @@
 name: Build and test Docker Image for PRs
 
 # Trigger workflow on changes to these paths in stated branch
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
 on:
   pull_request:
     branches:
-      - *
+      - '**'
 
 jobs:
 
@@ -13,7 +14,7 @@ jobs:
     runs-on: IT04GISTINAIS2L
     timeout-minutes: 10
     steps:
-      - name: 'Block Concurrent Action Executions'
+      - name: 'Block Concurrent Action Workflow Executions'
         uses: softprops/turnstyle@v1
         with:
           poll-interval-seconds: 10
