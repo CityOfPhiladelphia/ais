@@ -6,22 +6,27 @@ on:
   push:
     branches:
       - roland-dev-branch-10-15-21 
-      #- master
+      #- main
+
+concurrency:
+  group: testing_environment
+  cancel-in-progress: false
+
 
 jobs:
 
   # Wait for up to ten minutes for previous run to complete, abort if not done by then
-  pre-build:
-    runs-on: IT04GISTINAIS2L
-    timeout-minutes: 10
-    steps:
-      - name: 'Block Concurrent Action Workflow Executions'
-        uses: softprops/turnstyle@v1
-        with:
-          poll-interval-seconds: 10
-        env:
-        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB-TOKEN: ${{ github.token }}
+  #pre-build:
+  #  runs-on: IT04GISTINAIS2L
+  #  timeout-minutes: 10
+  #  steps:
+  #    - name: 'Block Concurrent Action Workflow Executions'
+  #      uses: softprops/turnstyle@v1
+  #      with:
+  #        poll-interval-seconds: 10
+  #      env:
+  #      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #        GITHUB-TOKEN: ${{ github.token }}
 
 
   build:
