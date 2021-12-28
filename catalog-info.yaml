@@ -13,4 +13,4 @@ metadata:
 spec: 
   type: openapi
   lifecycle: production
-
+  owner: citygeo
