@@ -10,6 +10,8 @@ metadata:
       title: Production Gatekeeper
     - url: https://dev-test.phila.gov/
       title: Dev Gatekeeper
+  annotations:
+    backstage.io/techdocs-ref: dir:.
 spec: 
   type: openapi
   lifecycle: production
