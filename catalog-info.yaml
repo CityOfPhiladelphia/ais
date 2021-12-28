@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ais
+  description: Address Information System (API)
+  links: 
+    - url: https://github.com/CityOfPhiladelphia/ais
+      title: Github Repo
+    - url: https://developer.phila.gov
+      title: Production Gatekeeper
+    - url: https://dev-test.phila.gov/
+      title: Dev Gatekeeper
+spec: 
+  type: openapi
+  lifecycle: production
+

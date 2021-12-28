@@ -89,3 +89,5 @@ instance/config.py
 ais/engine/log/
 tmp/
 ais/api/profiling/
+
+.vscode/*
