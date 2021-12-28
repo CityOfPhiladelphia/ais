@@ -2,6 +2,8 @@ site_name: 'ais-docs'
 
 nav:
   - Home: README.md
+  - API Usage: APIUSAGE.md
+  - Deployments: DEPLOY.md
 
 plugins:
   - techdocs-core
