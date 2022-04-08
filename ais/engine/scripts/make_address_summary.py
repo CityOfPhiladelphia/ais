@@ -515,15 +515,36 @@ from (
                 select asum.street_address, ap.parcel_row_id, pp.parcel_id
                 from address_summary asum
                 inner join address_parcel ap on asum.street_address = asum.opa_address and asum.pwd_parcel_id = '' and
-                ap.parcel_source = 'pwd' and ap.street_address = asum.street_address
+                ap.parcel_source = 'pwd' and ap.match_type = 'manual' and ap.street_address = asum.street_address
                 inner join pwd_parcel pp on pp.id = ap.parcel_row_id
                 ) updates
                 group by street_address
         ) prep
 where asum.street_address = prep.street_address
 '''
-#db.execute(manual_pwd_parcel_update_stmt)
-#db.save()
+db.execute(manual_pwd_parcel_update_stmt)
+db.save()
+
+manual_pwd_parcel_address_tag_update_stmt = '''
+insert into address_tag atag (street_address, key, value)
+        select updates.street_address, 'pwd_parcel_id' as key, string_agg(updates.parcel_id::text, '|') as value
+        from (
+                select asum.street_address, ap.parcel_row_id, pp.parcel_id
+                from address_summary asum
+				inner join
+				(select distinct street_address from address_summary
+				except
+				select distinct street_address from address_tag where key = 'pwd_parcel_id') notags on notags.street_address = asum.street_address
+                inner join address_parcel ap on asum.street_address = asum.opa_address and asum.pwd_parcel_id = '' and
+                ap.parcel_source = 'pwd' and match_type = 'manual' and ap.street_address = asum.street_address
+                inner join pwd_parcel pp on pp.id = ap.parcel_row_id
+                ) updates
+                group by street_address
+'''
+
+db.execute(manual_pwd_parcel_address_tag_update_stmt)
+db.save()
+
 
 db.close()
 
