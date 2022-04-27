@@ -228,13 +228,18 @@ def make_eclipse_address(comps):
     base_address = comps['base_address']
     unit_num = comps['unit_num']
     unit_type = comps['unit_type']
-    if not base_address:
-        return ''
-    if unit_num:
-        if unit_type:
-            return base_address + ' ' + unit_type + ' ' + unit_num
+    if base_address:
+        if unit_num:
+            if unit_type:
+                return base_address + ' ' + unit_type + ' ' + unit_num
+            else:
+                return base_address + ' # ' + unit_num
+        elif unit_type:
+            return base_address + ' ' + unit_type
         else:
-            return base_address + ' # ' + unit_num
+            return base_address
+    else:
+        return None
 
 
 ADDRESSES = {
