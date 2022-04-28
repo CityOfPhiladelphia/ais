@@ -227,7 +227,19 @@ def make_dor_parcel_id(comps):
 def make_eclipse_address(comps):
     base_address = comps['base_address']
     unit_num = comps['unit_num']
-    return base_address + ' # ' + unit_num if unit_num and base_address else base_address
+    unit_type = comps['unit_type']
+    if base_address:
+        if unit_num:
+            if unit_type:
+                return base_address + ' ' + unit_type + ' ' + unit_num
+            else:
+                return base_address + ' # ' + unit_num
+        elif unit_type:
+            return base_address + ' ' + unit_type
+        else:
+            return base_address
+    else:
+        return None
 
 
 ADDRESSES = {
@@ -354,11 +366,12 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'gis_lni.eclipse_parsed_addr',
-            'db':                   'gislni',
+            'table':                'gis_lni.active_retired_parcels',
+            'db':                   'gis',
             'address_fields':       {
                 'base_address':       'base_address',
-                'unit_num':           'unit',
+                'unit_num':           'unit_num',
+                'unit_type':          'unit_type',
             },
             'preprocessor':         make_eclipse_address,
             'tag_fields': [
