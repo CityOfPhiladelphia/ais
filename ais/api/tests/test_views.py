@@ -754,4 +754,8 @@ def test_ungeocoded_opa_address_returns_response(client):
     response = client.get('/search/3600 PINE ST?include_units&opa_only')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['street_address'] == '3600 PINE ST'
-    
+
+def test_pwd_parcel_search_include_units(client):
+    response = client.get('/search/454607?include_units&opa_only')
+    data = json.loads(response.get_data().decode())
+    assert len(data['features']) > 1

@@ -779,8 +779,16 @@ def pwd_parcel(query):
     #     .sort_by_source_address_from_search_type(search_type)
 
     tagged_pwd_parcel_ids = PwdParcel.query \
-        .filter(PwdParcel.parcel_id==query).all()
-    street_addresses = tuple(set([x.street_address for x in tagged_pwd_parcel_ids]))
+        .filter(PwdParcel.parcel_id==query)
+
+    if 'include_units' in request.args and request.args['include_units'].lower() != 'false':
+        tagged_pwd_parcel_ids = tagged_pwd_parcel_ids.join(AddressSummary, AddressSummary.pwd_parcel_id==query) \
+            .add_columns(AddressSummary.street_address.label('address_summary_street_address')) \
+            .all()
+    else:
+        tagged_pwd_parcel_ids = tagged_pwd_parcel_ids.all()
+
+    street_addresses = tuple(set([x.street_address for x in tagged_pwd_parcel_ids])) if 'include_units' not in request.args or request.args['include_units'].lower() == 'false' else tuple(set([x.address_summary_street_address for x in tagged_pwd_parcel_ids]))
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
