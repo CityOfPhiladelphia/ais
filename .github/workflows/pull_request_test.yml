@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - '**'
+    #types: [opened, edited, repoened, review_requested]
 
 concurrency:
   group: testing_environment

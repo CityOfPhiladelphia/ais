@@ -174,7 +174,7 @@ if WRITE_OUT:
     print('Rejected links: ')
     for key, value in rejected_link_map.items():
         value=list(set(value))
-        print('{key}: {value}'.format(key=key, value=value))
+        #print('{key}: {value}'.format(key=key, value=value))
     # print(rejected_link_map)
 # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
 # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
