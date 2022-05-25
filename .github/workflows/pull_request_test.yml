@@ -32,7 +32,7 @@ jobs:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     #runs-on: IT04GISPINAIS2L
-    runs-on: ais-runner
+    runs-on: ubuntu-latest
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
 
