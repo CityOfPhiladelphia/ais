@@ -106,20 +106,21 @@ build_engine() {
 # Get AWS production environment
 identify_prod() {
     echo "Finding the production environment via CNAME"
-    prod_color=$(get_prod_env || {
+    # export to environment var so it can be accessed by sub-python scripts run in this script.
+    export prod_color=$(get_prod_env || {
       echo "Could not find the production environment" ;
       exit 1 ;
     })
     echo "Production environment is: $prod_color"
     if [[ "$prod_color" == "blue" ]]; then
-        staging_color="green" 
+        export staging_color="green" 
         staging_db_uri=$GREEN_ENGINE_CNAME
         staging_lb_uri=$GREEN_CNAME
 
         prod_db_uri=$BLUE_ENGINE_CNAME
         prod_lb_uri=$BLUE_CNAME
     else
-        staging_color="blue"
+        export staging_color="blue"
         staging_db_uri=$BLUE_ENGINE_CNAME
         staging_lb_uri=$BLUE_CNAME
 
@@ -258,7 +259,7 @@ check_target_health() {
 warmup_lb() {
     echo "Warming up the load balancer for staging lb: $staging_color."
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py $staging_color
+    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py
     if [ $? -ne 0 ]
     then
       echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
