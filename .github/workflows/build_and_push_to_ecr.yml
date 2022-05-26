@@ -150,7 +150,7 @@ jobs:
     #needs: [build, pre-build]
     needs: build
     #runs-on: ubuntu-latest
-    runs-on: IT04GISTINAIS2L
+    runs-on: ais-runner
          
 
     steps:
