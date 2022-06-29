@@ -106,8 +106,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-          aws s3 cp s3://ais-static-files/election_block.csv ./docker-build-files/ --only-show-errors
-          aws s3 cp s3://ais-static-files/usps_zip4s.csv ./docker-build-files/ --only-show-errors
+          aws s3 cp s3://ais-static-files/election_block.csv . --only-show-errors
+          aws s3 cp s3://ais-static-files/usps_zip4s.csv . --only-show-errors
 
     - name: Build and start the Docker image using docker-compose
       env:
