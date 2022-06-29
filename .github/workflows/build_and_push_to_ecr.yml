@@ -6,7 +6,8 @@ on:
   push:
     branches:
       - roland-dev-branch-10-15-21 
-      #- main
+      - roland-dev-6-29-22
+      #- master
 
 concurrency:
   group: testing_environment
