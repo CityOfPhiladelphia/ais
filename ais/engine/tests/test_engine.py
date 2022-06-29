@@ -35,6 +35,9 @@ def startup():
         prod_rds_db_cur = db_cursor(**config["BLUE_DATABASE"])
     elif prod_env_color == 'green':
         prod_rds_db_cur = db_cursor(**config["GREEN_DATABASE"])
+    else:
+        raise AssertionError(f'prod_env_color not expected value?: {prod_env_color}')
+        
 
     local_build_db_cur = db_cursor(**config["LOCAL_BUILD_DATABASE"])
 
