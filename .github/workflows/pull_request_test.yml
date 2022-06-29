@@ -61,8 +61,8 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         REPOSITORY_URL: 880708401960.dkr.ecr.us-east-1.amazonaws.com/ais
       run: |
-          aws s3 cp s3://ais-static-files/election_block.csv .
-          aws s3 cp s3://ais-static-files/usps_zip4s.csv .
+          aws s3 cp s3://ais-static-files/election_block.csv .  --only-show-errors
+          aws s3 cp s3://ais-static-files/usps_zip4s.csv .  --only-show-errors
 
     - name: Build and start the Docker image using docker-compose
       env:
