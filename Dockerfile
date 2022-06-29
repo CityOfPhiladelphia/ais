@@ -27,8 +27,8 @@ RUN mkdir /ais/instance
 COPY docker-build-files/50x.html /var/www/html/50x.html
 COPY docker-build-files/nginx.conf /etc/nginx/nginx.conf
 
-COPY docker-build-files/election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv
-COPY docker-build-files/usps_zip4s.csv /ais/env/src/passyunk/passyunk/pdata/usps_zip4s.csv
+COPY election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv
+COPY usps_zip4s.csv /ais/env/src/passyunk/passyunk/pdata/usps_zip4s.csv
 
 COPY docker-build-files/entrypoint.sh /entrypoint.sh
 
