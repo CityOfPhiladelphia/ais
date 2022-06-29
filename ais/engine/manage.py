@@ -25,7 +25,15 @@ def run(script):
         paths.append(path)
         
     for path in paths:
-        subprocess.call([sys.executable, path], env=os.environ.copy())
+        try:
+            result = subprocess.call([sys.executable, path], env=os.environ.copy())
+        except SystemExit as e:
+            result = e.code
+        sys.exit(result or 0)
+
+
+
+
 
 ## ACTIVATE BELOW WHEN running "ais db migrate"
 #Import database models with app context

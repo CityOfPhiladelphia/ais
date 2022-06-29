@@ -1,0 +1,220 @@
+name: Build and Push Docker image to ECR
+
+# Trigger workflow on changes to these paths in stated branch
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
+on:
+  push:
+    branches:
+      - roland-dev-branch-10-15-21 
+      - roland-dev-6-29-22
+      #- master
+
+concurrency:
+  group: testing_environment
+  cancel-in-progress: false
+
+
+jobs:
+
+  # Wait for up to ten minutes for previous run to complete, abort if not done by then
+  #pre-build:
+  #  runs-on: IT04GISTINAIS2L
+  #  timeout-minutes: 10
+  #  steps:
+  #    - name: 'Block Concurrent Action Workflow Executions'
+  #      uses: softprops/turnstyle@v1
+  #      with:
+  #        poll-interval-seconds: 10
+  #      env:
+  #      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #        GITHUB-TOKEN: ${{ github.token }}
+
+
+  build:
+    name: Build and push docker container
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    #needs: pre-build
+    runs-on: ais-runner
+    # https://github.community/t/sharing-a-variable-between-jobs/16967/13
+    # save address for use in other jobs.
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
+    - uses: actions/checkout@v2
+      with:
+        ref: roland-dev-branch-10-15-21
+
+    - name: debug pwd
+      run: pwd
+
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-start: compact
+        show-on-start: true
+        show-on-exit: true
+        custom-facts: |
+          - name: Job Progress
+            value: Building and testing, and deploying action started.
+
+    
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           
+    - name: Set engine hostname based on prod color
+      env:
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+           echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+           echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
+        fi
+
+    - name: test env var setting
+      run: echo ${{ env.PROD_COLOR }}
+
+    - name: Pull private passyunk data
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+          aws s3 cp s3://ais-static-files/election_block.csv . --only-show-errors
+          aws s3 cp s3://ais-static-files/usps_zip4s.csv . --only-show-errors
+
+    - name: Build and start the Docker image using docker-compose
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker-compose -f build-test-compose.yml up --build -d
+
+    - name: Run API pytests to ensure image build is good
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: |
+          docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest -vvv -ra --showlocals /ais/ais/api/tests/'
+
+    - name: Confirm nginx configuration is good
+      run: docker exec ais bash -c 'nginx -t'
+
+    - name: Simple curl query check
+      run: curl http://localhost:8080/search/1234%20Market%20Street
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Docker Push to ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        ECR_REPOSITORY_URL: ${{ secrets.ECR_REPOSITORY_url }}
+      run: |
+        docker tag ais:latest $ECR_REPOSITORY_URL:latest
+        docker push $ECR_REPOSITORY_URL:latest
+
+
+  deploy:
+
+    name: Deploy to production ECS cluster
+    # needs prior job of 'build' to not fail.
+    #needs: [build, pre-build]
+    needs: build
+    #runs-on: ubuntu-latest
+    runs-on: ais-runner
+         
+
+    steps:
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+      
+
+    - name: Force deploy to ECS cluster
+      run: |
+          echo "Deploying to $PROD_COLOR"
+          aws ecs update-service --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --force-new-deployment --region us-east-1
+
+          aws ecs wait services-stable --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --region us-east-1
+
+    - name: Confirm LB target group health
+      run: |
+        blue_tg_arn=$(aws elbv2 describe-target-groups | grep "blue-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        green_tg_arn=$(aws elbv2 describe-target-groups | grep "green-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+              echo "blue"
+              aws elbv2 describe-target-health --target-group-arn $blue_tg_arn | grep "\"healthy\""
+              echo $?
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+              echo "green"
+              aws elbv2 describe-target-health --target-group-arn $green_tg_arn | grep "\"healthy\""
+              echo $?
+        fi
+
+  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
+  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
+    #- uses: toko-bifrost/ms-teams-deploy-card@master
+    - uses: patrickpaulin/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-exit: complete
+        show-on-start: false
+        show-on-exit: true
+        custom-facts: |
+          - name: Job Progress
+            value: Build successful, deploying to ${{ env.PROD_COLOR }} ECS cluster.

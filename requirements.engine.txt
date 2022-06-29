@@ -1,0 +1,30 @@
+#setuptools==54.1.2
+alembic==1.0.0
+-e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
+-e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
+# flasgger==0.5.14
+itsdangerous==0.24
+Jinja2==2.10.1
+Mako==1.0.3
+MarkupSafe==0.23
+normality==0.2.4
+psycopg2-binary==2.8.5
+pyproj==2.6.1.post1
+python-editor==0.5
+#PyYAML==3.11
+pyyaml>=4.2b1
+raven[flask]==5.21.0
+Shapely>=1.5.13
+SQLAlchemy==1.3.17
+zope.interface==5.1.0
+#-e git+https://github.com/CityOfPhiladelphia/geopetl.git@4d77021c164d5b6fd8db62c30d44106a93204a72#egg=geopetl
+pathlib2==2.3.5
+
+# For passyunk
+fuzzywuzzy==0.11.1
+python-levenshtein==0.12.0
+
+petl==1.6.8
+
+# For warmup_lb.py
+requests<=2.26.0

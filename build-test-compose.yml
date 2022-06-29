@@ -1,0 +1,14 @@
+version: '3'
+services:
+  ais:
+    container_name: ais
+    image: ais
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ENGINE_DB_HOST
+      - ENGINE_DB_PASS
+    ports:
+      - "8080:8080"
+

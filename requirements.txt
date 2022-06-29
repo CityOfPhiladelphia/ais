@@ -1,2 +1,3 @@
 -r requirements.app.txt
--r requirements.server.txt
+-r requirements.engine.txt
+-r requirements.tests.txt

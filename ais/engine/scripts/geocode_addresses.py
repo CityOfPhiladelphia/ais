@@ -444,14 +444,13 @@ for i, address_row in enumerate(address_rows):
                     proj_dist = seg_shp.project(parcel_xy)
                     proj_xy = seg_shp.interpolate(proj_dist)
                     proj_shp = LineString([parcel_xy, proj_xy])
-
                     # Get point of intersection and add
                     xsect_line_shp = curb_shp.intersection(proj_shp)
                     xsect_pt = None
-                    if isinstance(xsect_line_shp, LineString):
+                    if isinstance(xsect_line_shp, LineString) and not xsect_line_shp.is_empty:
                         xsect_pt = xsect_line_shp.coords[1]
-                    elif isinstance(xsect_line_shp, MultiLineString):
-                        xsect_pt = xsect_line_shp[-1:][0].coords[1]
+                    elif isinstance(xsect_line_shp, MultiLineString) and not xsect_line_shp.is_empty:
+                        xsect_pt = list(xsect_line_shp.geoms)[-1:][0].coords[1]
                     if xsect_pt:
                         xsect_pt_shp = Point(xsect_pt)
                         curb_geocode_row = {
