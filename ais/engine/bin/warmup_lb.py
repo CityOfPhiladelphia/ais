@@ -71,10 +71,12 @@ def main():
     # Grab random addresses and query them for warming up.
     # Postgres password passed from parent script, build_go.sh.
     # Make connection to local build DB to grab addresses
+    print('Reading example addresses from local db...')
     read_conn = psycopg2.connect(f'host=localhost dbname=ais_engine user=ais_engine password={local_db_pass}')
     #read_conn = psycopg2.connect("host=localhost dbname=ais_engine user=ais_engine passfile=~/.pgpass")
     address_count = etl.fromdb(read_conn, 'select count(*) as N from {}'.format(warmup_address_table_name))
     n = list(address_count.values('n'))[0]
+    print(f'Warming up on {n} rows')
     warmup_rows = etl.fromdb(read_conn, 'select {address_field} from {table} OFFSET floor(random()*{n}) limit {limit}'.format(address_field=warmup_address_field, table=warmup_address_table_name, n=n, limit=warmup_row_limit))
     print(etl.look(warmup_rows))
     responses = warmup_rows.addfield('response_status', (lambda a: query_address(a['street_address']))).progress(100)
@@ -83,6 +85,7 @@ def main():
     print(etl.look(eval))
     f_200 = [(count/warmup_row_limit) for status, count in eval[1:] if status == 200][0]
     print(f_200)
+    print('Finished warming up.')
 
     ###########################
     # WRITE ERRORS OUT TO FILE #
