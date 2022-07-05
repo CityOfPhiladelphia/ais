@@ -11,7 +11,7 @@ warmup_address_table_name = 'address_summary'
 warmup_address_field = 'street_address'
 warmup_row_limit = 1000
 warmup_fraction_success = .9
-rate_limit = 3
+rate_limit = 5
 query_errors = {}
 datestring = datetime.today().strftime('%Y-%m-%d')
 error_file = '../log/warmup_lb_errors_{}.csv'.format(datestring)
@@ -38,7 +38,7 @@ def RateLimited(maxPerSecond):
 
 
 from json.decoder import JSONDecodeError
-# @RateLimited(rate_limit)
+@RateLimited(rate_limit)
 def query_address(address):
     try:
         url = base_path + address + '?' + gatekeeper_key
