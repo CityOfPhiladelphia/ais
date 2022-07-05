@@ -1309,7 +1309,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon': {
                     'db': 'gis_sa',
-                    'table':                'gis_ohcd.NEIGHBORHOODADVISORYCOMMITTEES',
+                    'table':                'gis_planning.NEIGHBORHOODADVISORYCOMMITTEES',
                     'value_field':          'organization',
                 },
             },
