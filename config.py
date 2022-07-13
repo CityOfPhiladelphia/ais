@@ -695,7 +695,7 @@ SERVICE_AREAS = {
                 'polygon':  {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.SchoolDist_Catchments_ES',
-                    'value_field':          'es_short',
+                    'value_field':          'es_name',
                 },
             },
         },
@@ -707,7 +707,7 @@ SERVICE_AREAS = {
                 'polygon':  {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.SchoolDist_Catchments_MS',
-                    'value_field':          'ms_short',
+                    'value_field':          'ms_name',
                 },
             },
         },
@@ -719,7 +719,7 @@ SERVICE_AREAS = {
                 'polygon':  {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.SchoolDist_Catchments_HS',
-                    'value_field':          'hs_short',
+                    'value_field':          'hs_name',
                 },
             },
         },
