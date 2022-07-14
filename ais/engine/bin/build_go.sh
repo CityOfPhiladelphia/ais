@@ -137,7 +137,7 @@ engine_tests() {
     cd $WORKING_DIRECTORY
     #send_teams "Running tests."
     # Note: imports instance/config.py for credentials
-    pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -v
+    pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native 
     if [ $? -ne 0 ]
     then
       echo "Engine tests failed"
@@ -151,7 +151,7 @@ engine_tests() {
 api_tests() {
     echo "Running api_tests..."
     cd $WORKING_DIRECTORY
-    pytest $WORKING_DIRECTORY/ais/api/tests/
+    pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native 
     if [ $? -ne 0 ]
     then
       echo "API tests failed"
@@ -207,7 +207,7 @@ docker_tests() {
     # Spin up docker container from latest AIS image from ECR and test against staging database
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'
+    docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native '
 }
 
 
@@ -349,7 +349,7 @@ dump_local_db
 
 restore_db_to_staging
 
-docker_tests
+#docker_tests
 
 scale_up_staging
 

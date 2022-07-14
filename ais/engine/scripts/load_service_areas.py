@@ -97,9 +97,6 @@ for layer in layers:
 
 	for source_type, source in sources.items():
 		# Connect to DB
-                print(f'''
-                Connecting to database: {config['DATABASES'][source_db_name]}, table: {source['table']}
-                ''')
 		source_db_name = source['db']
 		try:
 			source_db = datum.connect(config['DATABASES'][source_db_name])
@@ -107,15 +104,8 @@ for layer in layers:
 			print('Database {} not found'.format(layer_id))
 			continue
 
-                source_table_name = source['table']
-		try:
-                    source_table = source_db[source_table_name]
-		except Exception as e:
-                    if 'ORA-00942: table or view does not exist' in str(e): 
-                        print('Table {} not found'.format(source_table_name))
-                        continue
-                    else:
-                        raise e
+		source_table_name = source['table']
+		source_table = source_db[source_table_name]
 		# import pdb; pdb.set_trace()
 		source_geom_field = source_table.geom_field
 		# If no object ID field is specified, default to `objectid`.
