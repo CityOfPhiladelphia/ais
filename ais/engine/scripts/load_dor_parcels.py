@@ -12,6 +12,9 @@ from config import VALID_ADDRESS_LOW_SUFFIXES
 # DEV
 from pprint import pprint
 import traceback
+import psycopg2
+import petl as etl
+import geopetl
 
 start = datetime.now()
 print('Starting...')
@@ -552,7 +555,17 @@ if WRITE_OUT:
             })
             error_polygons.append(error_polygon)
 
-    parcel_error_polygon_table.write(error_polygons, chunk_size=50000)
+#    parcel_error_polygon_table.write(error_polygons, chunk_size=50000)
+
+    target_dsn = config['DATABASES']['engine']
+    target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
+    target_pw = target_dsn[target_dsn.index(":",target_dsn.index(target_user)) + 1:target_dsn.index("@")]
+    target_name = target_dsn[target_dsn.index("/", target_dsn.index("@")) + 1:]
+    target_conn = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=target_name, db_user=target_user, db_pw=target_pw))
+    target_table_name = 'public.dor_parcel_error_polygon'
+    error_polygon_rows = etl.fromdicts(error_polygons)
+    error_polygon_rows.topostgis(target_conn, target_table_name)
+
     del error_polygons
 
     print('Creating indexes...')
