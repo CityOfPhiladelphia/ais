@@ -5,6 +5,8 @@
 set -e
 
 WORKING_DIRECTORY=/root/ais
+LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
+
 cd $WORKING_DIRECTORY
 echo "Working directory is $WORKING_DIRECTORY"
 
@@ -20,7 +22,7 @@ trap 'echo "Exited prematurely, running reenable_alarm.."; reenable_alarm; echo 
 # NOTE: postgres connection information is also stored in ~/.pgpass!!!
 # postgres commands should use passwords in there depending on the hostname.
 
-datestamp=$(date +%Y%m%d)
+datestamp=$(date +%Y-%m-%d)
 start_dt=$(date +%Y%m%d%T)
 echo "Started: "$start_dt
 
@@ -62,12 +64,16 @@ pull_repo() {
 
 # CREATE ENGINE LOG FILES
 setup_log_files() {
-    echo "Setting up log files"
-    mkdir -p $WORKING_DIRECTORY/ais/engine/log
+
+    mkdir -p $LOG_DIRECTORY
     error_file="build_errors_"
     out_file="build_log_"
-    error_file_loc=$WORKING_DIRECTORY/ais/engine/log/$error_file$datestamp.txt
-    out_file_loc=$WORKING_DIRECTORY/ais/engine/log/$out_file$datestamp.txt
+    error_file_loc=$LOG_DIRECTORY/$error_file$datestamp.txt
+    out_file_loc=$LOG_DIRECTORY/$out_file$datestamp.txt
+    warmup_lb_error_file_loc=$LOG_DIRECTORY/warmup_lb_error-$datestamp.txt
+    touch $error_file_loc
+    touch $out_file_loc
+    touch $warmup_lb_error_file_loc
 }
 
 
@@ -212,7 +218,7 @@ docker_tests() {
 
 
 scale_up_staging() {
-    echo "Running scale_up_stating..."
+    echo "Running scale_up_staging..."
     prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
     echo "Current running tasks in prod: $prod_tasks"
     if (( $prod_tasks > 2 ))
@@ -225,8 +231,8 @@ scale_up_staging() {
         aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count ${prod_tasks}
         # Wait for cluster to be stable, e.g. all the containers are spun up.
         # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
-        aws ecs wait services-stable --cluster ais-${staging_color-cluster} \
-        --service ais-$staging_color-api-service --region us-east-1 
+        aws ecs wait services-stable --cluster ais-${staging_color}-cluster \
+        --service ais-${staging_color}-api-service --region us-east-1 
         # When we re-enable the alarm at the end of this entire script, the scalein alarm should
         # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
     else
@@ -234,17 +240,18 @@ scale_up_staging() {
     fi
 }
 
+
 # Once confirmed good, deploy latest AIS image from ECR to staging
 deploy_to_staging_ecs() {
     echo "Deploying latest AIS image from ECR to $staging_color environment.."
     # pipe to null because they're quite noisy
     echo "running aws ecs update-service.."
-    aws ecs update-service --cluster ais-$staging_color-cluster \
-    --service ais-$staging_color-api-service --force-new-deployment --region us-east-1 \
+    aws ecs update-service --cluster ais-${staging_color}-cluster \
+    --service ais-${staging_color}-api-service --force-new-deployment --region us-east-1 \
     1> /dev/null
     echo "running aws ecs services-stable.."
-    aws ecs wait services-stable --cluster ais-$staging_color-cluster \
-    --service ais-$staging_color-api-service --region us-east-1 
+    aws ecs wait services-stable --cluster ais-${staging_color}-cluster \
+    --service ais-${staging_color}-api-service --region us-east-1 
 }
 
 
@@ -259,7 +266,7 @@ check_target_health() {
 warmup_lb() {
     echo "Warming up the load balancer for staging lb: $staging_color."
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py
+    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py $PROXY_AUTH
     if [ $? -ne 0 ]
     then
       echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
@@ -320,6 +327,7 @@ swap_cnames() {
     echo "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
     send_teams "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
 }
+
 
 reenable_alarm() {
     echo "Sleeping for 5 minutes, then running scale-in alarm re-enable command..."
