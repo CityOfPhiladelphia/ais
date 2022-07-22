@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import requests
 import geopetl
+import sys
 
 base_path = 'http://api.phila.gov/ais_staging/v1/addresses/'
 gatekeeper_key = 'gatekeeperKey=4b1dba5f602359a4c6d5c3ed731bfb5b'
@@ -13,9 +14,13 @@ warmup_row_limit = 1000
 warmup_fraction_success = .9
 rate_limit = 5
 query_errors = {}
-datestring = datetime.today().strftime('%Y-%m-%d')
-error_file = '../log/warmup_lb_errors_{}.csv'.format(datestring)
 
+datestamp = datetime.today().strftime('%Y-%m-%d')
+log_directory='/root/ais/ais/engine/log/'
+warmup_lb_error_file = log_directory + f'/warmup_lb_error-{datestamp}.txt'
+
+proxy_auth = sys.argv[1]
+assert 'http://' in proxy_auth
 
 def RateLimited(maxPerSecond):
     minInterval = 1.0 / float(maxPerSecond)
@@ -42,8 +47,11 @@ from json.decoder import JSONDecodeError
 def query_address(address):
     try:
         url = base_path + address + '?' + gatekeeper_key
-        # print(url)
-        r = requests.get(url)
+        print(url)
+        proxies = {
+                'http': proxy_auth,
+                'htps': proxy_auth }
+        r = requests.get(url, proxies=proxies)
         return r.status_code
     except requests.exceptions.HTTPError as e:
         error = [e,'','']
@@ -74,7 +82,7 @@ print("Writing errors to file...")
 error_table = []
 for url, error_vals in query_errors.items():
     error_table.append([url, error_vals[0], error_vals[1]])
-etl.tocsv(error_table, error_file)
+etl.tocsv(error_table, warmup_lb_error_file)
 exit(0) if f_200 > warmup_fraction_success else exit(1)
 
 
