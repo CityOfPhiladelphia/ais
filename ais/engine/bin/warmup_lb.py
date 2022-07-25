@@ -51,8 +51,13 @@ def query_address(address):
         proxies = {
                 'http': proxy_auth,
                 'htps': proxy_auth }
-        r = requests.get(url, proxies=proxies)
-        return r.status_code
+        r = requests.get(url, proxies=proxies, timeout=5)
+        if r.status_code:
+            if int(r.status_code) != 200:
+                print(f"Got a non-200 status code for {url}!: {r.status_code}")
+            return r.status_code
+        else:
+            return None
     except requests.exceptions.HTTPError as e:
         error = [e,'','']
         query_errors[url] = error
