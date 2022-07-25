@@ -264,6 +264,9 @@ check_target_health() {
 
 # Warm up load balancer against staging env?
 warmup_lb() {
+    # Export creds again so this function can access them.
+    file $WORKING_DIRECTORY/config-secrets.sh
+    source $WORKING_DIRECTORY/config-secrets.sh
     echo "Warming up the load balancer for staging lb: $staging_color."
     send_teams "Warming up the load balancer for staging lb: $staging_color."
     python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py $PROXY_AUTH
