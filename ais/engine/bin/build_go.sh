@@ -93,22 +93,6 @@ check_load_creds() {
 }
 
 
-# RUN BUILD ENGINE
-# Note: you need to have your ais/instance/config.py populated
-# with database connection info for this to work!
-# See check_load_creds function.
-build_engine() {
-    echo "Starting new engine build"
-    send_teams "Starting new engine build."
-    bash $WORKING_DIRECTORY/ais/engine/bin/build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
-    send_teams "Engine build has completed."
-    end_dt=$(date +%Y%m%d%T)
-    echo "Time Summary: "
-    echo "Started: "$start_dt
-    echo "Finished: "$end_dt
-}
-
-
 # Get AWS production environment
 identify_prod() {
     echo "Finding the production environment via CNAME"
@@ -135,6 +119,22 @@ identify_prod() {
     fi
     staging_tg_arn=$(aws elbv2 describe-target-groups | grep "${staging_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
     prod_tg_arn=$(aws elbv2 describe-target-groups | grep "${prod_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+}
+
+
+# RUN BUILD ENGINE
+# Note: you need to have your ais/instance/config.py populated
+# with database connection info for this to work!
+# See check_load_creds function.
+build_engine() {
+    echo "Starting new engine build"
+    send_teams "Starting new engine build."
+    bash $WORKING_DIRECTORY/ais/engine/bin/build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
+    send_teams "Engine build has completed."
+    end_dt=$(date +%Y%m%d%T)
+    echo "Time Summary: "
+    echo "Started: "$start_dt
+    echo "Finished: "$end_dt
 }
 
 
@@ -348,9 +348,9 @@ setup_log_files
 
 check_load_creds
 
-build_engine
-
 identify_prod
+
+build_engine
 
 engine_tests
 
