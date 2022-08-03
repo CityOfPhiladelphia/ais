@@ -269,7 +269,7 @@ warmup_lb() {
     source $WORKING_DIRECTORY/config-secrets.sh
     echo "Warming up the load balancer for staging lb: $staging_color."
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py $PROXY_AUTH
+    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --proxy $PROXY_AUTH --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
     if [ $? -ne 0 ]
     then
       echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
