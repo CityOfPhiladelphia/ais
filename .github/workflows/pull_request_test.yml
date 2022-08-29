@@ -1,4 +1,4 @@
-name: Build and test Docker Image for PRs
+name: Build and Test Docker Image for PRs
 
 # Trigger workflow on changes to these paths in stated branch
 # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
@@ -32,7 +32,7 @@ jobs:
   #        GITHUB-TOKEN: ${{ github.token }}
 
   build:
-    name: Build and push docker container
+    name: Build and Test docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     #runs-on: IT04GISPINAIS2L
     runs-on: ubuntu-latest
@@ -83,14 +83,14 @@ jobs:
           aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
           echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
            
-    - name: Set engine hostname based on prod color
+    - name: Set engine hostname to the staging database for testing against.
       env:
         PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
       run: |
         if [[ "$PROD_COLOR" -eq "blue" ]]; then
-           echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
-        elif [[ "$PROD_COLOR" -eq "green" ]]; then
            echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+           echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
         fi
 
     - name: Build and start the Docker image using docker-compose
