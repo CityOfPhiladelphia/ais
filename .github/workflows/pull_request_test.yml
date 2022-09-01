@@ -5,7 +5,8 @@ name: Build and Test Docker Image for PRs
 on:
   pull_request:
     branches:
-      - '**'
+      - master
+      - roland-dev-6-29-22
     #types: [opened, edited, repoened, review_requested]
   push:
     branches:
@@ -113,3 +114,14 @@ jobs:
     - name: Simple curl query check
       run: curl http://localhost:8080/search/1234%20Market%20Street
 
+    - uses: patrickpaulin/ms-teams-deploy-card@master
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        card-layout-exit: complete
+        show-on-start: false
+        show-on-exit: true
+        custom-facts: |
+          - name: Job Progress
+            value: Build successful for branch ${{ env.GITHUB_REF }}
