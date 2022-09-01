@@ -33,7 +33,7 @@ jobs:
     name: Build and push docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     #needs: pre-build
-    runs-on: ubuntu-latest
+    runs-on: ais-runner
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
 
@@ -42,7 +42,7 @@ jobs:
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
     - uses: actions/checkout@v2
       with:
-        ref: roland-dev-branch-10-15-21
+        ref: roland-dev-6-29-22
 
     - name: debug pwd
       run: pwd
