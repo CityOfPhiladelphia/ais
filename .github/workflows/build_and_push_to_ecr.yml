@@ -47,6 +47,9 @@ jobs:
     - name: debug pwd
       run: pwd
 
+    - name: Get github commit sha ID
+      run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
   # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
     #- uses: toko-bifrost/ms-teams-deploy-card@master
@@ -60,10 +63,9 @@ jobs:
         show-on-exit: true
         custom-facts: |
           - name: Job Progress
-            value: Building and testing, and deploying action started.
+            value: Building and testing of new AIS docker image started for commit id ${{ env.GITHUB_SHA_SHORT }}
 
     
-
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -87,7 +89,7 @@ jobs:
           #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
           aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
           echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
-           
+
 
     - name: Set engine hostname to the staging database for testing against.
       env:
@@ -153,4 +155,4 @@ jobs:
         show-on-exit: true
         custom-facts: |
           - name: Job Progress
-            value: Build successful, deploying to ${{ env.PROD_COLOR }} ECS cluster.
+            value: Build successful for commit ID ${{ env.GITHUB_SHA_SHORT }}, pushing new AIS docker image to ECR
