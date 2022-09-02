@@ -8,9 +8,6 @@ on:
       - master
       - roland-dev-6-29-22
     #types: [opened, edited, repoened, review_requested]
-  push:
-    branches:
-      - '**'
 
 concurrency:
   group: testing_environment

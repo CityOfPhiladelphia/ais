@@ -1,4 +1,4 @@
-name: Build and Push to ECR
+name: Build and Deploy
 
 # Trigger workflow on changes to these paths in stated branch
 # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
@@ -30,7 +30,7 @@ jobs:
 
 
   build:
-    name: Build and push docker container
+    name: Build and Push to ECR
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     #needs: pre-build
     runs-on: ais-runner
@@ -156,7 +156,7 @@ jobs:
 
   deploy:
 
-    name: Deploy to production ECS cluster
+    name: Deploy to prod ECS cluster
     # needs prior job of 'build' to not fail.
     #needs: [build, pre-build]
     needs: build
