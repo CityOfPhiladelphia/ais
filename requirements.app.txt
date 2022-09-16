@@ -12,7 +12,7 @@ Flask-CacheControl==0.1.2
 GeoAlchemy2==0.8.2
 itsdangerous==0.24
 Jinja2==2.10.1
-Mako==1.0.3
+Mako==1.2.2
 MarkupSafe==0.23
 normality==0.2.4
 psycopg2-binary==2.8.5
