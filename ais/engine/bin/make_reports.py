@@ -2,9 +2,9 @@ import subprocess
 from collections import OrderedDict
 from functools import partial
 import petl as etl
+import geopetl
 import cx_Oracle
 import psycopg2
-import geopetl
 from shapely.wkt import loads
 from shapely.ops import transform
 import pyproj
@@ -13,17 +13,35 @@ from ais.util import parse_url
 
 config = app.config
 read_db_string = config['DATABASES']['engine']
-write_db_string = config['DATABASES']['gis_ais']
+#write_db_string = config['DATABASES']['gis_ais']
+write_db_string = config['DATABASES']['gis_ais_test']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
-write_dsn = parsed_write_db_string['user'] + '/' + parsed_write_db_string['password'] + '@' + parsed_write_db_string[
-    'host']
+
 address_summary_write_table_name = 'ADDRESS_SUMMARY'
 service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
 dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
 true_range_write_table_name = 'TRUE_RANGE'
-read_conn = psycopg2.connect(
-    "dbname={db_name} user={user}".format(db_name=parsed_read_db_string['db_name'], user=parsed_read_db_string['user']))
+
+write_user = parsed_write_db_string['user']
+write_pw = parsed_write_db_string['password']
+write_host = parsed_write_db_string['host']
+write_dsn = f'{write_user}/{write_pw}@{write_host}'
+
+read_dsn = f"dbname={parsed_read_db_string['db_name']} user={parsed_read_db_string['user']}"
+read_conn = psycopg2.connect(read_dsn)
+
+def database_connect(dsn):
+    # Connect to database
+    db_connect = cx_Oracle.connect(dsn)
+    print('Connected to %s' % db_connect)
+    cursor = db_connect.cursor()
+    return cursor
+
+oracle_cursor = database_connect(write_dsn)
+
+print(f'\nReading from local DB: {read_dsn}')
+print(f'Writing to: {write_dsn}\n'.replace(write_pw, 'CENSORED'))
 #########################################################################################################################
 ## UTILS
 #########################################################################################################################
@@ -169,200 +187,148 @@ def concatenate_dor_address(source_comps):
 ##############
 # TRUE RANGE #
 ##############
-print("Writing true_range table...")
-etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+print(f"Writing {true_range_write_table_name} table...")
+#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+rows = etl.fromdb(read_conn, 'select * from true_range')
+rows.tooraclesde(write_dsn, true_range_write_table_name)
+
+
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print("Writing service_area_summary table...")
+print(f"Writing {service_area_summary_write_table_name} table...")
 etl.fromdb(read_conn, 'select * from service_area_summary')\
   .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
   .tooraclesde(write_dsn, service_area_summary_write_table_name)
+
+
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
-print("Creating transformed address_summary table...")
-# only export rows that have been geocoded:
-address_summary_out_table = etl.fromdb(read_conn, 'select * from address_summary') \
-    .addfield('address_full', (lambda a: make_address_full(
+print("\nCreating transformed ADDRESS_SUMMARY table...")
+# add address_full and transformed coords and only export rows that have been geocoded:
+print('Grabbing fields from local database')
+address_summary_out_table = etl.fromdb(read_conn, '''
+                select *, 
+                st_x(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lon,
+                st_y(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lat,
+                public.ST_AsText(st_point(geocode_x, geocode_y)) as shape
+                from address_summary;
+                ''')
+
+print('Synthesizing "ADDRESS_FULL" column..')
+address_summary_out_table.addfield('address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
-     'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']}))) \
-    .addfield('temp_lonlat', (lambda a: transform_coords({'geocode_x': a['geocode_x'], 'geocode_y': a['geocode_y']}))) \
-    .addfield('geocode_lon', lambda a: a['temp_lonlat'][0]) \
-    .addfield('geocode_lat', lambda a: a['temp_lonlat'][1]) \
-    .cutout('temp_lonlat') \
-    .select(lambda s: s.geocode_x is not None) \
-    .fieldmap(mapping) 
+     'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']})))
+
+address_summary_out_table.select(lambda s: s.geocode_x is not None).fieldmap(mapping)
 
 
+temp_as_table_name = 'T_ADDRESS_SUMMARY'
+prod_as_table_name = 'ADDRESS_SUMMARY'
+
+try:
+    create_stmt = f'CREATE TABLE {temp_as_table_name} AS (SELECT * FROM {prod_as_table_name} WHERE 1=0)'
+    print(f'Creating Oracle table with statement: {create_stmt}')
+    oracle_cursor.execute(create_stmt)
+    oracle_cursor.execute('COMMIT')
+except Exception as e:
+    if 'ORA-00955' not in str(e):
+        raise e
+    else:
+        print(f'Table {temp_as_table_name} already exists.')
+
+
+# Assert our fields match between our devised petl object and the destination oracle table.
+field_stmt = "SELECT column_name FROM all_tab_cols WHERE table_name = 'T_ADDRESS_SUMMARY' AND owner = 'GIS_AIS'  AND column_name NOT LIKE 'SYS_%'"
+oracle_cursor.execute(field_stmt)
+oracle_fields = oracle_cursor.fetchall()
+oracle_fields = [x[0].lower() for x in oracle_fields]
+our_fields = etl.fieldnames(address_summary_out_table)
+
+#print(f'DEBUG oracle fields: {oracle_fields}')
+#print(f'DEBUG petl fields: {our_fields}')
+field_differences = list(set(oracle_fields).symmetric_difference(set(our_fields)))
+print(f'Field differences between oracle and postgres: {field_differences}')
+#assert oracle_fields == our_fields
+
+
+print('Writing to csv file..')
 address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
-address_summary_out_table.todb(read_conn, "address_summary_transformed", create=True, sample=0)
+
+print('Writing to temp table "T_ADDRESS_SUMMARY"..')
+address_summary_out_table.tooraclesde(dbo=write_dsn, table_name='T_ADDRESS_SUMMARY', srid=2272)
+
+grant_sql1 = "GRANT SELECT on {} to SDE".format(temp_as_table_name)
+grant_sql2 = "GRANT SELECT ON {} to GIS_SDE_VIEWER".format(temp_as_table_name)
+grant_sql3 = "GRANT SELECT ON {} to GIS_AIS_SOURCES".format(temp_as_table_name)
+
+
+# Swap prod/temp tables:
+# Oracle does not allow table modification within a transaction, so make individual transactions:
+
+# First make the temp table and setup permissions
+oracle_cursor.execute(grant_sql1)
+oracle_cursor.execute(grant_sql2)
+oracle_cursor.execute(grant_sql3)
+
+sql1 = 'ALTER TABLE {} RENAME TO {}_old'.format(prod_as_table_name, prod_as_table_name)
+sql2 = 'ALTER TABLE {} RENAME TO {}'.format(temp_as_table_name, prod_as_table_name)
+sql3 = 'DROP TABLE {}_old'.format(prod_as_table_name)
+
+
+try:
+    oracle_cursor.execute(sql1)
+except:
+    print("Could not rename {} table. Does it exist?".format(temp_as_table_name))
+    raise
+try:
+    oracle_cursor.execute(sql2)
+except:
+    print("Could not rename {} table. Does it exist?".format(prod_as_table_name))
+    rb_sql = 'ALTER TABLE {}_old RENAME TO {}'.format(prod_as_table_name, prod_as_table_name)
+    oracle_cursor.execute(rb_sql)
+    raise
+try:
+    oracle_cursor.execute(sql3)
+except:
+    print("Could not drop {}_old table. Do you have permission?".format(prod_as_table_name))
+    rb_sql1 = 'DROP TABLE {}'.format(temp_as_table_name)
+    oracle_cursor.execute(rb_sql1)
+    rb_sql2 = 'ALTER TABLE {}_old RENAME TO {}'.format(prod_as_table_name, prod_as_table_name)
+    oracle_cursor.execute(rb_sql2)
+    raise
+
+
+
+# Grant privs:
+#try:
+#    for sql in grants_sql:
+#        oracle_cursor.execute(sql)
+#except:
+#    print("Could not grant all permissions to {}.".format(temp_as_table_name))
+#    raise
+
+
 #########################
 # DOR CONDOMINIUM ERROR #
 #########################
-print("Writing dor_condominium_error table...")
-dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error') \
-    .rename({'parcel_id': 'mapref', 'unit_num': 'condounit',}) \
-    .tooraclesde(write_dsn, dor_condo_error_table_name)
-###############################
-# DOR PARCEL ADDRESS ANALYSIS #
-###############################
-# print("Performing dor_parcel address analysis...")
-# import re
-# from passyunk.parser import PassyunkParser
-#
-# street_name_re = re.compile('^[A-Z0-9 ]+$')
-# unit_num_re = re.compile('^[A-Z0-9\-]+$')
-# parser = PassyunkParser(MAX_RANGE=9999999)
-#
-# print('Reading streets...')
-# street_rows = etl.fromdb(read_conn,
-#                          'select street_full, seg_id, street_code, left_from, left_to, right_from, right_to from street_segment')
-# street_code_map = {}  # street_full => street_code
-# street_full_map = {}  # street_code => street_full
-# seg_map = {}  # street_full => [seg rows]
-# street_headers = street_rows[0]
-# for street_row in street_rows[1:]:
-#     street_row = dict(zip(street_headers, street_row))
-#     street_code = street_row['street_code']
-#     street_full = street_row['street_full']
-#     seg_map.setdefault(street_full, [])
-#     seg_map[street_full].append(street_row)
-#     street_code_map[street_full] = street_code
-#     street_full_map[street_code] = street_full
-#
-# street_code_map.update({
-#     'VINE ST': 80120,
-#     'MARKET ST': 53560,
-#     'COMMERCE ST': 24500,
-# })
-# street_full_map.update({
-#     80120: 'VINE ST',
-#     53560: 'MARKET ST',
-#     24500: 'COMMERCE ST',
-# })
-#
-# source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
-# source_db_name = source_def['db']
-# source_db_url = config['DATABASES']['doroem']
-# parsed_dor_db_string = parse_url(source_db_url)
-# read_dsn = parsed_dor_db_string['user'] + '/' + parsed_dor_db_string['password'] + '@' + parsed_dor_db_string['host']
-# dsn = config['DATABASES']['engine']
-# db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
-# db_pw = dsn[dsn.index(":", dsn.index(db_user)) + 1:dsn.index("@")]
-# db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-# pg_db = psycopg2.connect(
-#     'dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user,
-#                                                                              db_pw=db_pw))
-# source_field_map = source_def['field_map']
-# source_table_name = source_def['table']
-# source_table_name = 'PARCEL'
-# print(source_table_name)
-# field_map = source_def['field_map']
-# print("Reading, parsing, and analyzing dor_parcel components and writing to postgres...")
-#
-# etl.fromoraclesde(read_dsn, source_table_name, where="SDE.ST_ISEMPTY(SHAPE)=0") \
-#     .cut('objectid', 'mapreg', 'stcod', 'house', 'suf', 'unit', 'stex', 'stdir', 'stnam',
-#          'stdes', 'stdessuf', 'status', 'shape') \
-#     .addfield('concatenated_address', lambda c: concatenate_dor_address(
-#     {'house': c['house'], 'suf': c['suf'], 'stex': c['stex'], 'stdir': c['stdir'], 'stnam': c['stnam'],
-#      'stdes': c['stdes'], 'stdessuf': c['stdessuf'], 'unit': c['unit'], 'stcod': c['stcod']})) \
-#     .addfield('parsed_comps', lambda p: parser.parse(p['concatenated_address'])) \
-#     .addfield('std_address_low', lambda a: a['parsed_comps']['components']['address']['low_num']) \
-#     .addfield('std_address_low_suffix', lambda a: a['parsed_comps']['components']['address']['addr_suffix'] if
-# a['parsed_comps']['components']['address']['addr_suffix'] else a['parsed_comps']['components']['address']['fractional']) \
-#     .addfield('std_high_num', lambda a: a['parsed_comps']['components']['address']['high_num']) \
-#     .addfield('std_street_predir', lambda a: a['parsed_comps']['components']['street']['predir']) \
-#     .addfield('std_street_name', lambda a: a['parsed_comps']['components']['street']['name']) \
-#     .addfield('std_street_suffix', lambda a: a['parsed_comps']['components']['street']['suffix']) \
-#     .addfield('std_address_postdir', lambda a: a['parsed_comps']['components']['street']['postdir']) \
-#     .addfield('std_unit_type', lambda a: a['parsed_comps']['components']['address_unit']['unit_type']) \
-#     .addfield('std_unit_num', lambda a: a['parsed_comps']['components']['address_unit']['unit_num']) \
-#     .addfield('std_street_address', lambda a: a['parsed_comps']['components']['output_address']) \
-#     .addfield('std_street_code', lambda a: a['parsed_comps']['components']['street']['street_code']) \
-#     .addfield('std_seg_id', lambda a: a['parsed_comps']['components']['cl_seg_id']) \
-#     .addfield('cl_addr_match', lambda a: a['parsed_comps']['components']['cl_addr_match']) \
-#     .cutout('parsed_comps') \
-#     .addfield('no_address',
-#               lambda a: 1 if standardize_nulls(a['stnam']) is None or standardize_nulls(a['house']) is None else None) \
-#     .addfield('change_stcod', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stcod'])) != str(
-#     standardize_nulls(a['std_street_code'])) else None) \
-#     .addfield('change_house', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['house'])) != str(
-#     standardize_nulls(a['std_address_low'])) else None) \
-#     .addfield('change_suf', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['suf'])) != str(
-#     standardize_nulls(a['std_address_low_suffix'])) else None) \
-#     .addfield('change_unit', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['unit'])) != str(
-#     standardize_nulls(a['std_unit_num'])) else None) \
-#     .addfield('change_stex', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stex'])) != str(
-#     standardize_nulls(a['std_high_num'])) else None) \
-#     .addfield('change_stdir', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdir'])) != str(
-#     standardize_nulls(a['std_street_predir'])) else None) \
-#     .addfield('change_stnam', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stnam'])) != str(
-#     standardize_nulls(a['std_street_name'])) else None) \
-#     .addfield('change_stdes', lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdes'])) != str(
-#     standardize_nulls(a['std_street_suffix'])) else None) \
-#     .addfield('change_stdessuf',
-#               lambda a: 1 if a['no_address'] != 1 and str(standardize_nulls(a['stdessuf'])) != str(
-#                   standardize_nulls(a['std_address_postdir'])) else 0) \
-#     .tocsv('dor_parcel_address_analysis.csv', write_header=True)
-# # get address_summary rows with dor_parcel_id as array:
-# address_summary_rows = address_summary_out_table \
-#     .addfield('dor_parcel_id_array', lambda d: d.dor_parcel_id.split('|') if d.dor_parcel_id else []) \
-#     .addfield('opa_account_num_array', lambda d: d.opa_account_num.split('|') if d.opa_account_num else [])
-# dor_parcel_address_analysis = etl.fromcsv('dor_parcel_address_analysis.csv')
-# mapreg_count_map = {}
-# address_count_map = {}
-# dor_parcel_header = dor_parcel_address_analysis[0]
-#
-# # count_maps
-# for row in dor_parcel_address_analysis[1:]:
-#     dict_row = dict(zip(dor_parcel_header, row))
-#     mapreg = dict_row['mapreg']
-#     std_street_address = dict_row['std_street_address']
-#     if mapreg not in mapreg_count_map:
-#         mapreg_count_map[mapreg] = 1
-#     else:
-#         mapreg_count_map[mapreg] += 1
-#     if std_street_address not in address_count_map:
-#         address_count_map[std_street_address] = 1
-#     else:
-#         address_count_map[std_street_address] += 1
-#
-# # mapreg_opa_map
-# mapreg_opa_map = {}
-# address_summary_header = address_summary_rows[0]
-# for i, row in enumerate(address_summary_rows[1:]):
-#     if i % 1000 == 0:
-#         print(i)
-#     dict_row = dict(zip(address_summary_header, row))
-#     opa_account_nums = dict_row['opa_account_num_array']
-#     dor_parcel_ids = dict_row['dor_parcel_id_array']
-#     for dor_parcel_id in dor_parcel_ids:
-#         if dor_parcel_id not in mapreg_opa_map:
-#             mapreg_opa_map[dor_parcel_id] = []
-#         for opa_account_num in opa_account_nums:
-#             if opa_account_num not in mapreg_opa_map[dor_parcel_id]:
-#                 mapreg_opa_map[dor_parcel_id].append(opa_account_num)
-#
-# for k in mapreg_opa_map:
-#     mapreg_opa_map[k] = '|'.join(mapreg_opa_map[k])
-#
-# dor_report_rows = dor_parcel_address_analysis\
-#     .addfield('opa_account_nums', lambda o: mapreg_opa_map.get(o.mapreg,'')) \
-#     .addfield('num_parcels_w_mapreg', lambda o: mapreg_count_map.get(o.mapreg, 0)) \
-#     .addfield('num_parcels_w_address', lambda o: address_count_map.get(o.std_street_address, 0))
-#
-# # Write to local db
-# dor_report_rows.topostgis(pg_db, 'dor_parcel_address_analysis')
+print(f"\nWriting to DOR_CONDOMINIUM_ERROR table...")
+dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error')
+dor_condominium_error_table.rename({'parcel_id': 'mapref', 'unit_num': 'condounit',})
+dor_condominium_error_table.tooraclesde(write_dsn, dor_condo_error_table_name)
+
 ###########################################################
 #  Use The-el from here to write spatial tables to oracle #
 ###########################################################
-print("Writing spatial reports to DataBridge...")
-oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
-postgis_conn = config['POSTGIS_CONN']
-subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
-print("Cleaning up...")
+#print("Writing spatial reports to DataBridge...")
+#oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
+#postgis_conn = config['POSTGIS_CONN']
+#subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
+#print("Cleaning up...")
 # cur = read_conn.cursor()
 # cur.execute('DROP TABLE "address_summary_transformed";')
 # read_conn.commit()
+
 read_conn.close()
+

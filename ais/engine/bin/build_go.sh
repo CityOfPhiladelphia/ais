@@ -339,6 +339,10 @@ reenable_alarm() {
     echo "Alarm 'ais-${staging_color}-api-taskin' re-enabled."
 }
 
+make_reports_tables() {
+    python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
+}
+
 
 activate_venv_source_libaries
 
@@ -373,6 +377,8 @@ warmup_lb
 swap_cnames -c $staging_color
 
 reenable_alarm
+
+make_reports_tables
 
 echo "Finished successfully!"
 
