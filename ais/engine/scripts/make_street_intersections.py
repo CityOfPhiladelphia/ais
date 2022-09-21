@@ -105,7 +105,8 @@ error_count = 0
 for i, cl_row in enumerate(centerline_rows):
     try:
         if i % 10000 == 0:
-            print(i)
+            #print(i)
+            pass
 
         # Parse street name
         source_street_full_comps = [str(cl_row[x]).strip() for x in \
@@ -135,7 +136,7 @@ for i, cl_row in enumerate(centerline_rows):
                 'street_full': comps['full'],
             }
         else:
-            print(source_street_full)
+            #print(source_street_full)
             street_comps = {
             # 'street_predir': cl_row[field_map['street_predir']] or '',
             # 'street_name': cl_row[field_map['street_name']] or '',
@@ -176,9 +177,14 @@ print(nodes_table)
 WRITE
 '''
 print("Copying temporary street_nodes table...")
-etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
-    .rename({'shape': 'geom'})\
-    .topostgis(pg_db, 'street_nodes')
+rows = etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])
+# For some reason rename 'shape' to 'geom' before inserting into postgres
+# But a recent build fail, it already had a geom field so it failed
+# So do it this way instead. -Roland 9-21-22
+field_names = etl.fieldnames(rows)
+if 'shape' in field_names:
+    rows.rename({'shape': 'geom'})
+rows.topostgis(pg_db, 'street_nodes')
 
 print("Writing temporary centerline table...")
 centerline_table.write(centerlines, chunk_size=50000)
