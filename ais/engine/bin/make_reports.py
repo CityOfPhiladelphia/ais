@@ -84,46 +84,46 @@ def transform_coords(comps):
 
     return [x, y]
 
-
-mapping = OrderedDict([
-    ('id', 'id'),
-    ('address', 'address_low'),
-    ('address_suffix', 'address_low_suffix'),
-    ('address_fractional', 'address_low_frac'),
-    ('address_high', 'address_high'),
-    ('address_full', 'address_full'),
-    ('street_predir', 'street_predir'),
-    ('street_name', 'street_name'),
-    ('street_suffix', 'street_suffix'),
-    ('street_postdir', 'street_postdir'),
-    ('unit_type', 'unit_type'),
-    ('unit_num', 'unit_num'),
-    ('zip_code', 'zip_code'),
-    ('zip_4', 'zip_4'),
-    ('street_address', 'street_address'),
-    ('opa_account_num', 'opa_account_num'),
-    ('opa_owners', 'opa_owners'),
-    ('opa_address', 'opa_address'),
-    ('info_companies', 'info_companies'),
-    ('info_residents', 'info_residents'),
-    ('voters', 'voters'),
-    ('pwd_account_nums', 'pwd_account_nums'),
-    ('li_address_key', 'li_address_key'),
-    ('seg_id', 'seg_id'),
-    ('seg_side', 'seg_side'),
-    ('dor_parcel_id', 'dor_parcel_id'),
-    ('pwd_parcel_id', 'pwd_parcel_id'),
-    ('geocode_type', 'geocode_type'),
-    ('geocode_x', 'geocode_x'),
-    ('geocode_y', 'geocode_y'),
-    ('geocode_lat', 'geocode_lat'),
-    ('geocode_lon', 'geocode_lon'),
-    ('eclipse_location_id', 'eclipse_location_id'),
-    ('zoning_document_ids', 'zoning_document_ids'),
-    ('bin', 'bin'),
-    ('li_parcel_id', 'li_parcel_id'),
-    ('street_code', 'street_code')
-])
+address_summary_mapping = {
+    'id': 'id',
+    'address': 'address_low',
+    'address_suffix': 'address_low_suffix',
+    'address_fractional': 'address_low_frac',
+    'address_high': 'address_high',
+    'address_full': 'address_full',
+    'street_predir': 'street_predir',
+    'street_name': 'street_name',
+    'street_suffix': 'street_suffix',
+    'street_postdir': 'street_postdir',
+    'unit_type': 'unit_type',
+    'unit_num': 'unit_num',
+    'zip_code': 'zip_code',
+    'zip_4': 'zip_4',
+    'street_address': 'street_address',
+    'opa_account_num': 'opa_account_num',
+    'opa_owners': 'opa_owners',
+    'opa_address': 'opa_address',
+    'info_companies': 'info_companies',
+    'info_residents': 'info_residents',
+    'voters': 'voters',
+    'pwd_account_nums': 'pwd_account_nums',
+    'li_address_key': 'li_address_key',
+    'seg_id': 'seg_id',
+    'seg_side': 'seg_side',
+    'dor_parcel_id': 'dor_parcel_id',
+    'pwd_parcel_id': 'pwd_parcel_id',
+    'geocode_type': 'geocode_type',
+    'geocode_x': 'geocode_x',
+    'geocode_y': 'geocode_y',
+    'geocode_lat': 'geocode_lat',
+    'geocode_lon': 'geocode_lon',
+    'eclipse_location_id': 'eclipse_location_id',
+    'zoning_document_ids': 'zoning_document_ids',
+    'bin': 'bin',
+    'li_parcel_id': 'li_parcel_id',
+    'street_code': 'street_code',
+    'shape': 'shape'
+}
 
 
 def standardize_nulls(val):
@@ -187,7 +187,7 @@ def concatenate_dor_address(source_comps):
 ##############
 # TRUE RANGE #
 ##############
-print(f"Writing {true_range_write_table_name} table...")
+print(f"\nWriting {true_range_write_table_name} table...")
 #etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 rows = etl.fromdb(read_conn, 'select * from true_range')
 rows.tooraclesde(write_dsn, true_range_write_table_name)
@@ -196,19 +196,19 @@ rows.tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print(f"Writing {service_area_summary_write_table_name} table...")
-etl.fromdb(read_conn, 'select * from service_area_summary')\
-  .rename({'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )\
-  .tooraclesde(write_dsn, service_area_summary_write_table_name)
+print(f"\nWriting {service_area_summary_write_table_name} table...")
+service_area_rows = etl.fromdb(read_conn, 'select * from service_area_summary')
+service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
+service_area_rows.tooraclesde(write_dsn, service_area_summary_write_table_name)
 
 
 ########################
 # ADDRESS AREA SUMMARY #
 ########################
 print("\nCreating transformed ADDRESS_SUMMARY table...")
-# add address_full and transformed coords and only export rows that have been geocoded:
-print('Grabbing fields from local database')
-address_summary_out_table = etl.fromdb(read_conn, '''
+# add address_full and transformed coords, as well as shape as WKT, and only export rows that have been geocoded:
+print('Grabbing fields from local database..')
+addr_summary_rows = etl.fromdb(read_conn, '''
                 select *, 
                 st_x(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lon,
                 st_y(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lat,
@@ -217,12 +217,21 @@ address_summary_out_table = etl.fromdb(read_conn, '''
                 ''')
 
 print('Synthesizing "ADDRESS_FULL" column..')
-address_summary_out_table.addfield('address_full', (lambda a: make_address_full(
+addr_summary_rows = etl.addfield(addr_summary_rows, 'address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
      'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']})))
+    
+# Remove rows with null coordinates
+addr_summary_rows = etl.select(addr_summary_rows, lambda s: s.geocode_x is not None)
 
-address_summary_out_table.select(lambda s: s.geocode_x is not None).fieldmap(mapping)
+# Rename field based on this dictionary
+# Note that its reversed to what you'd expect, values are the original field names
+# and the keys are what the fields are renamed to.
+addr_summary_rows = etl.fieldmap(addr_summary_rows, address_summary_mapping)
 
+# Cut out fields that aren't in our map to match it up with Oracle
+keep_fields = list(address_summary_mapping.keys())
+addr_summary_rows = etl.cut(addr_summary_rows, *keep_fields)
 
 temp_as_table_name = 'T_ADDRESS_SUMMARY'
 prod_as_table_name = 'ADDRESS_SUMMARY'
@@ -238,26 +247,21 @@ except Exception as e:
     else:
         print(f'Table {temp_as_table_name} already exists.')
 
-
 # Assert our fields match between our devised petl object and the destination oracle table.
 field_stmt = "SELECT column_name FROM all_tab_cols WHERE table_name = 'T_ADDRESS_SUMMARY' AND owner = 'GIS_AIS'  AND column_name NOT LIKE 'SYS_%'"
 oracle_cursor.execute(field_stmt)
 oracle_fields = oracle_cursor.fetchall()
 oracle_fields = [x[0].lower() for x in oracle_fields]
-our_fields = etl.fieldnames(address_summary_out_table)
+oracle_fields.remove('objectid')
 
-#print(f'DEBUG oracle fields: {oracle_fields}')
-#print(f'DEBUG petl fields: {our_fields}')
-field_differences = list(set(oracle_fields).symmetric_difference(set(our_fields)))
-print(f'Field differences between oracle and postgres: {field_differences}')
-#assert oracle_fields == our_fields
-
+# Validate that we have the expected headers in our petl object
+addr_summary_rows.validate(header=tuple(oracle_fields))
 
 print('Writing to csv file..')
-address_summary_out_table.tocsv("address_summary_transformed.csv", write_header=True)
+addr_summary_rows.tocsv("address_summary_transformed.csv", write_header=True)
 
 print('Writing to temp table "T_ADDRESS_SUMMARY"..')
-address_summary_out_table.tooraclesde(dbo=write_dsn, table_name='T_ADDRESS_SUMMARY', srid=2272)
+addr_summary_rows.tooraclesde(dbo=write_dsn, table_name='T_ADDRESS_SUMMARY', srid=2272)
 
 grant_sql1 = "GRANT SELECT on {} to SDE".format(temp_as_table_name)
 grant_sql2 = "GRANT SELECT ON {} to GIS_SDE_VIEWER".format(temp_as_table_name)
@@ -268,6 +272,7 @@ grant_sql3 = "GRANT SELECT ON {} to GIS_AIS_SOURCES".format(temp_as_table_name)
 # Oracle does not allow table modification within a transaction, so make individual transactions:
 
 # First make the temp table and setup permissions
+print('Renaming temp table to prod table to minimize downtime..')
 oracle_cursor.execute(grant_sql1)
 oracle_cursor.execute(grant_sql2)
 oracle_cursor.execute(grant_sql3)
@@ -299,36 +304,12 @@ except:
     oracle_cursor.execute(rb_sql2)
     raise
 
-
-
-# Grant privs:
-#try:
-#    for sql in grants_sql:
-#        oracle_cursor.execute(sql)
-#except:
-#    print("Could not grant all permissions to {}.".format(temp_as_table_name))
-#    raise
-
-
 #########################
 # DOR CONDOMINIUM ERROR #
 #########################
 print(f"\nWriting to DOR_CONDOMINIUM_ERROR table...")
 dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error')
-dor_condominium_error_table.rename({'parcel_id': 'mapref', 'unit_num': 'condounit',})
+dor_condominium_error_table = etl.rename(dor_condominium_error_table, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
 dor_condominium_error_table.tooraclesde(write_dsn, dor_condo_error_table_name)
 
-###########################################################
-#  Use The-el from here to write spatial tables to oracle #
-###########################################################
-#print("Writing spatial reports to DataBridge...")
-#oracle_conn_gis_ais = config['ORACLE_CONN_GIS_AIS']
-#postgis_conn = config['POSTGIS_CONN']
-#subprocess.check_call(['./output_spatial_tables.sh', str(postgis_conn), str(oracle_conn_gis_ais)])
-#print("Cleaning up...")
-# cur = read_conn.cursor()
-# cur.execute('DROP TABLE "address_summary_transformed";')
-# read_conn.commit()
-
 read_conn.close()
-
