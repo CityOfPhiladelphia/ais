@@ -334,7 +334,7 @@ for i, source_parcel in enumerate(source_parcels):
                 address_counts[street_address] += 1
             
             except Exception as e:
-                print(source_address)
+                #print(source_address)
                 had_error('Could not parse')
 
         # QC: parcel ID (aka mapreg)

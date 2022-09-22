@@ -105,7 +105,7 @@ parcel_xy_map = {}  # source name => parcel row id => centroid xy (Shapely)
 for parcel_layer_name, parcel_layer_def in parcel_layers.items():
     # source_name = parcel_source['name']
     source_table = parcel_layer_name + '_parcel'
-    print('  - {}'.format(parcel_layer_name))
+    #print('  - {}'.format(parcel_layer_name))
 
     # DEV
     parcel_where = ''
@@ -471,7 +471,8 @@ for i, address_row in enumerate(address_rows):
 
 
     except ValueError as e:
-        print(e)
+        #print(e)
+        pass
 
     except Exception:
         print(traceback.format_exc())

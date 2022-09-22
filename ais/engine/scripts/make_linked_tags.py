@@ -357,7 +357,7 @@ if WRITE_OUT and len(new_linked_tags) > 0:
 print('Rejected links: ')
 for key, value in rejected_link_map.items():
     value = list(set(value))
-    print('{key}: {value}'.format(key=key, value=value))
+    #print('{key}: {value}'.format(key=key, value=value))
 # print(rejected_link_map)
 
 print("Cleaning up...")

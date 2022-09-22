@@ -52,65 +52,68 @@ error_count = 0
 
 # Loop over streets
 for i, source_row in enumerate(source_rows):
-	try:
-		if i % 10000 == 0:
-			print(i)
+    try:
+        if i % 10000 == 0:
+            print(i)
 
-		# Parse street name
-		source_street_full_comps = [str(source_row[x]).strip() for x in \
-			source_street_full_fields]
-		# source_street_full_comps = [x for x in source_street_full_comps if x != '']
-		source_street_full_comps = [x for x in source_street_full_comps if x not in ('', None, 'None')]
-		source_street_full = ' '.join(source_street_full_comps)
-		seg_id = source_row[field_map['seg_id']]
-		try:
-			parsed = parser.parse(source_street_full)
-			if parsed['type'] != 'street':
-				raise ValueError('Invalid street')
+        # Parse street name
+        source_street_full_comps = [str(source_row[x]).strip() for x in \
+            source_street_full_fields]
+        # source_street_full_comps = [x for x in source_street_full_comps if x != '']
+        source_street_full_comps = [x for x in source_street_full_comps if x not in ('', None, 'None')]
+        source_street_full = ' '.join(source_street_full_comps)
+        seg_id = source_row[field_map['seg_id']]
+        try:
+            parsed = parser.parse(source_street_full)
+            if parsed['type'] != 'street':
+                raise ValueError('Invalid street')
 
-			# comps = parsed['components']    			<== phladdress
-			comps = parsed['components']['street']    # <== passyunk
-		except Exception as e:
-			raise ValueError('Could not parse')
+            # comps = parsed['components']              <== phladdress
+            comps = parsed['components']['street']    # <== passyunk
+        except Exception as e:
+            #raise ValueError('Could not parse')
+            pass
 
-		# Check for unaddressable streets
-		left_to = source_row[field_map['left_to']]
-		right_to = source_row[field_map['right_to']]
-		if left_to == 0 and right_to == 0:
-			raise ValueError('Not a range')
+        # Check for unaddressable streets
+        left_to = source_row[field_map['left_to']]
+        right_to = source_row[field_map['right_to']]
+        if left_to == 0 and right_to == 0:
+            #raise ValueError('Not a range')
+            pass
 
-		street_suffix = comps['suffix']
-		if street_suffix == 'RAMP':
-			raise ValueError('Ramp')
+        street_suffix = comps['suffix']
+        if street_suffix == 'RAMP':
+            #raise ValueError('Ramp')
+            pass
 
-		street_comps = {
-			'street_predir': comps['predir'] or '',
-			'street_name': comps['name'] or '',
-			'street_suffix': comps['suffix'] or '',
-			'street_postdir': comps['postdir'] or '',
-			'street_full': comps['full'],
-		}
+        street_comps = {
+            'street_predir': comps['predir'] or '',
+            'street_name': comps['name'] or '',
+            'street_suffix': comps['suffix'] or '',
+            'street_postdir': comps['postdir'] or '',
+            'street_full': comps['full'],
+        }
 
-		# Stringify numeric fields that should be strings
-		# source_row['zip_left'] = str(source_row['zip_left'])
-		# source_row['zip_right'] = str(source_row['zip_right'])
+        # Stringify numeric fields that should be strings
+        # source_row['zip_left'] = str(source_row['zip_left'])
+        # source_row['zip_right'] = str(source_row['zip_right'])
 
-		# Get values
-		street = {key: source_row[value] for key, value in field_map.items()}
-		street.update(street_comps)
-		street['geom'] = source_row[source_geom_field]
-		streets.append(street)
+        # Get values
+        street = {key: source_row[value] for key, value in field_map.items()}
+        street.update(street_comps)
+        street['geom'] = source_row[source_geom_field]
+        streets.append(street)
 
-	except ValueError as e:
-		# FEEDBACK
-		print('{}: {} ({})'.format(e, source_street_full, seg_id))
-		error_count += 1
+    except ValueError as e:
+        # FEEDBACK
+        #print('{}: {} ({})'.format(e, source_street_full, seg_id))
+        error_count += 1
 
-	except Exception as e:
-		print('Unhandled error on row: {}'.format(i))
-		# pprint(street)
-		print(traceback.format_exc())
-		sys.exit()
+    except Exception as e:
+        print('Unhandled error on row: {}'.format(i))
+        # pprint(street)
+        print(traceback.format_exc())
+        sys.exit()
 
 '''
 WRITE

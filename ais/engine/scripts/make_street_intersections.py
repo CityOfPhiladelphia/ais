@@ -105,8 +105,7 @@ error_count = 0
 for i, cl_row in enumerate(centerline_rows):
     try:
         if i % 10000 == 0:
-            #print(i)
-            pass
+            print(i)
 
         # Parse street name
         source_street_full_comps = [str(cl_row[x]).strip() for x in \
@@ -160,7 +159,7 @@ for i, cl_row in enumerate(centerline_rows):
 
     except ValueError as e:
         # FEEDBACK
-        print('{}: {} ({})'.format(e, source_street_full, seg_id))
+        #print('{}: {} ({})'.format(e, source_street_full, seg_id))
         error_count += 1
 
     except Exception as e:
@@ -177,14 +176,9 @@ print(nodes_table)
 WRITE
 '''
 print("Copying temporary street_nodes table...")
-rows = etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])
-# For some reason rename 'shape' to 'geom' before inserting into postgres
-# But a recent build fail, it already had a geom field so it failed
-# So do it this way instead. -Roland 9-21-22
-field_names = etl.fieldnames(rows)
-if 'shape' in field_names:
-    rows.rename({'shape': 'geom'})
-rows.topostgis(pg_db, 'street_nodes')
+etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
+    .rename({'shape': 'geom'})\
+    .topostgis(pg_db, 'street_nodes')
 
 print("Writing temporary centerline table...")
 centerline_table.write(centerlines, chunk_size=50000)

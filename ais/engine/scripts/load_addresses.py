@@ -571,7 +571,7 @@ for i, address in enumerate(addresses):
                     }
                     links.append(child_link)
             except ValueError:
-                print('Could not parse new address: {}'.format(child_address))
+                #print('Could not parse new address: {}'.format(child_address))
                 continue
 
         # Overlap link
@@ -942,7 +942,7 @@ for parcel_layer in parcel_layers:
             parcel_address = Address(street_address)
         except ValueError:
             # TODO: this should never happen
-            print('Could not parse parcel address: {}'.format(street_address))
+            #print('Could not parse parcel address: {}'.format(street_address))
             continue
 
         street_full = parcel_address.street_full
