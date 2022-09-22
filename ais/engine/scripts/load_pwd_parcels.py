@@ -129,8 +129,9 @@ for i, source_parcel in enumerate(source_parcels):
 		# 	print('{} => {}'.format(source_address, parcel.street_address))
 
 	except ValueError as e:
-		print('Parcel {}: {}'.format(parcel_id, e))
+		#print('Parcel {}: {}'.format(parcel_id, e))
 		# log_writer.writerow([parcel_id, source_address, e])
+                pass
 
 	except Exception as e:
 		print('{}: Unhandled error'.format(source_parcel))

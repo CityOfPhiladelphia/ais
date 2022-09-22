@@ -152,7 +152,7 @@ print('Reading addresses...')
 for i, street_name in enumerate(street_names):
     first_character = street_name[0]
     if first_character != cur_first_character:
-        print(street_name)
+        #print(street_name)
         cur_first_character = first_character
 
     address_rows = street_map[street_name]
@@ -293,7 +293,8 @@ for i, street_name in enumerate(street_names):
                     geocode_vals['geocode_street_x'] = x
                     geocode_vals['geocode_street_y'] = y
                 except:
-                    print("Could not get geocode_street values for: ", street_address)
+                    #print("Could not get geocode_street values for: ", street_address)
+                    pass
 
                 break
 

@@ -219,7 +219,8 @@ for address in addresses:
 							zip_alpha_i_low = alpha_map[zip_unit_low]
 							zip_alpha_i_high = alpha_map[zip_unit_high]
 						except KeyError:
-							print('Unhandled KeyError')
+							#print('Unhandled KeyError')
+                                                        pass
 
 						if zip_alpha_i_low <= unit_alpha_i <= \
 							zip_alpha_i_high:
