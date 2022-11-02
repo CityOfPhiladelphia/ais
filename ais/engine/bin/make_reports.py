@@ -169,8 +169,8 @@ def concatenate_dor_address(source_comps):
 ##############
 # TRUE RANGE #
 ##############
-#print("Writing true_range table...")
-#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
+print("Writing true_range table...")
+etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
