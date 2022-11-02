@@ -62,14 +62,15 @@ address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '18-20 W GIRARD AVE'
+DEV_ADDRESS = '5601 E WISTER ST'
 DEV_ADDRESS_COMPS = {
-    # 'address_low':      '4700',
-    # 'address_high':     '4726',
-    # 'street_name':      'ALDEN',
-    # 'street_suffix':    'WALK',
+    # 'address_low':      '5601',
+    # # 'address_high':     '',
+    # 'street_predir':    'E',
+    # 'street_name':      'WISTER',
+    # 'street_suffix':    'ST',
 }
-DEV_STREET_NAME = 'GIRARD'
+DEV_STREET_NAME = 'WISTER'
 
 # Logging stuff.
 address_errors = []
@@ -186,9 +187,10 @@ for source in sources:
         elif source_type == 'comps':
             source_rows = source_table.read(fields=source_fields, \
                                             aliases=aliases, where=where, return_geom=False)
-
-    if not source_rows or len(source_rows) < 2:
-        raise Exception("Exiting because source table {source_table} is empty.".format(source_table=source_table))
+    if not DEV:
+        if not source_rows or len(source_rows) < 1:
+            print(source_rows)
+            raise Exception("Exiting because source table {source_table} is empty.".format(source_table=source_table))
 
     # Loop over addresses
     for i, source_row in enumerate(source_rows):
@@ -751,14 +753,25 @@ for address in addresses:
                 check_from = None
                 check_to = None
 
-                if left_parity in [address_parity, 'B']:
+                if left_parity in [address_parity, 'B'] and right_parity not in [address_parity, 'B']:
                     check_from = left_from
                     check_to = left_to
                     matching_side = 'L'
-                elif right_parity in [address_parity, 'B']:
+                elif right_parity in [address_parity, 'B'] and left_parity not in (address_parity, 'B'):
                     check_from = right_from
                     check_to = right_to
                     matching_side = 'R'
+
+                # If seg has same parity on both sides, match to closest side:
+                elif left_parity in [address_parity, 'B'] and right_parity in [address_parity, 'B']:
+                    if abs(address_low - left_from) < abs(address_low - right_from):
+                        check_from = left_from
+                        check_to = left_to
+                        matching_side = 'L'
+                    else:
+                        check_from = right_from
+                        check_to = right_to
+                        matching_side = 'R'
                 else:
                     continue
 
