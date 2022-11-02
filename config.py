@@ -383,7 +383,7 @@ ADDRESSES = {
         },
         {
             'name':                 'voters',
-            'table':                'gis_elections.voters_2021_06',
+            'table':                'gis_elections.voters_2022_09',
             'db':                   'gis',
             'address_fields':       {
                 'address_low':          'house__',
