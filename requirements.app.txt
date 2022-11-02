@@ -1,7 +1,7 @@
 setuptools==54.1.2
 alembic==1.0.0
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
--e git+https://github.com/CityOfPhiladelphia/passyunk.git#egg=passyunk
+-e git+https://github.com/CityOfPhiladelphia/passyunk.git@pre-automation-stable#egg=passyunk
 # flasgger==0.5.14
 Flask==1.0.2
 Flask-Migrate==2.5.3
