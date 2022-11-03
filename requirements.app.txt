@@ -5,8 +5,7 @@ alembic==1.0.0
 # flasgger==0.5.14
 Flask==1.0.2
 Flask-Migrate==2.5.3
-#Flask-Script==2.0.6cd 
-Flask-Script==2.0.6 
+Flask-Script==2.0.6
 Flask-SQLAlchemy==2.4.1
 Flask-Cors==3.0.8
 Flask-CacheControl==0.1.2
@@ -32,5 +31,5 @@ pathlib2==2.3.5
 
 # For passyunk
 fuzzywuzzy==0.11.1
-#python-levenshtein
+python-levenshtein==0.12.0
 
