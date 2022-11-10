@@ -1,20 +1,27 @@
 from flask import Flask
-from flask_cachecontrol import FlaskCacheControl
+#import flask_cachecontrol
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_script import Manager
-from flask_migrate import Migrate, MigrateCommand
+from flask_migrate import Migrate
 # from flasgger import Swagger, MK_SANITIZER
+
+# Flask 2.0
+from flask.cli import FlaskGroup
+
+
+# below fixes "ModuleNotFoundError: No module named 'flask._compat'" error that happens
+# in later 2.0 flask versions
+#from flask_login._compat import text_type
 
 
 # Create app instance
-app = Flask(__name__, instance_relative_config=True)
+app = Flask('__name__', instance_relative_config=True)
 
 # Allow cross-origin requests
 CORS(app)
 
 # Allow caching of responses
-FlaskCacheControl(app)
+#FlaskCacheControl(app)
 
 # Load default config
 app.config.from_object('config')
@@ -33,14 +40,6 @@ if app.config.get('SENTRY_DSN', None):
 
 # Init database extension
 app_db = SQLAlchemy(app)
-
-# Init manager and register commands
-manager = Manager(app)
-manager.add_command('db', MigrateCommand)
-
-# Import engine manager here to avoid circular imports
-from ais.engine.manage import manager as engine_manager
-manager.add_command('engine', engine_manager)
 
 # Init migration extension
 migrate = Migrate(app, app_db)

@@ -1,5 +1,6 @@
 import json
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 from geoalchemy2.shape import to_shape
 from ais import app, util #, app_db as db
 from ais.models import Address, ENGINE_SRID

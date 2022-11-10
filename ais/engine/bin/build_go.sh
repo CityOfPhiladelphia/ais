@@ -52,13 +52,15 @@ activate_venv_source_libaries() {
 }
 
 
-pull_repo() {
-    echo "Ensuring necessary repos are updated from github"
+pull_passyunk_repo() {
+#    echo "Ensuring necessary repos are updated from github"
     # GET LATEST CODE FROM GIT REPO
-    git fetch origin && git pull
-    cd $WORKING_DIRECTORY/env/src/passyunk
-    git fetch origin && git pull
-    cd $WORKING_DIRECTORY
+    # passyunk public repo
+    pip install git+https://github.com/CityOfPhiladelphia/passyunk
+    # passyunk private repo that pulls in csvs
+    # note the URL is private-git, this is a custom SSH host specified in out SSH config
+    # file, /root/.ssh/config that is installed in our Dockerfile.
+    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 }
 
 
@@ -77,15 +79,16 @@ setup_log_files() {
 }
 
 
-# Check for and load credentials
 # Note: Make sure to have your ais/instance/config.py populated
+# Check for and load credentials
 # This wil be needed for the engine build to pull in data.
 # config-secrets.sh contains AWS 
 check_load_creds() {
     echo "Loading credentials and passwords into the environment"
-    . $WORKING_DIRECTORY/pull-private-passyunkdata.sh
-    cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-    cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+    # 11/9/22 Note: No longer needed with Jame's changes. pdata is installed via pip
+    #. $WORKING_DIRECTORY/pull-private-passyunkdata.sh
+    #cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
+    #cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
 
     file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/config-secrets.sh
@@ -346,7 +349,8 @@ make_reports_tables() {
 
 activate_venv_source_libaries
 
-pull_repo
+# 11/9/22 Note: No longer needed with Jame's changes. pdata is installed via pip
+#pull_repo
 
 setup_log_files
 

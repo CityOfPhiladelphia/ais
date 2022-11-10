@@ -1,0 +1,6 @@
+Host private-git
+  User Auto-CityGeo
+  Hostname github.com
+  PreferredAuthentications publickey
+  IdentityFile /root/.ssh/passyunk-private.key
+

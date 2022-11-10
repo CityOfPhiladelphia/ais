@@ -7,7 +7,7 @@ Does three primary things:
 from collections import OrderedDict
 from itertools import chain
 from flask import Response, request, redirect, url_for
-from flask_cachecontrol import cache_for
+from flask_cachecontrol import cache_for, ResponseIsSuccessfulOrRedirect
 # from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
@@ -130,7 +130,7 @@ def unmatched_response(**kwargs):
 
 
 @app.route('/unknown/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 def unknown_cascade_view(**kwargs):
 
     query = kwargs.get('query')
@@ -270,7 +270,7 @@ def unknown_cascade_view(**kwargs):
 
 
 @app.route('/addresses/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/addresses.yml')
 def addresses(query):
     """
@@ -554,7 +554,7 @@ def addresses(query):
 
 
 @app.route('/block/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/block.yml')
 def block(query):
     """
@@ -644,7 +644,7 @@ def block(query):
 
 
 @app.route('/owner/<query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
@@ -698,7 +698,7 @@ def owner(query):
 
 
 @app.route('/account/<query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/account.yml')
 def account(query):
     """
@@ -761,7 +761,7 @@ def account(query):
 
 
 @app.route('/pwd_parcel/<query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/pwd_parcel.yml')
 def pwd_parcel(query):
     """
@@ -831,7 +831,7 @@ def pwd_parcel(query):
 
 
 @app.route('/dor_parcel/<query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/mapreg.yml')
 def dor_parcel(query):
     """
@@ -889,7 +889,7 @@ def dor_parcel(query):
 
 
 @app.route('/intersection/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/intersection.yml')
 def intersection(query):
     '''
@@ -1008,7 +1008,7 @@ def intersection(query):
 
 
 @app.route('/reverse_geocode/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/reverse_geocode.yml')
 def reverse_geocode(query):
 
@@ -1133,7 +1133,7 @@ def reverse_geocode(query):
 
 
 @app.route('/service_areas/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/service_areas.yml')
 def service_areas(query):
 
@@ -1202,7 +1202,7 @@ def service_areas(query):
 
 
 #@app.route('/street/<path:query>')
-#@cache_for(hours=1)
+#@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 def street(query):
     error = json_error(404, 'Could not find any addresses matching query.',
                        {'query': query})
@@ -1216,7 +1216,7 @@ def street(query):
 #     return response
 
 @app.route('/search/<path:query>')
-@cache_for(hours=1)
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 # @swag_from('docs/search.yml')
 def search(query):
     """

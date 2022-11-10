@@ -1,5 +1,6 @@
 #FROM python:3.6.13-slim-stretch
-FROM python:3.6.15-slim-bullseye
+#FROM python:3.6.15-slim-bullseye
+FROM python:3.10.8-slim-bullseye
 MAINTAINER CityGeo
 
 RUN apt-get update -y && \
@@ -13,22 +14,32 @@ RUN apt-get update -y && \
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
 COPY . /ais
 
+# Private passyunk data now retrieved through private repo in build_go.sh
+#COPY election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv
+#COPY usps_zip4s.csv /ais/env/src/passyunk/passyunk/pdata/usps_zip4s.csv
+# Automated key for accessing private git repo
+RUN mkdir /root/.ssh && chmod 600 /root/.ssh
+# Add github to the list of known hosts so our SSH pip installs work later
+RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+COPY --chmod=0600 ssh-config /root/.ssh/config 
+COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
+
 # https://github.com/CityOfPhiladelphia/ais/blob/master/requirements.server.txt
 # Make the AIS cloned into the root, /ais
-
+# Note: right now passyunk needs to be installed manually, doesn't work
+# via requirements.txt for whatever reason
 RUN cd /ais && \
     python -m venv env && \
     . ./env/bin/activate && \
     pip install --upgrade pip && \
+    pip install git+https://github.com/CityOfPhiladelphia/passyunk && \
+    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git && \
     pip install -r requirements.app.txt
 
 RUN mkdir /ais/instance
 
 COPY docker-build-files/50x.html /var/www/html/50x.html
 COPY docker-build-files/nginx.conf /etc/nginx/nginx.conf
-
-COPY election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv
-COPY usps_zip4s.csv /ais/env/src/passyunk/passyunk/pdata/usps_zip4s.csv
 
 COPY docker-build-files/entrypoint.sh /entrypoint.sh
 

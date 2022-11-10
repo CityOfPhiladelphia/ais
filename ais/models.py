@@ -1152,9 +1152,10 @@ class AddressSummaryQuery(BaseQuery):
 
 try:
     class ServiceAreaSummary(db.Model):
-        __table__ = db.Table('service_area_summary',
-                             db.MetaData(bind=db.engine),
-                             autoload=True)
+        with app.app_context():
+            __table__ = db.Table('service_area_summary',
+                                 db.MetaData(bind=db.engine),
+                                 autoload=True)
 except NoSuchTableError:
     ServiceAreaSummary = None
     # if table hasn't been created yet, suppress error

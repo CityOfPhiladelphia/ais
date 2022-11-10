@@ -1,6 +1,7 @@
 #!/bin/bash
 cd /ais
 source env/bin/activate
+
 # This line has flask serve out the app directly, only for staging
 #python application.py runserver -h 0.0.0.0 -p 80
 

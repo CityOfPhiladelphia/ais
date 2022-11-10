@@ -1,3 +1,7 @@
+# Git keys
+passyunk-private.key
+passyunk-public.key
+*.key
 
 # docker-compose build secrets
 config-secrets.sh
