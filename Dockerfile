@@ -3,9 +3,16 @@
 FROM python:3.10.8-slim-bullseye
 MAINTAINER CityGeo
 
+# note, have these declared in your .env file and then use docker-compose to build
+# only docker-compose uses .env files
+ENV ENGINE_DB_HOST=$ENGINE_DB_HOST
+ENV ENGINE_DB_PASS=$ENGINE_DB_PASS
+ENV BLUE_ENGINE_CNAME=$BLUE_ENGINE_CNAME
+ENV GREEN_ENGINE_CNAME=$GREEN_ENGINE_CNAME
+
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install nginx gcc git build-essential vim -y && \
+    apt-get install nginx gcc git build-essential vim dnsutils -y && \
     apt-get clean -y && \
     apt-get autoremove -y
 
@@ -29,14 +36,18 @@ COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
 # Note: right now passyunk needs to be installed manually, doesn't work
 # via requirements.txt for whatever reason
 RUN cd /ais && \
-    python -m venv env && \
-    . ./env/bin/activate && \
+    #python -m venv /ais/venv && \
+    #. /ais/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install git+https://github.com/CityOfPhiladelphia/passyunk && \
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git && \
     pip install -r requirements.app.txt
 
-RUN mkdir /ais/instance
+
+# Actually install our AIS package
+RUN cd /ais && pip3 install .
+
+RUN mkdir -p /ais/instance
 
 COPY docker-build-files/50x.html /var/www/html/50x.html
 COPY docker-build-files/nginx.conf /etc/nginx/nginx.conf

@@ -34,10 +34,14 @@ To develop locally:
 
 ## Docker Container Dev
 
-For building the docker container, you'll need some environment variables first. Copy the example config script and populate it:
+For building the docker container, you'll need some environment/build arg variables first. Copy the example .env file used with docker-compose and populate it:
 
-1. `cp config-secrets.sh.example config-secrets.sh && chmod +x config-secrets.sh` 
-2. Source it so the env vars are in your shell: `source ./config-secrets.sh`
+1. `cp env.example .env && chmod +x .env` 
+2. populate it, set the $ENGINE_DB_HOST var to your database CNAME or IP. Note that in our build deploy process at citygeo this is done automatically and is not needed.
+
+Check to make sure docker-compose is populating your args:
+
+1. docker-compose -f build-test-compose.yml config
 
 Note that you may need to set ENGINE_DB_HOST to a direct IP instead of a CNAME to get it working in-office.
 Now run the 'pull-private-passyunkdata.sh' script to download CSVs needed in the DockerFile.
@@ -47,7 +51,8 @@ Now run the 'pull-private-passyunkdata.sh' script to download CSVs needed in the
 Then build and start the container.
 
 3. Via docker-compose: `docker-compose -f build-test-compose.yml up --build -d` 
-    1. Directly: ```
+    1. Directly:
+```
 docker build -t ais:latest .
 docker run -itd --name ais -p 8080:8080 -e ENGINE_DB_HOST=$ENGINE_DB_HOST -e ENGINE_DB_PASS= $ENGINE_DB_PASS ais:latest` 
 ```

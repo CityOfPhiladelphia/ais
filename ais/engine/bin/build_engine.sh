@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-WORKING_DIRECTORY=/root/ais
+WORKING_DIRECTORY=/home/ec2-user/ais
 
 echo "Activating virtual environment"
 source $WORKING_DIRECTORY/env/bin/activate

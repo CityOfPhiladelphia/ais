@@ -8,5 +8,8 @@ setup(name='ais',
       author_email='maps@phila.gov',
       license='MIT',
       packages=['ais'],
-      entry_points={'console_scripts': ['ais=ais:manager.run']},
+      # console_script arg format is <function_name>=<containing_script_name_minus_.py>:<main_function_that_runs_it>
+      # See application.py and setup.py for the responsible functions
+      #entry_points={'console_scripts': ['ais=ais:cli']},
+      entry_points={'console_scripts': ['ais=ais.commands:cli']},
       zip_safe=False)

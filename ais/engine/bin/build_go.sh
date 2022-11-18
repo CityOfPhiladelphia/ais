@@ -3,8 +3,9 @@
 
 # exit when any command fails
 set -e
+set -x
 
-WORKING_DIRECTORY=/root/ais
+WORKING_DIRECTORY=/home/ec2-user/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
 
 cd $WORKING_DIRECTORY
@@ -30,7 +31,7 @@ echo "Started: "$start_dt
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/env ]; then
         echo "Activating/creating venv.."
-        python3.6 -m venv $WORKING_DIRECTORY/env 
+        python3.10 -m venv $WORKING_DIRECTORY/env 
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
@@ -38,8 +39,13 @@ activate_venv_source_libaries() {
         # Looks like pip 18.1 works and is what we want.
         #pip install --upgrade "pip < 21.0"
         pip install wheel
+	# Add github to the list of known hosts so our SSH pip installs work later
+	ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+	pip install git+https://github.com/CityOfPhiladelphia/passyunk
+ 	pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 	# used for python3.5
         #python setup.py bdist_wheel 
+        #pip install -r $WORKING_DIRECTORY/requirements.txt || deactivate && rm $WORKING_DIRECTORY/env -rf && exit 1
         pip install -r $WORKING_DIRECTORY/requirements.txt
         # Install AIS as a python module, needed in tests.
         python setup.py develop
