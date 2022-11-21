@@ -16,11 +16,6 @@ RUN apt-get update -y && \
     apt-get clean -y && \
     apt-get autoremove -y
 
-#RUN git clone https://github.com/CityOfPhiladelphia/ais /ais
-#RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
-#RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
-COPY . /ais
-
 # Private passyunk data now retrieved through private repo in build_go.sh
 #COPY election_block.csv /ais/env/src/passyunk/passyunk/pdata/election_block.csv
 #COPY usps_zip4s.csv /ais/env/src/passyunk/passyunk/pdata/usps_zip4s.csv
@@ -35,14 +30,21 @@ COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
 # Make the AIS cloned into the root, /ais
 # Note: right now passyunk needs to be installed manually, doesn't work
 # via requirements.txt for whatever reason
-RUN cd /ais && \
-    #python -m venv /ais/venv && \
-    #. /ais/venv/bin/activate && \
-    pip install --upgrade pip && \
+# Note: Install python reqs at the system level, no need for venv in a docker container
+# also caused some issues for me.
+RUN mkdir -p /ais
+COPY ./requirements.app.txt /ais/
+RUN pip install --upgrade pip && \
     pip install git+https://github.com/CityOfPhiladelphia/passyunk && \
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git && \
-    pip install -r requirements.app.txt
+    pip install -r /ais/requirements.app.txt
+    #python -m venv /ais/venv && \
+    #. /ais/venv/bin/activate && \
 
+#RUN git clone https://github.com/CityOfPhiladelphia/ais /ais
+#RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
+#RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
+COPY . /ais
 
 # Actually install our AIS package
 RUN cd /ais && pip3 install .

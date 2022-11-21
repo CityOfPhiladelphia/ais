@@ -1,7 +1,7 @@
 # Deployment requirements
 
 python-levenshtein
-
+python-dotenv
 
 git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
 
