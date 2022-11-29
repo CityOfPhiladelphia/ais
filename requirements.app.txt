@@ -2,6 +2,7 @@
 
 python-levenshtein
 python-dotenv
+dnspython
 
 git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
 

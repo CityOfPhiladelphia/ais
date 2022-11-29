@@ -10,6 +10,7 @@ git+https://github.com/CityOfPhiladelphia/passyunk
 git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
+cx-oracle
 
 alembic
 # flasgger=0.5.14

@@ -1,13 +1,13 @@
 import click
-from flask import Flask
-from flask.cli import FlaskGroup
+from ais.engine.commands import engine
 
-def create_app():
-    app = Flask('testing')
-    # other setup
-    return app
 
-@click.group(cls=FlaskGroup, create_app=create_app)
+@click.group()
 def cli():
-    print('Test success!')
-    """Management script for the Wiki application."""
+    pass
+
+# for whatever reaosn, setting the console_scripts in setup.py to point
+# at this script sets __name__ to this.
+if __name__ == 'ais.commands':
+    cli.add_command(engine)
+    cli()
