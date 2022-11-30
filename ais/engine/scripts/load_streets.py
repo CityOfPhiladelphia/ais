@@ -44,9 +44,10 @@ def main():
     print('Deleting existing streets...')
     street_table.delete(cascade=True)
 
-    print('Reading streets from source...')
+    print(f'Reading streets table {source_table} from source...')
     source_fields = list(field_map.values())
     source_rows = source_table.read(to_srid=engine_srid)
+    print('Rows retrieved.')
 
     streets = []
     error_count = 0

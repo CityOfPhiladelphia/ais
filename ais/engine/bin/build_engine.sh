@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-WORKING_DIRECTORY=/home/ec2-user/ais
+WORKING_DIRECTORY=/home/ubuntu/ais
 
 echo "Activating virtual environment"
-source $WORKING_DIRECTORY/env/bin/activate
+source $WORKING_DIRECTORY/venv/bin/activate
 # Add the ais folder with our __init__.py so we can import it as a python module
 export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
 #source ../../../env/bin/activate

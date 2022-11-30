@@ -13,6 +13,7 @@ pardir = os.path.abspath('..')
 
 # load from .env file
 try:
+    print('Loading the .env file, will use database info if found there...')
     load_dotenv()
 except Exception:
     load_dotenv(pardir + '/.env')

@@ -12,4 +12,6 @@ def engine(script):
         # in that directory to be importable.
         mod = __import__("ais.engine.scripts.{}".format(script), fromlist=["main"])
         mod.main()
+    if not script:
+        print('Please pass an arg to the --script flag.')
 

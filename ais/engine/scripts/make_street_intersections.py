@@ -54,10 +54,10 @@ def main():
 
     parser = Parser()
 
-    print('Deleting existing intersections...')
+    print(f'Deleting existing table {str(intersection_table_name)}...')
     intersection_table.delete(cascade=True)
 
-    print('Creating temporary tables...')
+    print('Creating temporary table "street_centerlines"...')
 
     st_cent_stmt = '''
         DROP table if exists street_centerlines;
@@ -94,9 +94,9 @@ def main():
     db.execute(st_node_stmt)
     db.save()
 
-    print('Reading streets from source...')
     source_fields = list(field_map.values())
     # where = "st_type != 'RAMP'"
+    print(f'Reading {centerline_table} from source...')
     centerline_rows = centerline_table.read(to_srid=engine_srid)
     centerlines = []
     nodes = []
@@ -175,10 +175,19 @@ def main():
     '''
     WRITE
     '''
-    print("Copying temporary street_nodes table...")
-    etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
-        .rename({'shape': 'geom'})\
-        .topostgis(pg_db, 'street_nodes')
+    print(f'Copying temporary street_nodes table "{str(nodes_table_name)}"...')
+    #etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
+    #    .rename({'shape': 'geom'})\
+    #    .topostgis(pg_db, 'street_nodes')
+    # shape field is already named geom for whatever reason. -Roland, 11-30-22
+
+    nodes_rows = etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])
+
+    # Rename to match our street_nodes table shape field, which is geom.
+    nodes_rows = nodes_rows.rename({'shape': 'geom'})
+
+    # Write to our local db
+    nodes_rows.topostgis(pg_db, 'street_nodes')
 
     print("Writing temporary centerline table...")
     centerline_table.write(centerlines, chunk_size=50000)
@@ -262,11 +271,11 @@ def main():
     ;
     '''
 
-    print("Writing street intersection table...")
+    print("Writing street_intersection table...")
     db.execute(st_int_stmt)
     db.save()
 
-    print("Deleting temporary centerline table...")
+    print("Deleting temporary streets_centerline table...")
     del_st_cent_stmt =\
     '''
         Drop table if exists street_centerlines;

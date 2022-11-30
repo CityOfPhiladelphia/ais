@@ -1,4 +1,8 @@
-git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
+
+#git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
+# We need this specific branch for now to make some of the engine build functions work
+# but we can't merge that branch until some stuff is cleared up.
+git+https://github.com/CityOfPhiladelphia/geopetl@fix_shape_bug
 
 # Public code for passyunk
 git+https://github.com/CityOfPhiladelphia/passyunk
@@ -11,6 +15,9 @@ git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 
 -e git+https://github.com/CityOfPhiladelphia/datum.git@ais_version#egg=datum
 cx-oracle
+
+# used for date parsing
+python-dateutil
 
 alembic
 # flasgger=0.5.14
