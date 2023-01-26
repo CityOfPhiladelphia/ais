@@ -158,7 +158,8 @@ while not done:
                                             'linked_address': linked_address, 'linked_path': linked_path}
                             new_linked_tags.append(add_tag_dict)
                             found = True
-                            break
+                            #break # don't break in order to handle multiple tag values per tag key
+
                             # TODO: Do something if tag can't be found by traversing links so API doesn't look for it
     if len(new_linked_tags) > 0:
         linked_tags_map = linked_tags_map + new_linked_tags
