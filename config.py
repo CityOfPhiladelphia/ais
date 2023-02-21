@@ -1353,7 +1353,49 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # GIS_HEALTH
+        {
+            'layer_id':                     'tobacco_retailer_density_caps',
+            'name':                         'Tobacco Retailer Density Caps',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_health.TobRetailerDensityCaps',
+                    'value_field':          'isundercap',
+                },
+            },
+        },
+        {
+            'layer_id':                     'tobacco_free_school_zones',
+            'name':                         'Tobacco Free School Zones',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_health.TOBFREESCHOOLZONES',
+                    'value_field':          'objectid',
+                    'method':               'yes_or_no'
+                },
+            },
+            'value_method':                 'yes_or_no',
 
+        },
+        {
+            'layer_id':                     'tobacco_free_school_zones_parc',
+            'name':                         'Parcels Intersect Tobacco Free Zones',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_health.PARCELSINTERSECTTOBFREEZONE',
+                    'value_field':          'objectid',
+                    'method':               'yes_or_no'
+                },
+            },
+            'value_method':                 'yes_or_no',
+
+        },
     ],
 }
 
