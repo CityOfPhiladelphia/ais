@@ -1355,14 +1355,14 @@ SERVICE_AREAS = {
         },
         # GIS_HEALTH
         {
-            'layer_id':                     'tobacco_retailer_density_caps',
+            'layer_id':                     'tobacco_retailer_permit_capped',
             'name':                         'Tobacco Retailer Density Caps',
             'description': '',
             'sources': {
                 'polygon': {
                     'db':                   'gis_sa',
                     'table':                'gis_health.TobRetailerDensityCaps',
-                    'value_field':          'isundercap',
+                    'value_field':          'capped',
                 },
             },
         },
