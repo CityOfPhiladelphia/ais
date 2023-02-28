@@ -1,3 +1,4 @@
+# Our config full of secrets
 config.py
 
 # Git keys
@@ -10,6 +11,7 @@ config-secrets.sh
 config-secrets.py
 route53-change.json
 *.csv
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -80,6 +82,7 @@ target/
 
 # pyenv
 .python-version
+venv
 
 # dotenv
 .env
