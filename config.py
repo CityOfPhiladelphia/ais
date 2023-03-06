@@ -1404,11 +1404,7 @@ ADDRESS_SUMMARY = {
     'geocode_types': [
         'pwd_parcel',
         'dor_parcel',
-        # 'pwd_parcel_spatial',
-        # 'dor_parcel_spatial',
         'true_range',
-        # 'centerline',
-        # 'curb',
     ],
     # 'geocode_types_on_curb': [
     #     'pwd_curb',
@@ -1430,6 +1426,8 @@ ADDRESS_SUMMARY = {
         'centerline': 6,
         'pwd_parcel_spatial': 9,
         'dor_parcel_spatial': 10,
+        'pwd_parcel_front': 11,
+        'dor_parcel_front': 12,
         'unable_to_geocode': 99
     },
 
