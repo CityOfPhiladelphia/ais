@@ -111,6 +111,8 @@ def main():
     # Loop over address sources
     for source in sources:
         source_name = source['name']
+        if source_name == 'opa_property': 
+            continue
 
         # Determine address field mapping: single or comps
         address_fields = source['address_fields']

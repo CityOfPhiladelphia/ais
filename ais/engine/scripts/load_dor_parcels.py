@@ -8,7 +8,6 @@ import datum
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from ais import app
-from config import VALID_ADDRESS_LOW_SUFFIXES
 # DEV
 from pprint import pprint
 import traceback
@@ -24,6 +23,8 @@ def main():
 
     config = app.config
     db = datum.connect(config['DATABASES']['engine'])
+
+    VALID_ADDRESS_LOW_SUFFIXES = config['VALID_ADDRESS_LOW_SUFFIXES']
 
     source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
     source_db_name = source_def['db']
@@ -96,18 +97,19 @@ def main():
         24500:          'COMMERCE ST',
     })
 
-    print('Reading parcels from source...')
     # Get field names
     source_where = source_def['where']
 
     # DEV
     # source_table += ' SAMPLE(1)'
-    # source_where += " AND mapreg = '001S050134'"
+    # source_where += " AND mapreg = '038N010303'"
     # source_where += " AND objectid = 540985"
-    #source_where += " AND rownum < 100"
+    source_where += " AND rownum <= 20000"
 
     source_fields = list(field_map.values())
+    print(f'Reading parcels from {source_table_name} at db {source_db_url}...')
     source_parcels = source_table.read(where=source_where)
+    print(f'Read in {len(source_parcels)} rows.')
     source_parcel_map = {x['objectid']: x for x in source_parcels}
 
     parcels = []
@@ -128,8 +130,6 @@ def main():
     #   pass
 
     def had_warning(reason, note=None):
-        global warning_map
-        global object_id
         parcel_warnings = warning_map.setdefault(object_id, [])
         warning = {
             'reason':   reason,
@@ -138,22 +138,18 @@ def main():
         parcel_warnings.append(warning)
 
     def had_error(reason, note=None):
-        global error_map
-        global object_id
-        global should_add_parcel
         parcel_errors = error_map.setdefault(object_id, [])
         error = {
             'reason':   reason,
             'note':     note if note else '',
         }
         parcel_errors.append(error)
-        should_add_parcel = False
 
     # Loop over source parcels
     for i, source_parcel in enumerate(source_parcels):
+        if i % 50000 == 0:
+            print(i)
         try:
-            if i % 50000 == 0:
-                print(i)
 
             should_add_parcel = True
 
@@ -212,6 +208,7 @@ def main():
 
             # QC: Check street components
             if street_name is None:
+                should_add_parcel = False
                 had_error('No street name')
             if street_code is None:
                 had_warning('No street code')
@@ -244,6 +241,7 @@ def main():
 
             # QC: Check for low address number
             if address_low is None:
+                should_add_parcel = False
                 had_error('No address number')
 
             # Clean up
@@ -281,12 +279,14 @@ def main():
                         (len_address_low == 1 and len_address_high == 2):
                         address_high_full = address_high
                     else:
+                        should_add_parcel = False
                         had_error('Address spans multiple hundred blocks')
 
                     # Case: 317-315
                     if address_high_full:
                         if address_high_full < address_low:
                             # print(address_low, address_high_full)
+                            should_add_parcel = False
                             had_error('Inverted range address')
 
                         # Make sure both addresses are on the same hundred block
@@ -294,6 +294,7 @@ def main():
                         hun_block_high = address_high_full - (address_high_full % 100)
                         if hun_block_low != hun_block_high:
                             # print(hun_block_low, hun_block_high)
+                            should_add_parcel = False
                             had_error('Address spans multiple hundred blocks')
 
                         address_high = str(address_high_full)[-2:]
@@ -336,10 +337,12 @@ def main():
                 
                 except Exception as e:
                     #print(source_address)
+                    should_add_parcel = False
                     had_error('Could not parse')
 
             # QC: parcel ID (aka mapreg)
             if parcel_id is None:
+                should_add_parcel = False
                 had_error('No parcel ID')
             else:
                 # Check for duplicate
@@ -351,6 +354,7 @@ def main():
 
             # QC: geometry
             if not geometry_re.match(geometry):
+                should_add_parcel = False
                 had_error('Invalid geometry')
                 bad_geom_parcels.append(object_id)
 
@@ -449,6 +453,7 @@ def main():
         # except ValueError as e:
         #   # print('Parcel {}: {}'.format(parcel_id, e))
         #   reason = str(e)
+        #   should_add_parcel = False
         #   had_error(reason)
 
         except Exception as e:

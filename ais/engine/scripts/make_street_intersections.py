@@ -103,10 +103,9 @@ def main():
     error_count = 0
 
     for i, cl_row in enumerate(centerline_rows):
+        if i % 10000 == 0:
+            print(i)
         try:
-            if i % 10000 == 0:
-                print(i)
-
             # Parse street name
             source_street_full_comps = [str(cl_row[x]).strip() for x in \
                                         source_street_full_fields]
