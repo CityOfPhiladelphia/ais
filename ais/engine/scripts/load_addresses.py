@@ -1,23 +1,15 @@
-import sys
-# import os
-# import csv
-# from copy import deepcopy
 from datetime import datetime
 import datum
 from ais import app
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from passyunk.parser import PassyunkParser
-# DEV
-# import traceback
-# from pprint import pprint
 
 def main():
     print('Starting...')
     start = datetime.now()
 
     config = app.config
-    Parser = config['PARSER']
 
     parser_tags = config['ADDRESSES']['parser_tags']
     sources = config['ADDRESSES']['sources']
@@ -111,8 +103,6 @@ def main():
     # Loop over address sources
     for source in sources:
         source_name = source['name']
-        if source_name == 'opa_property': 
-            continue
 
         # Determine address field mapping: single or comps
         address_fields = source['address_fields']
@@ -139,7 +129,6 @@ def main():
         address_fields = source['address_fields']
         source_fields = list(address_fields.values())
         if 'tag_fields' in source:
-            # source_fields += [x['source_field'] for x in source['tag_fields']]
             for tag_field in source['tag_fields']:
                 tag_source_fields = tag_field['source_fields']
                 tag_preprocessor = tag_field.get('preprocessor')
@@ -152,18 +141,6 @@ def main():
         source_db = datum.connect(config['DATABASES'][source_db_name])
         source_table = source_db[source['table']]
         print('Reading from {}...'.format(source_name))
-
-        # Add source fields depending on address type
-        # Not using this since we implemented the `aliases` arg on .read()
-        # if source_type == 'single_field':
-        # source_fields.append('{} AS street_address'\
-        #     .format(address_fields['street_address']))
-        # source_fields.append(address_fields['street_address'])
-        # elif source_type == 'comps':
-        # for address_field_std, address_field in address_fields.items():
-        #     source_fields.append('{} AS {}'\
-        #         .format(address_field, address_field_std))
-        # source_fields.append(address_fields.values())
 
         where = source['where'] if 'where' in source else None
 
@@ -201,10 +178,6 @@ def main():
             # Get source address and add source to map. We do this outside the
             # try statement so that source_address is always properly set for
             # logging errors.
-            # if source_type == 'single_field':
-            #     source_address = source_row['street_address']
-            # else:
-            #     source_address = preprocessor(source_row)
 
             # If there's a preprocessor, apply. This could be single field or comps.
             if preprocessor:
@@ -275,9 +248,6 @@ def main():
                         source_field = source_fields[0]
                         value = source_row[source_field]
 
-                    # source_field = tag_field['source_field']
-                    # value = source_row[source_field]
-
                     # Skip empty tags
                     if value is None or len(str(value).strip()) == 0:
                         continue
@@ -287,7 +257,6 @@ def main():
                         value = value.upper()
 
                     key = tag_field['key']
-                    # value = source_row[source_field]
 
                     # Make address tag string to check if we already added this tag
                     address_tag_string_vals = [
@@ -301,9 +270,7 @@ def main():
                     if str(value).strip() and not address_tag_string in address_tag_strings:
                         address_tag = {
                             'street_address': street_address,
-                            # 'key':              tag_field['key'],
                             'key': key,
-                            # 'value':            source_row[source_field]
                             'value': value
                         }
                         address_tags.append(address_tag)
@@ -341,16 +308,6 @@ def main():
                             _source_addresses.append(source_address)
 
                 # # If it's a range, make sure we have all the child addresses
-                # for child_obj in address.child_addresses:
-                #     child_street_address = child_obj.street_address
-                #     if not child_street_address in street_addresses_seen:
-                #         addresses.append(child_obj)
-                #         street_addresses_seen.add(child_street_address)
-                #
-                #         # Add to source address map
-                #         _source_addresses = source_address_map.setdefault(child_street_address, [])
-                #         if not source_address in _source_addresses:
-                #             _source_addresses.append(source_address)
 
             except ValueError as e:
                 address_error = {
@@ -372,10 +329,13 @@ def main():
             address_tag_strings = set()
 
             print('Writing {} source addresses...'.format(len(source_addresses)))
+            # Had to re-initialize connection else cx_Oracle.DatabaseError: ORA-12170: TNS:Connect timeout occurred
+            db = datum.connect(config['DATABASES']['engine'])
+            address_table = db['address']
+            address_tag_table = db['address_tag']
+            source_address_table = db['source_address']
             source_address_table.write(source_addresses, chunk_size=150000)
             source_addresses = []
-
-        #source_db.close()
 
     insert_rows = [dict(x) for x in addresses]
 
@@ -455,7 +415,6 @@ def main():
     apt_unit_types = set(['APT', 'UNIT'])
 
     new_addresses = []
-    addresses_seen = set()
     for i, address in enumerate(addresses):
         if i % 100000 == 0:
             print(i)
@@ -468,7 +427,6 @@ def main():
                 'address_1': address.street_address,
                 'relationship': 'has base',
                 'address_2':       address.base_address,
-                # 'address_2': address.base_address_no_suffix,
             }
             links.append(base_link)
 
@@ -568,11 +526,9 @@ def main():
                             'address_1': child_street_address,
                             'relationship': 'in range',
                             'address_2': address.base_address,
-                            # 'address_2': base_address_no_suffix,
                         }
                         links.append(child_link)
                 except ValueError:
-                    #print('Could not parse new address: {}'.format(child_address))
                     continue
 
             # Overlap link
@@ -1065,14 +1021,6 @@ def main():
                 address_parcels.append(address_parcel)
 
                 # Rework this to support multiple matches
-                # if parcel_id is not None:
-                #   address_parcel = {
-                #       'street_address':   street_address,
-                #       'parcel_source':    parcel_layer,
-                #       'parcel_id':        parcel_id,
-                #       'match_type':       match_type,
-                #   }
-                #   address_parcels.append(address_parcel)
 
     if WRITE_OUT:
         print('Writing address-parcels...')
@@ -1209,9 +1157,6 @@ def main():
         address_error_table.write(address_errors, chunk_size=150000)
     del address_errors
 
-    # print('{} errors'.format(error_count))
-    # print('{} warnings'.format(warning_count))
-
     ################################################################################
     # FINISH
     ################################################################################
@@ -1220,11 +1165,6 @@ def main():
 
     if WRITE_OUT:
         print('Creating indexes...')
-        #     index_tables = (
-        #         address_table,
-        #         address_tag_table,
-        #         source_address_table,
-        #     )
         for table in (address_table, address_tag_table, source_address_table):
             table.create_index('street_address')
         address_link_table.create_index('address_1')

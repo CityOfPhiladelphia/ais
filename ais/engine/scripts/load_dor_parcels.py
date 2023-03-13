@@ -1,6 +1,4 @@
 import sys
-import os
-import csv
 import re
 from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
@@ -9,7 +7,6 @@ from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from ais import app
 # DEV
-from pprint import pprint
 import traceback
 import psycopg2
 import petl as etl
@@ -30,7 +27,6 @@ def main():
     source_db_name = source_def['db']
     source_db_url = config['DATABASES'][source_db_name]
     source_db = datum.connect(source_db_url)
-    source_field_map = source_def['field_map']
     source_table_name = source_def['table']
     source_table = source_db[source_table_name]
     source_geom_field = source_table.geom_field
@@ -44,7 +40,6 @@ def main():
     WRITE_OUT = True
 
     # Regex
-    street_name_re = re.compile('^[A-Z0-9 ]+$')
     unit_num_re = re.compile('^[A-Z0-9\-]+$')
     parcel_id_re = re.compile('^\d{3}(N|S)\d{6}$')
     geometry_re = re.compile('^(MULTI)?POLYGON')
@@ -102,9 +97,7 @@ def main():
 
     # DEV
     # source_table += ' SAMPLE(1)'
-    # source_where += " AND mapreg = '038N010303'"
-    # source_where += " AND objectid = 540985"
-    source_where += " AND rownum <= 20000"
+    # source_where += " AND rownum <= 20000"
 
     source_fields = list(field_map.values())
     print(f'Reading parcels from {source_table_name} at db {source_db_url}...')
@@ -124,10 +117,6 @@ def main():
 
     address_counts = {}         # street_address => count
     parcel_id_counts = {}       # parcel_id => count
-
-    # Use this to continue working on a parcel if one part of validation fails
-    # class KeepGoing(Exception):
-    #   pass
 
     def had_warning(reason, note=None):
         parcel_warnings = warning_map.setdefault(object_id, [])
@@ -199,12 +188,6 @@ def main():
             if unit_num and unit_num_re and not unit_num_re.match(unit_num):
                 had_warning('Invalid unit num')
                 should_check_street_full = False
-            #if address_low_fractional and address_low_fractional not in ('1/4', '1/3', '1/2'):
-            #    had_warning('Invalid address_low_frac')
-            #    should_check_street_full = False
-
-
-
 
             # QC: Check street components
             if street_name is None:
@@ -224,7 +207,6 @@ def main():
                 if street_full not in street_code_map:
                     found_street_full = False
                     note = 'Unknown street: {}'.format(street_full)
-                    # had_error('Unknown street', note=note)
                     had_warning('Unknown street', note=note)
 
                 if street_code:
@@ -285,7 +267,6 @@ def main():
                     # Case: 317-315
                     if address_high_full:
                         if address_high_full < address_low:
-                            # print(address_low, address_high_full)
                             should_add_parcel = False
                             had_error('Inverted range address')
 
@@ -293,7 +274,6 @@ def main():
                         hun_block_low = address_low - (address_low % 100)
                         hun_block_high = address_high_full - (address_high_full % 100)
                         if hun_block_low != hun_block_high:
-                            # print(hun_block_low, hun_block_high)
                             should_add_parcel = False
                             had_error('Address spans multiple hundred blocks')
 
@@ -336,7 +316,6 @@ def main():
                     address_counts[street_address] += 1
                 
                 except Exception as e:
-                    #print(source_address)
                     should_add_parcel = False
                     had_error('Could not parse')
 
@@ -424,8 +403,6 @@ def main():
                                 matching_seg = seg
 
                     if matching_seg is None:
-                        # had_error('Out of street range')
-                        # should_add_parcel = False
                         had_warning('Out of street range')
                         should_add_parcel = True
 
@@ -449,12 +426,6 @@ def main():
                 })
                 parcels.append(parcel)
                 parcel_map[object_id] = parcel
-
-        # except ValueError as e:
-        #   # print('Parcel {}: {}'.format(parcel_id, e))
-        #   reason = str(e)
-        #   should_add_parcel = False
-        #   had_error(reason)
 
         except Exception as e:
             print('{}: Unhandled error'.format(source_parcel))
@@ -557,11 +528,8 @@ def main():
                     'reasons':      reasons_joined,
                     'reason_count': len(reasons),
                     'notes':        notes_joined,
-                    # 'shape':        source_parcel[wkt_field],
                 })
                 error_polygons.append(error_polygon)
-
-    #    parcel_error_polygon_table.write(error_polygons, chunk_size=50000)
 
         target_dsn = config['DATABASES']['engine']
         target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
@@ -578,7 +546,6 @@ def main():
         parcel_table.create_index('street_address')
         # TODO: index error tables?
 
-    #source_db.close()
     db.close()
 
     print('Finished in {} seconds'.format(datetime.now() - start))

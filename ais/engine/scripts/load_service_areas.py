@@ -3,13 +3,31 @@ from datetime import datetime
 from shapely.wkt import loads
 import datum
 import petl as etl
-import cx_Oracle
 import geopetl
 from ais import app
-# DEV
-import traceback
-from pprint import pprint
 
+"""
+TRANSFORMS
+
+Define functions here that can be referenced in config.py for mutating
+service area rows. Eventually, these could probably go in their own file
+and be used by any script that iterates over rows dictionaries.
+
+Args: row, value_field
+Return: row
+"""
+
+def convert_to_integer(row, value_field):
+    value = row[value_field]
+    int_value = int(value)
+    row[value_field] = int_value
+    return row
+
+def remove_whitespace(row, value_field):
+    value = row[value_field]
+    no_whitespace = value.replace(' ', '')
+    row[value_field] = no_whitespace
+    return row
 
 def main():
     start = datetime.now()
@@ -28,29 +46,6 @@ def main():
     geom_field = 'shape'
     # sde_srid = 2272
     WRITE_OUT = True
-
-    """
-    TRANSFORMS
-
-    Define functions here that can be referenced in config.py for mutating
-    service area rows. Eventually, these could probably go in their own file
-    and be used by any script that iterates over rows dictionaries.
-
-    Args: row, value_field
-    Return: row
-    """
-
-    def convert_to_integer(row, value_field):
-        value = row[value_field]
-        int_value = int(value)
-        row[value_field] = int_value
-        return row
-
-    def remove_whitespace(row, value_field):
-        value = row[value_field]
-        no_whitespace = value.replace(' ', '')
-        row[value_field] = no_whitespace
-        return row
 
     print('\n** SERVICE AREA LAYERS **')
 
@@ -85,7 +80,6 @@ def main():
     points = []
 
     print('Reading service areas...')
-    # wkt_field = geom_field + '_wkt'
 
     for layer in layers:
         layer_id = layer['layer_id']
@@ -107,7 +101,6 @@ def main():
 
             source_table_name = source['table']
             source_table = source_db[source_table_name]
-            # import pdb; pdb.set_trace()
             source_geom_field = source_table.geom_field
             # If no object ID field is specified, default to `objectid`.
             object_id_field = source.get('object_id_field', 'objectid')
@@ -123,8 +116,8 @@ def main():
             if source_type == 'polygon':
                 value_field = source['value_field']
                 source_fields = [value_field, object_id_field]
-                source_rows = source_table.read(fields=source_fields, \
-                    geom_field=geom_field)
+                source_rows = source_table.read(fields=source_fields, 
+                                                geom_field=geom_field)
 
                 for i, source_row in enumerate(source_rows):
                     # Transform if necessary
@@ -253,6 +246,5 @@ def main():
         line_single_table.create_index('seg_id')
         line_dual_table.create_index('seg_id')
 
-    #source_db.close()
     db.close()
     print('Finished in {} seconds'.format(datetime.now() - start))

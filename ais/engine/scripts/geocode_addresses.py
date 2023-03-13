@@ -1,16 +1,10 @@
 import sys
-# import os
-# import csv
-# from math import sin, cos, atan2, radians, pi, degrees
 from datetime import datetime
 from shapely.wkt import loads, dumps
 from shapely.geometry import Point, LineString, MultiLineString
 import datum
 from ais import app, util
-from ais.models import Address
-# DEV
 import traceback
-# from pprint import pprint
 
 def main():
 
@@ -26,7 +20,6 @@ def main():
     parser = Parser()
     db = datum.connect(config['DATABASES']['engine'])
 
-    # parcel_table = 'pwd_parcel'
     parcel_layers = config['BASE_DATA_SOURCES']['parcels']
     address_table = db['address']
     address_fields = [
@@ -105,9 +98,7 @@ def main():
     parcel_xy_map = {}  # source name => parcel row id => centroid xy (Shapely)
 
     for parcel_layer_name, parcel_layer_def in parcel_layers.items():
-        # source_name = parcel_source['name']
         source_table = parcel_layer_name + '_parcel'
-        #print('  - {}'.format(parcel_layer_name))
 
         # DEV
         parcel_where = ''
@@ -135,8 +126,6 @@ def main():
             xy = loads(parcel_row['centroid'])
 
             # TODO: now that we're using row IDs, parcel IDs should all be ints
-            # if isinstance(parcel_id, int):
-            # 	parcel_id = str(parcel_id)
 
             parcel_layer_xy_map[parcel_id] = xy
 
@@ -153,7 +142,7 @@ def main():
 
     # TODO: redo curb stuff so it works with multiple parcel sources
     print('Reading curbs...')
-    curb_rows = curb_table.read(return_geom=False, geom_field='geom', to_srid=2272)
+    curb_rows = curb_table.read(return_geom=True, geom_field='geom', to_srid=2272)
     curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
     print('Reading parcel-curbs...')
@@ -164,37 +153,12 @@ def main():
     parcel_curb_map['dor'] = dor_parcel_curb_map
     parcel_curb_map['pwd'] = pwd_parcel_curb_map
 
-    # with open("parcel_curb_map_output.txt", "w") as text_file:
-    #     print("parcel_curb_map: {}".format(parcel_curb_map), file=text_file)
-
     print('Reading addresses from AIS...')
     address_rows = address_table.read(fields=address_fields, \
                                       where=WHERE_STREET_NAME)
-    # where='street_address = \'2653-55 N ORIANNA ST\'')
-    addresses = []
-    seg_side_map = {}
-    # for address_row in address_rows:
-    # 	street_address = address_row['street_address']
-    # 	address = Address(street_address)
-    # 	addresses.append(address)
-
-    # addresses = Address.query.all()
 
     # TODO: index by seg ID, side (seg_side_map above)
     # For interpolating between parcel centroids
-    # if address_row['seg_id']:
-    # 	seg_id = address_row['seg_id']
-    # 	seg_side = address_row['seg_side']
-    # 	if seg_id in seg_side_map:
-    # 		sides = seg_side_map[seg_id]
-    # 		if seg_side in sides:
-    # 			sides[seg_side].append(address)
-    # 		else:
-    # 			sides[seg_side] = [address]
-    # 	else:
-    # 		seg_side_map[seg_id] = {
-    # 			seg_side: [address]
-    # 		}
 
     print('Reading address-streets...')
     addr_street_rows = addr_street_table.read(where=WHERE_STREET_ADDRESS_IN)
@@ -227,10 +191,9 @@ def main():
     address_parcels = []
 
     for i, address_row in enumerate(address_rows):
+        if i % 50000 == 0:
+            print(i)
         try:
-            if i % 50000 == 0:
-                print(i)
-
             if i % 150000 == 0:
                 geocode_table.write(geocode_rows)
                 geocode_count += len(geocode_rows)
@@ -275,37 +238,23 @@ def main():
                 low = seg[seg_side]['low']
                 high = seg[seg_side]['high']
                 side_delta = high - low
-                # seg_estimated = False
 
                 # If the there's no range
                 if side_delta == 0:
-                    # print('No range: seg {}, {} - {}'.format(seg_id, low, high))
-                    # continue
                     # Put it in the middle
                     distance_ratio = 0.5
-                # seg_estimated = True
                 else:
                     distance_ratio = (address_num - low) / side_delta
-                # print('Distance ratio: {}'.format(distance_ratio))
-
-                # Old method: just interpolate
-                # seg_xsect_xy_old = seg_shp.interpolate(distance_ratio, \
-                # 	normalized=True)
-                # print('Old intersect: {}'.format(seg_xsect_xy_old))
 
                 # New method: interpolate buffered
                 seg_xsect_xy = util.interpolate_buffered(seg_shp, distance_ratio, \
                                                          centerline_end_buffer)
-                # print('Intersect: {}'.format(seg_xsect_xy))
 
                 seg_xy = util.offset(seg_shp, seg_xsect_xy, centerline_offset, \
                                      seg_side)
-                # print('Offset to {}: {}'.format(seg_side, seg_xy))
                 geocode_rows.append({
-                    # 'address_id': address_id,
                     'street_address': street_address,
                     'geocode_type': geocode_priority_map['centerline'],
-                    # 'estimated': '1' if seg_estimated else '0',
                     'geom': dumps(seg_xy)
                 })
 
@@ -316,28 +265,19 @@ def main():
                 true_low = seg[seg_side]['true_low']
                 true_high = seg[seg_side]['true_high']
                 true_side_delta = true_high - true_low
-                # true_estimated = False
 
                 if true_side_delta == 0:
-                    # print('No true range: {}, seg {}, {} - {}'.format(seg_id, true_low, true_high))
-                    # continue
                     true_distance_ratio = 0.5
-                # true_estimated = True
                 else:
                     true_distance_ratio = (address_num - true_low) / true_side_delta
 
-                # true_xsect_xy = seg_shp.interpolate(true_distance_ratio, \
-                # 	normalized=True)
                 true_xsect_xy = util.interpolate_buffered(seg_shp, true_distance_ratio, \
                                                           centerline_end_buffer)
                 true_seg_xy = util.offset(seg_shp, true_xsect_xy, centerline_offset, \
                                           seg_side)
-                # print('true: {}'.format(true_seg_xy))
                 geocode_rows.append({
-                    # 'address_id': address_id,
                     'street_address': street_address,
                     'geocode_type': geocode_priority_map['true_range'],
-                    # 'estimated': '1' if true_estimated else '0',
                     'geom': dumps(true_seg_xy)
                 })
 
@@ -365,10 +305,8 @@ def main():
                         parcel_id = parcel_ids[0]
                         parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
                         geocode_rows.append({
-                            # 'address_id': address_id,
                             'street_address': street_address,
                             'geocode_type': geocode_priority_map[source_table],
-                            # 'estimated': 		'0',
                             'geom': dumps(parcel_xy)
                         })
 
@@ -376,8 +314,6 @@ def main():
                     else:
                         # TODO: could get the combined centroid of the parcels,
                         # if they're adjacent
-                        # print('{}: {} parcel matches'.format(street_address, len(parcel_ids)))
-                        # num_multiple_parcel_matches += 1
                         parcel_id = None
                         parcel_xy = None
 
@@ -408,15 +344,10 @@ def main():
 
                         if parcel_match:
                             parcel_id = parcel_match['id']
-                            # pwd_parcel_id = parcel_match['parcel_id']
-                            # pwd_parcel_xy = parcel_xy_map[parcel_layer_name][parcel_id]
-                            # print('Rematched {} to PWD parcel {}'.format(street_address, pwd_parcel_id))
                             parcel_match_wkt = parcel_match['wkt']
                             geocode_rows.append({
                                 'street_address': street_address,
                                 'geocode_type': geocode_priority_map[source_table + '_spatial'],
-                                # 'estimated': '1',
-                                # 'geometry': dumps(pwd_parcel_xy)
                                 'geom': parcel_match_wkt,
                             })
 
@@ -485,15 +416,8 @@ def main():
         geocode_table.write(geocode_rows, chunk_size=150000)
 
         print('Writing address-parcels...')
-        # db.drop_index('address_parcel', 'street_address')
         addr_parcel_table.write(address_parcels, chunk_size=150000)
-        # db.create_index('address_parcel', 'street_address')
-
-        # print('Creating index...')
-        # geocode_table.create_index('street_address')
-
         print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
-
 
     print('Creating index...')
     geocode_table.create_index('street_address')
