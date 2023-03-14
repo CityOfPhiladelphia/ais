@@ -1,11 +1,10 @@
-import sys
+from datetime import datetime
 import datum
 from ais import app
-# DEV
-import traceback
-from pprint import pprint
 
 def main():
+    print('Starting...')
+    start = datetime.now()
 
     """SET UP"""
 
@@ -18,11 +17,7 @@ def main():
     curb_table = db['curb']
     parcel_curb_table = db['parcel_curb']
 
-
     """MAIN"""
-
-    # print('Dropping parcel-curb view...')
-    # db.drop_mview('parcel_curb')
 
     print('Dropping indexes...')
     curb_table.drop_index('curb_id')
@@ -40,7 +35,6 @@ def main():
     curbs = []
     for source_row in source_rows:
         curb = {x: source_row[field_map[x]] for x in field_map}
-        # curb['geom'] = source_row[wkt_field]
         curbs.append(curb)
 
     print('Writing curbs...')
@@ -49,7 +43,6 @@ def main():
     print('Making parcel-curbs...')
     for agency in config['BASE_DATA_SOURCES']['parcels']:
         print('  - ' + agency)
-        # table_name = parcel_source_def['table']
         stmt = '''
             insert into parcel_curb (parcel_source, parcel_row_id, curb_id) (
               select
@@ -66,6 +59,6 @@ def main():
 
     print('Creating indexes...')
 
-
-
     db.close()
+    print('Finished in {} seconds'.format(datetime.now() - start))
+    

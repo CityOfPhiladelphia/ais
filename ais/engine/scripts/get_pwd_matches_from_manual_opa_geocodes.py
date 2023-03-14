@@ -1,3 +1,4 @@
+from datetime import datetime
 import petl as etl
 import cx_Oracle
 import psycopg2
@@ -6,6 +7,8 @@ from ais import app
 
 
 def main():
+    start = datetime.now()
+
     config = app.config
 
     # read opa_active_accounts from databridge (oracle sde) and write to engine (postgis)
@@ -33,7 +36,7 @@ def main():
 
     # Read source table:
     print("Reading rows from {}".format(source_table))
-    rows = etl.fromoraclesde(source_conn, source_table, fields=source_fields)
+    rows = etl.fromoraclesde(source_conn, source_table, fields=source_fields) # Runs in 0:11:48
     # Format fields
     rows = rows.rename({v:k for k,v in source_field_map.items()})
 
@@ -87,3 +90,4 @@ def main():
     target_conn.commit()
     # close db connection:
     target_conn.close()
+    print('Finished in {} seconds'.format(datetime.now() - start))
