@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+git checkout python3.10-upgrade
+
 WORKING_DIRECTORY=/home/ubuntu/ais
 
 export ORACLE_HOME=/usr/lib/oracle/18.5/client64
