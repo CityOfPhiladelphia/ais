@@ -87,14 +87,14 @@ then
   exit 1;
 fi
 
-# echo "Loading Addresses"
-# ais engine --script load_addresses
+echo "Loading Addresses"
+ais engine --script load_addresses
 
-# if [ $? -ne 0 ]
-# then
-#   echo "Loading addresses failed. Exiting."
-#   exit 1;
-# fi
+if [ $? -ne 0 ]
+then
+  echo "Loading addresses failed. Exiting."
+  exit 1;
+fi
 
 echo "Loading opa active accounts and matching pwd parcels for properties without pwd parcel match"
 ais engine --script get_pwd_matches_from_manual_opa_geocodes # Runtime unknown
