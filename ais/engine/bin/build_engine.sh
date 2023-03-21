@@ -7,6 +7,7 @@ git checkout python3.10-upgrade
 export ORACLE_HOME=/usr/lib/oracle/18.5/client64
 export PATH=$PATH:$ORACLE_HOME/bin
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+export PYTHONUNBUFFERED=TRUE
 
 echo "Activating virtual environment"
 source $WORKING_DIRECTORY/venv/bin/activate
