@@ -151,7 +151,7 @@ for true_range_row in true_range_rows:
 
 # TODO: redo curb stuff so it works with multiple parcel sources
 print('Reading curbs...')
-curb_rows = curb_table.read(return_geom=False, geom_field='geom', to_srid=2272)
+curb_rows = curb_table.read(to_srid=2272)
 curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
