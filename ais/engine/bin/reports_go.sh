@@ -11,6 +11,14 @@ source ../../../bin/eb_env_utils.sh
 echo "Starting reporting."
 send_teams "Starting reporting."
 
+python output_address_points_for_ng911.py
+if [ $? -ne 0 ]
+then
+  echo "Outputting address points for NG911 failed"
+  send_teams "Engine reports did not complete."
+  exit 1;
+fi
+
 python make_reports.py
 if [ $? -ne 0 ]
 then

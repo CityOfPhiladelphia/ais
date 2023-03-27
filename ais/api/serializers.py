@@ -333,7 +333,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
             address, geocode_response_type, geom = address
-            if not geocode_response_type:
+            if geocode_response_type is None:
                 geocode_response_type = 99
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])
@@ -356,7 +356,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     sa_data[col.name] = getattr(address.service_areas, col.name)
             else:
                 sa_data = self.sa_data
-            # if self.metadata['search_type'] == 'address':
             if self.metadata['search_type'] in ('address', 'street'):
                 match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
             else:
