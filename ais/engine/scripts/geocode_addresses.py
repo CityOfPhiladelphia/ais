@@ -20,6 +20,7 @@ SET UP
 '''
 
 config = app.config
+engine_srid = config['ENGINE_SRID']
 Parser = config['PARSER']
 parser = Parser()
 db = datum.connect(config['DATABASES']['engine'])
@@ -153,7 +154,7 @@ for true_range_row in true_range_rows:
 
 # TODO: redo curb stuff so it works with multiple parcel sources
 print('Reading curbs...')
-curb_rows = curb_table.read(return_geom=False, geom_field='geom', to_srid=engine_srid)
+curb_rows = curb_table.read(to_srid=engine_srid)
 curb_map = {x['curb_id']: loads(x['geom']) for x in curb_rows}
 
 print('Reading parcel-curbs...')
@@ -403,8 +404,8 @@ for i, address_row in enumerate(address_rows):
 								ELSE ST_AsText(ST_PointOnSurface(geom))
 							END as wkt
 						FROM {source_table}
-						WHERE ST_Intersects(geom, ST_GeomFromText('{test_xy_wkt}', 2272))
-					'''.format(source_table=source_table, test_xy_wkt=test_xy_wkt)
+						WHERE ST_Intersects(geom, ST_GeomFromText('{test_xy_wkt}', {engine_srid}))
+					'''.format(source_table=source_table, test_xy_wkt=test_xy_wkt, engine_srid=engine_srid)
                     db.execute(parcel_match_stmt)
                     parcel_match = db._c.fetchone()
 
