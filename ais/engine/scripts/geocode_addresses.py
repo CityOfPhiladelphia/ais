@@ -24,6 +24,7 @@ engine_srid = config['ENGINE_SRID']
 Parser = config['PARSER']
 parser = Parser()
 db = datum.connect(config['DATABASES']['engine'])
+engine_srid = config['ENGINE_SRID']
 
 # parcel_table = 'pwd_parcel'
 parcel_layers = config['BASE_DATA_SOURCES']['parcels']
@@ -102,6 +103,7 @@ for seg_row in seg_rows:
 
 print('Reading parcels...')
 parcel_xy_map = {}  # source name => parcel row id => centroid xy (Shapely)
+parcel_geom_map = {} # parcel row id => geom
 
 for parcel_layer_name, parcel_layer_def in parcel_layers.items():
     # source_name = parcel_source['name']
@@ -112,34 +114,34 @@ for parcel_layer_name, parcel_layer_def in parcel_layers.items():
     parcel_where = ''
     if WHERE_STREET_NAME:
         parcel_where = '{} and '.format(WHERE_STREET_NAME)
-
+    # if source_table == 'pwd_parcel':
     parcel_stmt = '''
-		select
-			id,
-			st_astext(st_centroid(geom)) as centroid
-		from {source_table}
-		where {where} st_intersects(st_centroid(geom), geom)
-		union
-		select
-			id,
-			st_astext(st_pointonsurface(geom)) as centroid
-		from {source_table}
-		where {where} not st_intersects(st_centroid(geom), geom)
-	'''.format(where=parcel_where, source_table=source_table)
-
+        select
+            id,
+            ST_AsText(geom) as geom,
+            st_astext(st_centroid(geom)) as centroid
+        from {source_table}
+        where {where} st_intersects(st_centroid(geom), geom)
+        union
+        select
+            id,
+            ST_AsText(geom) as geom,
+            st_astext(st_pointonsurface(geom)) as centroid
+        from {source_table}
+        where {where} not st_intersects(st_centroid(geom), geom)
+    '''.format(where=parcel_where, source_table=source_table)
     parcel_rows = db.execute(parcel_stmt)
     parcel_layer_xy_map = {}
+    parcel_layer_geom_map = {}
     for parcel_row in parcel_rows:
         parcel_id = parcel_row['id']
         xy = loads(parcel_row['centroid'])
-
-        # TODO: now that we're using row IDs, parcel IDs should all be ints
-        # if isinstance(parcel_id, int):
-        # 	parcel_id = str(parcel_id)
-
+        poly = loads(parcel_row['geom'])
         parcel_layer_xy_map[parcel_id] = xy
-
+        parcel_layer_geom_map[str(parcel_id)] = poly
     parcel_xy_map[parcel_layer_name] = parcel_layer_xy_map
+    parcel_geom_map[parcel_layer_name] = parcel_layer_geom_map
+
 
 print('Reading true range...')
 true_range_rows = true_range_view.read(where=WHERE_SEG_ID_IN)
@@ -170,8 +172,10 @@ print('Reading addresses from AIS...')
 address_rows = address_table.read(fields=address_fields, \
                                   where=WHERE_STREET_NAME)
 # where='street_address = \'2653-55 N ORIANNA ST\'')
+
 addresses = []
 seg_side_map = {}
+
 # for address_row in address_rows:
 # 	street_address = address_row['street_address']
 # 	address = Address(street_address)
@@ -447,21 +451,21 @@ for i, address_row in enumerate(address_rows):
                     proj_shp = LineString([parcel_xy, proj_xy])
 
                     # Get point of intersection and add
-                    xsect_line_shp = curb_shp.intersection(proj_shp)
-                    xsect_pt = None
-                    if isinstance(xsect_line_shp, LineString):
-                        xsect_pt = xsect_line_shp.coords[1]
-                    elif isinstance(xsect_line_shp, MultiLineString):
-                        xsect_pt = xsect_line_shp[-1:][0].coords[1]
-                    if xsect_pt:
-                        xsect_pt_shp = Point(xsect_pt)
+                    curb_xsect_line_shp = curb_shp.intersection(proj_shp)
+                    curb_xsect_pt = None
+                    if isinstance(curb_xsect_line_shp, LineString):
+                        curb_xsect_pt = curb_xsect_line_shp.coords[1]
+                    elif isinstance(curb_xsect_line_shp, MultiLineString):
+                        curb_xsect_pt = curb_xsect_line_shp[-1:][0].coords[1]
+                    if curb_xsect_pt:
+                        xy_on_curb_shp = Point(curb_xsect_pt)
                         curb_geocode_row = {
                             'street_address': street_address,
                             'geocode_type': geocode_priority_map[parcel_layer_name + '_curb'],
-                            'geom': dumps(xsect_pt_shp)
+                            'geom': dumps(xy_on_curb_shp)
                         }
-                        # Get midpoint between proj_xy and xsect_pt
-                        xy_in_street = (proj_xy.x + xsect_pt[0]) / 2, (proj_xy.y + xsect_pt[1]) / 2
+                        # Get midpoint between centerline and curb
+                        xy_in_street = (proj_xy.x + curb_xsect_pt[0]) / 2, (proj_xy.y + curb_xsect_pt[1]) / 2
                         xy_in_st_shape = Point(xy_in_street)
                         in_st_geocode_row = {
                             'street_address': street_address,
@@ -471,6 +475,24 @@ for i, address_row in enumerate(address_rows):
                         geocode_rows.append(curb_geocode_row)
                         geocode_rows.append(in_st_geocode_row)
 
+                    # PWD centroid geocoded to front of building/parcel
+                    if parcel_id in parcel_geom_map[parcel_layer_name]:
+                        # print(parcel_id)
+                        parcel_geom = parcel_geom_map[parcel_layer_name][parcel_id]
+                        parcel_front_xsect_line_shp = parcel_geom.intersection(proj_shp)
+                        parcel_front_xsect_pt = None
+                        if isinstance(parcel_front_xsect_line_shp, LineString):
+                            parcel_front_xsect_pt = parcel_front_xsect_line_shp.coords[1]
+                        elif isinstance(parcel_front_xsect_line_shp, MultiLineString):
+                            parcel_front_xsect_pt = parcel_front_xsect_line_shp[-1:][0].coords[1]
+                        if parcel_front_xsect_pt:
+                            xy_on_parcel_front_shp = Point(parcel_front_xsect_pt)
+                            parcel_front_geocode_row = {
+                                'street_address': street_address,
+                                'geocode_type': geocode_priority_map[parcel_layer_name + '_parcel_front'],
+                                'geom': dumps(xy_on_parcel_front_shp)
+                            }
+                            geocode_rows.append(parcel_front_geocode_row)
 
     except ValueError as e:
         print(e)

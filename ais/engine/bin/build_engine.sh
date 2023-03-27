@@ -89,6 +89,7 @@ fi
 
 echo "Loading opa active accounts and matching pwd parcels for properties without pwd parcel match"
 ais engine run get_pwd_matches_from_manual_opa_geocodes
+
 if [ $? -ne 0 ]
 then
   echo "Adding manual opa-pwd parcel matches failed. Exiting."
