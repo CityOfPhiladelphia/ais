@@ -10,6 +10,7 @@ SET UP
 '''
 
 config = app.config
+engine_srid = config['ENGINE_SRID']
 Parser = config['PARSER']
 parser = Parser()
 db = datum.connect(config['DATABASES']['engine'])
@@ -89,7 +90,7 @@ if WRITE_OUT:
         street_address = new_row['street_address']
         geocode_type = new_row['geocode_type']
         geom = new_row['geom']
-        new_vals = '''('{street_address}', {geocode_type}, '{geom}')'''.format(street_address=street_address, geocode_type=geocode_type, geom=geom)
+        new_vals = '''('{street_address}', {geocode_type}, ST_GeomFromText('{geom}'),{engine_srid})'''.format(street_address=street_address, geocode_type=geocode_type, geom=geom, engine_srid=engine_srid)
         values = values + ', ' + new_vals if values else new_vals
         i += 1
         if i % 1000 == 0:
