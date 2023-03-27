@@ -5,6 +5,10 @@ from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from passyunk.parser import PassyunkParser
 
+# SET UP LOGGING / QC
+street_warning_map = {}  # street_address => [{reason, notes}]
+street_error_map = {}  # # street_address => {reason, notes}
+
 def main():
     print('Starting...')
     start = datetime.now()
@@ -329,11 +333,6 @@ def main():
             address_tag_strings = set()
 
             print('Writing {} source addresses...'.format(len(source_addresses)))
-            # Had to re-initialize connection else cx_Oracle.DatabaseError: ORA-12170: TNS:Connect timeout occurred
-            db = datum.connect(config['DATABASES']['engine'])
-            address_table = db['address']
-            address_tag_table = db['address_tag']
-            source_address_table = db['source_address']
             source_address_table.write(source_addresses, chunk_size=150000)
             source_addresses = []
 
@@ -586,10 +585,6 @@ def main():
     # ###############################################################################
 
     print('** ADDRESS-STREETS **')
-
-    # SET UP LOGGING / QC
-    street_warning_map = {}  # street_address => [{reason, notes}]
-    street_error_map = {}  # # street_address => {reason, notes}
 
 
     class ContinueIteration(Exception):
