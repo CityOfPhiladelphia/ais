@@ -1,7 +1,34 @@
+import io
 from datetime import datetime
 import datum
-
 from ais import app
+
+def copy(db, query: str) -> list[str]:
+    '''
+    Run a copy query and return a list of return values, header included
+    '''
+    with io.StringIO() as text_stream: 
+        db._c.copy_expert(query, text_stream)
+        text_stream.seek(0)
+        print(f'Total rows (excluding header): {len(lines := text_stream.readlines()) - 1}') # Walrus operator, new in python 3.8
+        return lines
+
+def create_map(lines: list[str], column_name: str) -> list[dict]: 
+    '''
+    Given a list of lines (including header) and a column name, create a list of 
+    dictionaries where the keys of each dict come from the header row and the values 
+    are the corresponding column values from each subsequent row. 
+    '''
+    map_dict = {}
+    header = lines[0].strip().split(',')
+    for line in lines[1:]: # Assuming header row at position 0
+        row = line.strip().split(',')
+        link_row = dict(zip(header, row))
+        value = link_row[column_name]
+        if not value in map_dict:
+            map_dict[value] = []
+        map_dict[value].append(link_row)
+    return map_dict
 
 def main():
     WRITE_OUT = True
@@ -15,7 +42,6 @@ def main():
     db = datum.connect(config['DATABASES']['engine'])
     address_table = db['address']
     address_tag_table = db['address_tag']
-    source_address_table = db['source_address']
     address_link_table = db['address_link']
     tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
     geocode_table = db['geocode']
@@ -30,42 +56,36 @@ def main():
     db.save()
 
     print('Reading address links...')
-    link_map = {}
-    link_rows = address_link_table.read()
-    for link_row in link_rows:
-        address_1 = link_row['address_1']
-        if not address_1 in link_map:
-            link_map[address_1] = []
-        link_map[address_1].append(link_row)
-
+    query = f"copy (select * from public.address_link) TO STDOUT WITH CSV HEADER;"
+    lines = copy(db, query)
+    link_map = create_map(lines, 'address_1')
+    
+    del lines 
+    
     #define traversal order
     traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
 
     print('Reading address tags...')
-    tag_map = {}
-    tag_rows = address_tag_table.read()
-    for tag_row in tag_rows:
-        street_address = tag_row['street_address']
-        if not street_address in tag_map:
-            tag_map[street_address] = []
-        tag_map[street_address].append(tag_row)
-
-    err_map = {}
-
+    query = f"copy (select * from public.address_tag) TO STDOUT WITH CSV HEADER;"
+    lines = copy(db, query)
+    tag_map = create_map(lines, 'street_address')
+    
     print('Reading geocode rows...')
+    query = f"copy (select * from public.geocode {geocode_where}) TO STDOUT WITH CSV HEADER;"
+    lines = copy(db, query)
     geocode_map = {}
-    geocode_rows = geocode_table.read(where=geocode_where)
-    print('Mapping geocode rows...')
-    for geocode_row in geocode_rows:
-        street_address = geocode_row['street_address']
-        geocode_type = geocode_row['geocode_type']
+    header = lines[0].strip().split(',')
+    for line in lines[1:]: # Assuming header row at position 0
+        row = line.strip().split(',')
+        link_row = dict(zip(header, row))
+        street_address = row['street_address']
         if not street_address in geocode_map:
             geocode_map[street_address] = {'pwd': '', 'dor': ''}
-        if geocode_row['geocode_type'] == 1:
-            geocode_map[street_address]['pwd'] = geocode_row['geom']
+        if row['geocode_type'] == 1:
+            geocode_map[street_address]['pwd'] = row['geom']
         else:
-            geocode_map[street_address]['dor'] = geocode_row['geom']
-
+            geocode_map[street_address]['dor'] = row['geom']
+    
     print('Reading addresses...')
     address_rows = address_table.read()
     print('Making linked tags...')
@@ -101,7 +121,6 @@ def main():
                     for link in links:
                         if link['relationship'] == rel:
                             sorted_links.append(link)
-                            # links.remove(link)
             # loop through tag fields in config
             for tag_field in tag_fields:
                 found = False
@@ -175,14 +194,11 @@ def main():
         print('Rejected links: ')
         for key, value in rejected_link_map.items():
             value=list(set(value))
-            #print('{key}: {value}'.format(key=key, value=value))
-        # print(rejected_link_map)
     # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
     # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
     # loop address.
     print("Searching for linked tags via path: has base in range unit child")
     new_linked_tags = []
-    debugz = False
 
     print("Reading addresses...")
     #del address_rows
@@ -192,7 +208,6 @@ def main():
 
     print('Reading address tags...')
     tag_map = {}
-    #tag_rows = address_tag_table.read()
     tag_sel_stmt = '''
         select a.*, t.key, t.value, t.linked_address, t.linked_path
         from (
@@ -222,9 +237,6 @@ def main():
         where relationship = 'has base'
         order by address_1
     '''
-    # where = "relationship = 'has base'"
-    # sort = "address_2"
-    # link_rows = address_link_table.read(where=where, sort=sort)
     link_rows = db.execute(link_sel_stmt)
     for link_row in link_rows:
         address_2 = link_row['address_2']
@@ -260,9 +272,6 @@ def main():
         tag_fields = [tag_field for tag_field in tag_fields if tag_field['traverse_links'] == 'true']
         for tag_field in tag_fields:
             found = False
-            # Skip tag_fields where 'traverse_links' value is false
-            # if tag_field['traverse_links'] != 'true':
-            #     continue
             tag_key = tag_field['tag_key']
             # Look for tag in tag_map for street_address
             tag_value = None
@@ -342,10 +351,7 @@ def main():
                                     add_tag_dict = {'street_address': street_address, 'key': tag_key,
                                                     'value': tag_value,
                                                     'linked_address': linked_address, 'linked_path': linked_path}
-                                    #print(street_address)
-                                    #print("ADDING NEW TAG: ", add_tag_dict)
                                     new_linked_tags.append(add_tag_dict)
-                                    #print("new linked tags: ", len(new_linked_tags))
                                     found = True
                                     break
 
@@ -358,16 +364,6 @@ def main():
     print('Rejected links: ')
     for key, value in rejected_link_map.items():
         value = list(set(value))
-        #print('{key}: {value}'.format(key=key, value=value))
-    # print(rejected_link_map)
-
-    print("Cleaning up...")
-    del link_rows
-    del tag_rows
-    del address_rows
-    del link_map
-    del tag_map
-    # del linked_tags_map
 
     transpired = datetime.now() - start
     print("Finished in ", transpired, " minutes.")
