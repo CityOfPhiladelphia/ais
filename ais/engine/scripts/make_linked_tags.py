@@ -1,33 +1,38 @@
-import io
 from datetime import datetime
 import datum
 from ais import app
+import petl as etl
+import os
+import psutil
 
-def copy(db, query: str) -> list[str]:
+def copy(db, out_file: str, query: str): 
+    '''Run a postgres COPY command with the database and query specified to out_file 
     '''
-    Run a copy query and return a list of return values, header included
-    '''
-    with io.StringIO() as text_stream: 
-        db._c.copy_expert(query, text_stream)
-        text_stream.seek(0)
-        print(f'Total rows (excluding header): {len(lines := text_stream.readlines()) - 1}') # Walrus operator, new in python 3.8
-        return lines
+    with open(out_file, 'w') as out_file: 
+        db._c.copy_expert(query, out_file)
 
-def create_map(lines: list[str], column_name: str) -> list[dict]: 
+def cleanup(filename: str): 
+    '''Print the virtual memory consumption and remove the downloaded file'''
+    print(psutil.virtual_memory())
+    os.remove(filename)
+    print(f'Removed {filename}')
+
+def create_map(rows, map_name: str, column_name: str, map_dict: dict) -> dict: 
     '''
-    Given a list of lines (including header) and a column name, create a list of 
-    dictionaries where the keys of each dict come from the header row and the values 
-    are the corresponding column values from each subsequent row. 
+    Read a csv and create a dictionary mapping where the keys are the unique 
+    values in column "column_name" and the values are a list of matching table rows.
+    To append to an existing mapping, pass it to map_dict.
     '''
-    map_dict = {}
-    header = lines[0].strip().split(',')
-    for line in lines[1:]: # Assuming header row at position 0
-        row = line.strip().split(',')
-        link_row = dict(zip(header, row))
-        value = link_row[column_name]
+    i = -1
+    for i, row in enumerate(rows):
+        if i % 100000 == 0: 
+            print(f'Row {i}')
+        value = row[column_name]
         if not value in map_dict:
             map_dict[value] = []
-        map_dict[value].append(link_row)
+        map_dict[value].append(row)
+    if i > -1: # Used to prevent an error if rows == []
+        print(f"length {map_name}: {len(map_dict)}. Total values looped through: {i + 1}")
     return map_dict
 
 def main():
@@ -42,11 +47,8 @@ def main():
     db = datum.connect(config['DATABASES']['engine'])
     address_table = db['address']
     address_tag_table = db['address_tag']
-    address_link_table = db['address_link']
     tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
-    geocode_table = db['geocode']
-    geocode_where = "geocode_type in (1,2)"
-
+    geocode_where = "WHERE geocode_type in (1,2)"
 
     print('Deleting linked tags...')
     del_stmt = '''
@@ -56,28 +58,31 @@ def main():
     db.save()
 
     print('Reading address links...')
-    query = f"copy (select * from public.address_link) TO STDOUT WITH CSV HEADER;"
-    lines = copy(db, query)
-    link_map = create_map(lines, 'address_1')
-    
-    del lines 
-    
-    #define traversal order
-    traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
+    address_link_file = 'address_link.csv'
+    query = f"copy (select * from address_link) TO STDOUT WITH CSV HEADER;"
+    copy(db, address_link_file, query)
+    link_map = create_map(
+        rows=etl.fromcsv(address_link_file).dicts(), 
+        map_name='link_map', column_name='address_1', map_dict={})
+    cleanup(address_link_file)
 
-    print('Reading address tags...')
-    query = f"copy (select * from public.address_tag) TO STDOUT WITH CSV HEADER;"
-    lines = copy(db, query)
-    tag_map = create_map(lines, 'street_address')
-    
+    print('Reading address tags')
+    address_tag_file = 'address_tag.csv'
+    query = f"copy (select * from address_tag) TO STDOUT WITH CSV HEADER;"
+    copy(db, address_tag_file, query)
+    tag_map = create_map(
+        rows=etl.fromcsv(address_tag_file).dicts(), 
+        map_name='tag_map', column_name='street_address', map_dict={})
+    cleanup(address_tag_file)
+
     print('Reading geocode rows...')
-    query = f"copy (select * from public.geocode {geocode_where}) TO STDOUT WITH CSV HEADER;"
-    lines = copy(db, query)
+    geocode_file = 'geocode.csv'
+    query = f"copy (select * from geocode {geocode_where}) TO STDOUT WITH CSV HEADER;"
+    copy(db, geocode_file, query)
+    
     geocode_map = {}
-    header = lines[0].strip().split(',')
-    for line in lines[1:]: # Assuming header row at position 0
-        row = line.strip().split(',')
-        link_row = dict(zip(header, row))
+    rows = etl.fromcsv(geocode_file).dicts()
+    for row in rows:
         street_address = row['street_address']
         if not street_address in geocode_map:
             geocode_map[street_address] = {'pwd': '', 'dor': ''}
@@ -85,6 +90,11 @@ def main():
             geocode_map[street_address]['pwd'] = row['geom']
         else:
             geocode_map[street_address]['dor'] = row['geom']
+    print(f"length geocode_map: {len(geocode_map)}")
+    cleanup(geocode_file)
+    
+    #define traversal order
+    traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
     
     print('Reading addresses...')
     address_rows = address_table.read()
@@ -101,11 +111,9 @@ def main():
         print("Linked tags iteration: ", i)
 
         # add new tags to tag map
-        for new_tag_row in new_linked_tags:
-            street_address = new_tag_row['street_address']
-            if not street_address in tag_map:
-                tag_map[street_address] = []
-            tag_map[street_address].append(new_tag_row)
+        tag_map = create_map(
+            rows=new_linked_tags, map_name='tag_map', column_name='street_address', 
+            map_dict=tag_map)
 
         new_linked_tags = []
         # loop through addresses
@@ -201,7 +209,6 @@ def main():
     new_linked_tags = []
 
     print("Reading addresses...")
-    #del address_rows
     where = "unit_num != ''"
     sort = "street_address"
     address_rows = address_table.read(where=where, sort=sort)
@@ -219,14 +226,10 @@ def main():
         order by a.street_address, t.key, t.value
     '''
     tag_rows = db.execute(tag_sel_stmt)
-    for tag_row in tag_rows:
-        street_address = tag_row['street_address']
-        if not street_address in tag_map:
-            tag_map[street_address] = []
-        tag_map[street_address].append(tag_row)
+    tag_map = create_map(
+        rows=tag_rows, map_name='tag_map', column_name='street_address', map_dict={})
 
     print('Reading address links...')
-    link_map = {}
     link_sel_stmt = '''
         select al.*
         from (
@@ -238,11 +241,8 @@ def main():
         order by address_1
     '''
     link_rows = db.execute(link_sel_stmt)
-    for link_row in link_rows:
-        address_2 = link_row['address_2']
-        if not address_2 in link_map:
-            link_map[address_2] = []
-        link_map[address_2].append(link_row)
+    link_map = create_map(
+        rows=link_rows, map_name='link_map', column_name='address_2', map_dict={})
 
     i=0
     rejected_link_map = {}
