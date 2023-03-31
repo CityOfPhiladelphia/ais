@@ -1,3 +1,5 @@
+import requests
+import json
 import psycopg2
 import petl as etl
 from ais import app
@@ -6,6 +8,7 @@ from ais.util import parse_url
 config = app.config
 target_table = 'ais.address_points_geocode_types_for_ng911'
 temp_csv = 'output_address_points_for_ng911.csv'
+airflow_trigger_creds = config['AIRFLOW_TRIGGER_CREDS']
 
 # Make source connection
 source_db_string = config['DATABASES']['engine']
@@ -81,5 +84,13 @@ with open(temp_csv, 'r') as f:
         COMMIT;
         '''.format(target_table=target_table, str_header=str_header)
         cursor.copy_expert(copy_stmt, f)
-        
+
 target_conn.close()
+
+# Trigger DAG to update NG911:
+workflow = 'etl_ng911_v0'
+requests.post(
+    airflow_trigger_creds.get('url').format(dag_name=workflow),
+    data=json.dumps("{}".format('{}')),
+    auth=("{}".format(airflow_trigger_creds.get('user')), "{}".format(airflow_trigger_creds.get('pw')))
+)

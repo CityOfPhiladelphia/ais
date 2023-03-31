@@ -3,7 +3,6 @@ import psycopg2
 import time
 from datetime import datetime
 import requests
-import geopetl
 
 base_path = 'http://api.phila.gov/ais_staging/v1/addresses/'
 gatekeeper_key = 'gatekeeperKey=4b1dba5f602359a4c6d5c3ed731bfb5b'
