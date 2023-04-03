@@ -6,8 +6,7 @@ import os
 import psutil
 
 def copy(db, out_file: str, query: str): 
-    '''Run a postgres COPY command with the database and query specified to out_file 
-    '''
+    '''Run a postgres COPY command with the database and query specified to out_file'''
     with open(out_file, 'w') as out_file: 
         db._c.copy_expert(query, out_file)
 
@@ -25,8 +24,6 @@ def create_map(rows, map_name: str, column_name: str, map_dict: dict) -> dict:
     '''
     i = -1
     for i, row in enumerate(rows):
-        if i % 100000 == 0: 
-            print(f'Row {i}')
         value = row[column_name]
         if not value in map_dict:
             map_dict[value] = []
@@ -45,7 +42,6 @@ def main():
     Parser = config['PARSER']
     parser = Parser()
     db = datum.connect(config['DATABASES']['engine'])
-    address_table = db['address']
     address_tag_table = db['address_tag']
     tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
     geocode_where = "WHERE geocode_type in (1,2)"
@@ -97,7 +93,11 @@ def main():
     traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
     
     print('Reading addresses...')
-    address_rows = address_table.read()
+    address_file = 'address.csv'
+    query = f"copy (select * from address) TO STDOUT WITH CSV HEADER;"
+    copy(db, address_file, query)
+    address_rows = etl.fromcsv(address_file).dicts()
+
     print('Making linked tags...')
     linked_tags_map = []
     new_linked_tags = []
@@ -199,9 +199,7 @@ def main():
     if WRITE_OUT:
         print('Writing ', len(linked_tags_map), ' linked tags to address_tag table...')
         address_tag_table.write(linked_tags_map, chunk_size=150000)
-        print('Rejected links: ')
-        for key, value in rejected_link_map.items():
-            value=list(set(value))
+
     # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
     # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
     # loop address.
@@ -209,9 +207,10 @@ def main():
     new_linked_tags = []
 
     print("Reading addresses...")
-    where = "unit_num != ''"
-    sort = "street_address"
-    address_rows = address_table.read(where=where, sort=sort)
+    address_file = 'address.csv'
+    query = f"copy (select * from address where unit_num != '' order by street_address) TO STDOUT WITH CSV HEADER;"
+    copy(db, address_file, query)
+    address_rows = etl.fromcsv(address_file).dicts()
 
     print('Reading address tags...')
     tag_map = {}
@@ -240,17 +239,15 @@ def main():
         where relationship = 'has base'
         order by address_1
     '''
-    link_rows = db.execute(link_sel_stmt)
+    link_rows = db.execute(link_sel_stmt) # Change to copy
     link_map = create_map(
         rows=link_rows, map_name='link_map', column_name='address_2', map_dict={})
 
     i=0
     rejected_link_map = {}
-    print('Looping through {} addresses...'.format(len(address_rows)))
+    print('Looping through {} addresses...'.format(len(address_rows))) # Remove this
     for address_row in address_rows:
         i+=1
-        if i % 10000 == 0:
-            print(i)
         unit_num = address_row['unit_num']
         street_address = address_row['street_address']
         low_num = address_row['address_low']
@@ -361,9 +358,7 @@ def main():
         print('Writing ', len(new_linked_tags), ' linked tags to address_tag table...')
         address_tag_table.write(new_linked_tags, chunk_size=150000)
 
-    print('Rejected links: ')
-    for key, value in rejected_link_map.items():
-        value = list(set(value))
-
+    cleanup(address_file)
+    
     transpired = datetime.now() - start
     print("Finished in ", transpired, " minutes.")
