@@ -5,7 +5,7 @@
 set -e
 set -x
 
-WORKING_DIRECTORY=/home/ec2-user/ais
+WORKING_DIRECTORY=/home/ubuntu/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
 
 cd $WORKING_DIRECTORY
@@ -29,9 +29,9 @@ echo "Started: "$start_dt
 
 
 activate_venv_source_libaries() {
-    if [ ! -d $WORKING_DIRECTORY/env ]; then
+    if [ ! -d $WORKING_DIRECTORY/venv ]; then
         echo "Activating/creating venv.."
-        python3.10 -m venv $WORKING_DIRECTORY/env 
+        python3.10 -m venv $WORKING_DIRECTORY/venv 
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
@@ -46,12 +46,14 @@ activate_venv_source_libaries() {
 	# used for python3.5
         #python setup.py bdist_wheel 
         #pip install -r $WORKING_DIRECTORY/requirements.txt || deactivate && rm $WORKING_DIRECTORY/env -rf && exit 1
-        pip install -r $WORKING_DIRECTORY/requirements.txt
+        #pip install -r $WORKING_DIRECTORY/requirements.txt
+        pip install -r $WORKING_DIRECTORY/requirements-build.txt
+
         # Install AIS as a python module, needed in tests.
         python setup.py develop
     else
         echo "Activating virtual environment"
-        source $WORKING_DIRECTORY/env/bin/activate
+        source $WORKING_DIRECTORY/venv/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
     fi
@@ -85,7 +87,6 @@ setup_log_files() {
 }
 
 
-# Note: Make sure to have your ais/instance/config.py populated
 # Check for and load credentials
 # This wil be needed for the engine build to pull in data.
 # config-secrets.sh contains AWS 
@@ -96,7 +97,7 @@ check_load_creds() {
     #cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
     #cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
 
-    file $WORKING_DIRECTORY/instance/config.py
+    file $WORKING_DIRECTORY/config.py
     file $WORKING_DIRECTORY/config-secrets.sh
     source $WORKING_DIRECTORY/config-secrets.sh
 }
@@ -364,7 +365,7 @@ check_load_creds
 
 identify_prod
 
-build_engine
+#build_engine
 
 engine_tests
 
