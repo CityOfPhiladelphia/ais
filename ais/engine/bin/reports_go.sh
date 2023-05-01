@@ -11,6 +11,8 @@ source ../../../bin/eb_env_utils.sh
 echo "Starting reporting."
 send_teams "Starting reporting."
 
+echo "Starting NG911 address points report..."
+#send_teams "Starting NG911 address points report."
 python output_address_points_for_ng911.py
 if [ $? -ne 0 ]
 then

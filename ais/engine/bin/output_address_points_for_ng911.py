@@ -89,8 +89,14 @@ target_conn.close()
 
 # Trigger DAG to update NG911:
 workflow = 'etl_ng911_v0'
-requests.post(
-    airflow_trigger_creds.get('url').format(dag_name=workflow),
-    data=json.dumps("{}".format('{}')),
-    auth=("{}".format(airflow_trigger_creds.get('user')), "{}".format(airflow_trigger_creds.get('pw')))
-)
+print("Triggering downstream process...")
+try:
+    r = requests.post(
+        airflow_trigger_creds.get('url').format(dag_name=workflow),
+        data=json.dumps("{}".format('{}')),
+        auth=("{}".format(airflow_trigger_creds.get('user')), "{}".format(airflow_trigger_creds.get('pw')))
+    )
+    print("Downstream process has been triggered, status code: {}".format(r.status_code))
+except Exception as e:
+    print("Triggering downstream process failed, exiting")
+    raise e
