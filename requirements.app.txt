@@ -3,7 +3,7 @@ alembic==1.0.0
 -e git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 -e git+https://github.com/CityOfPhiladelphia/passyunk.git@pre-automation-stable#egg=passyunk
 # flasgger==0.5.14
-Flask==1.0.2
+Flask==2.3.2
 Flask-Migrate==2.5.3
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.4.1
