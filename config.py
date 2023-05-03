@@ -1373,22 +1373,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon': {
                     'db':                   'gis_sa',
-                    'table':                'gis_health.TOBFREESCHOOLZONES',
-                    'value_field':          'objectid',
-                    'method':               'yes_or_no'
-                },
-            },
-            'value_method':                 'yes_or_no',
-
-        },
-        {
-            'layer_id':                     'tobacco_free_school_zones_parc',
-            'name':                         'Parcels Intersect Tobacco Free Zones',
-            'description': '',
-            'sources': {
-                'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_health.PARCELSINTERSECTTOBFREEZONE',
+                    'table':                'gis_health.TOBFREESCHOOLPARCELBUFFERMERGE',
                     'value_field':          'objectid',
                     'method':               'yes_or_no'
                 },
