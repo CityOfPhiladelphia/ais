@@ -3,7 +3,22 @@
 
 # exit when any command fails
 set -e
-set -x
+# Debug bash output (prints every command run)
+#set -x
+
+# Accept tests to skip
+while getopts "sa:se:" opt; do
+  case ${opt} in
+    sa|skip-api-tests ) skip_api_list=${OPTARG};;;
+    se|skip-engine-tests ) skip_engine_list=${OPTARG};;;
+  esac
+done
+
+# Print out the skip values
+#echo "Skip values:"
+#for skip_value in "${skip_values[@]}"; do
+#  echo "$skip_value"
+#done
 
 WORKING_DIRECTORY=/home/ubuntu/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
@@ -14,6 +29,11 @@ echo "Working directory is $WORKING_DIRECTORY"
 # Has our send_teams and get_prod_env functions
 source $WORKING_DIRECTORY/ais/engine/bin/ais-utils.sh
 source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
+
+# dump location used in mutltiple functions, so export it.
+export DB_DUMP_FILE_LOC=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
+# Remove it to start fresh and save disk space
+rm $DB_DUMP_FILE_LOC
 
 
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
@@ -60,6 +80,14 @@ activate_venv_source_libaries() {
 }
 
 
+git_pull_ais_repo() {
+    cd $WORKING_DIRECTORY
+    git fetch
+    git pull
+    cd -
+}
+
+
 pull_passyunk_repo() {
 #    echo "Ensuring necessary repos are updated from github"
     # GET LATEST CODE FROM GIT REPO
@@ -97,9 +125,11 @@ check_load_creds() {
     #cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
     #cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
 
+    #set +x
     file $WORKING_DIRECTORY/config.py
-    file $WORKING_DIRECTORY/config-secrets.sh
-    source $WORKING_DIRECTORY/config-secrets.sh
+    file $WORKING_DIRECTORY/.env
+    source $WORKING_DIRECTORY/.env
+    #set -x
 }
 
 
@@ -127,8 +157,8 @@ identify_prod() {
         prod_db_uri=$GREEN_ENGINE_CNAME
         prod_lb_uri=$GREEN_CNAME
     fi
-    staging_tg_arn=$(aws elbv2 describe-target-groups | grep "${staging_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
-    prod_tg_arn=$(aws elbv2 describe-target-groups | grep "${prod_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+    export staging_tg_arn=$(aws elbv2 describe-target-groups | grep "${staging_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+    export prod_tg_arn=$(aws elbv2 describe-target-groups | grep "${prod_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
 }
 
 
@@ -151,9 +181,14 @@ build_engine() {
 engine_tests() {
     echo "Running engine tests against locally built database."
     cd $WORKING_DIRECTORY
-    #send_teams "Running tests."
     # Note: imports instance/config.py for credentials
-    pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native 
+    # If we received skipped engine tests argument
+    if [ ! -z "$skip_engine_list" ]; then
+        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native --skip=$skip_engine_list
+    else
+        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native
+    fi
+
     if [ $? -ne 0 ]
     then
       echo "Engine tests failed"
@@ -167,7 +202,14 @@ engine_tests() {
 api_tests() {
     echo "Running api_tests..."
     cd $WORKING_DIRECTORY
-    pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native 
+
+    # If we received skipped engine tests argument
+    if [ ! -z "$skip_engine_list" ]; then
+        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=$skip_api_list
+    else
+        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native
+    fi
+
     if [ $? -ne 0 ]
     then
       echo "API tests failed"
@@ -182,13 +224,15 @@ api_tests() {
 dump_local_db() {
     echo "Running dump_local_db...."
     # TEMP stop docker to conserve memory
+    # don't fail on this, so pipe to true
+    echo "Attempting to stop docker containers if they exist..."
     docker stop ais || true
     docker rm ais || true
     echo "Dumping the newly built engine database.."
     send_teams "Dumping the newly built engine database.."
+    export PGPASSWORD=$LOCAL_ENGINE_DB_PASS
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
-    db_dump_file_loc=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
-    pg_dump -Fc -U ais_engine -n public ais_engine > $db_dump_file_loc
+    pg_dump -Fc -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
     if [ $? -ne 0 ]
     then
       echo "DB dump failed"
@@ -198,21 +242,33 @@ dump_local_db() {
 
 
 # Update (Restore) AWS RDS instance to staging database
+# Note: you can somewhat track restore progress by looking at the db size:
+#SELECT pg_size_pretty( pg_database_size('ais_engine') );
 restore_db_to_staging() {
     echo "Running restore_db_to_staging.."
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
+    export PGPASSWORD=$ENGINE_DB_PASS
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
-    export PGPASSWORD=$POSTGRES_PW
+    # Extensions must be re-installed and can only be done as superuser
+    export PGPASSWORD=$PG_ENGINE_DB_PASS
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
-    export PGPASSWORD=$AIS_ENGINE_PW
-    pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc || :
+    export PGPASSWORD=$ENGINE_DB_PASS
+    #pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc || :
+    echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
+    # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
+    # Or restore postgis specific tablse that our extensions handles
+    # We should rely on db tests passing instead.
+    pg_restore --verbose -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+    # Print size after restore
+    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    echo 'Database size after restore:'
+    psql -U postgres -h ais-engine-green.cfuoybzycpox.us-east-1.rds.amazonaws.com -d ais_engine -c "SELECT pg_size_pretty( pg_database_size('ais_engine') );"
+
 }
 
 
@@ -220,6 +276,8 @@ docker_tests() {
     echo "Running docker_tests, which pulls the docker image from the latest in ECR and runs tests.."
     # export the proper CNAME for the container to run against
     export ENGINE_DB_HOST=$staging_db_uri
+    # Login to ECR so we can pull the image, will  use our AWS creds sourced from .env
+    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 880708401960.dkr.ecr.us-east-1.amazonaws.com
     # Spin up docker container from latest AIS image from ECR and test against staging database
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
@@ -363,9 +421,11 @@ setup_log_files
 
 check_load_creds
 
+git_pull_ais_repo
+
 identify_prod
 
-#build_engine
+build_engine
 
 engine_tests
 
@@ -375,6 +435,7 @@ dump_local_db
 
 restore_db_to_staging
 
+# Currently failing because it's trying to run against what's in ECR, which is old
 #docker_tests
 
 scale_up_staging

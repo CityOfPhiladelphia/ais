@@ -5,7 +5,6 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - roland-dev-6-29-22
       - master
 
 concurrency:

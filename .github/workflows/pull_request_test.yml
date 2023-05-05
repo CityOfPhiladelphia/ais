@@ -6,7 +6,6 @@ on:
   pull_request:
     branches:
       - master
-      - roland-dev-6-29-22
     #types: [opened, edited, repoened, review_requested]
 
 concurrency:
@@ -82,14 +81,14 @@ jobs:
           aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
           echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
            
-    - name: Set engine hostname to the staging database for testing against.
+    - name: Set engine hostname to the production database for testing against.
       env:
         PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
       run: |
         if [[ "$PROD_COLOR" -eq "blue" ]]; then
-           echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
-        elif [[ "$PROD_COLOR" -eq "green" ]]; then
            echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+           echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
         fi
 
     - name: Build and start the Docker image using docker-compose

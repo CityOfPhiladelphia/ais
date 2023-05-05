@@ -1,11 +1,13 @@
 import json
 import pytest
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from ais import app, app_db
 from operator import eq, gt
 
 @pytest.fixture
 def client():
-    app.config['TESTING'] = True
+    app.testing = True
     return app.test_client()
 
 def assert_status(response, *expected_status_codes):
@@ -307,7 +309,9 @@ def test_opa_query_returns_child_address(client):
           AND parent.street_address not in {}
         LIMIT 1
     '''.format(tuple(ignore_addresses))
-    result = app_db.engine.execute(CHILD_SQL)
+    # Must use the app import like this to get context so we can run SQL commands
+    with app.app_context():
+        result = app_db.engine.execute(CHILD_SQL)
     child_address, parent_address = result.first()
 
     response = client.get('/addresses/{}?opa_only'.format(child_address))
@@ -343,7 +347,9 @@ def test_block_can_exclude_non_opa(client):
             AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
           ) AS block_addresses
     '''
-    result = app_db.engine.execute(BLOCK_COUNT_SQL)
+    # Must use the app import like this to get context so we can run SQL commands
+    with app.app_context():
+        result = app_db.engine.execute(BLOCK_COUNT_SQL)
     block_count = result.first()[0]
 
     # Ensure that no join collisions happen

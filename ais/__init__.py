@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import dns.resolver
+#from ais import app
 # from flasgger import Swagger, MK_SANITIZER
 
 pardir = os.path.abspath('..')
@@ -24,13 +25,15 @@ except Exception:
 # Create app instance
 app = Flask('__name__', instance_relative_config=True)
 
+# Load default config
+app.config.from_object('config')
 
-# Find our config.py file containing necessary vars for running, such as database connection info.
-flask_config_file = None
-possible_flask_config_files = [os.getcwd() + '/config.py', pardir + '/config.py', '/ais/config.py', pardir + '/instance/config.py']
-for file in possible_flask_config_files:
-    if os.path.isfile(file):
-        flask_config_file = file
+# Patch config with instance values
+app.config.from_pyfile('config.py')
+
+#print(app.config)
+
+flask_config_file = os.getcwd() + '/config.py'
 
 if flask_config_file:
     print(f'Loading {flask_config_file} as our Flask config..')
@@ -68,6 +71,8 @@ if db_host is None:
 if db_pass is None:
     raise AssertionError('Could not get password for backend database!')
 
+print(os.environ['ENGINE_DB_HOST'])
+print(os.environ['ENGINE_DB_PASS'])
 # format is: "postgresql://postgres:postgres@localhost/DBNAME"
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://ais_engine:{db_pass}@{db_host}/ais_engine'
 # Init database extension

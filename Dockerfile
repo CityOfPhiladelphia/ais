@@ -7,8 +7,8 @@ MAINTAINER CityGeo
 # only docker-compose uses .env files
 ENV ENGINE_DB_HOST=$ENGINE_DB_HOST
 ENV ENGINE_DB_PASS=$ENGINE_DB_PASS
-ENV BLUE_ENGINE_CNAME=$BLUE_ENGINE_CNAME
 ENV GREEN_ENGINE_CNAME=$GREEN_ENGINE_CNAME
+ENV BLUE_ENGINE_CNAME=$BLUE_ENGINE_CNAME
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
@@ -33,7 +33,8 @@ COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
 # Note: Install python reqs at the system level, no need for venv in a docker container
 # also caused some issues for me.
 RUN mkdir -p /ais
-COPY ./requirements.app.txt /ais/
+RUN git clone https://github.com/CityOfPhiladelphia/ais --branch python3.10-upgrade /ais
+COPY requirements* /ais/
 RUN pip install --upgrade pip && \
     pip install git+https://github.com/CityOfPhiladelphia/passyunk && \
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git && \
@@ -41,10 +42,17 @@ RUN pip install --upgrade pip && \
     #python -m venv /ais/venv && \
     #. /ais/venv/bin/activate && \
 
-#RUN git clone https://github.com/CityOfPhiladelphia/ais /ais
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
-COPY . /ais
+#COPY ais/ /ais/ais
+#COPY application.py /ais/
+#COPY bin/ /ais/bin/
+#COPY bin/ /ais/bin/
+#COPY docker-build-files/ /ais/docker-build-files/
+#COPY setup.py /ais/
+#COPY config.py /ais/
+#COPY gunicorn.conf.py /ais/
+#COPY manage.py /ais/
 
 # Actually install our AIS package
 RUN cd /ais && pip3 install .
@@ -57,4 +65,6 @@ COPY docker-build-files/nginx.conf /etc/nginx/nginx.conf
 COPY docker-build-files/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh", "$ENGINE_DB_HOST", "$ENGINE_DB_PASS"]
+#ENTRYPOINT ["/entrypoint.sh", "$ENGINE_DB_HOST", "$ENGINE_DB_PASS"]
+ENTRYPOINT /entrypoint.sh $ENGINE_DB_HOST $ENGINE_DB_PASS
+#CMD ["/bin/bash"]

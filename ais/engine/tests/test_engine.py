@@ -91,12 +91,10 @@ def test_num_rows_bt_db_tables(startup):
     list_tables_stmt = "select table_name from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE'"
     local_build_db_cur.execute(list_tables_stmt)
     local_build_db_cur_tables = local_build_db_cur.fetchall()
-    print("DEBUG1!!!!!: ", str(local_build_db_cur_tables))
 
     prod_rds_db_cur.execute(list_tables_stmt)
     prod_rds_db_cur_tables = prod_rds_db_cur.fetchall()
     # local_build_db_cur_tables = startup['local_build_db_cur'].tables
-    print("DEBUG1!!!!!: ", str(prod_rds_db_cur_tables))
     for ntable in local_build_db_cur_tables:
         table_name = ntable['table_name']
         if table_name in startup['ignore_tables']:
@@ -114,6 +112,7 @@ def test_num_rows_bt_db_tables(startup):
         # o_rows = odb_table.count
         fdif = abs((n_rows[0]['count'] - o_rows[0]['count']) / o_rows[0]['count'])
 
+        print('Making sure percent of rows that have changed are less than a 10% threshold')
         assert fdif <= 0.1, (ntable, fdif)
 
 

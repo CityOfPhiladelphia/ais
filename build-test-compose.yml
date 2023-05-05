@@ -1,6 +1,8 @@
 version: '3'
 services:
   ais:
+    env_file:
+      - .env
     container_name: ais
     image: ais
     build: 
