@@ -74,8 +74,9 @@ if db_host is None:
 if db_pass is None:
     raise AssertionError('Could not get password for backend database!')
 
-print(os.environ['ENGINE_DB_HOST'])
-print(os.environ['ENGINE_DB_PASS'])
+# Debug print if we got our creds as env variables (necessary for how we run it in docker/ECS)
+#print(os.environ['ENGINE_DB_HOST'])
+#print(os.environ['ENGINE_DB_PASS'])
 # format is: "postgresql://postgres:postgres@localhost/DBNAME"
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://ais_engine:{db_pass}@{db_host}/ais_engine'
 # Init database extension
