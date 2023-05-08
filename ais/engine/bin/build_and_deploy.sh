@@ -281,7 +281,7 @@ docker_tests() {
     # Spin up docker container from latest AIS image from ECR and test against staging database
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native '
+    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native'
 }
 
 
@@ -435,8 +435,7 @@ dump_local_db
 
 restore_db_to_staging
 
-# Currently failing because it's trying to run against what's in ECR, which is old
-#docker_tests
+docker_tests
 
 scale_up_staging
 
