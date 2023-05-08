@@ -34,14 +34,14 @@ COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
 # also caused some issues for me.
 RUN mkdir -p /ais
 RUN git clone https://github.com/CityOfPhiladelphia/ais --branch python3.10-upgrade /ais
-COPY requirements* /ais/
 RUN pip install --upgrade pip && \
     pip install git+https://github.com/CityOfPhiladelphia/passyunk && \
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git && \
-    pip install -r /ais/requirements.app.txt
+    pip install -r /ais/requirements.app.3.10.txt
     #python -m venv /ais/venv && \
     #. /ais/venv/bin/activate && \
 
+#COPY requirements* /ais/
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland-dev-branch-10-15-21 --single-branch /ais
 #RUN git clone https://github.com/CityOfPhiladelphia/ais --branch roland_testing --single-branch /ais
 #COPY ais/ /ais/ais
