@@ -9,8 +9,8 @@ set -e
 # Accept tests to skip
 while getopts "sa:se:" opt; do
   case ${opt} in
-    sa|skip-api-tests ) skip_api_list=${OPTARG};;;
-    se|skip-engine-tests ) skip_engine_list=${OPTARG};;;
+    sa|skip-api-tests ) skip_api_list=${OPTARG};;
+    se|skip-engine-tests ) skip_engine_list=${OPTARG};;
   esac
 done
 
@@ -33,7 +33,7 @@ source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
 # dump location used in mutltiple functions, so export it.
 export DB_DUMP_FILE_LOC=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
 # Remove it to start fresh and save disk space
-rm $DB_DUMP_FILE_LOC
+rm -f $DB_DUMP_FILE_LOC
 
 
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
@@ -127,6 +127,7 @@ check_load_creds() {
 
     #set +x
     file $WORKING_DIRECTORY/config.py
+    file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/.env
     source $WORKING_DIRECTORY/.env
     #set -x

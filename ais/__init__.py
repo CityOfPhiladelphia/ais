@@ -17,20 +17,23 @@ try:
     print('Loading the .env file, will use database info if found there...')
     load_dotenv()
 except Exception:
-    load_dotenv(pardir + '/.env')
+    load_dotenv(pardir + '/ais/.env')
 
 # Flask 2.0
 #from flask.cli import AppGroup
 
 # Create app instance
-app = Flask('__name__', instance_relative_config=True)
-
-# Load default config
+app = Flask('__name__')
+# load non-sensitive configurations from config.py
 app.config.from_object('config')
+# load sensitive configurations from instance/config.py
+# Note these will both be imported in app.config so don't have any conflicting values
+# in either that will overwrite the other.
+# reference "Instance Folders": https://flask.palletsprojects.com/en/2.3.x/config/
+app.config.from_pyfile('instance/config.py')
 
-# Patch config with instance values
-app.config.from_pyfile('config.py')
-
+# debug print all config options to make sure we're loading them correctly
+# will be referenced by script later like a dictionary
 #print(app.config)
 
 flask_config_file = os.getcwd() + '/config.py'
