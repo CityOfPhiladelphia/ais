@@ -7,18 +7,24 @@ set -e
 #set -x
 
 # Accept tests to skip
-while getopts "sa:se:" opt; do
-  case ${opt} in
-    sa|skip-api-tests ) skip_api_list=${OPTARG};;
-    se|skip-engine-tests ) skip_engine_list=${OPTARG};;
-  esac
+while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]] ;
+do
+    opt="$1";
+    shift;              #expose next argument
+    case "$opt" in
+        "--" ) break 2;;
+        "--skip-api-tests" )
+           skip_api_tests=="$1"; shift;;
+        "--skip-api-tests="* )
+           skip_api_tests=="${opt#*=}";;
+        "--skip-engine-tests" )
+           skip_engine_tests="$1"; shift;;
+        "--skip-engine-tests="* )
+           skip_engine_tests="${opt#*=}";;
+        *) echo >&2 "Invalid option: $@"; exit 1;;
+   esac
 done
 
-# Print out the skip values
-#echo "Skip values:"
-#for skip_value in "${skip_values[@]}"; do
-#  echo "$skip_value"
-#done
 
 WORKING_DIRECTORY=/home/ubuntu/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
@@ -184,8 +190,8 @@ engine_tests() {
     cd $WORKING_DIRECTORY
     # Note: imports instance/config.py for credentials
     # If we received skipped engine tests argument
-    if [ ! -z "$skip_engine_list" ]; then
-        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native --skip=$skip_engine_list
+    if [ ! -z "$skip_engine_tests" ]; then
+        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native --skip=$skip_engine_tests
     else
         pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native
     fi
@@ -205,10 +211,10 @@ api_tests() {
     cd $WORKING_DIRECTORY
 
     # If we received skipped engine tests argument
-    if [ ! -z "$skip_engine_list" ]; then
-        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=$skip_api_list
+    if [ ! -z "$skip_api_tests" ]; then
+        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=$skip_api_tests
     else
-        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native
+        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native
     fi
 
     if [ $? -ne 0 ]
@@ -426,7 +432,7 @@ git_pull_ais_repo
 
 identify_prod
 
-build_engine
+#build_engine
 
 engine_tests
 
