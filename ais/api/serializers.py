@@ -334,7 +334,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         geom = None
         if isinstance(address, Iterable) and not self.estimated:
             address, geocode_response_type, geom = address
-            if not geocode_response_type:
+            if geocode_response_type is None:
                 geocode_response_type = 99
             gp_map = config['ADDRESS_SUMMARY']['geocode_priority']
             geocode_response_type = (list(gp_map.keys())[list(gp_map.values()).index(geocode_response_type)])

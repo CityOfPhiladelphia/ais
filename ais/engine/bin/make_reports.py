@@ -23,12 +23,12 @@ service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
 dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
 true_range_write_table_name = 'TRUE_RANGE'
 
-write_user = parsed_write_db_string['user']
-write_pw = parsed_write_db_string['password']
-write_host = parsed_write_db_string['host']
-write_dsn = f'{write_user}/{write_pw}@{write_host}'
 
-read_dsn = f"dbname={parsed_read_db_string['db_name']} user={parsed_read_db_string['user']}"
+read_pass = parsed_read_db_string['password']
+read_user = parsed_read_db_string['user']
+read_host = parsed_read_db_string['host']
+read_db = parsed_read_db_string['db_name']
+read_dsn = f"dbname={read_db} host={read_host} user={read_user} password={read_pass}"
 read_conn = psycopg2.connect(read_dsn)
 
 def database_connect(dsn):
@@ -38,7 +38,12 @@ def database_connect(dsn):
     cursor = db_connect.cursor()
     return cursor
 
+write_user = parsed_write_db_string['user']
+write_pw = parsed_write_db_string['password']
+write_host = parsed_write_db_string['host']
+write_dsn = f'{write_user}/{write_pw}@{write_host}'
 oracle_cursor = database_connect(write_dsn)
+
 
 print(f'\nReading from local DB: {read_dsn}')
 print(f'Writing to: {write_dsn}\n'.replace(write_pw, 'CENSORED'))

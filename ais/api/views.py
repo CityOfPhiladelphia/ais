@@ -23,6 +23,8 @@ from .serializers import AddressJsonSerializer, IntersectionJsonSerializer, Serv
 config = app.config
 OWNER_RESPONSE_LIMIT = config['OWNER_RESPONSE_LIMIT']
 DEFAULT_AIS_MAX_RANGE = config['DEFAULT_AIS_MAX_RANGE']
+sa_yes_no_layers = ["'" + l.get('layer_id', '') + "'" for l in config['SERVICE_AREAS']['layers'] if l.get('value_method', '') == 'yes_or_no']
+sa_yes_no_layers_str = '(' + ', '.join(sa_yes_no_layers) + ')'
 
 def json_response(*args, **kwargs):
     return Response(*args, mimetype='application/json', **kwargs)
@@ -1164,7 +1166,12 @@ def service_areas(query):
     sa_stmt = '''
     with foo as
     (
-    SELECT layer_id, value
+    SELECT layer_id, 
+    case when layer_id in {sa_yes_no_layers_str} then
+         case when trim(coalesce(value, '')) != '' then 'Yes' else 'No'
+         end 
+         else value
+         end as value
     from service_area_polygon
     where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}))
      )
@@ -1179,8 +1186,7 @@ def service_areas(query):
     limit 1
     )
     order by layer_id 
-    '''.format(srid=srid, engine_srid=ENGINE_SRID,x=x, y=y)
-
+    '''.format(srid=srid, engine_srid=ENGINE_SRID,x=x, y=y, sa_yes_no_layers_str=sa_yes_no_layers_str)
     result = db.engine.execute(sa_stmt)
     for item in result.fetchall():
         sa_data[item[0]] = item[1]
