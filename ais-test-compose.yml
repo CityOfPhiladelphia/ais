@@ -6,6 +6,8 @@ services:
     environment:
       - ENGINE_DB_HOST
       - ENGINE_DB_PASS
+      - GREEN_ENGINE_CNAME
+      - BLUE_ENGINE_CNAME
     ports:
       - "8080:8080"
 

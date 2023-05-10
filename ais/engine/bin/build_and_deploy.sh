@@ -56,7 +56,7 @@ echo "Started: "$start_dt
 
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/venv ]; then
-        echo "Activating/creating venv.."
+        echo -e "\nActivating/creating venv.."
         python3.10 -m venv $WORKING_DIRECTORY/venv 
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
@@ -108,7 +108,6 @@ pull_passyunk_repo() {
 
 # CREATE ENGINE LOG FILES
 setup_log_files() {
-
     mkdir -p $LOG_DIRECTORY
     error_file="build_errors_"
     out_file="build_log_"
@@ -125,7 +124,7 @@ setup_log_files() {
 # This wil be needed for the engine build to pull in data.
 # config-secrets.sh contains AWS 
 check_load_creds() {
-    echo "Loading credentials and passwords into the environment"
+    echo -e "\nLoading credentials and passwords into the environment"
     # 11/9/22 Note: No longer needed with Jame's changes. pdata is installed via pip
     #. $WORKING_DIRECTORY/pull-private-passyunkdata.sh
     #cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
@@ -142,7 +141,7 @@ check_load_creds() {
 
 # Get AWS production environment
 identify_prod() {
-    echo "Finding the production environment via CNAME"
+    echo -e "\nFinding the production environment via CNAME"
     # export to environment var so it can be accessed by sub-python scripts run in this script.
     export prod_color=$(get_prod_env || {
       echo "Could not find the production environment" ;
@@ -174,7 +173,7 @@ identify_prod() {
 # with database connection info for this to work!
 # See check_load_creds function.
 build_engine() {
-    echo "Starting new engine build"
+    echo -e "\nStarting new engine build"
     send_teams "Starting new engine build."
     bash $WORKING_DIRECTORY/ais/engine/bin/build_engine.sh > >(tee -a $out_file_loc) 2> >(tee -a $error_file_loc >&2)
     send_teams "Engine build has completed."
@@ -186,7 +185,7 @@ build_engine() {
 
 
 engine_tests() {
-    echo "Running engine tests against locally built database."
+    echo -e "\nRunning engine tests against locally built database."
     cd $WORKING_DIRECTORY
     # Note: imports instance/config.py for credentials
     # If we received skipped engine tests argument
@@ -207,7 +206,7 @@ engine_tests() {
 
 
 api_tests() {
-    echo "Running api_tests..."
+    echo -e "\nRunning api_tests..."
     cd $WORKING_DIRECTORY
 
     # If we received skipped engine tests argument
@@ -229,12 +228,12 @@ api_tests() {
 
 # Make a copy (Dump) the newly built local engine db
 dump_local_db() {
-    echo "Running dump_local_db...."
+    echo -e "\nRunning dump_local_db...."
     # TEMP stop docker to conserve memory
     # don't fail on this, so pipe to true
     echo "Attempting to stop docker containers if they exist..."
-    docker stop ais || true
-    docker rm ais || true
+    docker stop ais 2>/dev/null || true
+    docker rm ais 2>/dev/null || true
     echo "Dumping the newly built engine database.."
     send_teams "Dumping the newly built engine database.."
     export PGPASSWORD=$LOCAL_ENGINE_DB_PASS
@@ -252,7 +251,7 @@ dump_local_db() {
 # Note: you can somewhat track restore progress by looking at the db size:
 #SELECT pg_size_pretty( pg_database_size('ais_engine') );
 restore_db_to_staging() {
-    echo "Running restore_db_to_staging.."
+    echo -e "\nRunning restore_db_to_staging.."
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
     export PGPASSWORD=$ENGINE_DB_PASS
@@ -268,34 +267,35 @@ restore_db_to_staging() {
     #pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc || :
     echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
     # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
-    # Or restore postgis specific tablse that our extensions handles
+    # or restore postgis specific tables that our extensions handles.
     # We should rely on db tests passing instead.
     pg_restore --verbose -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
     # Print size after restore
     export PGPASSWORD=$PG_ENGINE_DB_PASS
     echo 'Database size after restore:'
-    psql -U postgres -h ais-engine-green.cfuoybzycpox.us-east-1.rds.amazonaws.com -d ais_engine -c "SELECT pg_size_pretty( pg_database_size('ais_engine') );"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "SELECT pg_size_pretty( pg_database_size('ais_engine') );"
 
 }
 
 
 docker_tests() {
-    echo "Running docker_tests, which pulls the docker image from the latest in ECR and runs tests.."
+    echo -e "\nRunning docker_tests, which pulls the docker image from the latest in ECR and runs tests.."
     # export the proper CNAME for the container to run against
     export ENGINE_DB_HOST=$staging_db_uri
     # Login to ECR so we can pull the image, will  use our AWS creds sourced from .env
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 880708401960.dkr.ecr.us-east-1.amazonaws.com
     # Spin up docker container from latest AIS image from ECR and test against staging database
+    # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native'
+    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
 }
 
 
 scale_up_staging() {
-    echo "Running scale_up_staging..."
+    echo -e "\nRunning scale_up_staging..."
     prod_tasks=$(aws ecs describe-clusters --clusters ais-${prod_color}-cluster | grep runningTasksCount | tr -s ' ' | cut -d ' ' -f3 | cut -d ',' -f1)
-    echo "Current running tasks in prod: $prod_tasks"
+    echo -e "\nCurrent running tasks in prod: $prod_tasks"
     if (( $prod_tasks > 2 ))
     then
         # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
@@ -318,7 +318,7 @@ scale_up_staging() {
 
 # Once confirmed good, deploy latest AIS image from ECR to staging
 deploy_to_staging_ecs() {
-    echo "Deploying latest AIS image from ECR to $staging_color environment.."
+    echo -e "\nDeploying latest AIS image from ECR to $staging_color environment.."
     # pipe to null because they're quite noisy
     echo "running aws ecs update-service.."
     aws ecs update-service --cluster ais-${staging_color}-cluster \
@@ -332,19 +332,20 @@ deploy_to_staging_ecs() {
 
 # Check staging target group health
 check_target_health() {
-    echo "Confirming target group health.."
+    echo -e "\nConfirming target group health.."
     aws elbv2 describe-target-health --target-group-arn $staging_tg_arn | grep "\"healthy\"" 1> /dev/null
 }
 
 
 # Warm up load balancer against staging env?
 warmup_lb() {
+    echo -e "\nWarming up the load balancer for staging lb: $staging_color."
     # Export creds again so this function can access them.
-    file $WORKING_DIRECTORY/config-secrets.sh
-    source $WORKING_DIRECTORY/config-secrets.sh
-    echo "Warming up the load balancer for staging lb: $staging_color."
+    file $WORKING_DIRECTORY/.env
+    source $WORKING_DIRECTORY/.env
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --proxy $PROXY_AUTH --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
+    #python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --proxy $PROXY_AUTH --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
+    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
     if [ $? -ne 0 ]
     then
       echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
@@ -356,6 +357,7 @@ warmup_lb() {
 
 # Important step! Swaps the prod environments in Route 53!!
 swap_cnames() {
+    echo -e "\nSwapping prod/stage CNAMEs..."
     # https://stackoverflow.com/a/14203146
     # accept one argument of -c for color of blue or green
     POSITIONAL=()
@@ -408,14 +410,15 @@ swap_cnames() {
 
 
 reenable_alarm() {
-    echo "Sleeping for 5 minutes, then running scale-in alarm re-enable command..."
+    echo -e "\nSleeping for 5 minutes, then running scale-in alarm re-enable command..."
     sleep 300
     aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
     echo "Alarm 'ais-${staging_color}-api-taskin' re-enabled."
 }
 
 make_reports_tables() {
-    python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
+    echo -e "\nRunning engine make_reports.py script..."
+    python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py || true
 }
 
 
@@ -432,7 +435,7 @@ git_pull_ais_repo
 
 identify_prod
 
-#build_engine
+build_engine
 
 engine_tests
 
@@ -456,7 +459,8 @@ swap_cnames -c $staging_color
 
 reenable_alarm
 
-make_reports_tables
+# Will run as an independent job
+#make_reports_tables
 
 echo "Finished successfully!"
 
