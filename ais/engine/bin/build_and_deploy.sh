@@ -73,7 +73,8 @@ activate_venv_source_libaries() {
         #python setup.py bdist_wheel 
         #pip install -r $WORKING_DIRECTORY/requirements.txt || deactivate && rm $WORKING_DIRECTORY/env -rf && exit 1
         #pip install -r $WORKING_DIRECTORY/requirements.txt
-        pip install -r $WORKING_DIRECTORY/requirements-build.txt
+        #pip install -r $WORKING_DIRECTORY/requirements-build.txt
+        pip install -r $WORKING_DIRECTORY/requirements.app.3.10.txt
 
         # Install AIS as a python module, needed in tests.
         python setup.py develop
