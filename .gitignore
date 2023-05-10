@@ -3,6 +3,8 @@ passyunk-private.key
 passyunk-public.key
 *.key
 
+log/
+
 # docker-compose build secrets
 config-secrets.sh
 config-secrets.py
