@@ -19,7 +19,7 @@ def main(proxy, dbpass, gatekeeper_key):
 
     warmup_address_table_name = 'address_summary'
     warmup_address_field = 'street_address'
-    warmup_row_limit = 100
+    warmup_row_limit = 1000
     warmup_fraction_success = .9
     rate_limit = 5
     query_errors = {}
