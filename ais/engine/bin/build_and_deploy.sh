@@ -278,7 +278,7 @@ docker_tests() {
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
+    docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
 }
 
 
