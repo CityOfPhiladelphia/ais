@@ -59,14 +59,14 @@ def main():
     WRITE_OUT = True
 
     DEV = False  # This will target a single address
-    DEV_ADDRESS = '18-20 W GIRARD AVE'
+    DEV_ADDRESS = '2342 W HUNTING PARK AVE'
     DEV_ADDRESS_COMPS = {
         # 'address_low':      '4700',
         # 'address_high':     '4726',
         # 'street_name':      'ALDEN',
         # 'street_suffix':    'WALK',
     }
-    DEV_STREET_NAME = 'GIRARD'
+    DEV_STREET_NAME = 'W HUNTING PARK AVE'
 
     # Logging stuff.
     address_errors = []
@@ -171,14 +171,14 @@ def main():
                 source_rows = source_table.read(fields=source_fields, \
                                                 aliases=aliases, where=where, return_geom=False)
 
-        if not source_rows or len(source_rows) < 2:
-            raise Exception("Exiting because source table {source_table} is empty.".format(source_table=source_table))
+        if not DEV: 
+            if not source_rows or len(source_rows) < 2:
+                raise Exception("Exiting because source table {source_table} is empty.".format(source_table=source_table))
 
         # Loop over addresses
         for i, source_row in enumerate(source_rows):
             if i % 100000 == 0:
                 print(i)
-
             # Get source address and add source to map. We do this outside the
             # try statement so that source_address is always properly set for
             # logging errors.
@@ -353,8 +353,7 @@ def main():
             value = comps
             key = tag_field
             for item in path:
-                if __name__ == '__main__':
-                    value = value.get(item)
+                value = value.get(item)
             value = str(value).strip()
             value = '' if value == 'None' else value
             parser_address_tag_string_vals = [

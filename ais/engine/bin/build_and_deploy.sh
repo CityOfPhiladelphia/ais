@@ -54,6 +54,24 @@ start_dt=$(date +%Y%m%d%T)
 echo "Started: "$start_dt
 
 
+use_exit_status() {
+    # Use exit status to send correct success/failure message to Teams and console
+    # $1 int - exit status, typically of last process via $?
+    # $2 text - failure message to echo and send to Teams
+    # $3 text - success message to echo and send to Teams
+
+    if [ $1 -ne 0 ]
+    then
+        echo "$2"
+        send_teams "$2"
+        exit 1;
+    else
+        echo "$3"
+        send_teams "$3"
+    fi
+}
+
+
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/venv ]; then
         echo -e "\nActivating/creating venv.."
@@ -187,43 +205,18 @@ build_engine() {
 
 engine_tests() {
     echo -e "\nRunning engine tests against locally built database."
-    cd $WORKING_DIRECTORY
     # Note: imports instance/config.py for credentials
-    # If we received skipped engine tests argument
-    if [ ! -z "$skip_engine_tests" ]; then
-        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native --skip=$skip_engine_tests
-    else
-        pytest $WORKING_DIRECTORY/ais/engine/tests/test_engine.py -vvv -ra --showlocals --tb=native
-    fi
-
-    if [ $? -ne 0 ]
-    then
-      echo "Engine tests failed"
-      send_teams "Engine tests have failed."
-      exit 1;
-    fi
-    send_teams "Engine tests have passed."
+    cd $WORKING_DIRECTORY
+    pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
+    use_exit_status $? "Engine tests failed" "Engine tests passed"
 }
 
 
 api_tests() {
     echo -e "\nRunning api_tests..."
     cd $WORKING_DIRECTORY
-
-    # If we received skipped engine tests argument
-    if [ ! -z "$skip_api_tests" ]; then
-        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=$skip_api_tests
-    else
-        pytest $WORKING_DIRECTORY/ais/api/tests/ -vvv -ra --showlocals --tb=native
-    fi
-
-    if [ $? -ne 0 ]
-    then
-      echo "API tests failed"
-      send_teams "API tests failed."
-      exit 1;
-    fi
-    send_teams "API tests passed."
+    pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
+    use_exit_status $? "API tests failed" "API tests passed"
 }
 
 
@@ -240,11 +233,7 @@ dump_local_db() {
     export PGPASSWORD=$LOCAL_ENGINE_DB_PASS
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
     pg_dump -Fc -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
-    if [ $? -ne 0 ]
-    then
-      echo "DB dump failed"
-      exit 1;
-    fi
+    use_exit_status $? "DB dump failed" "DB dump succeeded"
 }
 
 
@@ -289,7 +278,7 @@ docker_tests() {
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
+    docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
 }
 
 
@@ -347,12 +336,9 @@ warmup_lb() {
     send_teams "Warming up the load balancer for staging lb: $staging_color."
     #python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --proxy $PROXY_AUTH --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
     python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
-    if [ $? -ne 0 ]
-    then
-      echo "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
-      send_teams "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed."
-      exit 1;
-    fi
+    use_exit_status $? \
+        "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed." \
+        "AIS load balancer warmup succeeded.\nEngine build has been pushed and deployed."
 }
 
 
@@ -425,9 +411,6 @@ make_reports_tables() {
 
 activate_venv_source_libaries
 
-# 11/9/22 Note: No longer needed with Jame's changes. pdata is installed via pip
-#pull_repo
-
 setup_log_files
 
 check_load_creds
@@ -464,4 +447,3 @@ reenable_alarm
 #make_reports_tables
 
 echo "Finished successfully!"
-

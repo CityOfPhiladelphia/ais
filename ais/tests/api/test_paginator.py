@@ -7,8 +7,8 @@
 # Test that empty results return a 404
 
 import pytest
-from ..views import validate_page_param
-from ..paginator import Paginator
+from ...api.views import validate_page_param
+from ...api.paginator import Paginator
 
 @pytest.fixture
 def full_paginator():
