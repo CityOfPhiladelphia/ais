@@ -455,7 +455,11 @@ def main():
                         curb_xsect_line_shp = curb_shp.intersection(proj_shp)
                         curb_xsect_pt = None
                         if isinstance(curb_xsect_line_shp, LineString):
-                            curb_xsect_pt = curb_xsect_line_shp.coords[1]
+                            try: 
+                                curb_xsect_pt = curb_xsect_line_shp.coords[1]
+                            # If no coords returned from our intersection, pass. 
+                            except IndexError: 
+                                pass
                         elif isinstance(curb_xsect_line_shp, MultiLineString):
                             curb_xsect_pt = curb_xsect_line_shp[-1:][0].coords[1]
                         if curb_xsect_pt:
@@ -498,9 +502,9 @@ def main():
         except ValueError as e:
             print(e)
 
-        except Exception:
+        except Exception as e:
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     if WRITE_OUT:
         print('Writing XYs...')

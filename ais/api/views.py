@@ -164,12 +164,10 @@ def unknown_cascade_view(**kwargs):
         error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
-        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-        #                           search_type=search_type, address=address)
 
     # CASCADE TO STREET SEGMENT
     cascadedseg = StreetSegment.query \
-        .filter_by_seg_id(seg_id) #if seg_id else None
+        .filter_by_seg_id(seg_id)
 
     cascadedseg = cascadedseg.first()
 
@@ -177,17 +175,11 @@ def unknown_cascade_view(**kwargs):
         error = json_error(404, 'Could not find any addresses matching query.',
                            {'query': query, 'normalized': normalized_address, 'search_type': search_type})
         return json_response(response=error, status=404)
-        # return unmatched_response(query=query, parsed=parsed, normalized_address=normalized_address,
-        #                           search_type=search_type, address=address)
 
     # Get address side of street centerline segment
     seg_side = "R" if cascadedseg.right_from % 2 == address.address_low % 2 and cascadedseg.right_to != 0 else "L"
     # Check if address low num is within centerline seg full address range with parity:
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
-    # if not from_num <= address.address_low <= to_num:
-    #     error = json_error(404, 'Address number is out of range.',
-    #                        {'query': query, 'normalized': normalized_address, 'search_type': search_type})
-    #     return json_response(response=error, status=404)
 
     # Get geom from true_range view item with same seg_id
     true_range_stmt = '''
@@ -205,8 +197,6 @@ def unknown_cascade_view(**kwargs):
         side_delta = true_range_result[1] - true_range_result[0]
         cascade_geocode_type = 'true_range'
     else:
-        # side_delta = cascadedseg.right_to - cascadedseg.right_from if seg_side == "R" \
-        #     else cascadedseg.left_to - cascadedseg.left_from
         side_delta = to_num - from_num
         cascade_geocode_type = 'full_range'
     if side_delta == 0:
@@ -239,16 +229,13 @@ def unknown_cascade_view(**kwargs):
 
     addresses = (address,)
     paginator = Paginator(addresses)
-    #addresses_count = paginator.collection_size
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
     if error:
-        # return json_response(response=error, status=error['status'])
         return json_response(response=error, status=404)
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
     crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
 
     # Render the response
@@ -266,14 +253,12 @@ def unknown_cascade_view(**kwargs):
         sa_data=sa_data
     )
     result = serializer.serialize_many(addresses_page)
-    # result = serializer.serialize_many(addresses_page) if addresses_count > 1 else serializer.serialize(next(addresses_page))
 
     return json_response(response=result, status=200)
 
 
 @app.route('/addresses/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/addresses.yml')
 def addresses(query):
     """
     Looks up information about the address given in the query. Response is an
@@ -319,7 +304,6 @@ def addresses(query):
 
     try:
         parsed = PassyunkParser(MAX_RANGE=int(max_range)).parse(query)
-        # parsed = PassyunkParser().parse(query)
         search_type = parsed['type']
         normalized_address = parsed['components']['output_address']
     except:
@@ -341,18 +325,8 @@ def addresses(query):
     addr_num = str(low_num) + '-' + str(high_num) if high_num else low_num
     base_address_no_num_suffix = '{} {}'.format(addr_num, street_full)
     search_type = parsed['type']
-    # loose_filters = OrderedDict([
-    #                             # ('seg_id',int(parsed['components']['cl_seg_id'])),
-    #                              ('street_name',parsed['components']['street']['name']),
-    #                              ('address_low',low_num if low_num is not None else full_num),
-    #                              ('address_low_suffix',parsed['components']['address']['addr_suffix']),
-    #                              ('address_low_frac',parsed['components']['address']['fractional']),
-    #                              ('street_predir',parsed['components']['street']['predir']),
-    #                              ('street_postdir',parsed['components']['street']['postdir']),
-    #                              ('street_suffix',parsed['components']['street']['suffix']),
-    # ])
+
     loose_filters = OrderedDict([
-                                # ('seg_id',int(parsed['components']['cl_seg_id'])),
                                  ('seg_id',seg_id),
                                  ('address_low',low_num if low_num is not None else full_num),
                                  ('address_low_suffix',parsed['components']['address']['addr_suffix']),

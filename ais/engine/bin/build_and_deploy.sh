@@ -25,12 +25,14 @@ do
    esac
 done
 
-
 WORKING_DIRECTORY=/home/ubuntu/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
-
 cd $WORKING_DIRECTORY
 echo "Working directory is $WORKING_DIRECTORY"
+
+git_commit=$(git rev-parse HEAD)
+git_branch=$(git rev-parse --abbrev-ref HEAD)
+echo "Current git commit id is: $git_commit, branch: $git_branch"
 
 # Has our send_teams and get_prod_env functions
 source $WORKING_DIRECTORY/ais/engine/bin/ais-utils.sh
@@ -117,11 +119,11 @@ pull_passyunk_repo() {
 #    echo "Ensuring necessary repos are updated from github"
     # GET LATEST CODE FROM GIT REPO
     # passyunk public repo
-    pip install git+https://github.com/CityOfPhiladelphia/passyunk
+    pip install -q git+https://github.com/CityOfPhiladelphia/passyunk
     # passyunk private repo that pulls in csvs
     # note the URL is private-git, this is a custom SSH host specified in out SSH config
     # file, /root/.ssh/config that is installed in our Dockerfile.
-    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
+    pip install -q git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 }
 
 
@@ -278,7 +280,15 @@ docker_tests() {
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
+    #docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
+    docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
+}
+
+
+test_prod_db() {
+    export ENGINE_DB_HOST='stage_db_uri'
+    export ENGINE_DB_PASS=$LOCAL_DB_PASS
+    docker compose -f build-test-compose.yml build --no-cache
 }
 
 
@@ -416,6 +426,8 @@ setup_log_files
 check_load_creds
 
 git_pull_ais_repo
+
+pull_passyunk_repo
 
 identify_prod
 

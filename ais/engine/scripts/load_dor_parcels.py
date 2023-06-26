@@ -431,7 +431,7 @@ def main():
             print('{}: Unhandled error'.format(source_parcel))
             print(parcel_id)
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     print('Checking for duplicates...')
 

@@ -109,7 +109,7 @@ def main():
         except Exception as e:
             print('Unhandled exception on {}'.format(source_address))
             print(traceback.format_exc())
-            # sys.exit()
+            raise e
 
     print('Writing properties...')
     prop_table.write(props)

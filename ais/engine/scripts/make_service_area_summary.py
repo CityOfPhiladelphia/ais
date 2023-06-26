@@ -157,9 +157,9 @@ def main():
             last_y = y
             last_sa_rows = sa_rows
 
-        except:
+        except Exception as e:
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     # Clear out XY map
     # xy_map = {}

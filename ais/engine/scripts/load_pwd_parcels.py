@@ -136,6 +136,7 @@ def main():
         except Exception as e:
             print('{}: Unhandled error'.format(source_parcel))
             print(traceback.format_exc())
+            raise e
 
     print('Writing parcels...')
     parcel_table.write(parcels, chunk_size=50000)

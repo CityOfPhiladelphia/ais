@@ -69,23 +69,19 @@ def main():
                 parsed = parser.parse(source_street_full)
                 if parsed['type'] != 'street':
                     raise ValueError('Invalid street')
-
-                # comps = parsed['components']              <== phladdress
                 comps = parsed['components']['street']    # <== passyunk
             except Exception as e:
-                #raise ValueError('Could not parse')
+                print(f'Could not parse {source_street_full}')
                 pass
 
             # Check for unaddressable streets
             left_to = source_row[field_map['left_to']]
             right_to = source_row[field_map['right_to']]
             if left_to == 0 and right_to == 0:
-                #raise ValueError('Not a range')
                 pass
 
             street_suffix = comps['suffix']
             if street_suffix == 'RAMP':
-                #raise ValueError('Ramp')
                 pass
 
             street_comps = {
@@ -96,10 +92,6 @@ def main():
                 'street_full': comps['full'],
             }
 
-            # Stringify numeric fields that should be strings
-            # source_row['zip_left'] = str(source_row['zip_left'])
-            # source_row['zip_right'] = str(source_row['zip_right'])
-
             # Get values
             street = {key: source_row[value] for key, value in field_map.items()}
             street.update(street_comps)
@@ -107,15 +99,12 @@ def main():
             streets.append(street)
 
         except ValueError as e:
-            # FEEDBACK
-            #print('{}: {} ({})'.format(e, source_street_full, seg_id))
             error_count += 1
 
         except Exception as e:
             print('Unhandled error on row: {}'.format(i))
-            # pprint(street)
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     '''
     WRITE
@@ -128,6 +117,5 @@ def main():
     '''
 
     print('{} errors'.format(error_count))
-    #source_db.close()
     db.close()
     print('Finished in {} seconds'.format(datetime.now() - start))

@@ -39,7 +39,7 @@ run_script() {
   echo "********************************************************************************"
   echo "Running script '$1'"
   ais engine --script "$1"
-  if [ $? -ne 0 ]
+  if [[ $? -ne 0 ]]
   then
     echo "Loading table failed. Exiting."
     exit 1;

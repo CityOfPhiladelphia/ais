@@ -163,9 +163,8 @@ def main():
 
         except Exception as e:
             print('Unhandled error on row: {}'.format(i))
-            # pprint(street)
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     centerline_table = db['street_centerlines']
     nodes_table = db['street_nodes']

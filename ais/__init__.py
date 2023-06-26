@@ -1,14 +1,10 @@
 import os
-import click
 from flask import Flask
-#import flask_cachecontrol
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import dns.resolver
-#from ais import app
-# from flasgger import Swagger, MK_SANITIZER
 
 pardir = os.path.abspath('..')
 
@@ -18,9 +14,6 @@ try:
     load_dotenv()
 except Exception:
     load_dotenv(pardir + '/ais/.env')
-
-# Flask 2.0
-#from flask.cli import AppGroup
 
 # Create app instance
 app = Flask('__name__')
@@ -34,7 +27,6 @@ app.config.from_pyfile('instance/config.py')
 
 # debug print all config options to make sure we're loading them correctly
 # will be referenced by script later like a dictionary
-#print(app.config)
 
 flask_config_file = os.getcwd() + '/config.py'
 
@@ -55,28 +47,32 @@ try:
 except Exception as e:
     db_pass = None
 
+try:
+    dev_test = os.environ['DEV_TEST']
+except Exception as e:
+    dev_test = None
+
 # Figure out 
-if db_host is None:
+if db_host is None: # FIX: This should be triggered so switch between them
     try:
         result = dns.resolver.resolve('ais-prod.phila.city')
         prod_cname = result.canonical_name.to_text()
-        if 'blue' in prod_cname:
+        if dev_test == 'true':
+            db_host = 'localhost'
+            db_pass = os.environ['LOCAL_PASSWORD']
+        elif 'blue' in prod_cname:
             db_host = app.config['BLUE_DATABASE']['host']
             db_pass = app.config['BLUE_DATABASE']['password']
-        if 'green' in prod_cname:
+        elif 'green' in prod_cname:
             db_host = app.config['GREEN_DATABASE']['host']
             db_host = app.config['GREEN_DATABASE']['password']
     except Exception as e:
         print(str(e))
 
-if db_host is None:
-    raise AssertionError('Could not get host for backend database!')
-if db_pass is None:
-    raise AssertionError('Could not get password for backend database!')
+assert db_host != None, 'Could not get host for backend database!'
+assert db_pass != None, 'Could not get password for backend database!'
 
 # Debug print if we got our creds as env variables (necessary for how we run it in docker/ECS)
-#print(os.environ['ENGINE_DB_HOST'])
-#print(os.environ['ENGINE_DB_PASS'])
 # format is: "postgresql://postgres:postgres@localhost/DBNAME"
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://ais_engine:{db_pass}@{db_host}/ais_engine'
 # Init database extension
@@ -96,5 +92,3 @@ if app.config.get('SENTRY_DSN', None):
 
 # Init migration extension
 migrate = Migrate(app, app_db)
-
-

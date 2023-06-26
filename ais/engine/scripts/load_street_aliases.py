@@ -71,10 +71,11 @@ def main():
             # TODO: FEEDBACK
             pass
 
-        except:
+        except Exception as e:
+            print('Unhandled exception!')
             print(alias_row)
             print(traceback.format_exc())
-            sys.exit()
+            raise e
 
     print('Writing aliases...')
     alias_table.write(aliases)
