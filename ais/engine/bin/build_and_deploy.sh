@@ -81,23 +81,10 @@ activate_venv_source_libaries() {
         source $WORKING_DIRECTORY/env/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
-	# used for python3.5, not needed with the pip version that's installed under 3.6
-        # Looks like pip 18.1 works and is what we want.
-        #pip install --upgrade "pip < 21.0"
         pip install wheel
-	# Add github to the list of known hosts so our SSH pip installs work later
-	ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-	pip install git+https://github.com/CityOfPhiladelphia/passyunk
- 	pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
-	# used for python3.5
-        #python setup.py bdist_wheel 
-        #pip install -r $WORKING_DIRECTORY/requirements.txt || deactivate && rm $WORKING_DIRECTORY/env -rf && exit 1
-        #pip install -r $WORKING_DIRECTORY/requirements.txt
-        #pip install -r $WORKING_DIRECTORY/requirements-build.txt
-        pip install -r $WORKING_DIRECTORY/requirements.app.3.10.txt
-
-        # Install AIS as a python module, needed in tests.
-        python setup.py develop
+        # Add github to the list of known hosts so our SSH pip installs work later
+        ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+        pip install -r $WORKING_DIRECTORY/requirements.txt
     else
         echo "Activating virtual environment"
         source $WORKING_DIRECTORY/venv/bin/activate
@@ -112,18 +99,6 @@ git_pull_ais_repo() {
     git fetch
     git pull
     cd -
-}
-
-
-pull_passyunk_repo() {
-#    echo "Ensuring necessary repos are updated from github"
-    # GET LATEST CODE FROM GIT REPO
-    # passyunk public repo
-    pip install -q git+https://github.com/CityOfPhiladelphia/passyunk
-    # passyunk private repo that pulls in csvs
-    # note the URL is private-git, this is a custom SSH host specified in out SSH config
-    # file, /root/.ssh/config that is installed in our Dockerfile.
-    pip install -q git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 }
 
 
@@ -426,8 +401,6 @@ setup_log_files
 check_load_creds
 
 git_pull_ais_repo
-
-pull_passyunk_repo
 
 identify_prod
 
