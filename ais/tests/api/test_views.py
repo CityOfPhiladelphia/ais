@@ -1,11 +1,10 @@
 import json
 import pytest
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from ais import app, app_db
+from ... import app, app_db
 from operator import eq, gt
 
-@pytest.fixture
+# TODO: Why do these tests all fail with 404 Response Error when run on their own?
+@pytest.fixture(scope='module')
 def client():
     app.testing = True
     return app.test_client()

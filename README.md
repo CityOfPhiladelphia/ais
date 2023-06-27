@@ -60,3 +60,12 @@ docker run -itd --name ais -p 8080:8080 -e ENGINE_DB_HOST=$ENGINE_DB_HOST -e ENG
 If the container could successfully contact the DB then it should stay up and running. You may now run tests to confirm functionality.
 
 4. `docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'`
+
+## Testing
+The API and the Engine can be tested separately using pytest after sourcing the virtual environment `venv`.
+```bash
+pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
+
+pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
+```
+For reasons currently unknown, the `tests/api/test_views.py` cannot be tested on their own -- almost all the tests will fail with a 404 Response Error -- so all `api` tests must be run simultaneously.
