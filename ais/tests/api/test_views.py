@@ -270,10 +270,6 @@ def test_fractional_addresses_are_ok(client):
 
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
-    # data = json.loads(response.get_data().decode())
-    # feature = data['features'][0]
-    # assert_status(response, 200)
-    # assert feature['match_type'] == 'parsed'
     assert_status(response, 404)
 
 def test_allows_0_as_block_low_num(client):

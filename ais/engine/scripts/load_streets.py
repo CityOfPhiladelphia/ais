@@ -78,7 +78,7 @@ def main():
             left_to = source_row[field_map['left_to']]
             right_to = source_row[field_map['right_to']]
             if left_to == 0 and right_to == 0:
-                pass
+                raise ValueError('Not a range')
 
             street_suffix = comps['suffix']
             if street_suffix == 'RAMP':
