@@ -121,17 +121,10 @@ setup_log_files() {
 # config-secrets.sh contains AWS 
 check_load_creds() {
     echo -e "\nLoading credentials and passwords into the environment"
-    # 11/9/22 Note: No longer needed with Jame's changes. pdata is installed via pip
-    #. $WORKING_DIRECTORY/pull-private-passyunkdata.sh
-    #cp $WORKING_DIRECTORY/docker-build-files/election_block.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-    #cp $WORKING_DIRECTORY/docker-build-files/usps_zip4s.csv $WORKING_DIRECTORY/env/src/passyunk/passyunk/pdata/
-
-    #set +x
     file $WORKING_DIRECTORY/config.py
     file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/.env
     source $WORKING_DIRECTORY/.env
-    #set -x
 }
 
 
@@ -231,7 +224,6 @@ restore_db_to_staging() {
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
     export PGPASSWORD=$ENGINE_DB_PASS
-    #pg_restore -h $staging_db_uri -d ais_engine -U ais_engine -c $db_dump_file_loc || :
     echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
     # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
     # or restore postgis specific tables that our extensions handles.
@@ -255,8 +247,7 @@ docker_tests() {
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ais-test-compose.yml up --build -d
     # Run engine and API tests
-    #docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=test_allows_0_as_address_low_num,test_seg_based_zip_code,test_null_usps_zip_populated_from_service_area'
-    docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
+    docker exec ais bash -c 'cd /ais && pytest /ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
 }
 
 
@@ -319,7 +310,6 @@ warmup_lb() {
     file $WORKING_DIRECTORY/.env
     source $WORKING_DIRECTORY/.env
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    #python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --proxy $PROXY_AUTH --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
     python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
     use_exit_status $? \
         "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed." \
@@ -363,7 +353,6 @@ swap_cnames() {
 }'
     json_string=$(printf "$template" "prod" "$COLOR" "$PROD_ENDPOINT" "$staging_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-prod-change.json
-    #cat $WORKING_DIRECTORY/route53-prod-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
         --change-batch file://$WORKING_DIRECTORY/route53-prod-change.json 1> /dev/null
@@ -371,7 +360,6 @@ swap_cnames() {
     # Then alter the staging cname back to what was just the prod_lb_uri
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-stage-change.json
-    #cat $WORKING_DIRECTORY/route53-stage-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
         --change-batch file://$WORKING_DIRECTORY/route53-stage-change.json 1> /dev/null
