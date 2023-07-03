@@ -19,6 +19,13 @@ AIS provides a unified view of City data for an address.
 - integration environment for address-centric data
 - API
 
+## Production Processes
+This AIS repository is used in 2 distinct ways.
+1. Built into a docker container and pushed to AWS ECR where it will run in ECS. This is done using the 'build-test-compose.yml' docker-compose file, and should be programmatically done in the Github Actions file [build_and_deploy.yml](.github/workflows/build_and_deploy.yml)
+If the action fails, you can troubleshoot manually by simply following the steps laid out in build_and_deploy.yml on our production AIS build server.
+
+2. Installed and run directly on our production AIS build server, where we run various build engine scripts to create database tables from various sources. These tables are then pushed up to our AWS RDS PostgreSQL instances for use by our ECS cluster.
+
 ## Development
 
 To develop locally:
