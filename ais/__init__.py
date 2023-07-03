@@ -23,18 +23,24 @@ app.config.from_object('config')
 # Note these will both be imported in app.config so don't have any conflicting values
 # in either that will overwrite the other.
 # reference "Instance Folders": https://flask.palletsprojects.com/en/2.3.x/config/
-app.config.from_pyfile('instance/config.py')
 
-# debug print all config options to make sure we're loading them correctly
-# will be referenced by script later like a dictionary
-
-flask_config_file = os.getcwd() + '/config.py'
-
-if flask_config_file:
-    print(f'Loading {flask_config_file} as our Flask config..')
-    app.config.from_pyfile(flask_config_file)
+# config path will be here if run in our built Docker image
+if os.path.isfile('/ais/instance/config.py'):
+    print(f'Loading /ais/instance/config.py as our secrets instance config..')
+    app.config.from_pyfile('/ais/instance/config.py')
+# Otherwise, default to the current working directory which should work when ais is installed as a package locally.
 else:
-    raise FileNotFoundError('Flask configuration file not found! Please make one and place it in the current directory as "config.py".')
+    print(f'Loading {os.getcwd() + "/config.py"} as our secrets instance config..')
+    app.config.from_pyfile('instance/config.py')
+
+# config path will be here if run in our built Docker image
+if os.path.isfile('/ais/config.py'):
+    print(f'Loading /ais/config.py as our Flask config..')
+    app.config.from_pyfile('/ais/config.py')
+# Otherwise, default to the current working directory which should work when ais is installed as a package locally.
+else:
+    print(f'Loading {os.getcwd() + "/config.py"} as our Flask config..')
+    app.config.from_pyfile(os.getcwd() + '/config.py')
 
 # Synthesize our database connection from env vars if they exist
 try:

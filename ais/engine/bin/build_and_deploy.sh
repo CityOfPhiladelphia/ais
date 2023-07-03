@@ -245,9 +245,9 @@ docker_tests() {
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 880708401960.dkr.ecr.us-east-1.amazonaws.com
     # Spin up docker container from latest AIS image from ECR and test against staging database
     # Note: the compose uses the environment variables for the database and password that we exported earlier
-    docker-compose -f ais-test-compose.yml up --build -d
+    docker-compose -f ecr-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'cd /ais && pytest /ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
+    docker exec ais bash -c 'pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
 }
 
 
