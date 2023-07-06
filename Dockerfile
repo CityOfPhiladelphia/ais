@@ -29,6 +29,9 @@ RUN git clone https://github.com/CityOfPhiladelphia/ais --branch python3.10-upgr
 RUN pip install --upgrade pip && \
     pip install -r /ais/requirements.txt
 
+# Copy our secrets into the flask speciic secret path
+COPY ./instance/config.py /ais/instance/config.py
+
 # Actually install our AIS package
 RUN cd /ais && pip3 install .
 RUN mkdir -p /ais/instance
