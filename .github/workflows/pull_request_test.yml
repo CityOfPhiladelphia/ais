@@ -88,7 +88,7 @@ jobs:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: |
-          docker exec ais bash -c 'cd /ais && pytest /ais/ais/api/tests/ -vvv -ra --showlocals --tb=native '
+          docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native'
 
     - name: Confirm nginx configuration is good
       run: docker exec ais bash -c 'nginx -t'
