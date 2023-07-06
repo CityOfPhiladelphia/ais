@@ -82,12 +82,16 @@ jobs:
         fi
 
     - name: Build the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
       env:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
       run: COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f build-test-compose.yml build --no-cache
 
     - name: Start the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
       env:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}

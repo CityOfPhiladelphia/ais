@@ -18,8 +18,9 @@ RUN apt-get update -y && \
 RUN mkdir /root/.ssh && chmod 600 /root/.ssh
 # Add github to the list of known hosts so our SSH pip installs work later
 RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-COPY --chmod=0600 ssh-config /root/.ssh/config 
-COPY --chmod=0600 passyunk-private.key /root/.ssh/passyunk-private.key
+COPY ssh-config /root/.ssh/config 
+COPY passyunk-private.key /root/.ssh/passyunk-private.key
+RUN chmod 600 /root/.ssh/config && /root/.ssh/passyunk-private.key
 
 # Make the AIS cloned into the root, /ais
 # Note: Install python reqs at the system level, no need for venv in a docker container
