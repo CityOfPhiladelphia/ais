@@ -25,6 +25,19 @@ do
    esac
 done
 
+
+# Enable ERR trap inheritance
+set -o errtrace
+
+# Cleanup command that will run if something in the script fails.
+function cleanup {
+    echo "Error! Exited prematurely at $BASH_COMMAND!!"
+    echo "running reenable_alarm.."
+    reenable_alarm
+}
+trap cleanup ERR
+
+
 WORKING_DIRECTORY=/home/ubuntu/ais
 LOG_DIRECTORY=$WORKING_DIRECTORY/ais/engine/log
 cd $WORKING_DIRECTORY
@@ -42,11 +55,6 @@ source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
 export DB_DUMP_FILE_LOC=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
 # Remove it to start fresh and save disk space
 rm -f $DB_DUMP_FILE_LOC
-
-
-trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
-# echo an error message before exiting
-trap 'echo "Exited prematurely, running reenable_alarm.."; reenable_alarm; echo "\"${last_command}\" command exited with code $?."' EXIT
 
 # NOTE: postgres connection information is also stored in ~/.pgpass!!!
 # postgres commands should use passwords in there depending on the hostname.
@@ -247,7 +255,7 @@ docker_tests() {
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ecr-test-compose.yml up --build -d
     # Run engine and API tests
-    docker exec ais bash -c 'pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings'
+    docker exec ais bash -c "pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests"
 }
 
 
