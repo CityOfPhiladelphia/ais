@@ -2,7 +2,6 @@ name: Build and Deploy to ECR and ECS
 # We want this to build our docker container, push to ECR ("build" job)
 # and then perform a rolling update to ECS with the new image ( "deploy" job)
 
-# Trigger workflow on changes to these paths in stated branch
 # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
 on:
   push:
@@ -17,34 +16,18 @@ concurrency:
 
 jobs:
 
-  # Wait for up to ten minutes for previous run to complete, abort if not done by then
-  #pre-build:
-  #  runs-on: IT04GISTINAIS2L
-  #  timeout-minutes: 10
-  #  steps:
-  #    - name: 'Block Concurrent Action Workflow Executions'
-  #      uses: softprops/turnstyle@v1
-  #      with:
-  #        poll-interval-seconds: 10
-  #      env:
-  #      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #        GITHUB-TOKEN: ${{ github.token }}
-
-
   build:
     name: Build and Push to ECR
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     #needs: pre-build
-    runs-on: ais-runner
-    # https://github.community/t/sharing-a-variable-between-jobs/16967/13
-    # save address for use in other jobs.
+    #runs-on: ais-runner
+    runs-on: ubuntu-latest
 
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
-    - uses: actions/checkout@v2
-      with:
-        ref: roland-dev-6-29-22
+    - name: Checkout PR branch
+      uses: actions/checkout@v3
 
     - name: debug pwd
       run: pwd
@@ -54,7 +37,6 @@ jobs:
 
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
   # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
-    #- uses: toko-bifrost/ms-teams-deploy-card@master
     - uses: patrickpaulin/ms-teams-deploy-card@master
       if: always()
       with:
@@ -70,7 +52,7 @@ jobs:
     
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -85,8 +67,6 @@ jobs:
       run: |
           # Note: a simple dig doesn't work from in office.
           # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
-          #echo "PROD_COLOR=$(dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green")" >> $GITHUB_ENV
-          #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
           aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
           echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
            
@@ -100,19 +80,12 @@ jobs:
            echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
         fi
 
-    - name: Pull private passyunk data
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-          aws s3 cp s3://ais-static-files/election_block.csv . --only-show-errors
-          aws s3 cp s3://ais-static-files/usps_zip4s.csv . --only-show-errors
-
     - name: Build the Docker image using docker-compose
       env:
         ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
         ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
-      run: docker compose -f build-test-compose.yml build --no-cache
+      run: |
+        docker-compose -f build-test-compose.yml build --no-cache
 
     - name: Start the Docker image using docker-compose
       env:
@@ -166,10 +139,8 @@ jobs:
 
     name: Deploy to prod ECS cluster
     # needs prior job of 'build' to not fail.
-    #needs: [build, pre-build]
     needs: build
-    #runs-on: ubuntu-latest
-    runs-on: ais-runner
+    runs-on: ubuntu-latest
          
 
     steps:
@@ -193,8 +164,6 @@ jobs:
       run: |
           # Note: a simple dig doesn't work from in office.
           # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
-          #echo "PROD_COLOR=$(dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green")" >> $GITHUB_ENV
-          #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
           aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
           echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
       
