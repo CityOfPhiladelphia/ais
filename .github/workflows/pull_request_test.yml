@@ -16,25 +16,11 @@ concurrency:
 
 jobs:
 
-  # Wait for up ten minutes for previous run to complete, abort if not done by then
-  #pre-build:
-  #  runs-on: IT04GISTINAIS2L
-  #  timeout-minutes: 10
-  #  steps:
-  #    - name: 'Block Concurrent Action Workflow Executions'
-  #      uses: softprops/turnstyle@v1
-  #      with:
-  #        poll-interval-seconds: 10
-  #      env:
-  #      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #        GITHUB-TOKEN: ${{ github.token }}
-
   build:
     name: Build and Test docker container
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    #runs-on: IT04GISPINAIS2L
-    #runs-on: ais-runner 
-    runs-on: ubuntu-latest
+    runs-on: ais-runner 
+    #runs-on: ubuntu-latest
     # https://github.community/t/sharing-a-variable-between-jobs/16967/13
     # save address for use in other jobs.
 

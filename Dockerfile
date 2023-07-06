@@ -20,7 +20,7 @@ RUN mkdir /root/.ssh && chmod 600 /root/.ssh
 RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 COPY ssh-config /root/.ssh/config 
 COPY passyunk-private.key /root/.ssh/passyunk-private.key
-RUN chmod 600 /root/.ssh/config && /root/.ssh/passyunk-private.key
+RUN chmod 600 /root/.ssh/config; chmod 600 /root/.ssh/passyunk-private.key
 
 # Make the AIS cloned into the root, /ais
 # Note: Install python reqs at the system level, no need for venv in a docker container
