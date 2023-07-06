@@ -1,4 +1,6 @@
-name: Build and Deploy
+name: Build and Deploy to ECR and ECS
+# We want this to build our docker container, push to ECR ("build" job)
+# and then perform a rolling update to ECS with the new image ( "deploy" job)
 
 # Trigger workflow on changes to these paths in stated branch
 # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
@@ -6,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - python3.10-upgrade
 
 concurrency:
   group: testing_environment

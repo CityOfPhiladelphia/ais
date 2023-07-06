@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - master
+      - python3.10-upgrade
     #types: [opened, edited, repoened, review_requested]
 
 concurrency:
