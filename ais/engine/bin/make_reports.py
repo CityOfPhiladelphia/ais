@@ -11,6 +11,20 @@ import pyproj
 from ais import app
 from ais.util import parse_url
 
+
+###################################
+# This script generates reports and writes them to tables in Databridge
+# address_summary, service_area_summary and true_range
+# They are for integrating standardized addresses with department records.
+# Department records meaning dor parcel_id, pwd parcel_id, OPA account number, eclipes location id
+# These departments will import these tables for their own usage.
+#
+# address_summary: contains standardized address components + primary keys and authoritative data
+# service_area_summary: for each address, has ids for each service area the point is located in
+# true_range: Interpolated address location along the street segment
+
+
+
 config = app.config
 read_db_string = config['DATABASES']['engine']
 #write_db_string = config['DATABASES']['gis_ais']
@@ -42,6 +56,7 @@ write_user = parsed_write_db_string['user']
 write_pw = parsed_write_db_string['password']
 write_host = parsed_write_db_string['host']
 write_dsn = f'{write_user}/{write_pw}@{write_host}'
+print('DEBUG: ' + write_dsn)
 oracle_cursor = database_connect(write_dsn)
 
 
