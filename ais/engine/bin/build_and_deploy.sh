@@ -82,6 +82,35 @@ use_exit_status() {
 }
 
 
+check_for_prior_runs() {
+    check_function() {
+      # Find the pid of the process, if it's still running, and then kill it.
+      echo "Checking for still running $1 processes..."
+      prior_pid=$(pgrep -a bash | grep "$1" | cut -d' ' -f1)
+      if [[ -n "${prior_pid}" ]]; then 
+          echo 'pkill $prior_pid'
+          pkill $prior_pid
+          # Wait to see if the kill worked
+          sleep 600
+          # check again
+          prior_pid=$(pgrep -a bash | grep "$1" | cut -d' ' -f1)
+          if [[ -n "${prior_pid}" ]]; then 
+              echo "Previous process for $1 not killed! Cannot continue build process today!"
+              exit 1 
+          fi
+      else
+          echo 'No previous runs still running.'
+      fi
+    }
+
+    # Check for build_and_deploy.sh processes
+    check_function "build_and_deploy.sh"
+    # Also check for build_engine.sh commands that could potentially be running
+    # without an invoking build_and_deploy.sh also running. Stranger things have happened.
+    check_function "build_engine.sh"
+}
+
+
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/venv ]; then
         echo -e "\nActivating/creating venv.."
@@ -99,6 +128,16 @@ activate_venv_source_libaries() {
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
     fi
+}
+
+
+# not always a given
+ensure_private_repos_updated() {
+    file $WORKING_DIRECTORY/ssh-config
+    file $WORKING_DIRECTORY/passyunk-private.key
+    cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
+    cp $WORKING_DIRECTORY/passyunk-private.key /root/.ssh/passyunk-private.key
+    git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 }
 
 
@@ -384,13 +423,21 @@ reenable_alarm() {
     echo "Alarm 'ais-${staging_color}-api-taskin' re-enabled."
 }
 
+
+# Runs various scripts that make necessary "report" tables off our built AIS tables that
+# aren't used by AIS.
+# These are used by other departments for various integrations, mainly related
+# to unique identifier for addresses. For example for DOR we call this PIN.
 make_reports_tables() {
     echo -e "\nRunning engine make_reports.py script..."
     python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py || true
 }
 
+check_for_prior_runs
 
 activate_venv_source_libaries
+
+ensure_private_repos_updated
 
 setup_log_files
 
@@ -425,6 +472,6 @@ swap_cnames -c $staging_color
 reenable_alarm
 
 # Will run as an independent job
-#make_reports_tables
+make_reports_tables
 
 echo "Finished successfully!"
