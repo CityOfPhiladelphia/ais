@@ -83,31 +83,30 @@ use_exit_status() {
 
 
 check_for_prior_runs() {
-    check_function() {
+    kill_subfunction() {
       # Find the pid of the process, if it's still running, and then kill it.
-      echo "Checking for still running $1 processes..."
-      prior_pid=$(pgrep -a bash | grep "$1" | cut -d' ' -f1)
-      if [[ -n "${prior_pid}" ]]; then 
-          echo 'pkill $prior_pid'
-          pkill $prior_pid
-          # Wait to see if the kill worked
-          sleep 600
-          # check again
-          prior_pid=$(pgrep -a bash | grep "$1" | cut -d' ' -f1)
-          if [[ -n "${prior_pid}" ]]; then 
-              echo "Previous process for $1 not killed! Cannot continue build process today!"
-              exit 1 
+      echo "Checking for still running '$1' processes..."
+      pids=( $(ps ax | grep "bash $1" | grep -v grep | awk '{ print $1 }') )
+      # Check the number of processes found.
+      # If it's greater than 2, it means multiple instances are running.
+      if [ ${#pids[@]} -gt 2 ]; then
+        echo "Multiple instances of '$1' are running."
+        # Kill all instances except for the current one.
+        for pid in "${pids[@]}"; do
+          if [ "$pid" != "$BASHPID" ]; then
+            echo "Killing process with PID: $pid"
+            kill $pid
           fi
+        done
       else
-          echo 'No previous runs still running.'
+        echo "'$1' is not currently running multiple instances."
       fi
     }
-
     # Check for build_and_deploy.sh processes
-    check_function "build_and_deploy.sh"
+    kill_subfunction "build_and_deploy.sh"
     # Also check for build_engine.sh commands that could potentially be running
     # without an invoking build_and_deploy.sh also running. Stranger things have happened.
-    check_function "build_engine.sh"
+    kill_subfunction "build_engine.sh"
 }
 
 
@@ -136,8 +135,8 @@ ensure_private_repos_updated() {
     file $WORKING_DIRECTORY/ssh-config
     file $WORKING_DIRECTORY/passyunk-private.key
     cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
-    cp $WORKING_DIRECTORY/passyunk-private.key /root/.ssh/passyunk-private.key
-    git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
+    cp $WORKING_DIRECTORY/passyunk-private.key ~/.ssh/passyunk-private.key
+    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 }
 
 
@@ -471,7 +470,6 @@ swap_cnames -c $staging_color
 
 reenable_alarm
 
-# Will run as an independent job
 make_reports_tables
 
 echo "Finished successfully!"
