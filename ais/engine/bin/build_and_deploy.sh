@@ -85,7 +85,7 @@ use_exit_status() {
 check_for_prior_runs() {
     kill_subfunction() {
       # Find the pid of the process, if it's still running, and then kill it.
-      echo "Checking for still running '$1' processes..."
+      echo -e "\nChecking for still running '$1' processes..."
       pids=( $(ps ax | grep "bash $1" | grep -v grep | awk '{ print $1 }') )
       # Check the number of processes found.
       # If it's greater than 2, it means multiple instances are running.
@@ -132,6 +132,7 @@ activate_venv_source_libaries() {
 
 # not always a given
 ensure_private_repos_updated() {
+    echo -e "\nUpdating passyunk_automation specifically.."
     file $WORKING_DIRECTORY/ssh-config
     file $WORKING_DIRECTORY/passyunk-private.key
     cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
@@ -250,6 +251,45 @@ dump_local_db() {
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
     pg_dump -Fc -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
     use_exit_status $? "DB dump failed" "DB dump succeeded"
+}
+
+
+restart_staging_db() {
+  echo -e "\nRestarting RDS instance: $staging_db_uri"
+  echo "********************************************************************************************************"
+  echo "Please make sure the RDS instance identifier names are set to 'ais-engine-green' and 'ais-engine-blue'!!"
+  echo "We reboot the RDS instance by those names with the AWS CLI commmand 'aws rds reboot-db-instance'."
+  echo "********************************************************************************************************"
+  if [[ "$prod_color" == "blue" ]]; then
+    local stage_instance_identifier="ais-engine-green"
+    aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-green"
+  else
+    local stage_instance_identifier="ais-engine-blue"
+    aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-blue"
+  fi
+
+  # Check to see if the instance is ready
+  local max_attempts=30
+  local attempt=1
+  while [ $attempt -le $max_attempts ]; do
+    instance_status=$(aws rds describe-db-instances --region "us-east-1" \
+      --db-instance-identifier "$stage_instance_identifier" \
+      --query "DBInstances[0].DBInstanceStatus" --output text)
+
+    if [ "$instance_status" = "available" ]; then
+      echo "RDS instance is ready!"
+      break
+    fi
+
+    echo "Waiting for RDS instance to be ready... (Attempt: $attempt/$max_attempts)"
+    sleep 10
+    ((attempt++))
+  done
+
+  if [ $attempt -gt $max_attempts ]; then
+    echo "RDS instance did not become ready within the expected time."
+    exit 1
+  fi
 }
 
 
@@ -453,6 +493,8 @@ engine_tests
 api_tests
 
 dump_local_db
+
+restart_staging_db
 
 restore_db_to_staging
 

@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, g
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -64,25 +64,36 @@ if db_host is None: # FIX: This should be triggered so switch between them
         result = dns.resolver.resolve('ais-prod.phila.city')
         prod_cname = result.canonical_name.to_text()
         if dev_test == 'true':
+            print('Will attempt to use local build database..')
             db_host = 'localhost'
             db_pass = os.environ['LOCAL_PASSWORD']
-        elif 'blue' in prod_cname:
-            db_host = app.config['BLUE_DATABASE']['host']
-            db_pass = app.config['BLUE_DATABASE']['password']
-        elif 'green' in prod_cname:
-            db_host = app.config['GREEN_DATABASE']['host']
-            db_host = app.config['GREEN_DATABASE']['password']
+        else:
+          print('DEV_TEST is false, determining which production database to use..')
+          if 'blue' in prod_cname:
+              db_host = app.config['BLUE_DATABASE']['host']
+              db_pass = app.config['BLUE_DATABASE']['password']
+          elif 'green' in prod_cname:
+              db_host = app.config['GREEN_DATABASE']['host']
+              db_pass = app.config['GREEN_DATABASE']['password']
     except Exception as e:
         print(str(e))
 
 assert db_host != None, 'Could not get host for backend database!'
 assert db_pass != None, 'Could not get password for backend database!'
+print(f'Prod host chosen: {db_host}')
 
 # Debug print if we got our creds as env variables (necessary for how we run it in docker/ECS)
 # format is: "postgresql://postgres:postgres@localhost/DBNAME"
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://ais_engine:{db_pass}@{db_host}/ais_engine'
 # Init database extension
 app_db = SQLAlchemy(app)
+
+# Close database sessions in case our app is killed.
+@app.teardown_appcontext
+def teardown_app_context(exception=None):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.session.remove()
 
 # Allow cross-origin requests
 CORS(app)
