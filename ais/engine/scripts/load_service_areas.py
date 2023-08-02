@@ -78,6 +78,7 @@ def main():
     line_singles = []
     line_duals = []
     points = []
+    empty_geometry_fail = False
 
     print('Reading service areas...')
 
@@ -131,6 +132,13 @@ def main():
                     if isinstance(value, str):
                         value = value.strip()
 
+                    # Alert on null geometries 
+ 
+                    if not source_row[source_geom_field]:
+                        print(f'Empty geometry found in {source_db_name}.{source_table_name}!')
+                        print(f'Source row: {source_row}')
+                        empty_geometry_fail = True
+                    
                     poly = {
                         'layer_id': 			layer_id,
                         'source_object_id': 	source_row[object_id_field],
@@ -138,6 +146,7 @@ def main():
                         'geom': 				source_row[source_geom_field],
                     }
                     polys.append(poly)
+
 
             # LINE SINGLE
             if source_type == 'line_single':
@@ -228,6 +237,9 @@ def main():
                         'geom': source_row[source_geom_field] if method != 'seg_id' else loads('POINT(0 0)').wkt,
                     }
                     points.append(point)
+    if empty_geometry_fail:
+        raise AssertionError('Encountered earlier empty geometry, that shouldnt happen!! Full row will be logged in earlier logs for this engine build script. Failing out..')
+
 
     if WRITE_OUT:
         print('Writing service area polygons...')
