@@ -591,6 +591,42 @@ SERVICE_AREAS = {
             },
         },
         {
+            'layer_id':                     'census_tract_2020',
+            'name':                         'Census Tract 2020',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Census_Tracts_2020',
+                    'value_field':          'tractce',
+                },
+            },
+        },
+        {
+            'layer_id':                     'census_block_group_2020',
+            'name':                         'Census Block Group 2020',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Census_Block_Groups_2020',
+                    'value_field':          'blkgrpce',
+                },
+            },
+        },
+        {
+            'layer_id':                     'census_block_2020',
+            'name':                         'Census Block 2020',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Census_Blocks_2020',
+                    'value_field':          'blockce20',
+                },
+            },
+        },
+        {
             'layer_id':                     'council_district_2016',
             'name':                         'Council District 2016',
             'description':                  '',
@@ -602,6 +638,18 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # {
+        #     'layer_id':                     'council_district_2024',
+        #     'name':                         'Council District 2024',
+        #     'description':                  '',
+        #     'sources': {
+        #         'polygon':  {
+        #             'db':                   'gis_sa',
+        #             'table':                'gis_planning.Council_Districts_2024',
+        #             'value_field':          'district',
+        #         },
+        #     },
+        # },
         {
             'layer_id':                     'political_ward',
             'name':                         'Ward',
@@ -639,6 +687,18 @@ SERVICE_AREAS = {
             },
         },
         {
+            'layer_id':                     'state_house_rep_2022',
+            'name':                         'State House Rep 2022',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.state_house_rep_2022',
+                    'value_field':          'district',
+                },
+            },
+        },
+        {
             'layer_id':                     'state_senate_2012',
             'name':                         'State Senate 2012',
             'description': '',
@@ -647,6 +707,18 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.state_senate_2012',
                     'value_field':          'district_number',
+                },
+            },
+        },
+        {
+            'layer_id':                     'state_senate_2022',
+            'name':                         'State Senate 2022',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.state_senate_2022',
+                    'value_field':          'district',
                 },
             },
         },
@@ -671,6 +743,18 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'gis_planning.us_congressional_2018',
                     'value_field':          'id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'us_congressional_2022',
+            'name':                         'US Congressional 2022',
+            'description':                  '',
+            'sources': {
+                'polygon': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.us_congressional_2022',
+                    'value_field':          'district',
                 },
             },
         },
