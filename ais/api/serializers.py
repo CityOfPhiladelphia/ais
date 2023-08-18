@@ -265,8 +265,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
     def shape_to_geodict(self, shape):
         from shapely.geometry import mapping
-        #data = mapping(shape)
-        #data = mapping(shape) if shape  else {'type': None, 'coordinates': None,}
         data = mapping(shape) if shape else {'type': 'Point', 'coordinates': [None, None],}
         return OrderedDict([
             ('type', data['type']),
@@ -286,18 +284,22 @@ class AddressJsonSerializer (GeoJSONSerializer):
             for key in tag_data[address.street_address]:
                 if not key in render_source:
                     render_source[key] = []
-                for val in tag_data[address.street_address].get(key):
+                tag_values_for_key = tag_data[address.street_address].get(key)
+                sorted_tag_values_for_key = sorted(tag_values_for_key, key=lambda v: v.value)
+                for val in sorted_tag_values_for_key:
                     render_source[key].append({'source': val.linked_path if val.linked_path else address.street_address, 'value': val.value})
             data_comps.append(render_source)
-        # If no 'source_details' in request args return tags as key (pipe delimited) value pairs
+        # If no 'source_details' in request args, return tags as key (pipe delimited) value pairs
         else:
             try:
                 for key in tag_data[address.street_address]:
                     if not key in render_source:
                         render_source[key] = None
-                    for val in tag_data[address.street_address].get(key):
+                    tag_values_for_key = tag_data[address.street_address].get(key)
+                    # sort to ensure contant order
+                    sorted_tag_values_for_key = sorted(tag_values_for_key, key=lambda v: v.value)
+                    for val in sorted_tag_values_for_key:
                         render_source[key] = render_source[key] + '|' + val.value if render_source[key] else val.value
-                        # render_source[key] = [render_source[key], val.value] if render_source[key] else val.value
                 data_comps.append(render_source)
             except:
                 pass
