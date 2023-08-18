@@ -112,15 +112,11 @@ while not done:
             tag_value = None
             # Check if already have value for this tag
             if mapped_tags:
-                for mapped_tag in mapped_tags:
-                    mapped_key = mapped_tag.get('key')
-                    # if street address has this tag already, continue to next tag_field
-                    if mapped_key != tag_key:
-                        continue;
-                    # TODO: handle empty string tag values as null and look for content from address_links
-                    tag_value = mapped_tag['value']
+                mapped_tags_for_key = [mapped_tag for mapped_tag in mapped_tags if mapped_tag.get('key', '') == tag_key]
+                first_mapped_tag_for_key = sorted(mapped_tags_for_key, key=lambda s: s['value'])[0] if mapped_tags_for_key else None
+                if first_mapped_tag_for_key:
+                    tag_value = first_mapped_tag_for_key['value']
                     found = True
-                    break
             # Otherwise, look for tag in address links
             if not links or found:
                 # Do something if tag can't be found by traversing links so API doesn't look for it
@@ -144,22 +140,19 @@ while not done:
                 # get tags for current link
                 link_tags = tag_map.get(link_address)
                 if link_tags:
-                    # loop through tags, looking for current tag
-                    for tag in link_tags:
-                        # if found, get value, linked address and linked path
-                        # TODO: handle empty string tag values as null and keep looking for content from remaining address_links
-                        if tag['key'] == tag_key:
-                            tag_value = tag['value']
-                            link_path = slink['relationship']
-                            linked_path = tag['linked_path'] if tag['linked_path'] else link_address
-                            linked_address = tag['linked_address'] if tag['linked_address'] else link_address
-                            linked_path = street_address + ' ' + link_path + ' ' + linked_path
-                            add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value,
-                                            'linked_address': linked_address, 'linked_path': linked_path}
-                            new_linked_tags.append(add_tag_dict)
-                            found = True
-                            break
-                            # TODO: Do something if tag can't be found by traversing links so API doesn't look for it
+                    link_tags_for_key = [link_tag for link_tag in link_tags if link_tag.get('key', '') == tag_key]
+                    first_link_tag_for_key = sorted(link_tags_for_key, key=lambda s: s['value'])[0] if link_tags_for_key else None
+                    if first_link_tag_for_key:
+                        tag_value = first_link_tag_for_key['value']
+                        link_path = slink['relationship']
+                        linked_path = first_link_tag_for_key['linked_path'] if first_link_tag_for_key['linked_path'] else link_address
+                        linked_address = first_link_tag_for_key['linked_address'] if first_link_tag_for_key['linked_address'] else link_address
+                        linked_path = street_address + ' ' + link_path + ' ' + linked_path
+                        add_tag_dict = {'street_address': street_address, 'key': tag_key, 'value': tag_value,
+                                        'linked_address': linked_address, 'linked_path': linked_path}
+                        new_linked_tags.append(add_tag_dict)
+                        found = True
+
     if len(new_linked_tags) > 0:
         linked_tags_map = linked_tags_map + new_linked_tags
     else:
@@ -175,7 +168,7 @@ if WRITE_OUT:
     for key, value in rejected_link_map.items():
         value=list(set(value))
         print('{key}: {value}'.format(key=key, value=value))
-    # print(rejected_link_map)
+
 # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
 # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
 # loop address.
