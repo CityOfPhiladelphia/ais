@@ -760,3 +760,13 @@ def test_pwd_parcel_search_include_units(client):
     response = client.get('/search/454607?include_units&opa_only')
     data = json.loads(response.get_data().decode())
     assert len(data['features']) > 1
+
+def test_aggregate_tags_are_sorted(client):
+    response = client.get('/search/901 N PENN ST')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['bin'].split('|')[0] == '1032992'
+
+def test_inherited_tags_from_aggregate_parent_are_lowest(client):
+    response = client.get('/search/901 N PENN ST UNIT F1102')
+    data = json.loads(response.get_data().decode())
+    assert data['features'][0]['properties']['bin'] == '1032992'
