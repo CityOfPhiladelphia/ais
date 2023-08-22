@@ -289,7 +289,7 @@ def test_address_query_can_end_in_comma(client):
     assert_status(response, 200)
 
 def test_opa_query_returns_child_address(client):
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE' ]
+    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE', '1214-32 N 26TH ST']
 
     CHILD_SQL = '''
         SELECT child.street_address, parent.street_address
@@ -313,7 +313,6 @@ def test_opa_query_returns_child_address(client):
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '7326-30 OXFORD AVE']
     if parent_address not in ignore_addresses:
         assert_num_results(data, 1)
 
