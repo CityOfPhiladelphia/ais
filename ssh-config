@@ -4,3 +4,8 @@ Host private-git
   PreferredAuthentications publickey
   IdentityFile ~/.ssh/passyunk-private.key
 
+Host github.com-ais_qa
+  User git
+  Hostname github.com
+  IdentityFile ~/.ssh/ais_qa
+  IdentitiesOnly true

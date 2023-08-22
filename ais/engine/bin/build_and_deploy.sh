@@ -469,7 +469,9 @@ reenable_alarm() {
 # to unique identifier for addresses. For example for DOR we call this PIN.
 make_reports_tables() {
     echo -e "\nRunning engine make_reports.py script..."
-    python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py || true
+    #python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
+    bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh
+    
 }
 
 check_for_prior_runs
