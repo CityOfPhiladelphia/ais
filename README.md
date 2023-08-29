@@ -70,7 +70,10 @@ If the container could successfully contact the DB then it should stay up and ru
 
 ## Testing
 The API and the Engine can be tested separately using pytest after sourcing the virtual environment `venv`.
+**Important Note** If you want to run pytests against a locally running database, you can either set your ENGINE_DB_HOST and ENGINE_DB_PASS parameters to the local instance and password, OR you can export DEV_TEST='true' to have this automatically use the local creds, as specified in your .env file. 
+
 ```bash
+export DEV_TEST='true'
 pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
 
 pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 

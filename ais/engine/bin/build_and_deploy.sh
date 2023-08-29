@@ -222,18 +222,28 @@ build_engine() {
 
 engine_tests() {
     echo -e "\nRunning engine tests against locally built database."
+    # Export spwcial var that will instruct AIS to use the local db
+    # https://github.com/CityOfPhiladelphia/ais/blob/python3.10-upgrade/ais/__init__.py#L66-L69
+    export DEV_TEST='true'
     # Note: imports instance/config.py for credentials
     cd $WORKING_DIRECTORY
     pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
     use_exit_status $? "Engine tests failed" "Engine tests passed"
+    # unset
+    export DEV_TEST='false'
 }
 
 
 api_tests() {
     echo -e "\nRunning api_tests..."
     cd $WORKING_DIRECTORY
+    # Export spwcial var that will instruct AIS to use the local db
+    # https://github.com/CityOfPhiladelphia/ais/blob/python3.10-upgrade/ais/__init__.py#L66-L69
+    export DEV_TEST='true'
     pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
     use_exit_status $? "API tests failed" "API tests passed"
+    # unset
+    export DEV_TEST='false'
 }
 
 
