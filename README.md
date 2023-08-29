@@ -78,4 +78,15 @@ pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --d
 
 pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
 ```
+
+To make direct queries using AIS, you can run the following on the dev box:
+
+```
+source ~/.env/bin/activate
+export DEV_TEST='true'
+gunicorn application --bind 0.0.0.0:8080 --workers 4 --worker-class gevent --access-logfile '-' --log-level 'notice'
+curl localhost:8080/search/1234%20Market%20Street | jq .
+
+```
+
 For reasons currently unknown, the `tests/api/test_views.py` cannot be tested on their own -- almost all the tests will fail with a 404 Response Error -- so all `api` tests must be run simultaneously.

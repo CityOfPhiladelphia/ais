@@ -114,7 +114,7 @@ activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/venv ]; then
         echo -e "\nActivating/creating venv.."
         python3.10 -m venv $WORKING_DIRECTORY/venv 
-        source $WORKING_DIRECTORY/env/bin/activate
+        source $WORKING_DIRECTORY/venv/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
         pip install wheel
