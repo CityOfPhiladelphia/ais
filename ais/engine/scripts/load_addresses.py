@@ -704,14 +704,25 @@ def main():
                     check_from = None
                     check_to = None
 
-                    if left_parity in [address_parity, 'B']:
+                    if left_parity in [address_parity, 'B'] and right_parity not in [address_parity, 'B']:
                         check_from = left_from
                         check_to = left_to
                         matching_side = 'L'
-                    elif right_parity in [address_parity, 'B']:
+                    elif right_parity in [address_parity, 'B'] and left_parity not in (address_parity, 'B'):
                         check_from = right_from
                         check_to = right_to
                         matching_side = 'R'
+
+                    # If seg has same parity on both sides, match to closest side:
+                    elif left_parity in [address_parity, 'B'] and right_parity in [address_parity, 'B']:
+                        if abs(address_low - left_from) < abs(address_low - right_from):
+                            check_from = left_from
+                            check_to = left_to
+                            matching_side = 'L'
+                        else:
+                            check_from = right_from
+                            check_to = right_to
+                            matching_side = 'R'
                     else:
                         continue
 
