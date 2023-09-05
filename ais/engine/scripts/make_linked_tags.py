@@ -77,7 +77,7 @@ def main():
     copy(db, geocode_file, query)
     
     geocode_map = {}
-    rows = etl.fromcsv(geocode_file).dicts()
+    rows = etl.fromcsv(geocode_file).convert('geocode_type', int).dicts()
     for row in rows:
         street_address = row['street_address']
         if not street_address in geocode_map:
@@ -208,7 +208,7 @@ def main():
     address_file = 'address.csv'
     query = f"copy (select * from address where unit_num != '' order by street_address) TO STDOUT WITH CSV HEADER;"
     copy(db, address_file, query)
-    address_rows = etl.fromcsv(address_file).dicts()
+    address_rows = etl.fromcsv(address_file).convert('address_low', int).dicts()
 
     print('Reading address tags...')
     tag_map = {}
