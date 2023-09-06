@@ -356,6 +356,11 @@ def main():
         print('Writing ', len(new_linked_tags), ' linked tags to address_tag table...')
         address_tag_table.write(new_linked_tags, chunk_size=150000)
 
+    print('Rejected links: ')
+    for key, value in rejected_link_map.items():
+        value=list(set(value))
+        print('{key}: {value}'.format(key=key, value=value))
+
     cleanup(address_file)
     
     transpired = datetime.now() - start
