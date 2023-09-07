@@ -1,11 +1,21 @@
+# Deploy key for pulling our passyunk repo
 Host private-git
   User Auto-CityGeo
   Hostname github.com
   PreferredAuthentications publickey
   IdentityFile ~/.ssh/passyunk-private.key
 
+# James' key for quality assurance work
 Host github.com-ais_qa
   User git
   Hostname github.com
   IdentityFile ~/.ssh/ais_qa
   IdentitiesOnly true
+
+# Deploy key for the ais repo itself
+Host github.com github-ais
+  User git
+  Hostname github.com
+  IdentityFile ~/.ssh/ais
+  IdentitiesOnly true
+
