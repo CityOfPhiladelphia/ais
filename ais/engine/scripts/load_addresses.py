@@ -59,14 +59,14 @@ def main():
     WRITE_OUT = True
 
     DEV = False  # This will target a single address
-    DEV_ADDRESS = '2342 W HUNTING PARK AVE'
+    DEV_ADDRESS = '1 Franklin Town Blvd Ste 2'
     DEV_ADDRESS_COMPS = {
-        # 'address_low':      '4700',
+        # 'base_address':      '1 FRANKLIN TOWN BLVD',
         # 'address_high':     '4726',
         # 'street_name':      'ALDEN',
         # 'street_suffix':    'WALK',
     }
-    DEV_STREET_NAME = 'W HUNTING PARK AVE'
+    DEV_STREET_NAME = 'FRANKLIN TOWN BLVD'
 
     # Logging stuff.
     address_errors = []
@@ -154,7 +154,7 @@ def main():
                 dev_where = "{} = '{}'" \
                     .format(address_fields['street_address'], DEV_ADDRESS)
             elif source_type == 'comps':
-                clauses = ["{} = {}".format(address_fields[key], value) \
+                clauses = ["{} = '{}'".format(address_fields[key], value) \
                            for key, value in DEV_ADDRESS_COMPS.items()]
                 dev_where = ' AND '.join(clauses)
             if where:
