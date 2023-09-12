@@ -30,7 +30,7 @@ db.save()
 
 print('Reading address links...')
 link_map = {}
-link_rows = address_link_table.read()
+link_rows = address_link_table.read(sort=['ADDRESS_1', 'ADDRESS_2'])
 for link_row in link_rows:
     address_1 = link_row['address_1']
     if not address_1 in link_map:
