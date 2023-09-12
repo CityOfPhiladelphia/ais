@@ -55,7 +55,7 @@ def main():
 
     print('Reading address links...')
     address_link_file = 'address_link.csv'
-    query = f"copy (select * from address_link) TO STDOUT WITH CSV HEADER;"
+    query = f"copy (select * from address_link ORDER BY ADDRESS_1, ADDRESS_2) TO STDOUT WITH CSV HEADER;"
     copy(db, address_link_file, query)
     link_map = create_map(
         rows=etl.fromcsv(address_link_file).dicts(), 
