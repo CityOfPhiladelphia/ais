@@ -26,7 +26,7 @@ def main():
 
     print('Reading geocode rows...')
     geocode_map = {}
-    geocode_rows = geocode_table.read(where="STREET_ADDRESS in ('1000 WALNUT ST APT 909', '1000-28 WALNUT ST', '1000 WALNUT ST')")
+    geocode_rows = geocode_table.read()
     print('Mapping geocode rows...')
     for geocode_row in geocode_rows:
         street_address = geocode_row['street_address']
@@ -37,7 +37,7 @@ def main():
     print('Reading address tags...')
     tag_map = {}
     where = "linked_address != '' and key in ('pwd_parcel_id', 'dor_parcel_id')"
-    tag_rows = address_tag_table.read(where=where + " and STREET_ADDRESS in ('1000 WALNUT ST APT 909', '1000-28 WALNUT ST', '1000 WALNUT ST')")
+    tag_rows = address_tag_table.read(where=where)
     print('Mapping address tags...')
     for tag_row in tag_rows:
         street_address = tag_row['street_address']
