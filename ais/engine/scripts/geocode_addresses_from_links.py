@@ -102,6 +102,12 @@ if WRITE_OUT:
             db.execute(write_stmt)
             db.save()
             values = ''
+    if values: 
+        write_stmt = '''
+            INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
+        '''.format(values=values)
+        db.execute(write_stmt)
+        db.save()        
 
     print('Creating index...')
     geocode_table.create_index('street_address')
