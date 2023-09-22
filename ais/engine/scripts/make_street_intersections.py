@@ -236,6 +236,7 @@ def main():
         (
         select distinct on (int_id, street_1_code, street_2_code) *
         from scsndj_distinct
+        order by int_id, street_1_code, street_2_code , node_id
         )
         select scsn.*, sc.street_predir as street_1_predir, sc.street_name as street_1_name, sc.street_suffix as street_1_suffix, sc.street_postdir as street_1_postdir, sc.street_full as street_1_full, sc.street_type as street_1_type
         from scsndjd_distinct scsn
