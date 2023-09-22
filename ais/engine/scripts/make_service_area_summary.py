@@ -142,15 +142,16 @@ def main():
             # Create and insert summary row
             sa_summary_row = deepcopy(sa_summary_row_template)
             sa_summary_row['street_address'] = street_address
-            update_dict = {}
-            for x in sa_rows: 
-                if update_dict.get(x['layer_id']) == None: 
-                    update_dict[x['layer_id']] = []
-                update_dict[x['layer_id']].append(x['value'])
-            for layer_id, _ in update_dict.items(): 
-                update_dict[layer_id].sort()
-                update_dict[layer_id] = '|'.join(update_dict[layer_id])
-            sa_summary_row.update(update_dict)
+            if sa_rows: 
+                update_dict = {}
+                for x in sa_rows: 
+                    if update_dict.get(x['layer_id']) == None: 
+                        update_dict[x['layer_id']] = []
+                    update_dict[x['layer_id']].append(x['value'])
+                for layer_id, _ in update_dict.items(): 
+                    update_dict[layer_id].sort()
+                    update_dict[layer_id] = '|'.join(update_dict[layer_id])
+                sa_summary_row.update(update_dict)
 
             sa_summary_rows.append(sa_summary_row)
 
