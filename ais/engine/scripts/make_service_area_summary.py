@@ -142,17 +142,15 @@ def main():
             # Create and insert summary row
             sa_summary_row = deepcopy(sa_summary_row_template)
             sa_summary_row['street_address'] = street_address
-            zoning_rco = []
-            if sa_rows is not None:
-                for x in sa_rows:
-                    if x['layer_id'] == 'zoning_rco':
-                        zoning_rco.append(x['value'])
-                    else:
-                        sa_summary_row[x['layer_id']] = x['value']
-                zoning_rco.sort()
-                zoning_rcos = '|'.join(zoning_rco)
-                if zoning_rcos: 
-                    sa_summary_row['zoning_rco'] = zoning_rcos
+            update_dict = {}
+            for x in sa_rows: 
+                if update_dict.get(x['layer_id']) == None: 
+                    update_dict[x['layer_id']] = []
+                update_dict[x['layer_id']].append(x['value'])
+            for layer_id, _ in update_dict.items(): 
+                update_dict[layer_id].sort()
+                update_dict[layer_id] = '|'.join(update_dict[layer_id])
+            sa_summary_row.update(update_dict)
 
             sa_summary_rows.append(sa_summary_row)
 
