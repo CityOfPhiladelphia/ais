@@ -131,13 +131,14 @@ activate_venv_source_libaries() {
 
 
 # not always a given
-ensure_private_repos_updated() {
+ensure_passyunk_updated() {
     echo -e "\nUpdating passyunk_automation specifically.."
     file $WORKING_DIRECTORY/ssh-config
     file $WORKING_DIRECTORY/passyunk-private.key
     cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
     cp $WORKING_DIRECTORY/passyunk-private.key ~/.ssh/passyunk-private.key
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
+    pip install git+https://github.com/CityOfPhiladelphia/passyunk
 }
 
 
@@ -488,7 +489,7 @@ check_for_prior_runs
 
 activate_venv_source_libaries
 
-ensure_private_repos_updated
+ensure_passyunk_updated
 
 setup_log_files
 
