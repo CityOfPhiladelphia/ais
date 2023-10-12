@@ -123,7 +123,17 @@ BASE_DATA_SOURCES = {
             'geom':                 'shape',
         },
     },
-
+    'ng911_address_points': {
+        'db':               'gis',
+        'table':            'GIS_NG911.ng911_siteaddresses',
+        'field_map': {
+            'source_address':       'street_address',
+            'guid':                 'guid',
+            'placement_type':       'placement',
+        },
+        # Query only verified/accepted addresses
+        'where':            'status in (0,1)',
+    },
     'curbs': {
         'db':               'gis',
         'table':            'GIS_STREETS.Curbs_No_Cartways',
@@ -446,6 +456,24 @@ ADDRESSES = {
                 {
                     'key': 'bin_parcel_id',
                     'source_fields': ['parcel_id_num'],
+                },
+            ],
+        },
+        {
+            'name':                 'ng911_address_point',
+            'table':                'ng911_address_point',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
+            },
+            'tag_fields': [
+                {
+                    'key':              'ng911_guid',
+                    'source_fields':     ['guid'],
+                },
+                {
+                    'key':              'ng911_address_point_placement',
+                    'source_fields':     ['placement_type'],
                 },
             ],
         },
@@ -1485,18 +1513,19 @@ ADDRESS_SUMMARY = {
         'true_range',
     ],
     'geocode_priority': {
-        'dor_curb': 8,
-        'pwd_curb': 7,
-        'true_range': 5,
-        'dor_street': 4,
-        'pwd_street': 3,
+        'dor_curb': 9,
+        'pwd_curb': 8,
+        'true_range': 6,
+        'dor_street': 5,
+        'pwd_street': 4,
         'pwd_parcel': 1,
         'dor_parcel': 2,
-        'centerline': 6,
-        'pwd_parcel_spatial': 9,
-        'dor_parcel_spatial': 10,
-        'pwd_parcel_front': 11,
-        'dor_parcel_front': 12,
+        'centerline': 7,
+        'pwd_parcel_spatial': 10,
+        'dor_parcel_spatial': 11,
+        'pwd_parcel_front': 12,
+        'dor_parcel_front': 13,
+        'ng911': 3,
         'unable_to_geocode': 99
     },
 
@@ -1639,7 +1668,7 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
     ],
-    'non_summary_tags': ['bin_parcel_id', 'info_resident', 'info_company', 'voter_name'],
+    'non_summary_tags': ['bin_parcel_id', 'info_resident', 'info_company', 'voter_name', 'ng911_guid', 'ng911_address_point_placement'],
 }
 
 SWAGGER = {

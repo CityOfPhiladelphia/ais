@@ -418,6 +418,37 @@ if WRITE_OUT:
     address_tag_table.write(parser_address_tags, chunk_size=150000)
 del parser_address_tags
 address_tag_strings = set()
+
+# spatial parcel id tags from address points:
+print("Adding dor_parcel_id tags for address points via spatial join...")
+dor_parcel_id_tag_stmt = '''
+insert into address_tag (street_address, key, value)
+select ng911.street_address, 'dor_parcel_id', dor.parcel_id 
+from ng911_address_point ng911 
+join dor_parcel dor on st_intersects(dor.geom, st_buffer(ng911.geom,2))
+join (
+    select street_address from address_tag 
+    except (
+        select street_address from address_tag where key = 'dor_parcel_id'
+        )
+    ) atag on atag.street_address = ng911.street_address'''
+db.execute(dor_parcel_id_tag_stmt)
+
+print("Adding pwd_parcel_id tags for address points via spatial join...")
+pwd_parcel_id_tag_stmt = '''
+insert into address_tag (street_address, key, value)
+select ng911.street_address, 'pwd_parcel_id', pwd.parcel_id 
+from ng911_address_point ng911 
+join pwd_parcel pwd on st_intersects(pwd.geom, st_buffer(ng911.geom,2))
+join (
+    select street_address from address_tag 
+    except (
+        select street_address from address_tag where key = 'pwd_parcel_id'
+        )
+    ) atag on atag.street_address = ng911.street_address
+'''
+db.execute(pwd_parcel_id_tag_stmt)
+db.save()
 ###############################################################################
 # ADDRESS LINKS
 ###############################################################################
