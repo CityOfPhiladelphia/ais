@@ -1501,6 +1501,7 @@ ADDRESS_SUMMARY = {
     'geocode_types': [
         'pwd_parcel',
         'dor_parcel',
+        'ng911',
         'true_range',
     ],
     # 'geocode_types_on_curb': [
