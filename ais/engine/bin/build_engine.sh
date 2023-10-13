@@ -87,14 +87,14 @@ then
   exit 1;
 fi
 
-echo "Loading opa active accounts and matching pwd parcels for properties without pwd parcel match"
-ais engine run get_pwd_matches_from_manual_opa_geocodes
+#echo "Loading opa active accounts and matching pwd parcels for properties without pwd parcel match"
+#ais engine run get_pwd_matches_from_manual_opa_geocodes
 
-if [ $? -ne 0 ]
-then
-  echo "Adding manual opa-pwd parcel matches failed. Exiting."
-  exit 1;
-fi
+#if [ $? -ne 0 ]
+#then
+#  echo "Adding manual opa-pwd parcel matches failed. Exiting."
+#  exit 1;
+#fi
 
 echo "Geocoding Addresses"
 ais engine run geocode_addresses

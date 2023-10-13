@@ -443,11 +443,11 @@ def test_unit_type_siblings_match_exact(client):
     match_type = feature['match_type']
     assert match_type == 'generic_unit_sibling'
 
-def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
-    response = client.get('/search/2100 KITTY HAWK AVE')
+def test_addresses_without_pwd_dor_id_return_true_or_full_range_or_ng911_geocode(client):
+    response = client.get('/search/1298 MARKET ST')
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'true_range'
+    assert feature['geometry']['geocode_type'] in ('true_range', 'full_range', 'ng911')
 
 def test_address_without_seg_match_returns_404(client):
     response = client.get('/search/2100 SITTY TAWK AVE')

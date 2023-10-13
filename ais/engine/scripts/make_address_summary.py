@@ -215,20 +215,6 @@ for i, street_name in enumerate(street_names):
                         value = tag_row['value'].upper()
                         values.append(value)
 
-            # if parent_unit_address:
-            # 	generic_unit_tags.setdefault(parent_unit_address, {})
-            # 	generic_unit_tags[parent_unit_address].setdefault(field_name, [])
-
-            # 	if len(values) > 0:
-            # 		generic_unit_tags[parent_unit_address][field_name] += values
-            # 	else:
-            # 		if field_type == 'number':
-            # 			generic_unit_tags[parent_unit_address][field_name].append(None)
-            # 		else:
-            # 			generic_unit_tags[parent_unit_address][field_name].append('')
-            # else:
-
-            # values = list(set(values)) # only use distinct values
             values = list(set(filter(None, values)))
             if len(values) > 0:
                 # Hack to supersede generic unit parser tags over base address parser tags
@@ -375,38 +361,6 @@ if WRITE_OUT:
     db.execute(rstcode_stmt)
     db.save()
 
-    # print('Populating PWD parcel IDs...')
-    # parcel_stmt = '''
-    # 	update address_summary asm
-    # 	set pwd_parcel_id = p.parcel_id
-    # 	from
-    # 		address_parcel ap,
-    # 		pwd_parcel p
-    # 	where
-    # 		ap.parcel_source = 'pwd' and
-    # 		ap.match_type != 'spatial' and
-    # 		ap.street_address = asm.street_address and
-    # 		p.id = ap.parcel_row_id
-    # '''
-    # db.execute(parcel_stmt)
-    # db.save()
-    #
-    # print('Populating DOR parcel IDs...')
-    # parcel_stmt = '''
-    # 	update address_summary asm
-    # 	set dor_parcel_id = d.parcel_id
-    # 	from
-    # 		address_parcel ap,
-    # 		dor_parcel d
-    # 	where
-    # 		ap.parcel_source = 'dor' and
-    # 		ap.match_type != 'spatial' and
-    # 		ap.street_address = asm.street_address and
-    # 		d.id = ap.parcel_row_id
-    # '''
-    # db.execute(parcel_stmt)
-    # db.save()
-    #
     print('Populating OPA accounts...')
     prop_stmt = '''
     	update address_summary asm
@@ -480,21 +434,6 @@ if WRITE_OUT:
     db.execute(li_pin_stmt)
     db.save()
 
-# This is depreciated in favor of Zip Codes/Zip4s read from Passyunk Components (address_tag table)
-# print('Populating ZIP codes...')
-# zip_stmt = '''
-# 	update address_summary asm
-# 	set zip_code = zr.zip_code,
-# 		zip_4 =
-# 			case when az.match_type = 'ignore_unit' then ''
-# 				else zr.zip_4 end
-# 	from address_zip az, zip_range zr
-# 	where asm.street_address = az.street_address and
-# 		az.usps_id = zr.usps_id
-# '''.format(address_summary_table)
-# db.execute(zip_stmt)
-# db.save()
-
 # Insert ungeocoded opa addresses into geocode table with null geoms:
 print("Inserting ungeocoded opa addresses into geocode table with null geom...")
 stmt = '''
@@ -503,51 +442,7 @@ stmt = '''
 for street_address in ungeocoded_opa_addresses:
     db.execute(stmt.format(street_address=street_address))
 db.save()
-
-# Update address_summary pwd_parcel_id for manual matches to OPA properties:
-# TODO: fix to identify rows to update from opa rows with null pwd_parcel_id and pwd parcel geocodes:
-manual_pwd_parcel_update_stmt = '''
-update address_summary asum
-set pwd_parcel_id = prep.pwd_parcel_id
-from (
-        select string_agg(updates.parcel_id::text, '|') as pwd_parcel_id, updates.street_address
-        from (
-                select asum.street_address, ap.parcel_row_id, pp.parcel_id
-                from address_summary asum
-                inner join address_parcel ap on asum.street_address = asum.opa_address and asum.pwd_parcel_id = '' and
-                ap.parcel_source = 'pwd' and ap.match_type = 'manual' and ap.street_address = asum.street_address
-                inner join pwd_parcel pp on pp.id = ap.parcel_row_id
-                ) updates
-                group by street_address
-        ) prep
-where asum.street_address = prep.street_address
-'''
-db.execute(manual_pwd_parcel_update_stmt)
-db.save()
-
-manual_pwd_parcel_address_tag_update_stmt = '''
-insert into address_tag (street_address, key, value)
-        select updates.street_address, 'pwd_parcel_id' as key, string_agg(updates.parcel_id::text, '|') as value
-        from (
-                select asum.street_address, ap.parcel_row_id, pp.parcel_id
-                from address_summary asum
-				inner join
-				(select distinct street_address from address_summary
-				except
-				select distinct street_address from address_tag where key = 'pwd_parcel_id') notags on notags.street_address = asum.street_address
-                inner join address_parcel ap on asum.street_address = asum.opa_address and
-                ap.parcel_source = 'pwd' and match_type = 'manual' and ap.street_address = asum.street_address
-                inner join pwd_parcel pp on pp.id = ap.parcel_row_id
-                ) updates
-                group by street_address
-'''
-
-db.execute(manual_pwd_parcel_address_tag_update_stmt)
-db.save()
-
-
 db.close()
 
 print('{} geocode errors'.format(geocode_errors))
 print('Finished in {} seconds'.format(datetime.now() - start))
-
