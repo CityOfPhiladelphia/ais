@@ -41,6 +41,15 @@ then
   exit 1;
 fi
 
+echo "Loading NG911 Address Points"
+ais engine run load_ng911_address_points
+
+if [ $? -ne 0 ]
+then
+  echo "Loading table failed. Exiting."
+  exit 1;
+fi
+
 echo "Loading DOR parcels"
 ais engine run load_dor_parcels
 
