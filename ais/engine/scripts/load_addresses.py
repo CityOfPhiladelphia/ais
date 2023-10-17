@@ -423,7 +423,7 @@ address_tag_strings = set()
 print("Adding dor_parcel_id tags for address points via spatial join...")
 dor_parcel_id_tag_stmt = '''
 insert into address_tag (street_address, key, value)
-select ng911.street_address, 'dor_parcel_id' as key, dor.parcel_id as value 
+select ng911.street_address, 'dor_parcel_id', dor.parcel_id 
 from ng911_address_point ng911 
 join (
     select street_address from address_tag 
