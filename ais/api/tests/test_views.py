@@ -403,7 +403,7 @@ def test_intersection_query_no_predir(client):
 
 
 def test_cascade_to_true_range(client):
-    response = client.get('/search/1050 filbert st')
+    response = client.get('/search/1298 market st')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
