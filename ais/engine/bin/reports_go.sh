@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source ais-config.sh
+
 datestamp=$(date +%Y%m%d)
 start_dt=$(date +%Y%m%d%T)
 echo "Started: "$start_dt
@@ -37,6 +39,26 @@ then
   send_teams "Engine reports did not complete."
   exit 1;
 fi
+
+##################################################
+# TEMPORARY COMMENT OUT UNTIL WE'RE IN PRODUCTION 
+# bash output_spatial_tables.sh $POSTGIS_CONN $ORACLE_CONN_GIS_AIS
+# if [ $? -ne 0 ]
+# then
+#   echo "Reporting has failed"
+#   send_teams "Engine reports did not complete."
+#   exit 1;
+# fi
+
+# echo "Starting updating EPAM address points report."
+# python update_address_points.py
+# if [ $? -ne 0 ]
+# then
+#   echo "Reporting has failed"
+#   send_teams "Engine reports did not complete."
+#   exit 1;
+# fi
+
 echo "Engine reports have completed."
 send_teams "Engine reports have completed."
 

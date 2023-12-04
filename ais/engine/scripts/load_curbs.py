@@ -45,14 +45,15 @@ def main():
         print('  - ' + agency)
         stmt = '''
             insert into parcel_curb (parcel_source, parcel_row_id, curb_id) (
-              select
+              select distinct on (p.id)
                 '{agency}',
                 p.id,
                 c.curb_id
               from {agency}_parcel p
               join curb c
               on ST_Intersects(p.geom, c.geom)
-            )
+              order by p.id, st_area(st_intersection(p.geom, c.geom)) desc
+         )
         '''.format(agency=agency)
         db.execute(stmt)
         db.save()

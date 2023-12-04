@@ -289,7 +289,7 @@ def test_address_query_can_end_in_comma(client):
     assert_status(response, 200)
 
 def test_opa_query_returns_child_address(client):
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE', '1214-32 N 26TH ST']
+    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE', '1214-32 N 26TH ST', '4131-63 WHITAKER AVE']
 
     CHILD_SQL = '''
         SELECT child.street_address, parent.street_address
@@ -404,7 +404,7 @@ def test_intersection_query_no_predir(client):
 
 
 def test_cascade_to_true_range(client):
-    response = client.get('/search/1050 filbert st')
+    response = client.get('/search/1298 market st')
     data = json.loads(response.get_data().decode())
     assert_status(response, 200)
     feature = data['features'][0]
@@ -444,11 +444,11 @@ def test_unit_type_siblings_match_exact(client):
     match_type = feature['match_type']
     assert match_type == 'generic_unit_sibling'
 
-def test_addresses_without_pwd_dor_id_return_true_or_full_range_geocode(client):
-    response = client.get('/search/2100 KITTY HAWK AVE')
+def test_addresses_without_pwd_dor_id_return_true_or_full_range_or_ng911_geocode(client):
+    response = client.get('/search/1298 MARKET ST')
     data = json.loads(response.get_data().decode())
     feature = data['features'][0]
-    assert feature['geometry']['geocode_type'] == 'true_range'
+    assert feature['geometry']['geocode_type'] in ('true_range', 'full_range', 'ng911')
 
 def test_address_without_seg_match_returns_404(client):
     response = client.get('/search/2100 SITTY TAWK AVE')

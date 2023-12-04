@@ -441,6 +441,14 @@ def main():
         addr_parcel_table.write(address_parcels, chunk_size=150000)
         print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
 
+    # Process source address point geocodes in batch:
+    # geocodes:
+    geocode_stmt = '''insert into geocode (street_address, geocode_type, geom)
+    select street_address, {geocode_type} as geocode_type, geom
+    from ng911_address_point
+    '''.format(geocode_type=geocode_priority_map['ng911'])
+    db.execute(geocode_stmt)
+
     print('Creating index...')
     geocode_table.create_index('street_address')
     db.close()

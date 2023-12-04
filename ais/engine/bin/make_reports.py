@@ -229,7 +229,7 @@ service_area_rows.tooraclesde(write_dsn, service_area_summary_write_table_name)
 
 
 ########################
-# ADDRESS AREA SUMMARY #
+# ADDRESS SUMMARY #
 ########################
 print("\nCreating transformed ADDRESS_SUMMARY table...")
 # add address_full and transformed coords, as well as shape as WKT, and only export rows that have been geocoded:

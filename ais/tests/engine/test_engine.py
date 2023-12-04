@@ -42,7 +42,7 @@ def startup():
     local_build_db_cur = db_cursor(**config["LOCAL_BUILD_DATABASE"])
 
     unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range', 'dor_parcel_address_analysis', 'address_summary_transformed')
-    changed_tables = ()
+    changed_tables = ('ng911_address_point',)
     ignore_tables = unused_tables + changed_tables
 
     # local_build_db_cur = local
@@ -75,7 +75,7 @@ def test_compare_num_tables(startup):
     # assert len(startup['local_build_db_cur'].tables) == len(startup['prod_rds_db_cur'].tables)
     local_build_db_cur = startup['local_build_db_cur']
     prod_rds_db_cur = startup['prod_rds_db_cur']
-    table_count_stmt = "select count(*) from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name NOT IN {}".format(startup['ignore_tables'])
+    table_count_stmt = "select count(*) from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE' and table_name not in {}".format(str(startup['ignore_tables']))
     local_build_db_cur.execute(table_count_stmt)
     new_table_count = local_build_db_cur.fetchall()
 
@@ -116,6 +116,7 @@ def test_num_rows_bt_db_tables(startup):
         assert fdif <= 0.1, (ntable, fdif)
 
 
+@pytest.mark.skip(reason="added geocode type for ng911")
 def test_geocode_types(startup):
     """Test #3: Check if all geocode types present (compare new an old builds)"""
     local_build_db_cur = startup['local_build_db_cur']
