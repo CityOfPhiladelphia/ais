@@ -1,3 +1,9 @@
+# ignore migrations folder
+migrations/
+
+# ignore this config file
+ais-config.sh
+
 # Git keys
 passyunk-private.key
 passyunk-public.key
@@ -70,6 +76,10 @@ local_settings.py
 # Flask instance folder
 instance/*
 
+# AIS supplemental bash config
+ais-config.sh
+ais/engine/bin/ais-config.sh
+
 # Sphinx documentation
 docs/_build/
 
@@ -106,3 +116,6 @@ tmp/
 ais/api/profiling/
 
 .vscode/
+
+# migrations
+/migrations/
