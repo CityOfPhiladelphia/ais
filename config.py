@@ -666,18 +666,18 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':                     'council_district_2024',
-        #     'name':                         'Council District 2024',
-        #     'description':                  '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_planning.Council_Districts_2024',
-        #             'value_field':          'district',
-        #         },
-        #     },
-        # },
+        {
+            'layer_id':                     'council_district_2024',
+            'name':                         'Council District 2024',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_planning.Council_Districts_2024',
+                    'value_field':          'district',
+                },
+            },
+        },
         {
             'layer_id':                     'political_ward',
             'name':                         'Ward',
