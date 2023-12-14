@@ -60,8 +60,7 @@ do
 done
 
 
-declare -a pdata_files=('election_block' 'electionblocks_origin'
-'usps_alias' 'usps_cityzip' 'usps_zip4s')
+declare -a pdata_files=('election_block' 'usps_alias' 'usps_cityzip' 'usps_zip4s')
 
 echo "Asserting private data is in passyunk_automation site-package folder"
 for i in "${pdata_files[@]}"
