@@ -80,6 +80,10 @@ jobs:
            echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
         fi
 
+    - name: git fetch and pull failsafe
+      working-directory: /home/ubuntu/ais
+      run: git fetch && git pull
+
     - name: Build the Docker image using docker-compose
       # Run directly in our ais folder, necessary to get some secrets in the container
       working-directory: /home/ubuntu/ais
