@@ -205,6 +205,20 @@ identify_prod() {
 }
 
 
+# Clean up old docker images/containers so we don't run out of storage.
+cleanup_docker() {
+    # TEMP stop docker to conserve memory
+    # don't fail on this, so pipe to true
+    echo "Attempting to stop docker containers if they exist..."
+    docker stop ais 2>/dev/null || true
+    docker rm ais 2>/dev/null || true
+
+    # Cleanup any other containers that may or may not exist.
+    yes | docker system prune
+    yes | docker image prune
+}
+
+
 # RUN BUILD ENGINE
 # Note: you need to have your ais/instance/config.py populated
 # with database connection info for this to work!
@@ -251,16 +265,11 @@ api_tests() {
 # Make a copy (Dump) the newly built local engine db
 dump_local_db() {
     echo -e "\nRunning dump_local_db...."
-    # TEMP stop docker to conserve memory
-    # don't fail on this, so pipe to true
-    echo "Attempting to stop docker containers if they exist..."
-    docker stop ais 2>/dev/null || true
-    docker rm ais 2>/dev/null || true
     echo "Dumping the newly built engine database.."
     send_teams "Dumping the newly built engine database.."
     export PGPASSWORD=$LOCAL_ENGINE_DB_PASS
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
-    pg_dump -Fc -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
+    pg_dump -Fcustom -Z0 --create --clean -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
     use_exit_status $? "DB dump failed" "DB dump succeeded"
 }
 
@@ -311,11 +320,44 @@ restore_db_to_staging() {
     echo -e "\nRunning restore_db_to_staging.."
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
-    export PGPASSWORD=$ENGINE_DB_PASS
-    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
-    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
-    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
-    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
+
+    if [[ "$prod_color" == "blue" ]]; then
+      local stage_instance_identifier="ais-engine-green"
+    else
+      local stage_instance_identifier="ais-engine-blue"
+    fi
+
+    #######################
+    # First let's modify parameters of the DB so restores go a bit faster
+
+    # Commands to create custom restore parameter group
+    #aws rds create-db-parameter-group --db-parameter-group-name ais-restore-parameters --db-parameter-group-family postgres12 --description "Params to speed up restore, DO NOT USE FOR PROD TRAFFIC"
+
+    # modify restore param group with our new params
+    # Unfortunately RDS does not allow us to modify "full_page_writes" which would definitely speed up restoring.
+    aws rds modify-db-parameter-group --db-parameter-group-name ais-restore-parameters --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" --no-cli-pager
+
+    # modify stage rds to use restore parameter group
+    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name ais-restore-parameters --apply-immediately --no-cli-pager
+
+
+    # Wait for parameter group modification to complete.
+    while true; do
+        status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text)
+        echo "Current status: $status"
+
+        if [ "$status" == "available" ]; then
+            echo "Modification completed."
+            break
+        fi
+        sleep 60  # Wait for 60 seconds before checking again
+    done
+
+    #export PGPASSWORD=$ENGINE_DB_PASS
+    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
+    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
+    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
+    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
     # Extensions must be re-installed and can only be done as superuser
     export PGPASSWORD=$PG_ENGINE_DB_PASS
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
@@ -325,7 +367,22 @@ restore_db_to_staging() {
     # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
     # or restore postgis specific tables that our extensions handles.
     # We should rely on db tests passing instead.
-    pg_restore --verbose -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+    # 1/5/2024 try out multiple jobs 
+    pg_restore --verbose -j 4 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+
+    # switch back to default
+    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
+
+    # Wait for parameter group modification to complete.
+    while true; do status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text) echo "Current status: $status"
+
+        if [ "$status" == "available" ]; then
+            echo "Modification completed."
+            break
+        fi
+        sleep 60  # Wait for 60 seconds before checking again
+    done
+
     # Print size after restore
     export PGPASSWORD=$PG_ENGINE_DB_PASS
     echo 'Database size after restore:'
@@ -340,6 +397,9 @@ docker_tests() {
     export ENGINE_DB_HOST=$staging_db_uri
     # Login to ECR so we can pull the image, will  use our AWS creds sourced from .env
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 880708401960.dkr.ecr.us-east-1.amazonaws.com
+
+    # Pull our latest docker image
+    docker pull 880708401960.dkr.ecr.us-east-1.amazonaws.com/ais:latest
     # Spin up docker container from latest AIS image from ECR and test against staging database
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ecr-test-compose.yml up --build -d
@@ -498,6 +558,8 @@ check_load_creds
 git_pull_ais_repo
 
 identify_prod
+
+cleanup_docker
 
 build_engine
 
