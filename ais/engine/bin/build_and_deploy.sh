@@ -360,8 +360,8 @@ restore_db_to_staging() {
     #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
     # Extensions must be re-installed and can only be done as superuser
     export PGPASSWORD=$PG_ENGINE_DB_PASS
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis;"
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm;"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION if not exists postgis;"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION if not exists pg_trgm;"
     export PGPASSWORD=$ENGINE_DB_PASS
     echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
     # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
