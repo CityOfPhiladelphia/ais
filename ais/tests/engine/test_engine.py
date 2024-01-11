@@ -1,5 +1,6 @@
 import subprocess
 import pytest
+import os
 from ais import app
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -15,29 +16,43 @@ def startup():
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         return cursor
 
+    # Get our current directory
     proc = subprocess.Popen(['bash', '-c', 'pwd'], stdout=subprocess.PIPE)
     output = proc.stdout.read()
-    prod_env_color = output.rstrip()
-    prod_env_color = prod_env_color.decode('utf-8')
-    print("Working directory: " + prod_env_color)
-
-    # Get prod color
-    proc = subprocess.Popen(['bash', '-c', '. ./ais/engine/bin/ais-utils.sh; get_prod_env'],
-            stdout=subprocess.PIPE)
-    # format the stdout we got properly into a simple string
-    output = proc.stdout.read()
-    prod_env_color = output.rstrip()
-    prod_env_color = prod_env_color.decode('utf-8')
+    working_dir = output.rstrip()
+    working_dir = working_dir.decode('utf-8')
+    print("Current working directly is: " + working_dir)
 
 
-
-    if prod_env_color == 'blue':
-        prod_rds_db_cur = db_cursor(**config["BLUE_DATABASE"])
-    elif prod_env_color == 'green':
-        prod_rds_db_cur = db_cursor(**config["GREEN_DATABASE"])
+    # If we had the DB hostname $ENGINE_DB_HOST passed to us, then use that.
+    db_host = None
+    try:
+        db_host = os.environ['ENGINE_DB_HOST']
+    except:
+        pass
+    if db_host:
+        if 'blue' in db_host:
+            prod_rds_db_cur = db_cursor(**config["BLUE_DATABASE"])
+        elif 'green' in db_host:
+            prod_rds_db_cur = db_cursor(**config["GREEN_DATABASE"])
+    # Else if ENGINE_DB_HOST wasn't passed to us, figure out prod dynamically instead.
     else:
-        raise AssertionError(f'prod_env_color not expected value?: {prod_env_color}')
-        
+        # Get prod color
+        proc = subprocess.Popen(['bash', '-c', '. ./ais/engine/bin/ais-utils.sh; get_prod_env'],
+                stdout=subprocess.PIPE)
+        # format the stdout we got properly into a simple string
+        output = proc.stdout.read()
+        prod_env_color = output.rstrip()
+        prod_env_color = prod_env_color.decode('utf-8')
+
+        if prod_env_color == 'blue':
+            prod_rds_db_cur = db_cursor(**config["BLUE_DATABASE"])
+        elif prod_env_color == 'green':
+            prod_rds_db_cur = db_cursor(**config["GREEN_DATABASE"])
+        else:
+            raise AssertionError(f'prod_env_color not expected value?: "{prod_env_color}"')
+
+    assert prod_rds_db_cur
 
     local_build_db_cur = db_cursor(**config["LOCAL_BUILD_DATABASE"])
 
