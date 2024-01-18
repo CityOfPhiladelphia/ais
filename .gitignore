@@ -1,6 +1,10 @@
 # ignore migrations folder
 migrations/
 
+# Intermediate files using for swapping DNS records
+route53-prod-change.json
+route53-stage-change.json
+
 # ignore this config file
 ais-config.sh
 

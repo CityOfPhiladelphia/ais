@@ -264,9 +264,8 @@ api_tests() {
 
 # Make a copy (Dump) the newly built local engine db
 dump_local_db() {
-    echo -e "\nRunning dump_local_db...."
-    echo "Dumping the newly built engine database.."
-    send_teams "Dumping the newly built engine database.."
+    echo -e "\nDumping the newly built engine database to $DB_DUMP_FILE_LOC"
+    send_teams "\nDumping the newly built engine database to $DB_DUMP_FILE_LOC"
     export PGPASSWORD=$LOCAL_ENGINE_DB_PASS
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
     pg_dump -Fcustom -Z0 --create --clean -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
@@ -321,6 +320,10 @@ restore_db_to_staging() {
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
 
+    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    echo "Database size before restore: $db_pretty_size"
+
     if [[ "$prod_color" == "blue" ]]; then
       local stage_instance_identifier="ais-engine-green"
     else
@@ -333,13 +336,22 @@ restore_db_to_staging() {
     # Commands to create custom restore parameter group
     #aws rds create-db-parameter-group --db-parameter-group-name ais-restore-parameters --db-parameter-group-family postgres12 --description "Params to speed up restore, DO NOT USE FOR PROD TRAFFIC"
 
-    # modify restore param group with our new params
+    # modify restore param group with less safe restore parameters
     # Unfortunately RDS does not allow us to modify "full_page_writes" which would definitely speed up restoring.
-    aws rds modify-db-parameter-group --db-parameter-group-name ais-restore-parameters --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" --no-cli-pager
+    # loosely based off https://www.databasesoup.com/2014/09/settings-for-fast-pgrestore.html
+    # and https://stackoverflow.com/a/75147585
+    aws rds modify-db-parameter-group \
+        --db-parameter-group-name ais-restore-parameters \
+        --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" \
+        --parameters "ParameterName=max_wal_senders,ParameterValue=0,ApplyMethod='immediate'" \
+        --parameters "ParameterName=wal_keep_segments,ParameterValue=0,ApplyMethod='immediate'" \
+        --parameters "ParameterName=autovacuum,ParameterValue=off,ApplyMethod='immediate'" \
+        --parameters "ParameterName=shared_buffers,ParameterValue='{DBInstanceClassMemory/65536}',ApplyMethod='pending-reboot'" \
+        --parameters "ParameterName=synchronous_commit,ParameterValue=off,ApplyMethod='immediate'" \
+        --no-cli-pager
 
     # modify stage rds to use restore parameter group
     aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name ais-restore-parameters --apply-immediately --no-cli-pager
-
 
     # Wait for parameter group modification to complete.
     while true; do
@@ -353,29 +365,42 @@ restore_db_to_staging() {
         sleep 60  # Wait for 60 seconds before checking again
     done
 
-    #export PGPASSWORD=$ENGINE_DB_PASS
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
-    #psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
-    # Extensions must be re-installed and can only be done as superuser
+
+    # Restart again and wait 60 seconds
+    # Had a situtation where somehow a process was running after we restarted before the
+    # the parameter group modification. So restart after that.
+    sleep 10
+    restart_staging_db   
+    sleep 60
+
+
+    # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
+    # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
     export PGPASSWORD=$PG_ENGINE_DB_PASS
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION if not exists postgis;"
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION if not exists pg_trgm;"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
+    # Recreate as ais_engine otherwise things get angry
+    export PGPASSWORD=$ENGINE_DB_PASS
+    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
+    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
+    psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
+
+    # Extensions can only be re-installed as postgres superuser
+    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis WITH SCHEMA public;"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm WITH SCHEMA public;"
+    psql -U postgres -h $staging_db_uri -d ais_engine -c "GRANT ALL ON TABLE public.spatial_ref_sys TO ais_engine;"
+
+    # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
     export PGPASSWORD=$ENGINE_DB_PASS
     echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
-    # Ignore failures, many of them are trying to drop non-existent tables (which our schema drop earlier handles)
-    # or restore postgis specific tables that our extensions handles.
-    # We should rely on db tests passing instead.
-    # 1/5/2024 try out multiple jobs 
-    pg_restore --verbose -j 4 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+    time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
 
-    # switch back to default
+
+    # switch back to default RDS parameter group
     aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
 
     # Wait for parameter group modification to complete.
     while true; do status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text) echo "Current status: $status"
-
         if [ "$status" == "available" ]; then
             echo "Modification completed."
             break
@@ -385,9 +410,14 @@ restore_db_to_staging() {
 
     # Print size after restore
     export PGPASSWORD=$PG_ENGINE_DB_PASS
-    echo 'Database size after restore:'
-    psql -U postgres -h $staging_db_uri -d ais_engine -c "SELECT pg_size_pretty( pg_database_size('ais_engine') );"
+    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    echo "Database size after restore: $db_pretty_size"
+    send_teams "Database size after restore: $db_pretty_size"
 
+    # Final reboot just because
+    sleep 10
+    restart_staging_db   
+    sleep 60
 }
 
 
@@ -405,6 +435,7 @@ docker_tests() {
     docker-compose -f ecr-test-compose.yml up --build -d
     # Run engine and API tests
     docker exec ais bash -c "pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests"
+    docker exec ais bash -c "pytest /ais/ais/tests/engine/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests"
 }
 
 
