@@ -392,12 +392,22 @@ restore_db_to_staging() {
 
     # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
     export PGPASSWORD=$ENGINE_DB_PASS
-    echo "Beginning restore with file $DB_DUMP_FILE_LOC.."
-    time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+    echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
+    echo "time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
+    time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
+    echo "Restore complete."
 
 
     # switch back to default RDS parameter group
     aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
+    sleep 60
+
+
+    # Print size after restore
+    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    echo "Database size after restore: $db_pretty_size"
+    send_teams "Database size after restore: $db_pretty_size"
 
     # Wait for parameter group modification to complete.
     while true; do status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text) echo "Current status: $status"
@@ -407,15 +417,7 @@ restore_db_to_staging() {
         fi
         sleep 60  # Wait for 60 seconds before checking again
     done
-
-    # Print size after restore
-    export PGPASSWORD=$PG_ENGINE_DB_PASS
-    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
-    echo "Database size after restore: $db_pretty_size"
-    send_teams "Database size after restore: $db_pretty_size"
-
     # Final reboot just because
-    sleep 10
     restart_staging_db   
     sleep 60
 }
