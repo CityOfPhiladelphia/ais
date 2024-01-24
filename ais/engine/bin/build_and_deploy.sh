@@ -242,7 +242,7 @@ engine_tests() {
     export DEV_TEST='true'
     # Note: imports instance/config.py for credentials
     cd $WORKING_DIRECTORY
-    pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
+    pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests
     use_exit_status $? "Engine tests failed" "Engine tests passed"
     # unset
     export DEV_TEST='false'
@@ -274,41 +274,78 @@ dump_local_db() {
 
 
 restart_staging_db() {
-  echo -e "\nRestarting RDS instance: $staging_db_uri"
-  echo "********************************************************************************************************"
-  echo "Please make sure the RDS instance identifier names are set to 'ais-engine-green' and 'ais-engine-blue'!!"
-  echo "We reboot the RDS instance by those names with the AWS CLI commmand 'aws rds reboot-db-instance'."
-  echo "********************************************************************************************************"
-  if [[ "$prod_color" == "blue" ]]; then
-    local stage_instance_identifier="ais-engine-green"
-    aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-green"
-  else
-    local stage_instance_identifier="ais-engine-blue"
-    aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-blue"
-  fi
-
-  # Check to see if the instance is ready
-  local max_attempts=30
-  local attempt=1
-  while [ $attempt -le $max_attempts ]; do
-    instance_status=$(aws rds describe-db-instances --region "us-east-1" \
-      --db-instance-identifier "$stage_instance_identifier" \
-      --query "DBInstances[0].DBInstanceStatus" --output text)
-
-    if [ "$instance_status" = "available" ]; then
-      echo "RDS instance is ready!"
-      break
+    echo -e "\nRestarting RDS instance: $staging_db_uri"
+    echo "********************************************************************************************************"
+    echo "Please make sure the RDS instance identifier names are set to 'ais-engine-green' and 'ais-engine-blue'!!"
+    echo "We reboot the RDS instance by those names with the AWS CLI commmand 'aws rds reboot-db-instance'."
+    echo "********************************************************************************************************"
+    if [[ "$prod_color" == "blue" ]]; then
+        local stage_instance_identifier="ais-engine-green"
+        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-green" --no-cli-pager
+    else
+        local stage_instance_identifier="ais-engine-blue"
+        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-blue" --no-cli-pager
     fi
 
-    echo "Waiting for RDS instance to be ready... (Attempt: $attempt/$max_attempts)"
-    sleep 10
-    ((attempt++))
-  done
+    # Check to see if the instance is ready
+    local max_attempts=30
+    local attempt=1
+    while [ $attempt -le $max_attempts ]; do
+        instance_status=$(aws rds describe-db-instances --region "us-east-1" \
+          --db-instance-identifier "$stage_instance_identifier" \
+          --query "DBInstances[0].DBInstanceStatus" --output text --no-cli-pager)
 
-  if [ $attempt -gt $max_attempts ]; then
-    echo "RDS instance did not become ready within the expected time."
-    exit 1
-  fi
+        if [ "$instance_status" = "available" ]; then
+            echo "RDS instance is ready!"
+            break
+        fi
+
+        echo "Waiting for RDS instance to be ready... (Attempt: $attempt/$max_attempts)"
+        sleep 10
+        ((attempt++))
+    done
+
+    if [ $attempt -gt $max_attempts ]; then
+        echo "RDS instance did not become ready within the expected time."
+        exit 1
+    fi
+}
+
+
+# Check to see if the RDS instance is in an "available" state.
+check_rds_instance() {
+    # Initial sleep of 6 minutes because we're seeing the instance be available
+    # and then suddenly in a modifying state, so parameter group modification can take longer than we expect.
+    echo 'Checking RDS instance status..'
+    sleep 300
+
+    if [[ "$prod_color" == "blue" ]]; then
+        local stage_instance_identifier="ais-engine-green"
+    else
+        local stage_instance_identifier="ais-engine-blue"
+    fi
+
+    local max_attempts=30
+    local attempt=1
+    while [ $attempt -le $max_attempts ]; do
+        instance_status=$(aws rds describe-db-instances --region "us-east-1" \
+          --db-instance-identifier "$stage_instance_identifier" \
+          --query "DBInstances[0].DBInstanceStatus" --output text --no-cli-pager)
+
+        if [ "$instance_status" = "available" ]; then
+            echo "RDS instance is ready!"
+            break
+        fi
+
+        echo "Waiting for RDS instance to be ready... (Attempt: $attempt/$max_attempts)"
+        sleep 10
+        ((attempt++))
+    done
+
+    if [ $attempt -gt $max_attempts ]; then
+        echo "RDS instance did not become ready within the expected time."
+        exit 1
+    fi
 }
 
 
@@ -324,10 +361,12 @@ restore_db_to_staging() {
     db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size before restore: $db_pretty_size"
 
+
+    # Get production color
     if [[ "$prod_color" == "blue" ]]; then
-      local stage_instance_identifier="ais-engine-green"
+        local stage_instance_identifier="ais-engine-green"
     else
-      local stage_instance_identifier="ais-engine-blue"
+        local stage_instance_identifier="ais-engine-blue"
     fi
 
     #######################
@@ -336,10 +375,12 @@ restore_db_to_staging() {
     # Commands to create custom restore parameter group
     #aws rds create-db-parameter-group --db-parameter-group-name ais-restore-parameters --db-parameter-group-family postgres12 --description "Params to speed up restore, DO NOT USE FOR PROD TRAFFIC"
 
-    # modify restore param group with less safe restore parameters
+    # Change RDS instance to use faster but less "safe" restore parameters
     # Unfortunately RDS does not allow us to modify "full_page_writes" which would definitely speed up restoring.
     # loosely based off https://www.databasesoup.com/2014/09/settings-for-fast-pgrestore.html
     # and https://stackoverflow.com/a/75147585
+
+    # This command actually modifies the parameter group "ais-restore-parameters" each time. Just nice to have the changes it makes explicitly in code.
     aws rds modify-db-parameter-group \
         --db-parameter-group-name ais-restore-parameters \
         --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" \
@@ -353,26 +394,8 @@ restore_db_to_staging() {
     # modify stage rds to use restore parameter group
     aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name ais-restore-parameters --apply-immediately --no-cli-pager
 
-    # Wait for parameter group modification to complete.
-    while true; do
-        status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text)
-        echo "Current status: $status"
-
-        if [ "$status" == "available" ]; then
-            echo "Modification completed."
-            break
-        fi
-        sleep 60  # Wait for 60 seconds before checking again
-    done
-
-
-    # Restart again and wait 60 seconds
-    # Had a situtation where somehow a process was running after we restarted before the
-    # the parameter group modification. So restart after that.
-    sleep 10
-    restart_staging_db   
-    sleep 60
-
+    # Wait for instance status to be "available" and not "modifying".
+    check_rds_instance $stage_instance_identifier
 
     # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
     # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
@@ -393,30 +416,32 @@ restore_db_to_staging() {
     # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
     export PGPASSWORD=$ENGINE_DB_PASS
     echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
-    echo "time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
-    time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true
-    echo "Restore complete."
+    echo "time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
+    # Store output so we can determine if errors are actually bad
+    restore_output=$(time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
+    #echo $restore_output | grep 'errors ignored on restore'
 
-
-    # switch back to default RDS parameter group
-    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
-    sleep 60
-
-
-    # Print size after restore
+    # Check size after restore
     export PGPASSWORD=$PG_ENGINE_DB_PASS
     db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size after restore: $db_pretty_size"
     send_teams "Database size after restore: $db_pretty_size"
 
-    # Wait for parameter group modification to complete.
-    while true; do status=$(aws rds describe-db-instances --db-instance-identifier $stage_instance_identifier --query 'DBInstances[0].DBInstanceStatus' --output text) echo "Current status: $status"
-        if [ "$status" == "available" ]; then
-            echo "Modification completed."
-            break
-        fi
-        sleep 60  # Wait for 60 seconds before checking again
-    done
+    # Assert the value is greater than 8000 MB
+    db_size=$(echo $db_pretty_size | awk '{print $1}')
+    # Checking if the numeric value is less than 8000
+    if [ "$db_size" -lt 8000 ]; then
+        echo "Database size after restore is less than 8 GB!!"
+        exit 1
+    fi
+
+    # After restore, switch back to default RDS parameter group
+    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
+    sleep 60
+
+    # Wait for instance status to be "available" and not "modifying".
+    check_rds_instance $stage_instance_identifier
+
     # Final reboot just because
     restart_staging_db   
     sleep 60
@@ -435,9 +460,11 @@ docker_tests() {
     # Spin up docker container from latest AIS image from ECR and test against staging database
     # Note: the compose uses the environment variables for the database and password that we exported earlier
     docker-compose -f ecr-test-compose.yml up --build -d
-    # Run engine and API tests
+    # Run API tests
     docker exec ais bash -c "pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests"
-    docker exec ais bash -c "pytest /ais/ais/tests/engine/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests"
+    # Engine tests hardcoded to running on local build only, so won't work with docker/RDS urls yet.
+    # We should figure out whether we want to do yet more tests once restoring into RDS.
+    #docker exec ais bash -c "pytest /ais/ais/tests/engine/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests"
 }
 
 
