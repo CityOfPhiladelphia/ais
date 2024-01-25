@@ -281,10 +281,10 @@ restart_staging_db() {
     echo "********************************************************************************************************"
     if [[ "$prod_color" == "blue" ]]; then
         local stage_instance_identifier="ais-engine-green"
-        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-green" --no-cli-pager
+        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-green" --no-cli-pager | grep "DBInstanceStatus"
     else
         local stage_instance_identifier="ais-engine-blue"
-        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-blue" --no-cli-pager
+        aws rds reboot-db-instance --region "us-east-1" --db-instance-identifier "ais-engine-blue" --no-cli-pager | grep "DBInstanceStatus"
     fi
 
     # Check to see if the instance is ready
@@ -418,7 +418,7 @@ restore_db_to_staging() {
     echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
     echo "time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
     # Store output so we can determine if errors are actually bad
-    restore_output=$(time pg_restore -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
+    restore_output=$(time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
     #echo $restore_output | grep 'errors ignored on restore'
 
     # Check size after restore
