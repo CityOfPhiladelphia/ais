@@ -32,8 +32,8 @@ set -o errtrace
 # Cleanup command that will run if something in the script fails.
 function cleanup {
     echo "Error! Exited prematurely at $BASH_COMMAND!!"
-    echo "running reenable_alarm.."
-    reenable_alarm
+    echo "running reenable_taskin_alarm.."
+    reenable_taskin_alarm
 }
 trap cleanup ERR
 
@@ -325,7 +325,7 @@ check_rds_instance() {
         local stage_instance_identifier="ais-engine-blue"
     fi
 
-    local max_attempts=30
+    local max_attempts=90
     local attempt=1
     while [ $attempt -le $max_attempts ]; do
         instance_status=$(aws rds describe-db-instances --region "us-east-1" \
@@ -345,6 +345,26 @@ check_rds_instance() {
     if [ $attempt -gt $max_attempts ]; then
         echo "RDS instance did not become ready within the expected time."
         exit 1
+    fi
+}
+
+
+modify_stage_scaling_out() {
+    # either disable or enable
+    action=$1
+
+    # 1 disable staging taskout action that scales out containers
+    if [[ "$action" == 'disable' ]]; then
+        echo 'Disabling ECS tasks and scale out..'
+        # 1. disable staging taskout action that scales out containers
+        aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskout
+        # 2. Set desired tasks to 0 so they don't blow up the db with health checks while restoring.
+        aws ecs update-service --cluster ais-blue-cluster --service ais-${staging_color}-api-service --desired-count 0
+    elif [[ "$action" == 'enable' ]]; then
+        echo 'Reenabling ECS tasks and scale out..'
+        aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskout
+        # Must allow back at least 1 instance so our later checks on the target groups works.
+        aws ecs update-service --cluster ais-blue-cluster --service ais-${staging_color}-api-service --desired-count 1
     fi
 }
 
@@ -381,18 +401,18 @@ restore_db_to_staging() {
     # and https://stackoverflow.com/a/75147585
 
     # This command actually modifies the parameter group "ais-restore-parameters" each time. Just nice to have the changes it makes explicitly in code.
-    aws rds modify-db-parameter-group \
-        --db-parameter-group-name ais-restore-parameters \
-        --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" \
-        --parameters "ParameterName=max_wal_senders,ParameterValue=0,ApplyMethod='immediate'" \
-        --parameters "ParameterName=wal_keep_segments,ParameterValue=0,ApplyMethod='immediate'" \
-        --parameters "ParameterName=autovacuum,ParameterValue=off,ApplyMethod='immediate'" \
-        --parameters "ParameterName=shared_buffers,ParameterValue='{DBInstanceClassMemory/65536}',ApplyMethod='pending-reboot'" \
-        --parameters "ParameterName=synchronous_commit,ParameterValue=off,ApplyMethod='immediate'" \
-        --no-cli-pager
+    #aws rds modify-db-parameter-group \
+    #    --db-parameter-group-name ais-restore-parameters \
+    #    --parameters "ParameterName=max_wal_size,ParameterValue=5120,ApplyMethod='immediate'" \
+    #    --parameters "ParameterName=max_wal_senders,ParameterValue=0,ApplyMethod='immediate'" \
+    #    --parameters "ParameterName=wal_keep_segments,ParameterValue=0,ApplyMethod='immediate'" \
+    #    --parameters "ParameterName=autovacuum,ParameterValue=off,ApplyMethod='immediate'" \
+    #    --parameters "ParameterName=shared_buffers,ParameterValue='{DBInstanceClassMemory/65536}',ApplyMethod='pending-reboot'" \
+    #    --parameters "ParameterName=synchronous_commit,ParameterValue=off,ApplyMethod='immediate'" \
+    #    --no-cli-pager
 
     # modify stage rds to use restore parameter group
-    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name ais-restore-parameters --apply-immediately --no-cli-pager
+    #aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name ais-restore-parameters --apply-immediately --no-cli-pager
 
     # Wait for instance status to be "available" and not "modifying".
     check_rds_instance $stage_instance_identifier
@@ -420,6 +440,7 @@ restore_db_to_staging() {
     # Store output so we can determine if errors are actually bad
     restore_output=$(time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
     #echo $restore_output | grep 'errors ignored on restore'
+    sleep 10
 
     # Check size after restore
     export PGPASSWORD=$PG_ENGINE_DB_PASS
@@ -436,14 +457,12 @@ restore_db_to_staging() {
     fi
 
     # After restore, switch back to default RDS parameter group
-    aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
+    #aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
     sleep 60
 
-    # Wait for instance status to be "available" and not "modifying".
+    # Wait for instance status to be "available" and not "modifying" or "backing-up". Can be triggered by restores it seems.
     check_rds_instance $stage_instance_identifier
 
-    # Final reboot just because
-    restart_staging_db   
     sleep 60
 }
 
@@ -586,7 +605,7 @@ swap_cnames() {
 }
 
 
-reenable_alarm() {
+reenable_taskin_alarm() {
     echo -e "\nSleeping for 5 minutes, then running scale-in alarm re-enable command..."
     sleep 300
     aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
@@ -629,9 +648,13 @@ api_tests
 
 dump_local_db
 
+modify_stage_scaling_out "disable"
+
 restart_staging_db
 
 restore_db_to_staging
+
+modify_stage_scaling_out "enable"
 
 docker_tests
 
@@ -645,7 +668,8 @@ warmup_lb
 
 swap_cnames -c $staging_color
 
-reenable_alarm
+
+reenable_taskin_alarm
 
 make_reports_tables
 
