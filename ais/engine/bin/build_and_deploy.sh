@@ -359,12 +359,12 @@ modify_stage_scaling_out() {
         # 1. disable staging taskout action that scales out containers
         aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskout
         # 2. Set desired tasks to 0 so they don't blow up the db with health checks while restoring.
-        aws ecs update-service --cluster ais-blue-cluster --service ais-${staging_color}-api-service --desired-count 0
+        aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count 0
     elif [[ "$action" == 'enable' ]]; then
         echo 'Reenabling ECS tasks and scale out..'
         aws cloudwatch enable-alarm-actions --alarm-names ais-${staging_color}-api-taskout
         # Must allow back at least 1 instance so our later checks on the target groups works.
-        aws ecs update-service --cluster ais-blue-cluster --service ais-${staging_color}-api-service --desired-count 1
+        aws ecs update-service --cluster ais-${staging_color}-cluster --service ais-${staging_color}-api-service --desired-count 2
     fi
 }
 
