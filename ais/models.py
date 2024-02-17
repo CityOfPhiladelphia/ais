@@ -1027,7 +1027,7 @@ class AddressSummaryQuery(BaseQuery):
                     # it's base's OPA account number. In the case where the
                     # address does not have a base, the base num will be None.
                     (AddressSummary.unit_type != '') &
-                    (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
+                    (AddressSummary.opa_account_num == func.coalesce(BaseAddressSummary.opa_account_num, ''))
                 )) \
                 .order_by(AddressSummary.opa_address, desc(AddressSummary.street_address == AddressSummary.opa_address)) \
                 .distinct(AddressSummary.opa_address)
@@ -1035,6 +1035,7 @@ class AddressSummaryQuery(BaseQuery):
             return query
         else:
             return self
+
 
     def get_all_parcel_geocode_locations(self, srid=DEFAULT_API_SRID, request=None):
 
@@ -1050,6 +1051,7 @@ class AddressSummaryQuery(BaseQuery):
             # If geom doesn't exist for geocode_type specified in request.arg (or if specified geocode_type doesn't exist),
             # return result of query without flag (set i=1 so all geocode_location flags are ignored)
             return self.get_address_geoms(request=request, i=1)
+
 
     def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=DEFAULT_API_SRID, request=None):
         if self.first():
