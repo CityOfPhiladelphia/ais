@@ -770,3 +770,7 @@ def test_inherited_tags_from_aggregate_parent_are_lowest(client):
     response = client.get('/search/901 N PENN ST UNIT F1102')
     data = json.loads(response.get_data().decode())
     assert data['features'][0]['properties']['bin'] == '1032992'
+
+def test_unit_address_parcel_property_opa_only(client):
+    response = client.get('/search/1650 N 5TH ST UNIT A?opa_only')
+    assert_status(response, 200)

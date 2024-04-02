@@ -1029,7 +1029,7 @@ class AddressSummaryQuery(BaseQuery):
                     # it's base's OPA account number. In the case where the
                     # address does not have a base, the base num will be None.
                     (AddressSummary.unit_type != '') &
-                    (AddressSummary.opa_account_num == BaseAddressSummary.opa_account_num)
+                    (AddressSummary.opa_account_num == func.coalesce(BaseAddressSummary.opa_account_num, ''))
                 )) \
                 .order_by(AddressSummary.opa_address, desc(AddressSummary.street_address == AddressSummary.opa_address)) \
                 .distinct(AddressSummary.opa_address)
