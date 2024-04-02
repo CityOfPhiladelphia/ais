@@ -37,6 +37,7 @@ service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
 dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
 true_range_write_table_name = 'TRUE_RANGE'
 address_error_write_table_name = 'AIS_ADDRESS_ERROR'
+source_address_write_table_name = 'SOURCE_ADDRESS'
 
 
 read_pass = parsed_read_db_string['password']
@@ -210,6 +211,11 @@ def concatenate_dor_address(source_comps):
 #################
 print("Writing address_error table...")
 etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').tooraclesde(write_dsn, address_error_write_table_name)
+##################
+# SOURCE ADDRESS #
+##################
+print("Writing source_address table...")
+etl.fromdb(read_conn, 'select * from source_address').tooraclesde(write_dsn, source_address_write_table_name)
 ##############
 # TRUE RANGE #
 ##############
