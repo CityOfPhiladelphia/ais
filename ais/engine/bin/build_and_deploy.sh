@@ -169,6 +169,7 @@ setup_log_files() {
 # config-secrets.sh contains AWS 
 check_load_creds() {
     echo -e "\nLoading credentials and passwords into the environment"
+    python3 $WORKING_DIRECTORY/write-secrets-to-env.py
     file $WORKING_DIRECTORY/config.py
     file $WORKING_DIRECTORY/instance/config.py
     file $WORKING_DIRECTORY/.env
