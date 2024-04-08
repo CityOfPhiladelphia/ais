@@ -1,5 +1,7 @@
 import citygeo_secrets as cgs
 import os
+from os.path import expanduser
+
 cgs.set_config(
     log_level='error',
     keeper_dir='~')
@@ -47,3 +49,29 @@ with open('.env', 'a') as f:
     f.write('\n' + new_contents)
 
 os.remove(TEMP_ENV)
+
+##############################
+# Update ~/.aws/credentials
+
+aws_creds = cgs.get_secrets('Citygeo AWS Key Pair PROD')
+access_key_id       = aws_creds["Citygeo AWS Key Pair PROD"]['access_key']
+secret_access_key   = aws_creds["Citygeo AWS Key Pair PROD"]['secret_key']
+
+home = expanduser("~")
+
+filename = os.path.join(home, '.aws/credentials')
+with open(filename, 'r') as file:
+    lines = file.readlines()
+
+new_lines = []
+for line in lines:
+    if line.startswith('aws_access_key_id'):
+        new_lines.append(f'aws_access_key_id = {access_key_id}\n')
+    elif line.startswith('aws_secret_access_key'):
+        new_lines.append(f'aws_secret_access_key = {secret_access_key}\n')
+    else:
+        new_lines.append(line)
+
+with open(filename, 'w') as file:
+    file.writelines(new_lines)
+
