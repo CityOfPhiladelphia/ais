@@ -62,15 +62,14 @@ address_error_table = db['address_error']
 WRITE_OUT = True
 
 DEV = False  # This will target a single address
-DEV_ADDRESS = '5601 E WISTER ST'
+DEV_ADDRESS = "920-22 W GIRARD AVE"
 DEV_ADDRESS_COMPS = {
-    # 'address_low':      '5601',
-    # # 'address_high':     '',
-    # 'street_predir':    'E',
-    # 'street_name':      'WISTER',
-    # 'street_suffix':    'ST',
+    # 'base_address':      '1 FRANKLIN TOWN BLVD',
+    # 'address_high':     '4726',
+    # 'street_name':      'ALDEN',
+    # 'street_suffix':    'WALK',
 }
-DEV_STREET_NAME = 'WISTER'
+DEV_STREET_NAME = 'W GIRARD AVE'
 
 # Logging stuff.
 address_errors = []
@@ -710,7 +709,7 @@ seg_fields = [
     'right_to'
 ]
 seg_map = {}
-seg_rows = street_segment_table.read(fields=seg_fields)
+seg_rows = street_segment_table.read(fields=seg_fields, sort=['STREET_FULL', 'LEFT_FROM', 'RIGHT_FROM'])
 for seg_row in seg_rows:
     street_full = seg_row['street_full']
     street_full_segs = seg_map.setdefault(street_full, [])
