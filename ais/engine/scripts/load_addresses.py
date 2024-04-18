@@ -59,14 +59,14 @@ def main():
     WRITE_OUT = True
 
     DEV = False  # This will target a single address
-    DEV_ADDRESS = '1 Franklin Town Blvd Ste 2'
+    DEV_ADDRESS = "920-22 W GIRARD AVE"
     DEV_ADDRESS_COMPS = {
         # 'base_address':      '1 FRANKLIN TOWN BLVD',
         # 'address_high':     '4726',
         # 'street_name':      'ALDEN',
         # 'street_suffix':    'WALK',
     }
-    DEV_STREET_NAME = 'FRANKLIN TOWN BLVD'
+    DEV_STREET_NAME = 'W GIRARD AVE'
 
     # Logging stuff.
     address_errors = []
@@ -378,7 +378,6 @@ def main():
     del parser_address_tags
     address_tag_strings = set()
 
-
     # spatial parcel id tags from address points:
     print("Adding dor_parcel_id tags for address points via spatial join...")
     dor_parcel_id_tag_stmt = '''
@@ -452,7 +451,7 @@ def main():
 
         # # Include address with unit_type in 'has_base' link set
         if address.unit_type is not None:
-        # if address.unit_type is not None or address.address_low_suffix is not None:
+            # if address.unit_type is not None or address.address_low_suffix is not None:
             # Base link
             base_link = {
                 'address_1': address.street_address,
@@ -618,10 +617,8 @@ def main():
 
     print('** ADDRESS-STREETS **')
 
-
     class ContinueIteration(Exception):
         pass
-
 
     def had_street_warning(street_address, reason, notes=None):
         '''
@@ -635,7 +632,6 @@ def main():
         }
         address_warnings.append(warning)
 
-
     def had_street_error(street_address, reason, notes=None):
         '''
         This is a wrapper around had_street_warning that raises an error.
@@ -645,7 +641,6 @@ def main():
         street_error_map[street_address] = {'reason': reason, 'notes': notes}
         had_street_warning(street_address, reason, notes=notes)
         raise ContinueIteration
-
 
     # START WORK
     if WRITE_OUT:
@@ -662,7 +657,9 @@ def main():
         'right_to'
     ]
     seg_map = {}
-    seg_rows = street_segment_table.read(fields=seg_fields)
+    seg_rows = street_segment_table.read(
+        fields=seg_fields, sort=["STREET_FULL", "LEFT_FROM", "RIGHT_FROM"]
+    )
     for seg_row in seg_rows:
         street_full = seg_row['street_full']
         street_full_segs = seg_map.setdefault(street_full, [])
@@ -926,7 +923,7 @@ def main():
                 parcel_address = Address(street_address)
             except ValueError:
                 # TODO: this should never happen
-                #print('Could not parse parcel address: {}'.format(street_address))
+                # print('Could not parse parcel address: {}'.format(street_address))
                 continue
 
             street_full = parcel_address.street_full
