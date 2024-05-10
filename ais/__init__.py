@@ -24,7 +24,8 @@ app.config.from_object('config')
 # in either that will overwrite the other.
 # reference "Instance Folders": https://flask.palletsprojects.com/en/2.3.x/config/
 
-# config path will be here if run in our built Docker image
+# First import in the sensitive secrets from the "instance" folder
+# Config path will be here if run in our built Docker image
 if os.path.isfile('/ais/instance/config.py'):
     print(f'Loading /ais/instance/config.py as our secrets instance config..')
     app.config.from_pyfile('/ais/instance/config.py')
@@ -33,6 +34,7 @@ else:
     print(f'Loading {os.getcwd() + "/config.py"} as our secrets instance config..')
     app.config.from_pyfile('instance/config.py')
 
+# Then import non-sensitive things from regular config.py.
 # config path will be here if run in our built Docker image
 if os.path.isfile('/ais/config.py'):
     print(f'Loading /ais/config.py as our Flask config..')
@@ -41,46 +43,15 @@ if os.path.isfile('/ais/config.py'):
 else:
     print(f'Loading {os.getcwd() + "/config.py"} as our Flask config..')
     app.config.from_pyfile(os.getcwd() + '/config.py')
+    
 
-# Synthesize our database connection from env vars if they exist
-try:
-    db_host = os.environ['ENGINE_DB_HOST']
-except Exception as e:
-    db_host = None
+# Assert we were passed an ENGINE_DB_HOST
+assert os.environ['ENGINE_DB_HOST'], 'Please set ENGINE_DB_HOST in an environment variable!'
+assert os.environ['ENGINE_DB_PASS'], 'Please set ENGINE_DB_PASS in an environment variable!'
+db_host = os.environ['ENGINE_DB_HOST']
+db_pass = os.environ['ENGINE_DB_PASS']
 
-try:
-    db_pass = os.environ['ENGINE_DB_PASS']
-except Exception as e:
-    db_pass = None
-
-try:
-    dev_test = os.environ['DEV_TEST']
-except Exception as e:
-    dev_test = None
-
-# Figure out 
-if db_host is None: # FIX: This should be triggered so switch between them
-    try:
-        result = dns.resolver.resolve('ais-prod.phila.city')
-        prod_cname = result.canonical_name.to_text()
-        if dev_test == 'true':
-            print('Will attempt to use local build database..')
-            db_host = 'localhost'
-            db_pass = os.environ['LOCAL_PASSWORD']
-        else:
-          print('DEV_TEST is false, determining which production database to use..')
-          if 'blue' in prod_cname:
-              db_host = app.config['BLUE_DATABASE']['host']
-              db_pass = app.config['BLUE_DATABASE']['password']
-          elif 'green' in prod_cname:
-              db_host = app.config['GREEN_DATABASE']['host']
-              db_pass = app.config['GREEN_DATABASE']['password']
-    except Exception as e:
-        print(str(e))
-
-assert db_host != None, 'Could not get host for backend database!'
-assert db_pass != None, 'Could not get password for backend database!'
-print(f'Prod host chosen: {db_host}')
+print(f'DB host passed: {db_host}')
 
 # Debug print if we got our creds as env variables (necessary for how we run it in docker/ECS)
 # format is: "postgresql://postgres:postgres@localhost/DBNAME"

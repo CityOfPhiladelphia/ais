@@ -10,14 +10,17 @@ TEMP_ENV='citygeo_secrets_env_vars.bash'
 INSERT_MARKER='# Below is automatically inserted by write-secrets-to-env.py'
 
 cgs.generate_env_file('keeper', 
-    ENGINE_DB_PASS = (
+    RDS_ENGINE_DB_PASS = (
         'ais-engine (green and blue) - ais_engine',
         'password'),
-    PG_ENGINE_DB_PASS = (
+    RDS_SUPER_ENGINE_DB_PASS = (
         'ais-engine (green and blue) - postgres',
         'password'),
     LOCAL_POSTGRES_ENGINE_DB_PASS = (
         'AIS local build postgres',
+        'password'),
+    LOCAL_ENGINE_DB_PASS = (
+        'ais_engine/on-prem',
         'password'),
     AWS_ACCESS_KEY_ID = (
         'Citygeo AWS Key Pair PROD', 

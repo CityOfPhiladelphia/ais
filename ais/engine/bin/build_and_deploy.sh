@@ -237,29 +237,32 @@ build_engine() {
 
 
 engine_tests() {
-    echo -e "\nRunning engine tests against locally built database."
-    # Export spwcial var that will instruct AIS to use the local db
-    # https://github.com/CityOfPhiladelphia/ais/blob/python3.10-upgrade/ais/__init__.py#L66-L69
-    export DEV_TEST='true'
-    # Note: imports instance/config.py for credentials
+    echo -e "\nRunning engine tests, comparing local build tables against what is currently in prod RDS ($prod_db_uri).."
+    # Set these so it'll use the prod RDS instance
+
+    # Compare prod against local
+    export ENGINE_TO_TEST='localhost'
+    export ENGINE_TO_COMPARE=$prod_db_uri
+
+    # Unused by the engine pytests, but required by ais/__init__.py to start up ais at all.
+    export ENGINE_DB_HOST=$ENGINE_TO_TEST
+
+    export ENGINE_DB_PASS=$RDS_ENGINE_DB_PASS
     cd $WORKING_DIRECTORY
     pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests
     use_exit_status $? "Engine tests failed" "Engine tests passed"
     # unset
-    export DEV_TEST='false'
 }
 
 
 api_tests() {
     echo -e "\nRunning api_tests..."
     cd $WORKING_DIRECTORY
-    # Export spwcial var that will instruct AIS to use the local db
-    # https://github.com/CityOfPhiladelphia/ais/blob/python3.10-upgrade/ais/__init__.py#L66-L69
-    export DEV_TEST='true'
+    # Set these so it'll use our local build for API tests
+    export ENGINE_DB_HOST='localhost'
+    export ENGINE_DB_PASS=$LOCAL_ENGINE_DB_PASS
     pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
     use_exit_status $? "API tests failed" "API tests passed"
-    # unset
-    export DEV_TEST='false'
 }
 
 
@@ -378,7 +381,7 @@ restore_db_to_staging() {
     echo "Restoring the engine DB to $staging_db_uri"
     send_teams "Restoring the engine DB to $staging_db_uri"
 
-    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
     db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size before restore: $db_pretty_size"
 
@@ -420,22 +423,22 @@ restore_db_to_staging() {
 
     # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
     # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
-    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
     psql -U postgres -h $staging_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
     # Recreate as ais_engine otherwise things get angry
-    export PGPASSWORD=$ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_ENGINE_DB_PASS
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "CREATE SCHEMA public;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
     psql -U ais_engine -h $staging_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
 
     # Extensions can only be re-installed as postgres superuser
-    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION postgis WITH SCHEMA public;"
     psql -U postgres -h $staging_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm WITH SCHEMA public;"
     psql -U postgres -h $staging_db_uri -d ais_engine -c "GRANT ALL ON TABLE public.spatial_ref_sys TO ais_engine;"
 
     # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
-    export PGPASSWORD=$ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_ENGINE_DB_PASS
     echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
     echo "time pg_restore -v -j 6 -h $staging_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
     # Store output so we can determine if errors are actually bad
@@ -444,7 +447,7 @@ restore_db_to_staging() {
     sleep 10
 
     # Check size after restore
-    export PGPASSWORD=$PG_ENGINE_DB_PASS
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
     db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size after restore: $db_pretty_size"
     send_teams "Database size after restore: $db_pretty_size"
@@ -468,10 +471,30 @@ restore_db_to_staging() {
 }
 
 
+engine_tests_for_restored_rds() {
+    echo -e "Running engine tests, testing $staging_db_uri and comparing to $prod_db_uri.."
+    # Set these so it'll use the prod RDS instance
+
+    # Compare stage against prod
+    export ENGINE_TO_TEST=$staging_db_uri
+    export ENGINE_TO_COMPARE=$prod_db_uri
+
+    # Unused by the engine pytests, but required by ais/__init__.py to start up ais at all.
+    export ENGINE_DB_HOST=$ENGINE_TO_TEST
+    export ENGINE_DB_PASS=$RDS_ENGINE_DB_PASS
+
+    cd $WORKING_DIRECTORY
+    pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests
+    use_exit_status $? "Engine tests failed" "Engine tests passed"
+    # unset
+}
+
+
 docker_tests() {
     echo -e "\nRunning docker_tests, which pulls the docker image from the latest in ECR and runs tests.."
-    # export the proper CNAME for the container to run against
+    # Set these so it'll use the staging RDS instance
     export ENGINE_DB_HOST=$staging_db_uri
+    export ENGINE_DB_PASS=$RDS_ENGINE_DB_PASS
     # Login to ECR so we can pull the image, will  use our AWS creds sourced from .env
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 880708401960.dkr.ecr.us-east-1.amazonaws.com
 
@@ -482,16 +505,6 @@ docker_tests() {
     docker-compose -f ecr-test-compose.yml up --build -d
     # Run API tests
     docker exec ais bash -c "pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests"
-    # Engine tests hardcoded to running on local build only, so won't work with docker/RDS urls yet.
-    # We should figure out whether we want to do yet more tests once restoring into RDS.
-    #docker exec ais bash -c "pytest /ais/ais/tests/engine/ -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests"
-}
-
-
-test_prod_db() {
-    export ENGINE_DB_HOST='stage_db_uri'
-    export ENGINE_DB_PASS=$LOCAL_DB_PASS
-    docker compose -f build-test-compose.yml build --no-cache
 }
 
 
@@ -547,7 +560,7 @@ warmup_lb() {
     file $WORKING_DIRECTORY/.env
     source $WORKING_DIRECTORY/.env
     send_teams "Warming up the load balancer for staging lb: $staging_color."
-    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --dbpass $LOCAL_PASSWORD --gatekeeper-key $GATEKEEPER_KEY
+    python $WORKING_DIRECTORY/ais/engine/bin/warmup_lb.py --dbpass $LOCAL_ENGINE_DB_PASS --gatekeeper-key $GATEKEEPER_KEY
     use_exit_status $? \
         "AIS load balancer warmup failed.\nEngine build has been pushed but not deployed." \
         "AIS load balancer warmup succeeded.\nEngine build has been pushed and deployed."
@@ -621,8 +634,7 @@ reenable_taskin_alarm() {
 make_reports_tables() {
     echo -e "\nRunning engine make_reports.py script..."
     #python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
-    bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh
-    
+    bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh    
 }
 
 check_for_prior_runs
@@ -655,6 +667,8 @@ restart_staging_db
 
 restore_db_to_staging
 
+engine_tests_for_restored_rds
+
 modify_stage_scaling_out "enable"
 
 docker_tests
@@ -668,7 +682,6 @@ check_target_health
 warmup_lb
 
 swap_cnames -c $staging_color
-
 
 reenable_taskin_alarm
 
