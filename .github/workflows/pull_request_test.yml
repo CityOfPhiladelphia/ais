@@ -17,7 +17,7 @@ concurrency:
 jobs:
 
   build:
-    name: Build and Test docker container
+    name: Build and Test docker container for PRs
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ais-runner 
     #runs-on: ubuntu-latest
@@ -96,14 +96,12 @@ jobs:
     - name: Simple curl query check
       run: curl http://localhost:8080/search/1234%20Market%20Street
 
-    - uses: patrickpaulin/ms-teams-deploy-card@master
+    - name: Notify job progress
+      uses: jdcargile/ms-teams-notification@v1.4
       if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
-        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-exit: complete
-        show-on-start: false
-        show-on-exit: true
-        custom-facts: |
-          - name: Job Progress
-            value: Build successful for branch ${{ env.GITHUB_REF }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Build successful for branch ${{ env.GITHUB_REF }}
+        timezone: America/New_York
+

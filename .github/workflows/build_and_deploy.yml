@@ -26,28 +26,20 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
-    - name: Checkout PR branch
-      uses: actions/checkout@v3
-
-    - name: debug pwd
-      run: pwd
+    - name: Checkout commit
+      uses: actions/checkout@v4
 
     - name: Get github commit sha ID
       run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
 
-  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
-  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
-    - uses: patrickpaulin/ms-teams-deploy-card@master
+    - name: Notify build start
+      uses: jdcargile/ms-teams-notification@v1.4
       if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
-        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-start: compact
-        show-on-start: true
-        show-on-exit: true
-        custom-facts: |
-          - name: Job Progress
-            value: Building and testing of new AIS docker image started for commit id ${{ env.GITHUB_SHA_SHORT }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Building and testing of new AIS docker image started for commit id ${{ env.GITHUB_SHA_SHORT }}
+        timezone: America/New_York
 
     
     # https://github.com/aws-actions/amazon-ecr-login
@@ -131,17 +123,13 @@ jobs:
   # https://github.com/marketplace/actions/microsoft-teams-deploy-card
   # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
     #- uses: toko-bifrost/ms-teams-deploy-card@master
-    - uses: patrickpaulin/ms-teams-deploy-card@master
-      if: always()
+    - name: Notify build success
+      uses: jdcargile/ms-teams-notification@v1.4
       with:
         GITHUB-TOKEN: ${{ github.token }}
-        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-exit: complete
-        show-on-start: false
-        show-on-exit: true
-        custom-facts: |
-          - name: Job Progress
-            value: Build successful for commit ID ${{ env.GITHUB_SHA_SHORT }}, pushing new AIS docker image to ECR
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summar: Build successful for commit ID ${{ env.GITHUB_SHA_SHORT }}, pushing new AIS docker image to ECR
+        timezone: America/New_York
 
   deploy:
 
@@ -209,4 +197,11 @@ jobs:
         show-on-exit: true
         custom-facts: |
           - name: Job Progress
-            value: Deployed to ${{ env.PROD_COLOR }} ECS cluster.
+    - name: Notify job progress
+      uses: jdcargile/ms-teams-notification@v1.4
+      if: always()
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summar: Deployed to ${{ env.PROD_COLOR }} ECS cluster.
+        timezone: America/New_York

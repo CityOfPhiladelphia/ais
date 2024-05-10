@@ -14,7 +14,12 @@ source $WORKING_DIRECTORY/venv/bin/activate
 # Add the ais folder with our __init__.py so we can import it as a python module
 export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
 
-echo "Running the engine"
+source $WORKING_DIRECTORY/.env
+
+export ENGINE_DB_HOST="localhost"
+export ENGINE_DB_PASS=$LOCAL_ENGINE_DB_PASS
+
+echo "Running the engine build!"
 
 SCRIPTS=(
   "load_streets" 
