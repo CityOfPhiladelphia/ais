@@ -32,13 +32,14 @@ jobs:
     - name: Get github commit sha ID
       run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
 
+    # https://github.com/marketplace/actions/microsoft-teams-notification
     - name: Notify build start
       uses: jdcargile/ms-teams-notification@v1.4
-      if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
         notification-summary: Building and testing of new AIS docker image started for commit id ${{ env.GITHUB_SHA_SHORT }}
+        notification-color: 17a2b8
         timezone: America/New_York
 
     
@@ -120,15 +121,15 @@ jobs:
         docker tag ais:latest $ECR_REPOSITORY_URL:latest
         docker push $ECR_REPOSITORY_URL:latest
 
-  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
-  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
-    #- uses: toko-bifrost/ms-teams-deploy-card@master
-    - name: Notify build success
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify build status
+      if: always()
       uses: jdcargile/ms-teams-notification@v1.4
       with:
         GITHUB-TOKEN: ${{ github.token }}
         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        notification-summar: Build successful for commit ID ${{ env.GITHUB_SHA_SHORT }}, pushing new AIS docker image to ECR
+        notification-summary: Build  and push to ECR; ${{ job.status }} for commit ID ${{ env.GITHUB_SHA_SHORT }}!
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
         timezone: America/New_York
 
   deploy:
@@ -184,24 +185,13 @@ jobs:
               echo $?
         fi
 
-  # https://github.com/marketplace/actions/microsoft-teams-deploy-card
-  # Using replacement fork for toko-bifrost, context for why: https://github.com/toko-bifrost/ms-teams-deploy-card/issues/33#issuecomment-888466503 
-    #- uses: toko-bifrost/ms-teams-deploy-card@master
-    - uses: patrickpaulin/ms-teams-deploy-card@master
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify build status
       if: always()
-      with:
-        GITHUB-TOKEN: ${{ github.token }}
-        WEBHOOK-URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        card-layout-exit: complete
-        show-on-start: false
-        show-on-exit: true
-        custom-facts: |
-          - name: Job Progress
-    - name: Notify job progress
       uses: jdcargile/ms-teams-notification@v1.4
-      if: always()
       with:
         GITHUB-TOKEN: ${{ github.token }}
         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        notification-summar: Deployed to ${{ env.PROD_COLOR }} ECS cluster.
+        notification-summary: Deployed to ${{ env.PROD_COLOR }} ECS cluster.
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
         timezone: America/New_York

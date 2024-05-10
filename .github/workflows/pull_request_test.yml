@@ -28,7 +28,7 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
     - name: Checkout PR branch
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
@@ -96,12 +96,14 @@ jobs:
     - name: Simple curl query check
       run: curl http://localhost:8080/search/1234%20Market%20Street
 
+
+    # https://github.com/marketplace/actions/microsoft-teams-notification
     - name: Notify job progress
-      uses: jdcargile/ms-teams-notification@v1.4
       if: always()
+      uses: jdcargile/ms-teams-notification@v1.4
       with:
         GITHUB-TOKEN: ${{ github.token }}
         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        notification-summary: Build successful for branch ${{ env.GITHUB_REF }}
+        notification-summary: Build status; ${{ job.status }} for branch ${{ env.GITHUB_REF }}
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
         timezone: America/New_York
-
