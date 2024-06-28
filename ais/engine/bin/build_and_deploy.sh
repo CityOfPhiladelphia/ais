@@ -602,17 +602,34 @@ swap_cnames() {
     }}]
 }'
     json_string=$(printf "$template" "prod" "$COLOR" "$PROD_ENDPOINT" "$staging_lb_uri")
-    echo "$json_string" > $WORKING_DIRECTORY/route53-prod-change.json
+    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
-        --change-batch file://$WORKING_DIRECTORY/route53-prod-change.json 1> /dev/null
+        --profile default \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
+   # Do the same for mulesoft, using the mulesoft access key in ~/.aws/credentials
+    json_string=$(printf "$template" "prod" "$COLOR" "$PROD_ENDPOINT" "$staging_lb_uri")
+    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
+    aws route53 change-resource-record-sets \
+        --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
+        --profile mulesoft \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
     # Then alter the staging cname back to what was just the prod_lb_uri
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
-    echo "$json_string" > $WORKING_DIRECTORY/route53-stage-change.json
+    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
-        --change-batch file://$WORKING_DIRECTORY/route53-stage-change.json 1> /dev/null
+        --profile default \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
+    json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
+    # Do the same for mulesoft, using the mulesoft access key in ~/.aws/credentials
+    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
+    aws route53 change-resource-record-sets \
+        --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
+        --profile mulesoft \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
+    rm $WORKING_DIRECTORY/route53-temp-change.json
 
     echo "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
     send_teams "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
@@ -634,7 +651,10 @@ reenable_taskin_alarm() {
 make_reports_tables() {
     echo -e "\nRunning engine make_reports.py script..."
     #python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
-    bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh    
+    send_teams "Making Reports..."
+    bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh
+    send_teams "Reports have completed!"
+    
 }
 
 check_for_prior_runs
