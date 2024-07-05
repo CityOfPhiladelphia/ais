@@ -177,6 +177,14 @@ check_load_creds() {
 }
 
 
+# Make sure our creds for AWS are correct and account names match our profile names.
+check_aws_creds() {
+    file ~/.aws/credentials
+    # Default will be for our citygeo account
+    aws sts get-caller-identity --profile default | grep '880708401960'
+    aws sts get-caller-identity --profile mulesoft | grep '975050025792'
+}
+
 # Get AWS production environment
 identify_prod() {
     echo -e "\nFinding the production environment via CNAME"
@@ -188,21 +196,19 @@ identify_prod() {
     echo "Production environment is: $prod_color"
     if [[ "$prod_color" == "blue" ]]; then
         export staging_color="green" 
-        staging_db_uri=$GREEN_ENGINE_CNAME
-        staging_lb_uri=$GREEN_CNAME
-
-        prod_db_uri=$BLUE_ENGINE_CNAME
-        prod_lb_uri=$BLUE_CNAME
     else
         export staging_color="blue"
-        staging_db_uri=$BLUE_ENGINE_CNAME
-        staging_lb_uri=$BLUE_CNAME
-
-        prod_db_uri=$GREEN_ENGINE_CNAME
-        prod_lb_uri=$GREEN_CNAME
     fi
+
+    # dynamically retrieve ARNs and DNS information because resources could be dynamically re-made by terraform.
     export staging_tg_arn=$(aws elbv2 describe-target-groups | grep "${staging_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
     export prod_tg_arn=$(aws elbv2 describe-target-groups | grep "${prod_color}-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+
+    export prod_lb_uri=$(aws elbv2 describe-load-balancers --names ais-${prod_color}-api-alb --query "LoadBalancers[*].DNSName" --output text)
+    export staging_lb_uri=$(aws elbv2 describe-load-balancers --names ais-${staging_color}-api-alb --query "LoadBalancers[*].DNSName" --output text)
+
+    export prod_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${prod_color} --query "DBInstances[*].Endpoint.Address" --output text)
+    export staging_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${staging_color} --query "DBInstances[*].Endpoint.Address" --output text)
 }
 
 
@@ -570,25 +576,6 @@ warmup_lb() {
 # Important step! Swaps the prod environments in Route 53!!
 swap_cnames() {
     echo -e "\nSwapping prod/stage CNAMEs..."
-    # https://stackoverflow.com/a/14203146
-    # accept one argument of -c for color of blue or green
-    POSITIONAL=()
-    while [[ $# -gt 0 ]]; do
-      key="$1"
-
-      case $key in
-        -c|--color)
-          COLOR="$2"
-          shift # past argument
-          shift # past value
-          ;;
-      esac
-    done
-    set -- "${POSITIONAL[@]}" # restore positional parameters
-    if [[ "$COLOR" != "blue" ]] && [[ "$COLOR" != "green" ]]; then
-        echo "Error, -c only accepts blue or green, got: '$COLOR'."
-        return 1
-    fi
     # First let's swap the prod cname to our now ready-to-be-prod staging_lb_uri.
     template='{
   "Comment": "Modify %s ais record to %s",
@@ -601,21 +588,22 @@ swap_cnames() {
         "ResourceRecords": [{ "Value": "%s" }]
     }}]
 }'
-    json_string=$(printf "$template" "prod" "$COLOR" "$PROD_ENDPOINT" "$staging_lb_uri")
+
+    # Swap the production DNS record to the ALB DNS we identified as staging
+    json_string=$(printf "$template" "prod" "$prod_color" "$PROD_ENDPOINT" "$staging_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-   # Do the same for mulesoft, using the mulesoft access key in ~/.aws/credentials
-    json_string=$(printf "$template" "prod" "$COLOR" "$PROD_ENDPOINT" "$staging_lb_uri")
+    json_string=$(printf "$template" "prod" "$prod_color" "$PROD_ENDPOINT" "$staging_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
         --profile mulesoft \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
-    # Then alter the staging cname back to what was just the prod_lb_uri
+    # Swap the staging DNS record to the ALB DNS we identified as prod
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
@@ -623,7 +611,6 @@ swap_cnames() {
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
-    # Do the same for mulesoft, using the mulesoft access key in ~/.aws/credentials
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
@@ -631,8 +618,8 @@ swap_cnames() {
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
     rm $WORKING_DIRECTORY/route53-temp-change.json
 
-    echo "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
-    send_teams "Swapped prod cname to $COLOR successfully! Staging is now ${prod_color}."
+    echo "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
+    send_teams "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
 }
 
 
@@ -669,6 +656,8 @@ check_load_creds
 
 git_pull_ais_repo
 
+check_aws_creds
+
 identify_prod
 
 cleanup_docker
@@ -701,7 +690,7 @@ check_target_health
 
 warmup_lb
 
-swap_cnames -c $staging_color
+swap_cnames
 
 reenable_taskin_alarm
 

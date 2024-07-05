@@ -15,7 +15,7 @@ import click
 @click.option('--gatekeeper-key', '-k', required=True,
               help='')
 def main(proxy, dbpass, gatekeeper_key):
-    base_path = 'http://api.phila.gov/ais_staging/v2/search/'
+    base_path = 'http://api.phila.gov/ais_staging/v1/search/'
 
     warmup_address_table_name = 'address_summary'
     warmup_address_field = 'street_address'
