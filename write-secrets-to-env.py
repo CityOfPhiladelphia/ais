@@ -60,21 +60,21 @@ aws_creds = cgs.get_secrets('Citygeo AWS Key Pair PROD')
 access_key_id       = aws_creds["Citygeo AWS Key Pair PROD"]['access_key']
 secret_access_key   = aws_creds["Citygeo AWS Key Pair PROD"]['secret_key']
 
+aws_creds = cgs.get_secrets('Mulesoft AWS Key Pair PROD')
+ms_access_key_id       = aws_creds["Mulesoft AWS Key Pair PROD"]['login']
+ms_secret_access_key   = aws_creds["Mulesoft AWS Key Pair PROD"]['password']
+
 home = expanduser("~")
 
-filename = os.path.join(home, '.aws/credentials')
-with open(filename, 'r') as file:
-    lines = file.readlines()
+aws_credentials_path = os.path.join(home, '.aws/credentials')
 
-new_lines = []
-for line in lines:
-    if line.startswith('aws_access_key_id'):
-        new_lines.append(f'aws_access_key_id = {access_key_id}\n')
-    elif line.startswith('aws_secret_access_key'):
-        new_lines.append(f'aws_secret_access_key = {secret_access_key}\n')
-    else:
-        new_lines.append(line)
+# Open the file in write mode ('w') to ensure it will be overwritten if it exists
+with open(aws_credentials_path, 'w') as file:
+    file.write(f"[default]\n")
+    file.write(f"aws_access_key_id = {access_key_id}\n")
+    file.write(f"aws_secret_access_key = {secret_access_key}\n")
+    file.write(f"[mulesoft]\n")
+    file.write(f"aws_access_key_id = {ms_access_key_id}\n")
+    file.write(f"aws_secret_access_key = {ms_secret_access_key}\n")
 
-with open(filename, 'w') as file:
-    file.writelines(new_lines)
-
+print("AWS credentials file created and overwritten successfully.")
