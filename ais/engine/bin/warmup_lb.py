@@ -111,6 +111,7 @@ def main(proxy, dbpass, gatekeeper_key):
             exit(1)
     else:
         print('Unable to count successes for some reason?')
+        exit(1)
 
 
 
