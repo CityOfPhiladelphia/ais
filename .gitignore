@@ -1,3 +1,27 @@
+# ignore migrations folder
+migrations/
+
+# Intermediate files using for swapping DNS records
+route53-prod-change.json
+route53-stage-change.json
+
+# ignore this config file
+ais-config.sh
+
+# Git keys
+passyunk-private.key
+passyunk-public.key
+*.key
+
+log/
+
+# docker-compose build secrets
+config-secrets.sh
+config-secrets.py
+route53-change.json
+*.csv
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -56,6 +80,10 @@ local_settings.py
 # Flask instance folder
 instance/*
 
+# AIS supplemental bash config
+ais-config.sh
+ais/engine/bin/ais-config.sh
+
 # Sphinx documentation
 docs/_build/
 
@@ -67,6 +95,7 @@ target/
 
 # pyenv
 .python-version
+venv
 
 # dotenv
 .env
@@ -89,3 +118,8 @@ instance/config.py
 ais/engine/log/
 tmp/
 ais/api/profiling/
+
+.vscode/
+
+# migrations
+/migrations/

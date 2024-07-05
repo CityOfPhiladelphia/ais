@@ -1,11 +1,12 @@
 import json
 import pytest
-from ais import app, app_db
+from ... import app, app_db
 from operator import eq, gt
 
-@pytest.fixture
+# TODO: Why do these tests all fail with 404 Response Error when run on their own?
+@pytest.fixture(scope='module')
 def client():
-    app.config['TESTING'] = True
+    app.testing = True
     return app.test_client()
 
 def assert_status(response, *expected_status_codes):
@@ -268,10 +269,6 @@ def test_fractional_addresses_are_ok(client):
 
 def test_allows_0_as_address_low_num(client):
     response = client.get('/addresses/0-98 Sharpnack')
-    # data = json.loads(response.get_data().decode())
-    # feature = data['features'][0]
-    # assert_status(response, 200)
-    # assert feature['match_type'] == 'parsed'
     assert_status(response, 404)
 
 def test_allows_0_as_block_low_num(client):
@@ -292,7 +289,7 @@ def test_address_query_can_end_in_comma(client):
     assert_status(response, 200)
 
 def test_opa_query_returns_child_address(client):
-    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '4131-63 WHITAKER AVE', '2611-21 W HUNTINGDON ST', '5541 VINE ST', '5539-51 VINE ST']
+    ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE', '1214-32 N 26TH ST', '4131-63 WHITAKER AVE']
 
     CHILD_SQL = '''
         SELECT child.street_address, parent.street_address
@@ -307,7 +304,9 @@ def test_opa_query_returns_child_address(client):
           AND parent.street_address not in {}
         LIMIT 1
     '''.format(tuple(ignore_addresses))
-    result = app_db.engine.execute(CHILD_SQL)
+    # Must use the app import like this to get context so we can run SQL commands
+    with app.app_context():
+        result = app_db.engine.execute(CHILD_SQL)
     child_address, parent_address = result.first()
 
     response = client.get('/addresses/{}?opa_only'.format(child_address))
@@ -342,7 +341,9 @@ def test_block_can_exclude_non_opa(client):
             AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
           ) AS block_addresses
     '''
-    result = app_db.engine.execute(BLOCK_COUNT_SQL)
+    # Must use the app import like this to get context so we can run SQL commands
+    with app.app_context():
+        result = app_db.engine.execute(BLOCK_COUNT_SQL)
     block_count = result.first()[0]
 
     # Ensure that no join collisions happen

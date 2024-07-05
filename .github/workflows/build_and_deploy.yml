@@ -1,0 +1,197 @@
+name: Build and Deploy to ECR and ECS
+# We want this to build our docker container, push to ECR ("build" job)
+# and then perform a rolling update to ECS with the new image ( "deploy" job)
+
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
+on:
+  push:
+    branches:
+      - master
+      - python3.10-upgrade
+
+concurrency:
+  group: testing_environment
+  cancel-in-progress: false
+
+
+jobs:
+
+  build:
+    name: Build and Push to ECR
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    #needs: pre-build
+    runs-on: ais-runner
+    #runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
+    - name: Checkout commit
+      uses: actions/checkout@v4
+
+    - name: Get github commit sha ID
+      run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify build start
+      uses: jdcargile/ms-teams-notification@v1.4
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Building and testing of new AIS docker image started for commit id ${{ env.GITHUB_SHA_SHORT }}
+        notification-color: 17a2b8
+        timezone: America/New_York
+
+    
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           
+    - name: Set engine hostname based on prod color
+      env:
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+           echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+           echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
+        fi
+
+    - name: git fetch and pull failsafe
+      working-directory: /home/ubuntu/ais
+      run: git fetch && git pull
+
+    - name: Build the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: |
+        docker-compose -f build-test-compose.yml build --no-cache
+
+    - name: Start the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker-compose -f build-test-compose.yml up -d
+
+    - name: Run API pytests to ensure image build is good
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: |
+          docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native'
+
+    - name: Confirm nginx configuration is good
+      run: docker exec ais bash -c 'nginx -t'
+
+    - name: Simple curl query check
+      run: curl http://localhost:8080/search/1234%20Market%20Street
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Docker Push to ECR
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        ECR_REPOSITORY_URL: ${{ secrets.ECR_REPOSITORY_url }}
+      run: |
+        docker tag ais:latest $ECR_REPOSITORY_URL:latest
+        docker push $ECR_REPOSITORY_URL:latest
+
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify build status
+      if: always()
+      uses: jdcargile/ms-teams-notification@v1.4
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Build  and push to ECR; ${{ job.status }} for commit ID ${{ env.GITHUB_SHA_SHORT }}!
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
+        timezone: America/New_York
+
+  deploy:
+
+    name: Deploy to prod ECS cluster
+    # needs prior job of 'build' to not fail.
+    needs: build
+    runs-on: ubuntu-latest
+         
+
+    steps:
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+      
+    - name: Force deploy to ECS cluster
+      run: |
+          echo "Deploying to $PROD_COLOR"
+          aws ecs update-service --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --force-new-deployment --region us-east-1
+          aws ecs wait services-stable --cluster ais-$PROD_COLOR-cluster \
+          --service ais-$PROD_COLOR-api-service --region us-east-1
+    - name: Confirm LB target group health
+      run: |
+        blue_tg_arn=$(aws elbv2 describe-target-groups | grep "blue-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        green_tg_arn=$(aws elbv2 describe-target-groups | grep "green-tg" | grep TargetGroupArn| cut -d"\"" -f4)
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+              echo "blue"
+              aws elbv2 describe-target-health --target-group-arn $blue_tg_arn | grep "\"healthy\""
+              echo $?
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+              echo "green"
+              aws elbv2 describe-target-health --target-group-arn $green_tg_arn | grep "\"healthy\""
+              echo $?
+        fi
+
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify build status
+      if: always()
+      uses: jdcargile/ms-teams-notification@v1.4
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Deployed to ${{ env.PROD_COLOR }} ECS cluster.
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
+        timezone: America/New_York

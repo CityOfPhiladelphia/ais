@@ -5,6 +5,11 @@ import petl as etl
 from ais import app
 from ais.util import parse_url
 
+############################
+# This script extracts NG911 geometry (proxy for the front door) for each address point and writes
+# it to the databridge-raw database, table name "ais.address_points_geocode_types_for_ng911"
+# Then, triggers a DAG that upserts records in the tripoli 911 database
+
 config = app.config
 target_table = 'ais.address_points_geocode_types_for_ng911'
 temp_csv = 'output_address_points_for_ng911.csv'
@@ -89,7 +94,7 @@ target_conn.close()
 
 # Trigger DAG to update NG911:
 workflow = 'etl_ng911_v0'
-print("Triggering downstream process...")
+print(f"Triggering downstream DAG {workflow}...")
 try:
     r = requests.post(
         airflow_trigger_creds.get('url').format(dag_name=workflow),

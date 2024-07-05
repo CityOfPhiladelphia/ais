@@ -1,160 +1,57 @@
 #!/usr/bin/env bash
 
-echo "Activating virtual environment"
-source ../../../env/bin/activate
+WORKING_DIRECTORY=/home/ubuntu/ais
+cd $WORKING_DIRECTORY
 
-echo "Running the engine"
+export ORACLE_HOME=/usr/lib/oracle/18.5/client64
+export PATH=$PATH:$ORACLE_HOME/bin
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+export PYTHONUNBUFFERED=TRUE
+echo "Setting DEV_TEST to true so we use the local database."
+export DEV_TEST="true"
+echo -e "\nActivating virtual environment"
+source $WORKING_DIRECTORY/venv/bin/activate
+# Add the ais folder with our __init__.py so we can import it as a python module
+export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
 
-echo "Loading Streets"
-ais engine run load_streets
+source $WORKING_DIRECTORY/.env
 
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
+export ENGINE_DB_HOST="localhost"
+export ENGINE_DB_PASS=$LOCAL_ENGINE_DB_PASS
 
-echo "Loading Street Aliases"
-ais engine run load_street_aliases
+echo "Running the engine build!"
 
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
+SCRIPTS=(
+  "load_streets" 
+  "load_street_aliases" 
+  "make_street_intersections"
+  "load_opa_properties"
+  "load_ng911_address_points"
+  "load_dor_parcels"
+  "load_dor_condos"
+  "load_pwd_parcels"
+  "load_curbs"
+  "load_addresses"
+  "geocode_addresses"
+  "make_linked_tags"
+  "geocode_addresses_from_links"
+  "make_address_summary"
+  "load_service_areas"
+  "make_service_area_summary"
+)
 
-echo "Making Intersections"
-ais engine run make_street_intersections
+run_script() {
+  echo ""
+  echo "********************************************************************************"
+  echo "Running script '$1'"
+  ais engine --script "$1"
+  if [[ $? -ne 0 ]]
+  then
+    echo "Loading table failed. Exiting."
+    exit 1;
+  fi
+}
 
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading OPA Properties"
-ais engine run load_opa_properties
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading NG911 Address Points"
-ais engine run load_ng911_address_points
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading DOR parcels"
-ais engine run load_dor_parcels
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading DOR condos"
-ais engine run load_dor_condos
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading PWD Parcels"
-ais engine run load_pwd_parcels
-
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading Curbs"
-ais engine run load_curbs
-
-if [ $? -ne 0 ]
-then
-  echo "Loading table failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading Addresses"
-ais engine run load_addresses
-
-if [ $? -ne 0 ]
-then
-  echo "Loading addresses failed. Exiting."
-  exit 1;
-fi
-
-#echo "Loading opa active accounts and matching pwd parcels for properties without pwd parcel match"
-#ais engine run get_pwd_matches_from_manual_opa_geocodes
-
-#if [ $? -ne 0 ]
-#then
-#  echo "Adding manual opa-pwd parcel matches failed. Exiting."
-#  exit 1;
-#fi
-
-echo "Geocoding Addresses"
-ais engine run geocode_addresses
-
-if [ $? -ne 0 ]
-then
-  echo "Geocoding addresses failed. Exiting."
-  exit 1;
-fi
-
-echo "Making Address Tags from Linked Addresses"
-ais engine run make_linked_tags
-
-if [ $? -ne 0 ]
-then
-  echo "Making address tags failed. Exiting."
-  exit 1;
-fi
-
-echo "Geocoding addresses from links"
-ais engine run geocode_addresses_from_links
-
-if [ $? -ne 0 ]
-then
-  echo "Geocoding addresses from links failed. Exiting."
-  exit 1;
-fi
-
-echo "Making Address Summary"
-ais engine run make_address_summary
-
-if [ $? -ne 0 ]
-then
-  echo "Making address summary failed. Exiting."
-  exit 1;
-fi
-
-echo "Loading Service Areas"
-ais engine run load_service_areas
-
-if [ $? -ne 0 ]
-then
-  echo "Loading service areas failed. Exiting."
-  exit 1;
-fi
-
-echo "Making Service Area Summary"
-ais engine run make_service_area_summary
-
-if [ $? -ne 0 ]
-then
-  echo "Making service area summary failed. Exiting."
-  exit 1;
-fi
+for script in "${SCRIPTS[@]}"; do
+  run_script $script
+done

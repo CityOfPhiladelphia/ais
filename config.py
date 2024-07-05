@@ -12,9 +12,9 @@ SQLALCHEMY_ECHO = (os.environ.get('SQLALCHEMY_ECHO', 'False').title() == 'True')
 from passyunk.parser import PassyunkParser
 PARSER = PassyunkParser
 
-DATABASES = {
+#DATABASES = {
     # these are set in instance config or environment variables
-}
+#}
 
 DEBUG = (os.environ.get('DEBUG', 'False').title() == 'True')
 PROFILE = (os.environ.get('PROFILE', 'False').title() == 'True')
@@ -677,7 +677,7 @@ SERVICE_AREAS = {
                     'value_field':          'district',
                 },
             },
-        },
+        },       
         {
             'layer_id':                     'political_ward',
             'name':                         'Ward',

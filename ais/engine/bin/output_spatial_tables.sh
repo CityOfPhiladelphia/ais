@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -e 
 
 postgis_dsn=$1
 oracle_dsn_gis_ais=$2
@@ -47,3 +47,5 @@ send_slack "Completed updating address summary in DataBridge."
 
 echo "Cleaning up."
 psql -U ais_engine -h localhost -d ais_engine -c "DROP TABLE address_summary_transformed;"
+
+

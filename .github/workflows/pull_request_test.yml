@@ -1,0 +1,109 @@
+name: Build and Test Docker Image for PRs
+
+# Trigger workflow on changes to these paths in stated branch
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#on
+on:
+  pull_request:
+    branches:
+      - master
+      - python3.10-upgrade
+    #types: [opened, edited, repoened, review_requested]
+
+concurrency:
+  group: testing_environment
+  cancel-in-progress: false
+
+
+jobs:
+
+  build:
+    name: Build and Test docker container for PRs
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ais-runner 
+    #runs-on: ubuntu-latest
+    # https://github.community/t/sharing-a-variable-between-jobs/16967/13
+    # save address for use in other jobs.
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    # This is a github function? Ref doc: https://github.com/actions/checkout#checkout-a-different-branch
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+
+    # https://github.com/aws-actions/amazon-ecr-login
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Print current working directory
+      run: pwd
+
+    # Set $PROD_COLOR env var through the complicated method github actions requires
+    # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#setting-an-environment-variable
+    - name: Identify production cluster, either blue or green
+      id: prod-cluster-color
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+          # Note: a simple dig doesn't work from in office.
+          # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
+          #echo "PROD_COLOR=$(dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green")" >> $GITHUB_ENV
+          #dig ${{ secrets.PROD_ENDPOINT }} +short | grep -o "blue\|green"
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+           
+    - name: Set engine hostname to the production database for testing against.
+      env:
+        PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
+      run: |
+        if [[ "$PROD_COLOR" -eq "blue" ]]; then
+           echo "ENGINE_HOST=${{ secrets.BLUE_ENGINE_CNAME }}" >> $GITHUB_ENV
+        elif [[ "$PROD_COLOR" -eq "green" ]]; then
+           echo "ENGINE_HOST=${{ secrets.GREEN_ENGINE_CNAME }}" >> $GITHUB_ENV
+        fi
+
+    - name: Build the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f build-test-compose.yml build --no-cache
+
+    - name: Start the Docker image using docker-compose
+      # Run directly in our ais folder, necessary to get some secrets in the container
+      working-directory: /home/ubuntu/ais
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: docker-compose -f build-test-compose.yml up -d
+
+    - name: Run API pytests to ensure image build is good
+      env:
+        ENGINE_DB_HOST: ${{ env.ENGINE_HOST }}
+        ENGINE_DB_PASS: ${{ secrets.ENGINE_DB_PASS }}
+      run: |
+          docker exec ais bash -c 'cd /ais && pytest /ais/ais/tests/api/ -vvv -ra --showlocals --tb=native'
+
+    - name: Confirm nginx configuration is good
+      run: docker exec ais bash -c 'nginx -t'
+
+    - name: Simple curl query check
+      run: curl http://localhost:8080/search/1234%20Market%20Street
+
+
+    # https://github.com/marketplace/actions/microsoft-teams-notification
+    - name: Notify job progress
+      if: always()
+      uses: jdcargile/ms-teams-notification@v1.4
+      with:
+        GITHUB-TOKEN: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: Build status; ${{ job.status }} for branch ${{ env.GITHUB_REF }}
+        notification-color: ${{ job.status == 'success' && '28a745' || 'dc3545' }}
+        timezone: America/New_York

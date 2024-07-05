@@ -179,6 +179,7 @@ class DorCondominium(db.Model):
     street_full = db.Column(db.Text)
     source_object_id = db.Column(db.Integer)
 
+
 ##############
 # PROPERTIES #
 ##############
@@ -225,7 +226,8 @@ class NG911AddressPoint(db.Model):
     guid = db.Column(db.Text)
     placement_type = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
-    
+
+
 #############
 # ADDRESSES #
 #############
@@ -1177,9 +1179,10 @@ class AddressSummaryQuery(BaseQuery):
 
 try:
     class ServiceAreaSummary(db.Model):
-        __table__ = db.Table('service_area_summary',
-                             db.MetaData(bind=db.engine),
-                             autoload=True)
+        with app.app_context():
+            __table__ = db.Table('service_area_summary',
+                                 db.MetaData(bind=db.engine),
+                                 autoload=True)
 except NoSuchTableError:
     ServiceAreaSummary = None
     # if table hasn't been created yet, suppress error

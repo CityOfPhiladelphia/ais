@@ -92,7 +92,7 @@ for multi_addr in multi_addrs:
 		geocode_row = geocode_rows[0]
 		geocode_shp = loads(geocode_row['geometry_wkt'])
 	except IndexError:
-		print('No parcel XY for {}'.format(multi_addr))
+		#print('No parcel XY for {}'.format(multi_addr))
 		continue
 
 	# Get seg IDs
