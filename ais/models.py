@@ -1038,6 +1038,7 @@ class AddressSummaryQuery(BaseQuery):
         else:
             return self
 
+
     def get_all_parcel_geocode_locations(self, srid=DEFAULT_API_SRID, request=None):
 
         geocode_xy_join = self \
@@ -1052,6 +1053,7 @@ class AddressSummaryQuery(BaseQuery):
             # If geom doesn't exist for geocode_type specified in request.arg (or if specified geocode_type doesn't exist),
             # return result of query without flag (set i=1 so all geocode_location flags are ignored)
             return self.get_address_geoms(request=request, i=1)
+
 
     def get_parcel_geocode_location(self, parcel_geocode_location=None, srid=DEFAULT_API_SRID, request=None):
         if self.first():

@@ -154,55 +154,6 @@ def standardize_nulls(val):
     else:
         return None if val == 0 else val
 
-
-def concatenate_dor_address(source_comps):
-    # Get attributes
-    address_low = source_comps[field_map['address_low']]
-    address_low_suffix = source_comps[field_map['address_low_suffix']]
-    address_high = source_comps[field_map['address_high']]
-    street_predir = source_comps[field_map['street_predir']]
-    street_name = source_comps[field_map['street_name']]
-    street_suffix = source_comps[field_map['street_suffix']]
-    street_postdir = source_comps[field_map['street_postdir']]
-    unit_num = source_comps[field_map['unit_num']]
-    source_address = None
-    street_full = ''
-    # Make street full
-    if street_name:
-        street_comps = [street_predir, street_name, street_suffix, \
-                        street_postdir]
-        street_full = ' '.join([x for x in street_comps if x])
-
-    # Only accept numeric address_low_suffixes = 2 for transformation to 1/2; discard other numeric suffixes
-    address_low_fractional = None
-    try:
-        address_low_suffix_int = int(address_low_suffix)
-        if address_low_suffix_int == 2:
-            address_low_fractional = '1/2'
-        address_low_suffix = None
-    except:
-        pass
-
-    address_full = None
-    if address_low:
-        address_full = str(address_low)
-        if address_low_suffix:
-            address_full += address_low_suffix
-        if address_low_fractional:
-            address_full += ' ' + address_low_fractional
-        if address_high:
-            address_full += '-' + str(address_high)
-
-    # Get unit
-    unit_full = None
-    if standardize_nulls(unit_num):
-        unit_full = '# {}'.format(unit_num)
-
-    if address_full and street_full:
-        source_address_comps = [address_full, street_full, unit_full]
-        source_address = ' '.join([x for x in source_address_comps if x])
-
-    return source_address if source_address != None else ''
 #############################################
 # Read in files, format and write to tables #
 #############################################
