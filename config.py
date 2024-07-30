@@ -393,7 +393,7 @@ ADDRESSES = {
         },
         {
             'name':                 'voters',
-            'table':                'gis_elections.voters_2022_09',
+            'table':                'gis_elections.vw_latest_registered_voters',
             'db':                   'gis',
             'address_fields':       {
                 'address_low':          'house__',
