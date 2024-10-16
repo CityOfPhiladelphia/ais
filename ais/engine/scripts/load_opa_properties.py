@@ -102,9 +102,9 @@ def main():
             }
             props.append(prop)
 
-        except ValueError as e:
-            # FEEDBACK
-            pass
+        # except ValueError as e:
+        #     # FEEDBACK
+        #     pass
 
         except Exception as e:
             print('Unhandled exception on {}'.format(source_address))
