@@ -177,6 +177,14 @@ def test_matching_indexes(startup):
     # "new db has {} more indexes.".format(len(engine_to_test_cur_result) - len(engine_to_compare_cur_result)))
 
 
+def test_num_opa_records(startup):
+    opa_property_row_count_for_testing = 583900
+    stmt = '''select count(*) as num_rows from opa_property;'''
+    startup['engine_to_test_cur'].execute(stmt)
+    num_opa_property_rows = startup['engine_to_test_cur'].fetchall()[0]['num_rows']
+    assert num_opa_property_rows < opa_property_row_count_for_testing
+
+
 @pytest.fixture(scope="module")
 def teardown():
     """Teardown fixture: close db connections"""
