@@ -49,7 +49,7 @@ echo "Current git commit id is: $git_commit, branch: $git_branch"
 
 # Has our send_teams and get_prod_env functions
 source $WORKING_DIRECTORY/ais/engine/bin/ais-utils.sh
-source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
+#source $WORKING_DIRECTORY/ais/engine/bin/ais-config.sh
 
 # dump location used in mutltiple functions, so export it.
 export DB_DUMP_FILE_LOC=$WORKING_DIRECTORY/ais/engine/backup/ais_engine.dump
