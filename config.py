@@ -428,7 +428,7 @@ ADDRESSES = {
         },
         {
             'name': 'zoning_documents',
-            'table': 'gis_ais_sources.vw_zoning_documents',
+            'table': 'gis_ais_sources.ais_zoning_documents',
             'db': 'gis',
             'address_fields': {
                 'street_address': 'address',
