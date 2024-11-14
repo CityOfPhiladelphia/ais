@@ -1065,6 +1065,24 @@ SERVICE_AREAS = {
             },
         },
         {
+            'layer_id':                     'secondary_rubbish_day',
+            'name':                         'Secondary Rubbish Day',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'gis_sa',
+                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd',
+                    'value_field':          'secondary_rubbish_day',
+                },
+                'line_single': {
+                    'db':                   'gis_sa',
+                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd_Arcs',
+                    'seg_id_field':         'seg_id',
+                    'value_field':          'secondary_rubbish_day',
+                },
+            },
+        },
+        {
             'layer_id':                     'recycling_diversion_rate',
             'name':                         'Recycling Diversion Rate',
             'description':                  '',
