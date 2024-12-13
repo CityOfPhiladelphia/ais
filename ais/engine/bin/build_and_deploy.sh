@@ -137,8 +137,8 @@ ensure_passyunk_updated() {
     file $WORKING_DIRECTORY/passyunk-private.key
     cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
     cp $WORKING_DIRECTORY/passyunk-private.key ~/.ssh/passyunk-private.key
-    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
-    pip install git+https://github.com/CityOfPhiladelphia/passyunk
+    pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git --upgrade
+    pip install git+https://github.com/CityOfPhiladelphia/passyunk --upgrade
 }
 
 

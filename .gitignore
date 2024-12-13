@@ -123,3 +123,4 @@ ais/api/profiling/
 
 # migrations
 /migrations/
+client-config.json
