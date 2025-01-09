@@ -26,7 +26,7 @@ RUN chmod 600 /root/.ssh/config; chmod 600 /root/.ssh/passyunk-private.key
 # Note: Install python reqs at the system level, no need for venv in a docker container
 # also caused some issues for me.
 RUN mkdir -p /ais
-RUN git clone https://github.com/CityOfPhiladelphia/ais --branch python3.10-upgrade /ais
+RUN git clone https://github.com/CityOfPhiladelphia/ais --branch master /ais
 RUN pip install --upgrade pip && \
     pip install -r /ais/requirements.txt
 
