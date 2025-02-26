@@ -996,7 +996,7 @@ SERVICE_AREAS = {
                 'polygon':  {
                     'db':                   'gis_sa',
                     'table':                'gis_police.Boundaries_District',
-                    'value_field':          'dist_num',
+                    'value_field':          'dist_numc',
                     'transforms': [
                         'convert_to_integer',
                     ],
