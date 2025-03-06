@@ -202,7 +202,17 @@ def make_voter_address(comps):
     low_num_full = low_num_full.replace(" ", "") if low_num_full else low_num_full
     street_address = (low_num_full, street_name)
     street_address = " ".join(filter(None, street_address))
-    return street_address + ' # ' + unit_num if unit_num else street_address
+    if not unit_num:
+        return street_address
+    unit_tokens = unit_num.split()
+    if len(unit_tokens) == 1:
+        return street_address + ' # ' + unit_num 
+    elif len(unit_tokens) >= 2 and unit_tokens[0] in ['APT', 'APT.', 'APART', 'REAR', 'RM', 'ROOM', 'SIDE', 'UNIT']:
+        # ['FL', 'FLR', 'FLOOR', 'STE'] will have # sign automatically stripped by passyunk,
+        # so they don't need to be explicitly handled.
+        return street_address + ' ' + unit_num
+    else:
+        return street_address + ' # ' + unit_num
 
 def make_voter_name(comps):
     first_name = comps['first_name']
