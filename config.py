@@ -576,7 +576,7 @@ SERVICE_AREAS = {
                     'db':                   'gis_sa',
                     'table':                'gis_phillyrising.PhillyRising_Boundaries',
                     'value_field':          'site_name',
-                    'object_id_field':      'objectid_12',
+                    'object_id_field':      'objectid',
                 },
             },
         },
