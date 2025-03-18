@@ -86,6 +86,6 @@ typing_extensions==4.5.0
 urllib3==1.26.13
 wcwidth==0.2.6
 Werkzeug==2.2.2
-zipp==3.15.0
+zipp==3.19.1
 zope.event==4.5.0
 zope.interface==5.5.2
