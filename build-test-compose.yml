@@ -6,7 +6,6 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    network_mode: host
     environment:
       - ENGINE_DB_HOST
       - ENGINE_DB_PASS
@@ -14,4 +13,3 @@ services:
       - GREEN_ENGINE_CNAME
     ports:
       - "8080:8080"
-
