@@ -19,12 +19,6 @@ source $WORKING_DIRECTORY/.env
 export ENGINE_DB_HOST="localhost"
 export ENGINE_DB_PASS=$LOCAL_ENGINE_DB_PASS
 
-echo "Printing the currently active passyunk branch!"
-cd $WORKING_DIRECTORY/venv/src/passyunk
-git branch | grep '\*'
-
-cd $WORKING_DIRECTORY
-
 echo "Running the engine build!"
 
 SCRIPTS=(
