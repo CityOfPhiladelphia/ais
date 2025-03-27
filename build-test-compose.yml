@@ -13,4 +13,3 @@ services:
       - GREEN_ENGINE_CNAME
     ports:
       - "8080:8080"
-
