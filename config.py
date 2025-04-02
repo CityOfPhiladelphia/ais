@@ -31,8 +31,8 @@ VALID_ADDRESS_LOW_SUFFIXES = ('F', 'R', 'A', 'S', 'M', 'P', 'G', 'B', 'C', 'D', 
 
 BASE_DATA_SOURCES = {
     'streets': {
-        'db':               'gis',
-        'table':            'GIS_STREETS.Street_Centerline',
+        'db':               'citygeo',
+        'table':            'viewer_streets.street_centerline',
         # 'srid':             2272,
         # 'geom_field':       'shape',
         'field_map':  {
