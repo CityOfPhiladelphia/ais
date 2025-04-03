@@ -49,8 +49,8 @@ BASE_DATA_SOURCES = {
         }
     },
     'street_aliases': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.alias_list_ais',
+        'db':               'citygeo',
+        'table':            'viewer_alias_sources.alias_list_ais',
         'field_map': {
             'seg_id':                   'seg_id',
             'street_predir':            'pre_dir',
