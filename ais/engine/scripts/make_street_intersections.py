@@ -33,18 +33,14 @@ def main():
     source_db_url = config['DATABASES'][source_db_name]
     field_map = source_def['field_map']
     centerline_table_name = source_def['table']
-    nodes_table_name = 'GIS_STREETS.Street_Nodes'
+    nodes_table_name = 'viewer_streets.street_nodes'
     street_full_fields = ['street_' + x for x in ['predir', 'name', 'suffix', 'postdir']]
     source_street_full_fields = [field_map[x] for x in street_full_fields]
-    con_dsn = source_db_url[source_db_url.index("//") + 2:]
-    con_user = con_dsn[:con_dsn.index(":")]
-    con_pw = con_dsn[con_dsn.index(":") + 1 : con_dsn.index("@")]
-    con_db = con_dsn[con_dsn.index("@") + 1:]
-    con = cx_Oracle.connect(con_user, con_pw, con_db)
+
     # Get table references
     source_db = Database(source_db_url)
     centerline_table = source_db[centerline_table_name]
-    node_table = source_db[nodes_table_name]
+    # node_table = source_db[nodes_table_name] # never called
     source_geom_field = centerline_table.geom_field
     intersection_table_name = StreetIntersection.__table__.name
     intersection_table = db[intersection_table_name]
@@ -118,7 +114,6 @@ def main():
                 if parsed['type'] != 'street':
                     raise ValueError('Invalid street')
 
-                # comps = parsed['components']    			<== phladdress
                 comps = parsed['components']['street']  # <== passyunk
             except:
                 pass
@@ -174,16 +169,12 @@ def main():
     WRITE
     '''
     print(f'Copying temporary street_nodes table "{str(nodes_table_name)}"...')
-    #etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])\
-    #    .rename({'shape': 'geom'})\
-    #    .topostgis(pg_db, 'street_nodes')
-    # shape field is already named geom for whatever reason. -Roland, 11-30-22
-
-    nodes_rows = etl.fromoraclesde(con, nodes_table_name, fields=['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti'])
-
+    nodes_rows = etl.frompostgis(source_db_url, nodes_table_name)
     # Rename to match our street_nodes table shape field, which is geom.
+    # print(etl.header(nodes_rows))
     nodes_rows = nodes_rows.rename({'shape': 'geom'})
-
+    nodes_rows = etl.cut(nodes_rows, 'objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti', 'geom')
+    # print(etl.header(nodes_rows))
     # Write to our local db
     nodes_rows.topostgis(pg_db, 'street_nodes')
 
@@ -293,6 +284,5 @@ def main():
     FINISH
     '''
 
-    #source_db.close()
     db.close()
     print('Finished in {} seconds'.format(datetime.now() - start))
