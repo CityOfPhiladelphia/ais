@@ -70,8 +70,8 @@ BASE_DATA_SOURCES = {
             },
         },
         'dor': {
-            'db':               'gis',
-            'table':            'GIS_DOR.DOR_Parcel',
+            'db':               'citygeo',
+            'table':            'viewer_dor.dor_parcel',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapreg',
@@ -93,8 +93,8 @@ BASE_DATA_SOURCES = {
     },
     'condos': {
         'dor': {
-            'db':               'gis',
-            'table':            'GIS_DOR.CONDOMINIUM',
+            'db':               'citygeo',
+            'table':            'viewer_dor.condominium',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapref',
