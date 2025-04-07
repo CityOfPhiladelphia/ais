@@ -130,6 +130,8 @@ BASE_DATA_SOURCES = {
             'source_address':       'street_address',
             'guid':                 'guid',
             'placement_type':       'placement',
+            # I think this needs to be explicitly added since shape isn't auto-queried by datum for postgis
+            'geom':                 'shape',
         },
         # Query only verified/accepted addresses
         'where':            'status in (0,1)',
