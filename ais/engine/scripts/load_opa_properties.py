@@ -49,8 +49,9 @@ def main():
     owner_stmt = """
     select account_num, owners from {}
     """.format(owner_table_name)
+    print(owner_stmt)
     owner_rows = ais_source_db.execute(owner_stmt)
-    owner_map = {x[0]: x[1] for x in owner_rows}
+    owner_map = {x['account_num']: x['owners'] for x in owner_rows}
 
     print('Reading properties from source...')
     source_props = source_table.read(fields=source_fields)
