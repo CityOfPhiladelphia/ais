@@ -124,8 +124,8 @@ BASE_DATA_SOURCES = {
         },
     },
     'ng911_address_points': {
-        'db':               'gis',
-        'table':            'GIS_NG911.ng911_siteaddresses',
+        'db':               'citygeo',
+        'table':            'viewer_ng911.ng911_siteaddresses',
         'field_map': {
             'source_address':       'street_address',
             'guid':                 'guid',
