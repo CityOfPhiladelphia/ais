@@ -18,7 +18,7 @@ def main():
     config = app.config
     source_def = config['BASE_DATA_SOURCES']['properties']
     source_db = datum.connect(config['DATABASES'][source_def['db']])
-    ais_source_db = datum.connect(config['DATABASES']['gis'])
+    ais_source_db = datum.connect(config['DATABASES']['citygeo'])
     source_table = source_db[source_def['table']]
     field_map = source_def['field_map']
 

@@ -105,8 +105,8 @@ BASE_DATA_SOURCES = {
         }
     },
     'properties': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.VW_CAMA_ADDRESS_SOURCE_FOR_AIS',
+        'db':               'citygeo',
+        'table':            'citygeo.cama_address_source_for_ais',
         'field_map': {
             'account_num':          'opa_account_num',
             'tencode':              'property_id',
@@ -114,8 +114,8 @@ BASE_DATA_SOURCES = {
         },
     },
     'opa_active_accounts': {
-        'db':               'gis',
-        'table':            'GIS_OPA.OPA_ACTIVE_ACCOUNTS',
+        'db':               'citygeo',
+        'table':            'viewer_opa.opa_active_accounts',
         'field_map': {
             'account_num':          'opa_act',
             'source_address':       'address',
@@ -143,8 +143,8 @@ BASE_DATA_SOURCES = {
         },
     },
     'opa_owners': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.OPA_OWNERS_CAMA_AIS',
+        'db':               'citygeo',
+        'table':            'citygeo.opa_owners_cama_ais',
         'field_map': {
             'account_num':              'account_num',
             'street_address':           'street_address',
