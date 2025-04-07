@@ -61,8 +61,8 @@ BASE_DATA_SOURCES = {
     },
     'parcels': {
         'pwd': {
-            'db':               'gis',
-            'table':            'GIS_WATER.PWD_Parcels',
+            'db':               'citygeo',
+            'table':            'viewer_water.pwd_parcels',
             'field_map': {
                 'parcel_id':            'parcelid',
                 'source_address':       'address',
