@@ -23,12 +23,8 @@ def main():
     source_db_url = config['DATABASES'][source_db_name]
     dsn = source_db_url.split('//')[1].replace(':','/')
     conn_components = re.split(r'\/|@', dsn)
-    source_user = conn_components[0]
-    source_pw = conn_components[1]
-    source_host = conn_components[2]
-    # source_port = conn_components[3]
-    # source_hostname = conn_components[4]
-    source_conn = psycopg2.connect(f'user={source_user} password={source_pw} host={source_host} dbname={source_db_name}')
+    source_user, source_pw, source_host, _, source_hostname = conn_components
+    source_conn = psycopg2.connect(f'user={source_user} password={source_pw} host={source_host} dbname={source_hostname}')
     source_table_name = source_def['table']
     source_field_map = source_def['field_map']
 

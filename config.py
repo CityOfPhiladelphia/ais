@@ -137,8 +137,8 @@ BASE_DATA_SOURCES = {
         'where':            'status in (0,1)',
     },
     'curbs': {
-        'db':               'gis',
-        'table':            'GIS_STREETS.Curbs_No_Cartways',
+        'db':               'citygeo',
+        'table':            'viewer_streets.curbs_no_cartways',
         'field_map':  {
             'curb_id':              'cp_id',
             'geom':                 'shape',
