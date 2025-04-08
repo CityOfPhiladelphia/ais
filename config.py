@@ -342,9 +342,8 @@ ADDRESSES = {
         },
         {
             'name':                 'info_commercial',
-            #'table':                'gis_gsg.infogroup_commercial',
-            'table':                'gis_ais_sources.infogroup_commercial_2017_07',
-            'db':                   'gis',
+            'table':                'ais_sources.infogroup_commercial_2017_07',
+            'db':                   'citygeo',
             'address_fields':       {
                 'street_address':       'primary_address',
             },
@@ -357,17 +356,14 @@ ADDRESSES = {
         },
         {
             'name':                 'info_residents',
-            #'table':                'gis_gsg.infogroup_residential',
-            'table':                'gis_ais_sources.infogroup_residential_2017_07',
-            'db':                   'gis',
+            'table':                'ais_sources.infogroup_residential_2017_07',
+            'db':                   'citygeo',
             'address_fields':       {
-                #'street_address':       'caddr',
                 'street_address':       'address',
             },
             'tag_fields': [
                 {
                     'key':              'info_resident',
-                    # 'source_field':     'name',
                     'source_fields':     ['contact_name'],
                 },
             ],
@@ -405,8 +401,8 @@ ADDRESSES = {
         },
         {
             'name':                 'voters',
-            'table':                'gis_elections.vw_latest_registered_voters',
-            'db':                   'gis',
+            'table':                'citygeo.latest_registered_voters',
+            'db':                   'citygeo',
             'address_fields':       {
                 'address_low':          'house__',
                 'address_low_suffix':   'housenosuffix',
@@ -440,8 +436,8 @@ ADDRESSES = {
         },
         {
             'name': 'zoning_documents',
-            'table': 'gis_ais_sources.ais_zoning_documents',
-            'db': 'gis',
+            'table': 'viewer_citygeo.ais_zoning_documents',
+            'db': 'citygeo',
             'address_fields': {
                 'street_address': 'address',
             },
@@ -455,8 +451,8 @@ ADDRESSES = {
         },
         {
             'name': 'building_footprints',
-            'table': 'gis_lni.li_building_footprints',
-            'db':    'gis',
+            'table': 'viewer_li.li_building_footprints',
+            'db':    'citygeo',
             'address_fields': {
                 'street_address': 'address',
             },
