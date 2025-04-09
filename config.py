@@ -62,7 +62,7 @@ BASE_DATA_SOURCES = {
     'parcels': {
         'pwd': {
             'db':               'citygeo',
-            'table':            'viewer_water.pwd_parcels',
+            'table':            'viewer_pwd.pwd_parcels',
             'field_map': {
                 'parcel_id':            'parcelid',
                 'source_address':       'address',
@@ -1413,15 +1413,15 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # GIS_WATERSHEDS
+        # PWD_WATERSHEDS
         {
             'layer_id':                     'major_phila_watershed',
             'name':                         'Major Watersheds Phila',
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_watersheds.MAJOR_WATERSHEDS_PHILA',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd_watersheds.major_watersheds_phila',
                     'value_field':          'watershed_name',
                 },
             },
