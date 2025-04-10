@@ -342,7 +342,7 @@ ADDRESSES = {
         },
         {
             'name':                 'info_commercial',
-            'table':                'ais_sources.infogroup_commercial_2017_07',
+            'table':                'viewer_ais_sources.infogroup_commercial_2017_07',
             'db':                   'citygeo',
             'address_fields':       {
                 'street_address':       'primary_address',
@@ -356,7 +356,7 @@ ADDRESSES = {
         },
         {
             'name':                 'info_residents',
-            'table':                'ais_sources.infogroup_residential_2017_07',
+            'table':                'viewer_ais_sources.infogroup_residential_2017_07',
             'db':                   'citygeo',
             'address_fields':       {
                 'street_address':       'address',
@@ -537,8 +537,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis',
-                    'table':                'CenterCityDistrict',
+                    'db':                   'citygeo',
+                    'table':                'viewer_ais_sources.centercitydistrict',
                     'value_field':          'district',
                 },
             },
@@ -566,7 +566,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'citygeo',
-                    'table':                'li.li_districts', # TODO: put in viewer_li
+                    'table':                'viewer_li.li_districts',
                     'value_field':          'district',
                     'object_id_field':      'objectid',
 
@@ -574,17 +574,17 @@ SERVICE_AREAS = {
             },
         },
 
-        # PHILLYRISING
+        # PHILLYRISING - TODO: decide whether to keep this, since it's unclear if program still exists.
         {
             'layer_id':                     'philly_rising_area',
             'name':                         'Philly Rising Area',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_phillyrising.PhillyRising_Boundaries',
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.phillyrising_boundaries',
                     'value_field':          'site_name',
-                    'object_id_field':      'objectid_12',
+                    'object_id_field':      'objectid', # the field that was objectid_12 in oracle is now called just objectid in postgres.
                 },
             },
         },
@@ -861,8 +861,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Zoning_BaseDistricts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.zoning_basedistricts',
                     'value_field':          'long_code',
                 },
             },
@@ -886,8 +886,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_service_areas.VW_Commercial_Corridors',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.commercial_corridors',
                     'value_field':          'name',
                 },
             },
