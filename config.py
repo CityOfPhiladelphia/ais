@@ -803,7 +803,7 @@ SERVICE_AREAS = {
                     'db':                   'citygeo',
                     'table':                'viewer_planning.planning_districts',
                     'value_field':          'dist_name',
-                    'object_id_field':      'objectid_1'
+                    'object_id_field':      'objectid'
                 },
             },
         },
@@ -1384,7 +1384,7 @@ SERVICE_AREAS = {
                     'db':                   'citygeo',
                     'table':                'viewer_pwd.wtpsa',
                     'value_field':          'acronym',
-                    'object_id_field':      'objectid_1'
+                    'object_id_field':      'objectid'
                 },
             },
         },
