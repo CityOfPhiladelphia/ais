@@ -44,7 +44,7 @@ def startup():
             engine_to_test_cur = db_cursor(**config["GREEN_DATABASE"])
 
     unused_tables =  ('spatial_ref_sys', 'alembic_version', 'multiple_seg_line', 'service_area_diff', 'address_zip', 'zip_range', 'dor_parcel_address_analysis', 'address_summary_transformed')
-    changed_tables = ('ng911_address_point',)
+    changed_tables = ()
     ignore_tables = unused_tables + changed_tables
 
     return {'engine_to_test_cur': engine_to_test_cur,
