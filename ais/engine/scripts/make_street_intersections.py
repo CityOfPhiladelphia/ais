@@ -3,10 +3,7 @@ import traceback
 from datetime import datetime
 import petl as etl
 import geopetl
-import cx_Oracle
 import psycopg2
-#from pprint import pprint
-# from phladdress.parser import Parser
 from ais import app
 from datum import Database
 from ais.models import StreetIntersection

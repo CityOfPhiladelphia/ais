@@ -826,7 +826,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'citygeo',
-                    'table':                'gis_planning.schooldist_catchments_ms',
+                    'table':                'viewer_planning.schooldist_catchments_ms',
                     'value_field':          'ms_name',
                 },
             },
@@ -838,7 +838,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'citygeo',
-                    'table':                'gis_planning.schooldist_catchments_hs',
+                    'table':                'viewer_planning.schooldist_catchments_hs',
                     'value_field':          'hs_name',
                 },
             },
@@ -1407,7 +1407,7 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
+                    'db':                   'citygeo',
                     'table':                'viewer_pwd.center_city_district',
                     'value_field':          'district',
                 },
