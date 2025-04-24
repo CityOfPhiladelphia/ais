@@ -4,6 +4,7 @@ from functools import partial
 import petl as etl
 import geopetl
 import psycopg2
+import re
 from ais import app
 from ais.util import parse_url
 
@@ -26,12 +27,12 @@ write_db_string = config['DATABASES']['citygeo_test']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
 
-ADDRESS_SUMMARY_WRITE_TABLE_NAME = 'ais.address_summary'
-SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME = 'ais.service_area_summary'
-DOR_CONDO_ERROR_TABLE_NAME = 'ais.dor_condominium_error'
-TRUE_RANGE_WRITE_TABLE_NAME = 'ais.true_range'
-ADDRESS_ERROR_WRITE_TABLE_NAME = 'ais.ais_address_error'
-SOURCE_ADDRESS_WRITE_TABLE_NAME = 'ais.source_address'
+ADDRESS_SUMMARY_WRITE_TABLE_NAME = 'citygeo.address_summary'
+SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME = 'citygeo.service_area_summary'
+DOR_CONDO_ERROR_TABLE_NAME = 'citygeo.dor_condominium_error'
+TRUE_RANGE_WRITE_TABLE_NAME = 'citygeo.true_range'
+ADDRESS_ERROR_WRITE_TABLE_NAME = 'citygeo.ais_address_error'
+SOURCE_ADDRESS_WRITE_TABLE_NAME = 'citygeo.source_address'
 
 
 read_pass = parsed_read_db_string['password']
@@ -125,17 +126,17 @@ def standardize_nulls(val):
 #################
 # ADDRESS ERROR #
 #################
-print("Writing address_error table...")
+print(f"Writing address_error table to {ADDRESS_ERROR_WRITE_TABLE_NAME}...")
 etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').topostgis(write_conn, ADDRESS_ERROR_WRITE_TABLE_NAME)
 ##################
 # SOURCE ADDRESS #
 ##################
-print("Writing source_address table...")
+print(f"Writing source_address table to {SOURCE_ADDRESS_WRITE_TABLE_NAME}...")
 etl.fromdb(read_conn, 'select * from source_address').topostgis(write_conn, SOURCE_ADDRESS_WRITE_TABLE_NAME)
 ##############
 # TRUE RANGE #
 ##############
-print(f"\nWriting {TRUE_RANGE_WRITE_TABLE_NAME} table...")
+print(f"\nWriting true_range table to {TRUE_RANGE_WRITE_TABLE_NAME}...")
 rows = etl.fromdb(read_conn, 'select * from true_range')
 rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 
@@ -143,16 +144,16 @@ rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print(f"\nWriting {SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME} table...")
+print(f"\nWriting service_area_summary table to {SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME}...")
 service_area_rows = etl.fromdb(read_conn, 'select * from service_area_summary')
-service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
+service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, ).cutout('objectid')
 service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
 
 
 ########################
 # ADDRESS SUMMARY #
 ########################
-print("\nCreating transformed ADDRESS_SUMMARY table...")
+print("\nCreating transformed address_summary table...")
 # add address_full and transformed coords, as well as shape as WKT, and only export rows that have been geocoded:
 print('Grabbing fields from local database..')
 addr_summary_rows = etl.fromdb(read_conn, '''
@@ -163,7 +164,7 @@ addr_summary_rows = etl.fromdb(read_conn, '''
                 from address_summary;
                 ''')
 
-print('Synthesizing "ADDRESS_FULL" column..')
+print('Synthesizing "address_full" column..')
 addr_summary_rows = etl.addfield(addr_summary_rows, 'address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
      'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']})))
@@ -190,7 +191,7 @@ addr_summary_rows.topostgis(write_conn, ADDRESS_SUMMARY_WRITE_TABLE_NAME, from_s
 #########################
 # DOR CONDOMINIUM ERROR #
 #########################
-print(f"\nWriting to {DOR_CONDO_ERROR_TABLE_NAME} table...")
+print(f"\nWriting dor_condominum_error to {DOR_CONDO_ERROR_TABLE_NAME} table...")
 dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error')
 dor_condominium_error_table = etl.rename(dor_condominium_error_table, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
 dor_condominium_error_table.topostgis(write_conn, DOR_CONDO_ERROR_TABLE_NAME)

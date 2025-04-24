@@ -876,7 +876,7 @@ SERVICE_AREAS = {
                 'polygon': {
                     'db':                   'citygeo',
                     'table':                'viewer_planning.zoning_rco',
-                    'value_field':          'objectid',
+                    'value_field':          'lni_id',
                 },
             },
         },
