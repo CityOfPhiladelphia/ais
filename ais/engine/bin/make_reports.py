@@ -146,7 +146,9 @@ rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 ########################
 print(f"\nWriting service_area_summary table to {SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME}...")
 service_area_rows = etl.fromdb(read_conn, 'select * from service_area_summary')
-service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, ).cutout('objectid')
+service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
+if 'objectid' in etl.header(service_area_rows):
+    service_area_rows = etl.cutout(service_area_rows, 'objectid')
 service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
 
 
