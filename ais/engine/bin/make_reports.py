@@ -5,9 +5,6 @@ import petl as etl
 import geopetl
 import cx_Oracle
 import psycopg2
-from shapely.wkt import loads
-from shapely.ops import transform
-import pyproj
 from ais import app
 from ais.util import parse_url
 
@@ -16,7 +13,7 @@ from ais.util import parse_url
 # This script generates reports and writes them to tables in Databridge
 # address_summary, service_area_summary and true_range
 # They are for integrating standardized addresses with department records.
-# Department records meaning dor parcel_id, pwd parcel_id, OPA account number, eclipes location id
+# Department records meaning dor parcel_id, pwd parcel_id, OPA account number, Eclipse location id
 # These departments will import these tables for their own usage.
 #
 # address_summary: contains standardized address components + primary keys and authoritative data
@@ -24,20 +21,19 @@ from ais.util import parse_url
 # true_range: Interpolated address location along the street segment
 
 
-
 config = app.config
 read_db_string = config['DATABASES']['engine']
-write_db_string = config['DATABASES']['gis_ais']
-# write_db_string = config['DATABASES']['gis_ais_test']
+write_db_string = config['DATABASES']['citygeo_test']
+#write_db_string = config['DATABASES']['gis_ais']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
 
-address_summary_write_table_name = 'ADDRESS_SUMMARY'
-service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
-dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
-true_range_write_table_name = 'TRUE_RANGE'
-address_error_write_table_name = 'AIS_ADDRESS_ERROR'
-source_address_write_table_name = 'SOURCE_ADDRESS'
+address_summary_write_table_name = 'address_summary'
+service_area_summary_write_table_name = 'service_area_summary'
+dor_condo_error_table_name = 'dor_condominium_error'
+true_range_write_table_name = 'true_range'
+address_error_write_table_name = 'ais_address_error'
+source_address_write_table_name = 'source_address'
 
 
 read_pass = parsed_read_db_string['password']
@@ -85,26 +81,6 @@ def make_address_full(comps):
 
     return address_full
 
-
-def transform_coords(comps):
-    x_coord = comps['geocode_x']
-    y_coord = comps['geocode_y']
-
-    if x_coord is None or y_coord is None:
-        return [None, None]
-
-    point = loads('POINT({x} {y})'.format(x=x_coord, y=y_coord))
-
-    project = partial(
-        pyproj.transform,
-        pyproj.Proj(init='EPSG:2272', preserve_units=True),
-        pyproj.Proj(init='EPSG:4326', preserve_units=True))
-
-    transformed_point = transform(project, point)
-    x = transformed_point.x
-    y = transformed_point.y
-
-    return [x, y]
 
 address_summary_mapping = {
     'id': 'id',
@@ -171,7 +147,6 @@ etl.fromdb(read_conn, 'select * from source_address').tooraclesde(write_dsn, sou
 # TRUE RANGE #
 ##############
 print(f"\nWriting {true_range_write_table_name} table...")
-#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
 rows = etl.fromdb(read_conn, 'select * from true_range')
 rows.tooraclesde(write_dsn, true_range_write_table_name)
 
