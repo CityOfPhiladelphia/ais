@@ -120,6 +120,56 @@ def standardize_nulls(val):
     else:
         return None if val == 0 else val
 
+
+def upload_csv_to_postgres(csv_file_path, table_name, conn):
+    """
+    Upload a CSV file to a PostgreSQL table using the copy_expert method.
+    
+    Parameters:
+    - csv_file_path: Path to the CSV file.
+    - table_name: Name of the target table in PostgreSQL.
+    - conn: active connection to the PostgreSQL database.
+    """
+    try:
+        # Establish connection to PostgreSQL
+        cursor = conn.cursor()
+        header = etl.fromcsv(csv_file_path)[0]
+        fields = ', '.join(header)
+        header = None
+
+        # Begin a transaction block
+        conn.autocommit = False
+
+        # Step 1: Delete all existing rows in the table
+        cursor.execute(f"DELETE FROM {table_name}")
+        print(f"Deleted all rows from {table_name}.")
+
+        # Step 2: Open the CSV file and insert the new data
+        with open(csv_file_path, 'r') as f:
+            # Use copy_expert to upload the CSV data
+            sql_copy = f"""
+                COPY {table_name} ({fields}) FROM STDIN WITH CSV HEADER DELIMITER ','
+                """
+            print(sql_copy)
+            cursor.copy_expert(sql_copy, f)
+
+        # Step 3: Commit the transaction if all operations succeed
+        conn.commit()
+        print(f"Data from {csv_file_path} uploaded successfully to {table_name}.")
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        # If an error occurs, roll back the entire transaction
+        if conn:
+            conn.rollback()
+        print(f"Error: {error}. Transaction rolled back.")
+        # Commit the transaction
+        conn.commit()
+        raise error
+    
+    finally:
+        if cursor:
+            cursor.close()
+
 #############################################
 # Read in files, format and write to tables #
 #############################################
@@ -137,8 +187,8 @@ etl.fromdb(read_conn, 'select * from source_address').topostgis(write_conn, SOUR
 # TRUE RANGE #
 ##############
 print(f"\nWriting true_range table to {TRUE_RANGE_WRITE_TABLE_NAME}...")
-rows = etl.fromdb(read_conn, 'select * from true_range')
-rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
+true_range_rows = etl.fromdb(read_conn, 'select * from true_range')
+true_range_rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 
 
 ########################
@@ -162,9 +212,9 @@ addr_summary_rows = etl.fromdb(read_conn, '''
                 select *, 
                 st_x(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lon,
                 st_y(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lat,
-                public.ST_AsText(st_point(geocode_x, geocode_y)) as shape
+                public.ST_AsEWKT(st_setsrid(st_point(geocode_x, geocode_y), 2272)) as shape
                 from address_summary;
-                ''')
+                ''') # need to use AsEWKT and enforce srid explicitly for copy_expert to work from the csv
 
 print('Synthesizing "address_full" column..')
 addr_summary_rows = etl.addfield(addr_summary_rows, 'address_full', (lambda a: make_address_full(
@@ -184,19 +234,22 @@ keep_fields = list(address_summary_mapping.keys())
 addr_summary_rows = etl.cut(addr_summary_rows, *keep_fields)
 
 print('Writing to csv file..')
-addr_summary_rows.tocsv("address_summary_transformed.csv", write_header=True)
+ADDRESS_SUMMARY_CSV_FILENAME = "address_summary_transformed.csv"
+addr_summary_rows.tocsv(ADDRESS_SUMMARY_CSV_FILENAME, write_header=True)
 
 print(f'Writing to table {ADDRESS_SUMMARY_WRITE_TABLE_NAME}...')
-addr_summary_rows.topostgis(write_conn, ADDRESS_SUMMARY_WRITE_TABLE_NAME, from_srid=2272)
-
+#addr_summary_rows.topostgis(write_conn, ADDRESS_SUMMARY_WRITE_TABLE_NAME, from_srid=2272)
+upload_csv_to_postgres(ADDRESS_SUMMARY_CSV_FILENAME, ADDRESS_SUMMARY_WRITE_TABLE_NAME, write_conn)
 
 #########################
 # DOR CONDOMINIUM ERROR #
 #########################
 print(f"\nWriting dor_condominum_error to {DOR_CONDO_ERROR_TABLE_NAME} table...")
-dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error')
-dor_condominium_error_table = etl.rename(dor_condominium_error_table, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
-dor_condominium_error_table.topostgis(write_conn, DOR_CONDO_ERROR_TABLE_NAME)
+dor_condominium_error_rows = etl.fromdb(read_conn, 'select * from dor_condominium_error')
+dor_condominium_error_rows = etl.rename(dor_condominium_error_rows, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
+if 'objectid' in etl.header(dor_condominium_error_rows):
+    dor_condominium_error_rows = etl.cutout(dor_condominium_error_rows, 'objectid')
+dor_condominium_error_rows.topostgis(write_conn, DOR_CONDO_ERROR_TABLE_NAME)
 
 read_conn.close()
 
