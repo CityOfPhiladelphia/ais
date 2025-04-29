@@ -54,7 +54,7 @@ def main():
     '''.format(source_table_name)
     source_db._c.execute(ambig_stmt)
     ambig_rows = source_db._c.fetchall()
-    ambig_addresses = set([x[0] for x in ambig_rows])
+    ambig_addresses = set([x['address'] for x in ambig_rows])
 
 
     """MAIN"""

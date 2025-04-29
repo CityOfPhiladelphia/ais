@@ -31,8 +31,8 @@ VALID_ADDRESS_LOW_SUFFIXES = ('F', 'R', 'A', 'S', 'M', 'P', 'G', 'B', 'C', 'D', 
 
 BASE_DATA_SOURCES = {
     'streets': {
-        'db':               'gis',
-        'table':            'GIS_STREETS.Street_Centerline',
+        'db':               'citygeo',
+        'table':            'viewer_streets.street_centerline',
         # 'srid':             2272,
         # 'geom_field':       'shape',
         'field_map':  {
@@ -49,8 +49,8 @@ BASE_DATA_SOURCES = {
         }
     },
     'street_aliases': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.alias_list_ais',
+        'db':               'citygeo',
+        'table':            'viewer_ais_sources.alias_list_ais',
         'field_map': {
             'seg_id':                   'seg_id',
             'street_predir':            'pre_dir',
@@ -61,8 +61,8 @@ BASE_DATA_SOURCES = {
     },
     'parcels': {
         'pwd': {
-            'db':               'gis',
-            'table':            'GIS_WATER.PWD_Parcels',
+            'db':               'citygeo',
+            'table':            'viewer_pwd.pwd_parcels',
             'field_map': {
                 'parcel_id':            'parcelid',
                 'source_address':       'address',
@@ -70,8 +70,8 @@ BASE_DATA_SOURCES = {
             },
         },
         'dor': {
-            'db':               'gis',
-            'table':            'GIS_DOR.DOR_Parcel',
+            'db':               'citygeo',
+            'table':            'viewer_dor.dor_parcel',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapreg',
@@ -93,8 +93,8 @@ BASE_DATA_SOURCES = {
     },
     'condos': {
         'dor': {
-            'db':               'gis',
-            'table':            'GIS_DOR.CONDOMINIUM',
+            'db':               'citygeo',
+            'table':            'viewer_dor.condominium',
             'field_map': {
                 'source_object_id':     'objectid',
                 'parcel_id':            'mapref',
@@ -105,8 +105,8 @@ BASE_DATA_SOURCES = {
         }
     },
     'properties': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.VW_CAMA_ADDRESS_SOURCE_FOR_AIS',
+        'db':               'citygeo',
+        'table':            'citygeo.cama_address_source_for_ais',
         'field_map': {
             'account_num':          'opa_account_num',
             'tencode':              'property_id',
@@ -114,8 +114,8 @@ BASE_DATA_SOURCES = {
         },
     },
     'opa_active_accounts': {
-        'db':               'gis',
-        'table':            'GIS_OPA.OPA_ACTIVE_ACCOUNTS',
+        'db':               'citygeo',
+        'table':            'viewer_opa.opa_active_accounts',
         'field_map': {
             'account_num':          'opa_act',
             'source_address':       'address',
@@ -124,27 +124,29 @@ BASE_DATA_SOURCES = {
         },
     },
     'ng911_address_points': {
-        'db':               'gis',
-        'table':            'GIS_NG911.ng911_siteaddresses',
+        'db':               'citygeo',
+        'table':            'viewer_ng911.ng911_siteaddresses',
         'field_map': {
             'source_address':       'street_address',
             'guid':                 'guid',
             'placement_type':       'placement',
+            # I think this needs to be explicitly added since shape isn't auto-queried by datum for postgis
+            'geom':                 'shape',
         },
         # Query only verified/accepted addresses
         'where':            'status in (0,1)',
     },
     'curbs': {
-        'db':               'gis',
-        'table':            'GIS_STREETS.Curbs_No_Cartways',
+        'db':               'citygeo',
+        'table':            'viewer_streets.curbs_no_cartways',
         'field_map':  {
             'curb_id':              'cp_id',
             'geom':                 'shape',
         },
     },
     'opa_owners': {
-        'db':               'gis',
-        'table':            'GIS_AIS_SOURCES.OPA_OWNERS_CAMA_AIS',
+        'db':               'citygeo',
+        'table':            'citygeo.opa_owners_cama_ais',
         'field_map': {
             'account_num':              'account_num',
             'street_address':           'street_address',
@@ -340,9 +342,8 @@ ADDRESSES = {
         },
         {
             'name':                 'info_commercial',
-            #'table':                'gis_gsg.infogroup_commercial',
-            'table':                'gis_ais_sources.infogroup_commercial_2017_07',
-            'db':                   'gis',
+            'table':                'viewer_ais_sources.infogroup_commercial_2017_07',
+            'db':                   'citygeo',
             'address_fields':       {
                 'street_address':       'primary_address',
             },
@@ -355,17 +356,14 @@ ADDRESSES = {
         },
         {
             'name':                 'info_residents',
-            #'table':                'gis_gsg.infogroup_residential',
-            'table':                'gis_ais_sources.infogroup_residential_2017_07',
-            'db':                   'gis',
+            'table':                'viewer_ais_sources.infogroup_residential_2017_07',
+            'db':                   'citygeo',
             'address_fields':       {
-                #'street_address':       'caddr',
                 'street_address':       'address',
             },
             'tag_fields': [
                 {
                     'key':              'info_resident',
-                    # 'source_field':     'name',
                     'source_fields':     ['contact_name'],
                 },
             ],
@@ -403,8 +401,8 @@ ADDRESSES = {
         },
         {
             'name':                 'voters',
-            'table':                'gis_elections.vw_latest_registered_voters',
-            'db':                   'gis',
+            'table':                'citygeo.latest_registered_voters',
+            'db':                   'citygeo',
             'address_fields':       {
                 'address_low':          'house__',
                 'address_low_suffix':   'housenosuffix',
@@ -438,8 +436,8 @@ ADDRESSES = {
         },
         {
             'name': 'zoning_documents',
-            'table': 'gis_ais_sources.ais_zoning_documents',
-            'db': 'gis',
+            'table': 'viewer_citygeo.ais_zoning_documents',
+            'db': 'citygeo',
             'address_fields': {
                 'street_address': 'address',
             },
@@ -453,8 +451,8 @@ ADDRESSES = {
         },
         {
             'name': 'building_footprints',
-            'table': 'gis_lni.li_building_footprints',
-            'db':    'gis',
+            'table': 'viewer_li.li_building_footprints',
+            'db':    'citygeo',
             'address_fields': {
                 'street_address': 'address',
             },
@@ -532,43 +530,43 @@ GEOCODE = {
 
 SERVICE_AREAS = {
     'layers': [
-        # GIS_AIS_SOURCES
+        # AIS_SOURCES
         {
             'layer_id':                     'center_city_district',
             'name':                         'Center City District',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis',
-                    'table':                'CenterCityDistrict',
+                    'db':                   'citygeo',
+                    'table':                'viewer_ais_sources.centercitydistrict',
                     'value_field':          'district',
                 },
             },
         },
 
-        # GIS_DHS
+        # DHS
         {
             'layer_id':                     'cua_zone',
             'name':                         'CUA Zone',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_dhs.cua_zones',
+                    'db':                   'citygeo',
+                    'table':                'viewer_dhs.cua_zones',
                     'value_field':          'cua_name',
                 },
             },
         },
 
-        # GIS_LNI
+        # LNI
         {
             'layer_id':                     'li_district',
             'name':                         'L&I District',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'GIS_LNI.LI_DISTRICTS',
+                    'db':                   'citygeo',
+                    'table':                'viewer_li.li_districts',
                     'value_field':          'district',
                     'object_id_field':      'objectid',
 
@@ -576,30 +574,30 @@ SERVICE_AREAS = {
             },
         },
 
-        # GIS_PHILLYRISING
+        # PHILLYRISING - TODO: decide whether to keep this, since it's unclear if program still exists.
         {
             'layer_id':                     'philly_rising_area',
             'name':                         'Philly Rising Area',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_phillyrising.PhillyRising_Boundaries',
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.phillyrising_boundaries',
                     'value_field':          'site_name',
-                    'object_id_field':      'objectid_12',
+                    'object_id_field':      'objectid', # the field that was objectid_12 in oracle is now called just objectid in postgres.
                 },
             },
         },
 
-        # GIS_PLANNING
+        # PLANNING
         {
             'layer_id':                     'census_tract_2010',
             'name':                         'Census Tract 2010',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Tracts_2010',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_tracts_2010',
                     'value_field':          'tractce10',
                 },
             },
@@ -610,8 +608,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Block_Groups_2010',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_block_groups_2010',
                     'value_field':          'blkgrpce10',
                 },
             },
@@ -622,8 +620,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Blocks_2010',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_blocks_2010',
                     'value_field':          'blockce10',
                 },
             },
@@ -634,8 +632,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Tracts_2020',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_tracts_2020',
                     'value_field':          'tractce',
                 },
             },
@@ -646,8 +644,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Block_Groups_2020',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_block_groups_2020',
                     'value_field':          'blkgrpce',
                 },
             },
@@ -658,8 +656,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Census_Blocks_2020',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.census_blocks_2020',
                     'value_field':          'blockce20',
                 },
             },
@@ -670,8 +668,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Council_Districts_2016',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.council_districts_2016',
                     'value_field':          'district',
                 },
             },
@@ -682,8 +680,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Council_Districts_2024',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.council_districts_2024',
                     'value_field':          'district',
                 },
             },
@@ -694,8 +692,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Political_Wards',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.political_wards',
                     'value_field':          'ward_num',
                 },
             },
@@ -706,8 +704,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Political_Divisions',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.political_divisions',
                     'value_field':          'division_num',
                 },
             },
@@ -718,8 +716,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.state_house_rep_2012',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.state_house_rep_2012',
                     'value_field':          'district_number',
                 },
             },
@@ -730,8 +728,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.state_house_rep_2022',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.state_house_rep_2022',
                     'value_field':          'district',
                 },
             },
@@ -742,8 +740,8 @@ SERVICE_AREAS = {
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.state_senate_2012',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.state_senate_2012',
                     'value_field':          'district_number',
                 },
             },
@@ -754,8 +752,8 @@ SERVICE_AREAS = {
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.state_senate_2022',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.state_senate_2022',
                     'value_field':          'district',
                 },
             },
@@ -766,8 +764,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.us_congressional_2012',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.us_congressional_2012',
                     'value_field':          'district_number',
                 },
             },
@@ -778,8 +776,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.us_congressional_2018',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.us_congressional_2018',
                     'value_field':          'id',
                 },
             },
@@ -790,8 +788,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.us_congressional_2022',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.us_congressional_2022',
                     'value_field':          'district',
                 },
             },
@@ -802,10 +800,10 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Planning_Districts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.planning_districts',
                     'value_field':          'dist_name',
-                    'object_id_field':      'objectid_1'
+                    'object_id_field':      'objectid'
                 },
             },
         },
@@ -815,8 +813,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.SchoolDist_Catchments_ES',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.schooldist_catchments_es',
                     'value_field':          'es_name',
                 },
             },
@@ -827,8 +825,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.SchoolDist_Catchments_MS',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.schooldist_catchments_ms',
                     'value_field':          'ms_name',
                 },
             },
@@ -839,8 +837,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.SchoolDist_Catchments_HS',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.schooldist_catchments_hs',
                     'value_field':          'hs_name',
                 },
             },
@@ -863,8 +861,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Zoning_BaseDistricts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.zoning_basedistricts',
                     'value_field':          'long_code',
                 },
             },
@@ -876,9 +874,9 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Zoning_RCO',
-                    'value_field':          'objectid',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.zoning_rco',
+                    'value_field':          'lni_id',
                 },
             },
         },
@@ -888,8 +886,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_service_areas.VW_Commercial_Corridors',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.commercial_corridors',
                     'value_field':          'name',
                 },
             },
@@ -900,8 +898,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.HistoricDistricts_Local',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.historicdistricts_local',
                     'value_field':          'name',
                 },
             },
@@ -912,8 +910,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_planning.Historic_sites_PhilReg',
+                    'db':                   'citygeo',
+                    'table':                'viewer_planning.historic_sites_philreg',
                     'value_field':          'loc',
                     'method':               'yes_or_no'
                 },
@@ -973,15 +971,15 @@ SERVICE_AREAS = {
         # #       },
         # #   },
         # # },
-        # GIS_POLICE
+        # POLICE
         {
             'layer_id':                     'police_division',
             'name':                         'Police Division',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_police.Boundaries_Division',
+                    'db':                   'citygeo',
+                    'table':                'viewer_police.boundaries_division',
                     'value_field':          'div_name',
                 },
             },
@@ -1004,8 +1002,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_police.Boundaries_District',
+                    'db':                   'citygeo',
+                    'table':                'viewer_police.boundaries_district',
                     'value_field':          'dist_numc',
                     'transforms': [
                         'convert_to_integer',
@@ -1019,8 +1017,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_police.Boundaries_PSA',
+                    'db':                   'citygeo',
+                    'table':                'viewer_police.boundaries_psa',
                     'value_field':          'psa_num',
                 },
             },
@@ -1055,20 +1053,20 @@ SERVICE_AREAS = {
         #     },
         # },
 
-       # GIS_STREETS
+       # STREETS
         {
             'layer_id':                     'rubbish_recycle_day',
             'name':                         'Rubbish/Recycle Day',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.rubbish_recyc_coll_bnd',
                     'value_field':          'collday',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd_Arcs',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.rubbish_recyc_coll_bnd_arcs',
                     'seg_id_field':         'seg_id',
                     'value_field':          'collday',
                 },
@@ -1080,13 +1078,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.rubbish_recyc_coll_bnd',
                     'value_field':          'secondary_rubbish_day',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd_Arcs',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.rubbish_recyc_coll_bnd_arcs',
                     'seg_id_field':         'seg_id',
                     'value_field':          'secondary_rubbish_day',
                 },
@@ -1098,8 +1096,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Recycling_Diversion_Rate',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.recycling_diversion_rate',
                     'value_field':          'score',
                 },
             },
@@ -1110,13 +1108,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Leaf_Collection_Areas',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.leaf_collection_areas',
                     'value_field':          'schedule',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Leaf_Collection_Areas_Arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.leaf_collection_areas_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'schedule',
                 },
@@ -1128,13 +1126,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Sanitation_Areas',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.sanitation_areas',
                     'value_field':          'sanarea',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Rubbish_Recyc_Coll_Bnd_Arcs',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.rubbish_recyc_coll_bnd_arcs',
                     'seg_id_field':         'seg_id',
                     'value_field':          'sanarea',
                 },
@@ -1146,13 +1144,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Sanitation_Districts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.sanitation_districts',
                     'value_field':          'sandis',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Sanitation_Districts_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.sanitation_districts_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'sandis',
                 },
@@ -1164,8 +1162,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'point': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Sanitation_Convenience_Centers',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.sanitation_convenience_centers',
                     'value_field':          'name',
                     'method':               'nearest',
                 },
@@ -1195,8 +1193,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Historic_Streets',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.historic_streets',
                     'seg_id_field':         'seg_id',
                     'value_field':          'on_street',
                     'object_id_field':      'objectid',
@@ -1209,13 +1207,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Districts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_districts',
                     'value_field':          'district',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Subsections_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_subsections_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'district',
                 },
@@ -1227,16 +1225,16 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Sections',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_sections',
                     'value_field':          'distsect',
                     'transforms': [
                         'remove_whitespace',
                     ],
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Subsections_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_subsections_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'distsect',
                     'transforms': [
@@ -1251,16 +1249,16 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Subsections',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_subsections',
                     'value_field':          'distsectsub',
                     'transforms': [
                         'remove_whitespace',
                     ],
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Highway_Subsections_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.highway_subsections_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'distsectsub',
                     'transforms': [
@@ -1275,13 +1273,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Traffic_Districts',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.traffic_districts',
                     'value_field':          'district',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Traffic_Districts_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.traffic_districts_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'district',
                 },
@@ -1294,13 +1292,13 @@ SERVICE_AREAS = {
             'sources': {
                 # NOTE: these have m-values.
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Traf_PM_Dist',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.traf_pm_dist',
                     'value_field':          'pm_dist',
                 },
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Traf_PM_Dist_arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.traf_pm_dist_arc',
                     'seg_id_field':         'seg_id',
                     'value_field':          'pm_distric',
                 },
@@ -1312,13 +1310,13 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Zipcodes_Poly',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.zipcodes_poly',
                     'value_field':          'code',
                 },
                 'line_dual': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Zipcodes_Arc',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.zipcodes_arc',
                     'seg_id_field':         'seg_id',
                     'left_value_field':     'zip_left',
                     'right_value_field':    'zip_right',
@@ -1331,8 +1329,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.Street_Light_Routes',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.street_light_routes',
                     'value_field':          'route',
                 },
             },
@@ -1343,8 +1341,8 @@ SERVICE_AREAS = {
             'description': '',
             'sources': {
                 'line_single': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_streets.LaneClosure_Master',
+                    'db':                   'citygeo',
+                    'table':                'viewer_streets.laneclosure_master',
                     'seg_id_field':         'seg_id',
                     'value_field':          'permitnumber',
                     'object_id_field':      'objectid',
@@ -1352,15 +1350,15 @@ SERVICE_AREAS = {
             },
         },
 
-        # GIS_WATER
+        # PWD
         {
             'layer_id':                     'pwd_maint_district',
             'name':                         'PWD Maintenance District',
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_water.maint_dist',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd.maint_dist',
                     'value_field':          'cs_distric',
                 },
             },
@@ -1371,8 +1369,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_water.pres_dist',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd.pres_dist',
                     'value_field':          'acronym',
                 },
             },
@@ -1383,10 +1381,10 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_water.wtpsa',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd.wtpsa',
                     'value_field':          'acronym',
-                    'object_id_field':      'objectid_1'
+                    'object_id_field':      'objectid'
                 },
             },
         },
@@ -1396,8 +1394,8 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_water.Water_Plate_Index',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd.water_plate_index',
                     'value_field':          'water_plate',
                 },
             },
@@ -1409,21 +1407,21 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'polygon':  {
-                    'db':                   'gis_sa',
-                    'table':                'gis_water.CENTER_CITY_DISTRICT',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd.center_city_district',
                     'value_field':          'district',
                 },
             },
         },
-        # GIS_WATERSHEDS
+        # PWD_WATERSHEDS
         {
             'layer_id':                     'major_phila_watershed',
             'name':                         'Major Watersheds Phila',
             'description':                  '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_watersheds.MAJOR_WATERSHEDS_PHILA',
+                    'db':                   'citygeo',
+                    'table':                'viewer_pwd_watersheds.major_watersheds_phila',
                     'value_field':          'watershed_name',
                 },
             },
@@ -1441,42 +1439,42 @@ SERVICE_AREAS = {
         #         },
         #     },
         # },
-        # GIS_OHCD
+        # OHCD
         {
             'layer_id':                     'neighborhood_advisory_committee',
             'name':                         'Neighborhood Advisory Committees',
             'description': '',
             'sources': {
                 'polygon': {
-                    'db': 'gis_sa',
-                    'table':                'gis_planning.NEIGHBORHOODADVISORYCOMMITTEES',
+                    'db': 'citygeo',
+                    'table':                'viewer_planning.neighborhoodadvisorycommittees',
                     'value_field':          'organization',
                 },
             },
         },
-        # GIS_PPR
+        # PPR
         {
             'layer_id':                     'ppr_friends',
             'name':                         'PPR Friends',
             'description': '',
             'sources': {
                 'point': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_ppr.PPR_FRIENDS_GROUPS',
+                    'db':                   'citygeo',
+                    'table':                'viewer_ppr.ppr_friends_groups',
                     'value_field':          'friends_group_name',
                     'method':               'nearest',
                 },
             },
         },
-        # GIS_FIRE
+        # FIRE
         {
             'layer_id':                     'engine_local',
             'name':                         'Engine Local',
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_fire.ENGINE_LOCAL',
+                    'db':                   'citygeo',
+                    'table':                'viewer_fire.engine_local',
                     'value_field':          'engine_num',
                 },
             },
@@ -1487,21 +1485,21 @@ SERVICE_AREAS = {
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_fire.LADDER_LOCAL',
+                    'db':                   'citygeo',
+                    'table':                'viewer_fire.ladder_local',
                     'value_field':          'ladder_num',
                 },
             },
         },
-        # GIS_HEALTH
+        # HEALTH
         {
             'layer_id':                     'tobacco_retailer_permit_capped',
             'name':                         'Tobacco Retailer Density Caps',
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_health.TobRetailerDensityCaps',
+                    'db':                   'citygeo',
+                    'table':                'viewer_health.tobretailerdensitycaps',
                     'value_field':          'capped',
                 },
             },
@@ -1512,8 +1510,8 @@ SERVICE_AREAS = {
             'description': '',
             'sources': {
                 'polygon': {
-                    'db':                   'gis_sa',
-                    'table':                'gis_health.TOBFREESCHOOLPARCELBUFFERMERGE',
+                    'db':                   'citygeo',
+                    'table':                'viewer_health.tobfreeschoolparcelbuffermerge',
                     'value_field':          'objectid',
                     'method':               'yes_or_no'
                 },

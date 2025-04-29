@@ -3,11 +3,8 @@ from collections import OrderedDict
 from functools import partial
 import petl as etl
 import geopetl
-import cx_Oracle
 import psycopg2
-from shapely.wkt import loads
-from shapely.ops import transform
-import pyproj
+import re
 from ais import app
 from ais.util import parse_url
 
@@ -16,7 +13,7 @@ from ais.util import parse_url
 # This script generates reports and writes them to tables in Databridge
 # address_summary, service_area_summary and true_range
 # They are for integrating standardized addresses with department records.
-# Department records meaning dor parcel_id, pwd parcel_id, OPA account number, eclipes location id
+# Department records meaning dor parcel_id, pwd parcel_id, OPA account number, Eclipse location id
 # These departments will import these tables for their own usage.
 #
 # address_summary: contains standardized address components + primary keys and authoritative data
@@ -24,20 +21,18 @@ from ais.util import parse_url
 # true_range: Interpolated address location along the street segment
 
 
-
 config = app.config
 read_db_string = config['DATABASES']['engine']
-write_db_string = config['DATABASES']['gis_ais']
-# write_db_string = config['DATABASES']['gis_ais_test']
+write_db_string = config['DATABASES']['citygeo']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
 
-address_summary_write_table_name = 'ADDRESS_SUMMARY'
-service_area_summary_write_table_name = 'SERVICE_AREA_SUMMARY'
-dor_condo_error_table_name = 'DOR_CONDOMINIUM_ERROR'
-true_range_write_table_name = 'TRUE_RANGE'
-address_error_write_table_name = 'AIS_ADDRESS_ERROR'
-source_address_write_table_name = 'SOURCE_ADDRESS'
+ADDRESS_SUMMARY_WRITE_TABLE_NAME = 'citygeo.address_summary'
+SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME = 'citygeo.service_area_summary'
+DOR_CONDO_ERROR_TABLE_NAME = 'citygeo.dor_condominium_error'
+TRUE_RANGE_WRITE_TABLE_NAME = 'citygeo.true_range'
+ADDRESS_ERROR_WRITE_TABLE_NAME = 'citygeo.ais_address_error'
+SOURCE_ADDRESS_WRITE_TABLE_NAME = 'citygeo.source_address'
 
 
 read_pass = parsed_read_db_string['password']
@@ -47,20 +42,11 @@ read_db = parsed_read_db_string['db_name']
 read_dsn = f"dbname={read_db} host={read_host} user={read_user} password={read_pass}"
 read_conn = psycopg2.connect(read_dsn)
 
-def database_connect(dsn):
-    # Connect to database
-    db_connect = cx_Oracle.connect(dsn)
-    print('Connected to %s' % db_connect)
-    cursor = db_connect.cursor()
-    return cursor
 
-write_user = parsed_write_db_string['user']
-write_pw = parsed_write_db_string['password']
-write_host = parsed_write_db_string['host']
-write_dsn = f'{write_user}/{write_pw}@{write_host}'
-print('DEBUG: ' + write_dsn)
-oracle_cursor = database_connect(write_dsn)
-
+write_dsn = write_db_string.split('//')[1].replace(':','/')
+conn_components = re.split(r'\/|@', write_dsn)
+write_user, write_pw, write_host, _, write_hostname = conn_components
+write_conn = psycopg2.connect(f'user={write_user} password={write_pw} host={write_host} dbname={write_hostname}')
 
 print(f'\nReading from local DB: {read_dsn}')
 print(f'Writing to: {write_dsn}\n'.replace(write_pw, 'CENSORED'))
@@ -85,26 +71,6 @@ def make_address_full(comps):
 
     return address_full
 
-
-def transform_coords(comps):
-    x_coord = comps['geocode_x']
-    y_coord = comps['geocode_y']
-
-    if x_coord is None or y_coord is None:
-        return [None, None]
-
-    point = loads('POINT({x} {y})'.format(x=x_coord, y=y_coord))
-
-    project = partial(
-        pyproj.transform,
-        pyproj.Proj(init='EPSG:2272', preserve_units=True),
-        pyproj.Proj(init='EPSG:4326', preserve_units=True))
-
-    transformed_point = transform(project, point)
-    x = transformed_point.x
-    y = transformed_point.y
-
-    return [x, y]
 
 address_summary_mapping = {
     'id': 'id',
@@ -154,52 +120,103 @@ def standardize_nulls(val):
     else:
         return None if val == 0 else val
 
+
+def upload_csv_to_postgres(csv_file_path, table_name, conn):
+    """
+    Upload a CSV file to a PostgreSQL table using the copy_expert method.
+    
+    Parameters:
+    - csv_file_path: Path to the CSV file.
+    - table_name: Name of the target table in PostgreSQL.
+    - conn: active connection to the PostgreSQL database.
+    """
+    try:
+        # Establish connection to PostgreSQL
+        cursor = conn.cursor()
+        header = etl.fromcsv(csv_file_path)[0]
+        fields = ', '.join(header)
+        header = None
+
+        # Begin a transaction block
+        conn.autocommit = False
+
+        # Step 1: Delete all existing rows in the table
+        cursor.execute(f"DELETE FROM {table_name}")
+        print(f"Deleted all rows from {table_name}.")
+
+        # Step 2: Open the CSV file and insert the new data
+        with open(csv_file_path, 'r') as f:
+            # Use copy_expert to upload the CSV data
+            sql_copy = f"""
+                COPY {table_name} ({fields}) FROM STDIN WITH CSV HEADER DELIMITER ','
+                """
+            print(sql_copy)
+            cursor.copy_expert(sql_copy, f)
+
+        # Step 3: Commit the transaction if all operations succeed
+        conn.commit()
+        print(f"Data from {csv_file_path} uploaded successfully to {table_name}.")
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        # If an error occurs, roll back the entire transaction
+        if conn:
+            conn.rollback()
+        print(f"Error: {error}. Transaction rolled back.")
+        # Commit the transaction
+        conn.commit()
+        raise error
+    
+    finally:
+        if cursor:
+            cursor.close()
+
 #############################################
 # Read in files, format and write to tables #
 #############################################
 #################
 # ADDRESS ERROR #
 #################
-print("Writing address_error table...")
-etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').tooraclesde(write_dsn, address_error_write_table_name)
+print(f"Writing address_error table to {ADDRESS_ERROR_WRITE_TABLE_NAME}...")
+etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').topostgis(write_conn, ADDRESS_ERROR_WRITE_TABLE_NAME)
 ##################
 # SOURCE ADDRESS #
 ##################
-print("Writing source_address table...")
-etl.fromdb(read_conn, 'select * from source_address').tooraclesde(write_dsn, source_address_write_table_name)
+print(f"Writing source_address table to {SOURCE_ADDRESS_WRITE_TABLE_NAME}...")
+etl.fromdb(read_conn, 'select * from source_address').topostgis(write_conn, SOURCE_ADDRESS_WRITE_TABLE_NAME)
 ##############
 # TRUE RANGE #
 ##############
-print(f"\nWriting {true_range_write_table_name} table...")
-#etl.fromdb(read_conn, 'select * from true_range').tooraclesde(write_dsn, true_range_write_table_name)
-rows = etl.fromdb(read_conn, 'select * from true_range')
-rows.tooraclesde(write_dsn, true_range_write_table_name)
+print(f"\nWriting true_range table to {TRUE_RANGE_WRITE_TABLE_NAME}...")
+true_range_rows = etl.fromdb(read_conn, 'select * from true_range')
+true_range_rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 
 
 ########################
 # SERVICE AREA SUMMARY #
 ########################
-print(f"\nWriting {service_area_summary_write_table_name} table...")
+print(f"\nWriting service_area_summary table to {SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME}...")
 service_area_rows = etl.fromdb(read_conn, 'select * from service_area_summary')
 service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
-service_area_rows.tooraclesde(write_dsn, service_area_summary_write_table_name)
+if 'objectid' in etl.header(service_area_rows):
+    service_area_rows = etl.cutout(service_area_rows, 'objectid')
+service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
 
 
 ########################
 # ADDRESS SUMMARY #
 ########################
-print("\nCreating transformed ADDRESS_SUMMARY table...")
+print("\nCreating transformed address_summary table...")
 # add address_full and transformed coords, as well as shape as WKT, and only export rows that have been geocoded:
 print('Grabbing fields from local database..')
 addr_summary_rows = etl.fromdb(read_conn, '''
                 select *, 
                 st_x(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lon,
                 st_y(st_transform(st_setsrid(st_point(geocode_x, geocode_y), 2272), 4326)) as geocode_lat,
-                public.ST_AsText(st_point(geocode_x, geocode_y)) as shape
+                public.ST_AsEWKT(st_setsrid(st_point(geocode_x, geocode_y), 2272)) as shape
                 from address_summary;
-                ''')
+                ''') # need to use AsEWKT and enforce srid explicitly for copy_expert to work from the csv
 
-print('Synthesizing "ADDRESS_FULL" column..')
+print('Synthesizing "address_full" column..')
 addr_summary_rows = etl.addfield(addr_summary_rows, 'address_full', (lambda a: make_address_full(
     {'address_low': a['address_low'], 'address_low_suffix': a['address_low_suffix'],
      'address_low_frac': a['address_low_frac'], 'address_high': a['address_high']})))
@@ -212,87 +229,28 @@ addr_summary_rows = etl.select(addr_summary_rows, lambda s: s.geocode_x is not N
 # and the keys are what the fields are renamed to.
 addr_summary_rows = etl.fieldmap(addr_summary_rows, address_summary_mapping)
 
-# Cut out fields that aren't in our map to match it up with Oracle
+# Cut out fields that aren't in our map to match it up with database
 keep_fields = list(address_summary_mapping.keys())
 addr_summary_rows = etl.cut(addr_summary_rows, *keep_fields)
 
-temp_as_table_name = 'T_ADDRESS_SUMMARY'
-prod_as_table_name = 'ADDRESS_SUMMARY'
-
-try:
-    create_stmt = f'CREATE TABLE {temp_as_table_name} AS (SELECT * FROM {prod_as_table_name} WHERE 1=0)'
-    print(f'Creating Oracle table with statement: {create_stmt}')
-    oracle_cursor.execute(create_stmt)
-    oracle_cursor.execute('COMMIT')
-except Exception as e:
-    if 'ORA-00955' not in str(e):
-        raise e
-    else:
-        print(f'Table {temp_as_table_name} already exists.')
-
-# Assert our fields match between our devised petl object and the destination oracle table.
-field_stmt = "SELECT column_name FROM all_tab_cols WHERE table_name = 'T_ADDRESS_SUMMARY' AND owner = 'GIS_AIS'  AND column_name NOT LIKE 'SYS_%'"
-oracle_cursor.execute(field_stmt)
-oracle_fields = oracle_cursor.fetchall()
-oracle_fields = [x[0].lower() for x in oracle_fields]
-oracle_fields.remove('objectid')
-
-# Validate that we have the expected headers in our petl object
-addr_summary_rows.validate(header=tuple(oracle_fields))
-
 print('Writing to csv file..')
-addr_summary_rows.tocsv("address_summary_transformed.csv", write_header=True)
+ADDRESS_SUMMARY_CSV_FILENAME = "address_summary_transformed.csv"
+addr_summary_rows.tocsv(ADDRESS_SUMMARY_CSV_FILENAME, write_header=True)
 
-print('Writing to temp table "T_ADDRESS_SUMMARY"..')
-addr_summary_rows.tooraclesde(dbo=write_dsn, table_name='T_ADDRESS_SUMMARY', srid=2272)
-
-grant_sql1 = "GRANT SELECT on {} to SDE".format(temp_as_table_name)
-grant_sql2 = "GRANT SELECT ON {} to GIS_SDE_VIEWER".format(temp_as_table_name)
-grant_sql3 = "GRANT SELECT ON {} to GIS_AIS_SOURCES".format(temp_as_table_name)
-
-
-# Swap prod/temp tables:
-# Oracle does not allow table modification within a transaction, so make individual transactions:
-
-# First make the temp table and setup permissions
-print('Renaming temp table to prod table to minimize downtime..')
-oracle_cursor.execute(grant_sql1)
-oracle_cursor.execute(grant_sql2)
-oracle_cursor.execute(grant_sql3)
-
-sql1 = 'ALTER TABLE {} RENAME TO {}_old'.format(prod_as_table_name, prod_as_table_name)
-sql2 = 'ALTER TABLE {} RENAME TO {}'.format(temp_as_table_name, prod_as_table_name)
-sql3 = 'DROP TABLE {}_old'.format(prod_as_table_name)
-
-
-try:
-    oracle_cursor.execute(sql1)
-except:
-    print("Could not rename {} table. Does it exist?".format(temp_as_table_name))
-    raise
-try:
-    oracle_cursor.execute(sql2)
-except:
-    print("Could not rename {} table. Does it exist?".format(prod_as_table_name))
-    rb_sql = 'ALTER TABLE {}_old RENAME TO {}'.format(prod_as_table_name, prod_as_table_name)
-    oracle_cursor.execute(rb_sql)
-    raise
-try:
-    oracle_cursor.execute(sql3)
-except:
-    print("Could not drop {}_old table. Do you have permission?".format(prod_as_table_name))
-    rb_sql1 = 'DROP TABLE {}'.format(temp_as_table_name)
-    oracle_cursor.execute(rb_sql1)
-    rb_sql2 = 'ALTER TABLE {}_old RENAME TO {}'.format(prod_as_table_name, prod_as_table_name)
-    oracle_cursor.execute(rb_sql2)
-    raise
+print(f'Writing to table {ADDRESS_SUMMARY_WRITE_TABLE_NAME}...')
+#addr_summary_rows.topostgis(write_conn, ADDRESS_SUMMARY_WRITE_TABLE_NAME, from_srid=2272)
+upload_csv_to_postgres(ADDRESS_SUMMARY_CSV_FILENAME, ADDRESS_SUMMARY_WRITE_TABLE_NAME, write_conn)
 
 #########################
 # DOR CONDOMINIUM ERROR #
 #########################
-print(f"\nWriting to DOR_CONDOMINIUM_ERROR table...")
-dor_condominium_error_table = etl.fromdb(read_conn, 'select * from dor_condominium_error')
-dor_condominium_error_table = etl.rename(dor_condominium_error_table, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
-dor_condominium_error_table.tooraclesde(write_dsn, dor_condo_error_table_name)
+print(f"\nWriting dor_condominum_error to {DOR_CONDO_ERROR_TABLE_NAME} table...")
+dor_condominium_error_rows = etl.fromdb(read_conn, 'select * from dor_condominium_error')
+dor_condominium_error_rows = etl.rename(dor_condominium_error_rows, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
+if 'objectid' in etl.header(dor_condominium_error_rows):
+    dor_condominium_error_rows = etl.cutout(dor_condominium_error_rows, 'objectid')
+dor_condominium_error_rows.topostgis(write_conn, DOR_CONDO_ERROR_TABLE_NAME)
 
 read_conn.close()
+
+print("All writings complete!")

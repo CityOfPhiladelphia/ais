@@ -20,7 +20,6 @@ def main():
 	source_db = datum.connect(config['DATABASES'][source_def['db']])
 	source_table = source_db[source_def['table']]
 
-	source_geom_field = source_table.geom_field
 	field_map = source_def['field_map']
 	source_where = source_def['where']
 
@@ -37,6 +36,7 @@ def main():
 	source_guid_field = field_map['guid']
 	source_address_field = field_map['source_address']
 	source_placement_type_field = field_map['placement_type']
+	source_geom_field = field_map['geom'] # moved to account for datum postgis differences from oracle
 
 	print('Dropping index...')
 	ng911_table.drop_index('street_address')

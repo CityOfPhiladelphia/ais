@@ -18,7 +18,7 @@ def main():
     config = app.config
     source_def = config['BASE_DATA_SOURCES']['properties']
     source_db = datum.connect(config['DATABASES'][source_def['db']])
-    ais_source_db = datum.connect(config['DATABASES']['gis'])
+    ais_source_db = datum.connect(config['DATABASES']['citygeo'])
     source_table = source_db[source_def['table']]
     field_map = source_def['field_map']
 
@@ -50,7 +50,7 @@ def main():
     select account_num, owners from {}
     """.format(owner_table_name)
     owner_rows = ais_source_db.execute(owner_stmt)
-    owner_map = {x[0]: x[1] for x in owner_rows}
+    owner_map = {x['account_num']: x['owners'] for x in owner_rows}
 
     print('Reading properties from source...')
     source_props = source_table.read(fields=source_fields)

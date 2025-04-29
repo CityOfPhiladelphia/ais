@@ -1,8 +1,8 @@
 import petl as etl
-import cx_Oracle
 import psycopg2
 from datetime import datetime
 from ais import app
+import re
 
 def main():
     start = datetime.now()
@@ -16,17 +16,17 @@ def main():
     db_pw = engine_dsn[engine_dsn.index(":",engine_dsn.index(db_user)) + 1:engine_dsn.index("@")]
     db_name = engine_dsn[engine_dsn.index("/", engine_dsn.index("@")) + 1:]
     pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+
+    # get source table params
     source_def = config['BASE_DATA_SOURCES']['condos']['dor']
     source_db_name = source_def['db']
     source_db_url = config['DATABASES'][source_db_name]
     dsn = source_db_url.split('//')[1].replace(':','/')
-    dbo = cx_Oracle.connect(dsn)
+    conn_components = re.split(r'\/|@', dsn)
+    source_user, source_pw, source_host, _, source_hostname = conn_components
+    source_conn = psycopg2.connect(f'user={source_user} password={source_pw} host={source_host} dbname={source_hostname}')
     source_table_name = source_def['table']
     source_field_map = source_def['field_map']
-    source_field_map_upper = {}
-
-    for k,v in source_field_map.items():
-        source_field_map_upper[k] = v.upper()
 
     # Read DOR CONDO rows from source
     print("Reading condos...")
@@ -35,7 +35,7 @@ def main():
         select condounit, objectid, mapref from {dor_condo_table}
         where status in (1,3)
     '''.format(dor_condo_table = source_table_name)
-    source_dor_condo_rows = etl.fromdb(dbo, dor_condo_read_stmt).fieldmap(source_field_map_upper)
+    source_dor_condo_rows = etl.fromdb(source_conn, dor_condo_read_stmt).fieldmap(source_field_map)
     if DEV:
         print(etl.look(source_dor_condo_rows))
 
