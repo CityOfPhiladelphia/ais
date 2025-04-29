@@ -37,7 +37,6 @@ def main():
     # Get table references
     source_db = Database(source_db_url)
     centerline_table = source_db[centerline_table_name]
-    # node_table = source_db[nodes_table_name] # never called
     source_geom_field = centerline_table.geom_field
     intersection_table_name = StreetIntersection.__table__.name
     intersection_table = db[intersection_table_name]

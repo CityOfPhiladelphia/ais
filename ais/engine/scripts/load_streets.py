@@ -18,7 +18,6 @@ def main():
     Parser = config['PARSER']
 
     db = Database(config['DATABASES']['engine'])
-    print(vars(db)) # for debug
     engine_srid = config['ENGINE_SRID']
 
     # Get table params
@@ -30,17 +29,8 @@ def main():
     street_full_fields = ['street_' + x for x in ['predir', 'name', 'suffix', 'postdir']]
     source_street_full_fields = [field_map[x] for x in street_full_fields]
 
-    print(f"source_def: {source_def}\n"
-          f"source_db_name: {source_db_name}\n"
-          f"source_db_url: {source_db_url}\n"
-          f"field_map: {field_map}\n"
-          f"source_table_name: {source_table_name}\n"
-          f"street_full_fields: {street_full_fields}\n"
-          f"source_street_full_fields: {source_street_full_fields}")
-
     # Get table references
     source_db = Database(source_db_url)
-    print(vars(source_db)) # for debug
     source_table = source_db[source_table_name]
     source_geom_field = source_table.geom_field
     street_table_name = StreetSegment.__table__.name
