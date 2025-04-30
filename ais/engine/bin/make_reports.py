@@ -23,7 +23,8 @@ from ais.util import parse_url
 
 config = app.config
 read_db_string = config['DATABASES']['engine']
-write_db_string = config['DATABASES']['citygeo']
+# For testing dev vs prod instance, these must be written to test, to not interfere with real AIS.
+write_db_string = config['DATABASES']['citygeo_test']
 parsed_read_db_string = parse_url(read_db_string)
 parsed_write_db_string = parse_url(write_db_string)
 

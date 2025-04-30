@@ -340,34 +340,36 @@ ADDRESSES = {
                 },
             ],
         },
-        {
-            'name':                 'info_commercial',
-            'table':                'viewer_ais_sources.infogroup_commercial_2017_07',
-            'db':                   'citygeo',
-            'address_fields':       {
-                'street_address':       'primary_address',
-            },
-            'tag_fields': [
-                {
-                    'key':              'info_company',
-                    'source_fields':     ['company_name'],
-                },
-            ],
-        },
-        {
-            'name':                 'info_residents',
-            'table':                'viewer_ais_sources.infogroup_residential_2017_07',
-            'db':                   'citygeo',
-            'address_fields':       {
-                'street_address':       'address',
-            },
-            'tag_fields': [
-                {
-                    'key':              'info_resident',
-                    'source_fields':     ['contact_name'],
-                },
-            ],
-        },
+        #### BEGIN REMOVING IG SOURCES ##################################
+        # {
+        #     'name':                 'info_commercial',
+        #     'table':                'viewer_ais_sources.infogroup_commercial_2017_07',
+        #     'db':                   'citygeo',
+        #     'address_fields':       {
+        #         'street_address':       'primary_address',
+        #     },
+        #     'tag_fields': [
+        #         {
+        #             'key':              'info_company',
+        #             'source_fields':     ['company_name'],
+        #         },
+        #     ],
+        # },
+        # {
+        #     'name':                 'info_residents',
+        #     'table':                'viewer_ais_sources.infogroup_residential_2017_07',
+        #     'db':                   'citygeo',
+        #     'address_fields':       {
+        #         'street_address':       'address',
+        #     },
+        #     'tag_fields': [
+        #         {
+        #             'key':              'info_resident',
+        #             'source_fields':     ['contact_name'],
+        #         },
+        #     ],
+        # },
+        ### END REMOVING IG SOURCES
         {
             'name':                 'li_address_keys',
             'table':                'gis_lni.parsed_addr',
@@ -1658,18 +1660,20 @@ ADDRESS_SUMMARY = {
             'type':                 'text',
             'traverse_links':       'false',
         },
-        {
-            'name':                 'info_residents',
-            'tag_key':              'info_resident',
-            'type':                 'text',
-            'traverse_links':       'false',
-        },
-        {
-            'name':                 'info_companies',
-            'tag_key':              'info_company',
-            'type':                 'text',
-            'traverse_links':       'false',
-        },
+        ### BEGIN REMOVING IG TAGS ######################################
+        # {
+        #     'name':                 'info_residents',
+        #     'tag_key':              'info_resident',
+        #     'type':                 'text',
+        #     'traverse_links':       'false',
+        # },
+        # {
+        #     'name':                 'info_companies',
+        #     'tag_key':              'info_company',
+        #     'type':                 'text',
+        #     'traverse_links':       'false',
+        # },
+        ### END REMOVING IG TAGS ########################################
         {
             'name':                 'eclipse_location_id',
             'tag_key':              'eclipse_location_id',
@@ -1695,7 +1699,14 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
     ],
-    'non_summary_tags': ['bin_parcel_id', 'info_resident', 'info_company', 'voter_name', 'ng911_guid', 'ng911_address_point_placement'],
+    'non_summary_tags': [
+        'bin_parcel_id', 
+        # 'info_resident', 
+        # 'info_company', 
+        'voter_name', 
+        'ng911_guid', 
+        'ng911_address_point_placement'
+        ],
 }
 
 SWAGGER = {
