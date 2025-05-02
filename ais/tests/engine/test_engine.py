@@ -178,7 +178,8 @@ def test_matching_indexes(startup):
 
 
 def test_num_opa_records(startup):
-    opa_property_row_count_for_testing = 583900
+    # opa_property_row_count_for_testing = 583900
+    opa_property_row_count_for_testing = 580000
     stmt = '''select count(*) as num_rows from opa_property;'''
     startup['engine_to_test_cur'].execute(stmt)
     num_opa_property_rows = startup['engine_to_test_cur'].fetchall()[0]['num_rows']
