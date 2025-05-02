@@ -387,7 +387,7 @@ ADDRESSES = {
         {
             'name':                 'li_eclipse_location_ids',
             'table':                'gis_lni.active_retired_parcels',
-            'db':                   'gis',
+            'db':                   'gislni',
             'address_fields':       {
                 'base_address':       'base_address',
                 'unit_num':           'unit_num',
