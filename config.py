@@ -1175,13 +1175,10 @@ SERVICE_AREAS = {
             'description':                  '',
             'sources': {
                 'point': {
-                    'db':                   'gis',
-                    # 'table':                'gis_streets.CleanPhilly_Block_Captains',
-                    'table':                'VW_CLEANPHL_BLOCK_CAPTAINS',
+                    'db':                   'citygeo',
+                    'table':                'citygeo.vw_cleanphl_block_captains',
                     'seg_id_field':         'seg_id',
-                    # 'value_field':          'address',
                     'value_field':          'match_addr',
-                    # 'object_id_field':      'objectid',
                     'method':               'seg_id',
                 },
             },
