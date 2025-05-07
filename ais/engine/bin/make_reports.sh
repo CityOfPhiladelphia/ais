@@ -25,7 +25,6 @@ python $WORKING_DIRECTORY/ais/engine/bin/output_address_points_for_ng911.py
 echo "Running make_reports.py.."
 python $WORKING_DIRECTORY/ais/engine/bin/make_reports.py
 
-echo "Starting updating EPAM address points report."
-python $WORKING_DIRECTORY/ais/engine/bin/update_address_points.py
+echo "EPAM address points report is now created by dbt and triggered by address_summary DAG."
 
 echo "Engine reports have completed."
