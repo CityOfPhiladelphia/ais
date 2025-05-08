@@ -273,6 +273,7 @@ ADDRESSES = {
         'usps_bldgfirm': ['mailing', 'bldgfirm'],
         'election block_id': ['election', 'blockid'],
         'election precinct': ['election', 'precinct'],
+        'floor': ['floor', 'floor_num']
     },
 
     'sources': [
