@@ -287,6 +287,7 @@ class Address(db.Model):
     street_postdir = db.Column(db.Text)
     unit_type = db.Column(db.Text)
     unit_num = db.Column(db.Text)
+    floor = db.Column(db.Text)
     street_full = db.Column(db.Text)
     zip_code = db.Column(db.Text)
     zip_4 = db.Column(db.Text)
@@ -362,6 +363,7 @@ class Address(db.Model):
             'street_postdir':       c['street']['postdir'],
             'unit_type':            c['address_unit']['unit_type'],                # passyunk change
             'unit_num':             c['address_unit']['unit_num'],                 # passyunk change
+            'floor':                c['floor']['floor_num'],                # added to passyunk spring 2025
             'street_full':          c['street']['full'],
             'street_address':       c['output_address'],
             'zip_code':             c['mailing']['zipcode'],
