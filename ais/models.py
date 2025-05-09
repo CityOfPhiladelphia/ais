@@ -1205,6 +1205,7 @@ class AddressSummary(db.Model):
     street_postdir = db.Column(db.Text)
     unit_type = db.Column(db.Text)
     unit_num = db.Column(db.Text)
+    floor = db.Column(db.Text) # do I want/need this?
     street_full = db.Column(db.Text)
     zip_code = db.Column(db.Text)
     zip_4 = db.Column(db.Text)
