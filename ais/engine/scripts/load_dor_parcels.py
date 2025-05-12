@@ -417,6 +417,7 @@ def main():
                 #Remove fields not in parcel tables:
                 parcel.pop('zip_code', None)
                 parcel.pop('zip_4', None)
+                parcel.pop('floor', None)
                 #Add fields:
                 parcel.update({
                     'parcel_id':        parcel_id,

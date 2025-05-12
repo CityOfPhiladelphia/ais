@@ -59,14 +59,14 @@ def main():
     WRITE_OUT = True
 
     DEV = False  # This will target a single address
-    DEV_ADDRESS = "920-22 W GIRARD AVE"
+    DEV_ADDRESS = "1231 N BROAD ST FL 3"
     DEV_ADDRESS_COMPS = {
         # 'base_address':      '1 FRANKLIN TOWN BLVD',
         # 'address_high':     '4726',
         # 'street_name':      'ALDEN',
         # 'street_suffix':    'WALK',
     }
-    DEV_STREET_NAME = 'W GIRARD AVE'
+    DEV_STREET_NAME = 'N BROAD ST'
 
     # Logging stuff.
     address_errors = []
@@ -217,6 +217,8 @@ def main():
                     raise ValueError('Unknown address type')
 
                 address = Address(parsed_address)
+                if DEV: #added for debug 05/25
+                    print(vars(address))
 
                 # Get street address and map to source address
                 street_address = address.street_address
