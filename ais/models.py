@@ -243,6 +243,7 @@ ADDRESS_FIELDS = [
     'street_postdir',
     'unit_type',
     'unit_num',
+    'floor',
     'street_full',
     'street_address',
     'zip_code',
