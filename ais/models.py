@@ -1234,6 +1234,13 @@ class AddressSummary(db.Model):
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
 
+    # OPAL stuff
+    opal_location_name = db.Column(db.Text)
+    opal_location_id = db.Column(db.Text)
+    opal_superior_location = db.Column(db.Text)
+    opal_hierarchy = db.Column(db.Text)
+    opal_location_usages = db.Column(db.Text)
+
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)

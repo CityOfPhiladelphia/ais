@@ -267,15 +267,15 @@ def make_opal_address(comps):
     """Beta test assuming formatting for authoritative OPAL table roughly resembles 
     cleanup_locations_deduplicated. Should be removed and rewritten if formatting
     changes substantially."""
-    address_line_1 = comps['address_line_1']
+    base_address = comps['base_address']
     floor = comps['floor']
-    suite = comps['suite']
+    suite = comps['unit_num'] # has to be named unit_num to pass condition in load_addresses
     if floor not in (None, ''):
         if floor[-3:] == ' FL':
             floor = floor[:-3]
             ORD_RE = r'(\d)(ST|ND|RD|TH)'
             floor = 'FL ' + re.sub(ORD_RE, r'\1', floor)
-    return ' '.join([address_line_1, floor, suite])
+    return ' '.join([base_address, floor, suite])
 
 def make_opal_location_usages(comps):
     """Beta test assuming formatting for authoritative OPAL table roughly resembles 
@@ -287,8 +287,6 @@ def make_opal_location_usages(comps):
     usages = []
     if ship_to == 'Y':
         usages.append("ship-to")
-        print("ship-to added")
-        print(usages)
     if business_site == 'Y':
         if "ship-to" in usages:
             raise ValueError("A Workday location cannot be both a ship-to and a business site!")
@@ -300,7 +298,6 @@ def make_opal_location_usages(comps):
 
 ADDRESSES = {
     'parser_tags': {
-
         'usps_zipcode': ['mailing', 'zipcode'],
         'usps_zip4': ['mailing', 'zip4'],
         'usps_type': ['mailing', 'uspstype'],
@@ -524,9 +521,9 @@ ADDRESSES = {
             'table':                'viewer_opal.cleanup_locations_deduplicated',
             'db':                   'citygeo',
             'address_fields':       {
-                'address_line_1':     'address_line_1',
-                'floor':              'floor',
-                'suite':              'suite',
+                'base_address':     'address_line_1',
+                'floor':            'floor',
+                'unit_num':         'suite', # has to be named unit_num to pass condition in load_addresses
             },
             'preprocessor':         make_opal_address,
             'tag_fields': [
@@ -553,7 +550,7 @@ ADDRESSES = {
                                             'location_usage_business_site',
                                             'location_usage_business_asset'
                                          ],
-                    'preprocessor':     'make_opal_location_usages',
+                    'preprocessor':     make_opal_location_usages,
                 },
             ],
         },
@@ -1760,6 +1757,36 @@ ADDRESS_SUMMARY = {
         {
             'name':                 'bin_parcel_id',
             'tag_key':              'bin_parcel_id',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'opal_location_name',
+            'tag_key':              'opal_location_name',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'opal_location_id',
+            'tag_key':              'opal_location_id',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'opal_superior_location',
+            'tag_key':              'opal_superior_location',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'opal_hierachy',
+            'tag_key':              'opal_hierachy',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'opal_location_usages',
+            'tag_key':              'opal_location_usages',
             'type':                 'text',
             'traverse_links':       'false',
         },
