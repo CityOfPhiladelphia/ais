@@ -416,6 +416,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('opa_account_num', ''),
                 ('opa_owners', ''),
                 ('opa_address', ''),
+                ('opal_location_id', ''),
+                ('opal_location_name', ''),
+                ('opal_superior_location', ''),
+                ('opal_hierarchy', ''),
+                ('opal_location_usages', ''),
             ])),
             ('geometry', geom_data),
         ])

@@ -1779,8 +1779,8 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
         {
-            'name':                 'opal_hierachy',
-            'tag_key':              'opal_hierachy',
+            'name':                 'opal_hierarchy',
+            'tag_key':              'opal_hierarchy',
             'type':                 'text',
             'traverse_links':       'false',
         },
