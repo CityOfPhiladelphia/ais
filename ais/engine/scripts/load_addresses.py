@@ -462,6 +462,16 @@ def main():
             }
             links.append(base_link)
 
+            # Floor link, first attempt
+            if address.floor is not None and address.unit_type != 'FL': # e.g. 100 S BROAD ST FL 11 STE 1100
+                address_with_floor = f"{address.base_address} FL {address.floor}"
+                floor_link = {
+                    'address_1': address.street_address,
+                    'relationship': 'on floor',
+                    'address_2': address_with_floor,
+                }
+                links.append(floor_link)
+
             # Sibling generic unit links
             # These relate unit addresses to all other addresses that share the same
             # generic unit. Bidirectional.

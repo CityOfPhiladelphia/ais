@@ -90,7 +90,7 @@ def main():
     cleanup(geocode_file)
     
     #define traversal order
-    traversal_order = ['has generic unit', 'matches unit', 'has base', 'overlaps', 'in range']
+    traversal_order = ['has generic unit', 'matches unit', 'on floor', 'has base', 'overlaps', 'in range']
     
     print('Reading addresses...')
     address_file = 'address.csv'
