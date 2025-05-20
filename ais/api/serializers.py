@@ -328,7 +328,6 @@ class AddressJsonSerializer (GeoJSONSerializer):
         return data
 
     def model_to_data(self, address):
-
         shape = self.project_shape(self.shape) if self.shape else None
         geocode_response_type = None
         # Handle instances where query includes request arg 'parcel_geocode_location' which joins geom from geocode,

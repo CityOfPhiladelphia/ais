@@ -540,7 +540,7 @@ ADDRESSES = {
                     'source_fields':     ['superior_location'],
                 },
                 {
-                    'key':              'opal_hierachy',
+                    'key':              'opal_hierarchy',
                     'source_fields':     ['hierarchy'],
                 },
                 {

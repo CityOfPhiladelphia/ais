@@ -355,7 +355,6 @@ def addresses(query):
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
     filters.update(strict_filters)
-    print(filters)
 
     if search_type not in ('address', 'street') or low_num is None:
         error = json_error(404, 'Not a valid address.',
@@ -372,7 +371,6 @@ def addresses(query):
         return addresses
 
     def process_query(addresses, match_type):
-        print(addresses)
         addresses = addresses.include_child_units(
             'include_units' in request.args and request.args['include_units'].lower() != 'false',
             is_range=False if range else high_num_full is not None,
@@ -384,7 +382,6 @@ def addresses(query):
         
 
         # Get tag data
-        # if not addresses.all():
         # if addresses.all():
         if not addresses.all():
             if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
@@ -460,6 +457,7 @@ def addresses(query):
                                {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                 'search_params': requestargs})
             return json_response(response=error, status=404)
+
 
 
     addresses = query_addresses(filters=filters)
