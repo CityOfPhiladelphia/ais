@@ -379,6 +379,7 @@ def addresses(query):
             .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
             .get_address_geoms(request) \
             .order_by_address()
+        print(addresses)
         
 
         # Get tag data
@@ -1188,6 +1189,73 @@ def street(query):
                        {'query': query})
     return json_response(response=error, status=404)
 
+
+@app.route('/opal-location-id/<query>') # or <path:query>
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
+def opal_location_id(query):
+    """
+    Looks up information about the location with the given OPAL location ID.
+    Returns the unique address with opal_location_id matching query if such an 
+    address exists; otherwise, returns an error.
+    """
+    query = query.strip('/')
+    parsed = PassyunkParser().parse(query)
+    search_type = parsed['type']
+    normalized = parsed['components']['output_address']
+    print(f"normalized: {normalized}\n")
+
+    if search_type != "opal_location_id":
+        error = json_error(404, "Not a valid OPAL location ID.", {'query': query})
+        return json_response(response=error, status=404)
+
+    addresses = AddressSummary.query \
+            .filter(AddressSummary.opal_location_id.like('%{}%'.format(normalized))) \
+            .get_address_geoms(request) #\
+            #.exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \ 
+            #.exclude_children() 
+            # TODO: consider getting suites on floor etc.
+    print(addresses)
+
+    paginator = QueryPaginator(addresses) 
+
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        error = json_error(404, "Could not find any addresses with OPAL location ID matching query.", {'query': query})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=404)
+    
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    crs = {'type': 'link',
+            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
+    # Get tag data
+    all_tags = get_tag_data(addresses)
+
+    # Serialize the response
+    addresses_page = paginator.get_page(page_num)
+    serializer = AddressJsonSerializer(
+        metadata={
+            'query': query, 
+            'normalized': normalized, 
+            'search_type': search_type,
+            'search_params': request.args, 
+            'crs': crs
+            },
+        pagination=paginator.get_page_info(page_num),
+        srid=srid,
+        normalized_address=normalized,
+        tag_data=all_tags
+    )
+
+    result = serializer.serialize_many(addresses_page)
+    return json_response(response=result, status=200)
+
+
 # from flask_sqlalchemy import get_debug_queries
 # @app.after_request
 # def after_request(response):
@@ -1231,6 +1299,7 @@ def search(query):
         'latlon': reverse_geocode,
         'stateplane': reverse_geocode,
         'street': addresses,
+        'opal_location_id': opal_location_id,
     }
     try:
         parsed = PassyunkParser().parse(query)

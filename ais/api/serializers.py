@@ -368,7 +368,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     'stateplane': 'exact location',
                     'mapreg': 'exact_key',
                     'pwd_parcel_id': 'exact_key',
-                    'opa_account': 'exact_key'
+                    'opa_account': 'exact_key',
+                    'opal_location_id': 'exact_key', # TODO: decide if this is what we want
                 }
                 match_type = match_type_key[self.metadata['search_type']]
 
