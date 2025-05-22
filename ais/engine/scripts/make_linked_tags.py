@@ -246,6 +246,8 @@ def main():
     print('Looping through {} addresses...'.format(len(address_rows))) # Remove this
     for address_row in address_rows:
         i+=1
+        if i % 10000 == 0:
+            print(f"Now on address {i} at {datetime.now()}")
         unit_num = address_row['unit_num']
         street_address = address_row['street_address']
         low_num = address_row['address_low']
