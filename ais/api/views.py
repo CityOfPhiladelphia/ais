@@ -1208,12 +1208,16 @@ def opal_location_id(query):
         error = json_error(404, "Not a valid OPAL location ID.", {'query': query})
         return json_response(response=error, status=404)
 
+    tagged_opal_location_ids = AddressTag.query \
+        .filter(AddressTag.key == 'opal_location_id') \
+        .filter(AddressTag.value == normalized).all()
+    
+    street_addresses = tuple(set([x.street_address for x in tagged_opal_location_ids]))
+
     addresses = AddressSummary.query \
-            .filter(AddressSummary.opal_location_id.like('%{}%'.format(normalized))) \
-            .get_address_geoms(request) #\
-            #.exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \ 
-            #.exclude_children() 
-            # TODO: consider getting suites on floor etc.
+        .filter(AddressSummary.street_address.in_(street_addresses)) \
+        .get_address_geoms(request) 
+        # TODO: consider modifying to also get suites on floor etc.
     print(addresses)
 
     paginator = QueryPaginator(addresses) 
