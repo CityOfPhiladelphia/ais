@@ -355,7 +355,7 @@ def addresses(query):
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
     filters.update(strict_filters)
-    print(filters)
+    # print(filters)
 
     if search_type not in ('address', 'street') or low_num is None:
         error = json_error(404, 'Not a valid address.',
@@ -372,7 +372,7 @@ def addresses(query):
         return addresses
 
     def process_query(addresses, match_type):
-        print(addresses)
+        # print(addresses)
         addresses = addresses.include_child_units(
             'include_units' in request.args and request.args['include_units'].lower() != 'false',
             is_range=False if range else high_num_full is not None,
@@ -587,7 +587,7 @@ def block(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
-    #print(addresses_count)
+    # print(addresses_count)
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',
