@@ -355,6 +355,7 @@ def addresses(query):
         strict_filters.update(dict(unit_type=unit_type or '', ))
 
     filters.update(strict_filters)
+    # print(filters)
 
     if search_type not in ('address', 'street') or low_num is None:
         error = json_error(404, 'Not a valid address.',
@@ -379,7 +380,6 @@ def addresses(query):
             .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
             .get_address_geoms(request) \
             .order_by_address()
-        print(addresses)
         
 
         # Get tag data
@@ -586,7 +586,7 @@ def block(query):
 
     # Ensure that we have results
     addresses_count = paginator.collection_size
-    #print(addresses_count)
+    # print(addresses_count)
     if addresses_count == 0:
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',

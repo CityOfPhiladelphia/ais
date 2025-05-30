@@ -187,6 +187,7 @@ The root of the `FeatureCollection` contains:
   * `street_postdir` (e.g. 190 N INDEPENDENCE MALL **W**)
   * `unit_type` (APT, STE, FL, #, UNIT, etc.)
   * `unit_num`
+  * `floor` (e.g. 1234 MARKET ST FL **15**)
   * `street_full` (e.g., **N BROAD ST**)
   * `zip_code`
   * `zip_4`
