@@ -59,14 +59,14 @@ def main():
     WRITE_OUT = True
 
     DEV = False  # This will target a single address
-    DEV_ADDRESS = "920-22 W GIRARD AVE"
+    DEV_ADDRESS = "1231 N BROAD ST FL 3"
     DEV_ADDRESS_COMPS = {
         # 'base_address':      '1 FRANKLIN TOWN BLVD',
         # 'address_high':     '4726',
         # 'street_name':      'ALDEN',
         # 'street_suffix':    'WALK',
     }
-    DEV_STREET_NAME = 'W GIRARD AVE'
+    DEV_STREET_NAME = 'N BROAD ST'
 
     # Logging stuff.
     address_errors = []
@@ -217,6 +217,8 @@ def main():
                     raise ValueError('Unknown address type')
 
                 address = Address(parsed_address)
+                if DEV: #added for debug 05/25
+                    print(vars(address))
 
                 # Get street address and map to source address
                 street_address = address.street_address
@@ -459,6 +461,16 @@ def main():
                 'address_2':       address.base_address,
             }
             links.append(base_link)
+
+            # Floor link, first attempt
+            if address.floor is not None and address.unit_type != 'FL': # e.g. 100 S BROAD ST FL 11 STE 1100
+                address_with_floor = f"{address.base_address} FL {address.floor}"
+                floor_link = {
+                    'address_1': address.street_address,
+                    'relationship': 'on floor',
+                    'address_2': address_with_floor,
+                }
+                links.append(floor_link)
 
             # Sibling generic unit links
             # These relate unit addresses to all other addresses that share the same

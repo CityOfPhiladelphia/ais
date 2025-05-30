@@ -395,6 +395,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('street_postdir', address.street_postdir),
                 ('unit_type', address.unit_type),
                 ('unit_num', address.unit_num),
+                ('floor', address.floor),
                 ('street_full', address.street_full),
                 ('street_code', address.street_code),
                 ('seg_id', address.seg_id),
