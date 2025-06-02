@@ -569,6 +569,11 @@ class AddressTag(db.Model):
     * usps type
     * seg id
     * seg side
+    * opal location name
+    * opal location id
+    * opal superior location
+    * opal hierarchy
+    * opal location usages
     """
     query_class = AddressTagQuery
 
