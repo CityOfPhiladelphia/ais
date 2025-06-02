@@ -1260,6 +1260,72 @@ def opal_location_id(query):
     return json_response(response=result, status=200)
 
 
+@app.route('/landmark/<query>') # or <path:query>
+@cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
+def landmark(query):
+    """
+    Looks up information about the location with the given ladnmark or place name.
+    Returns all addresses that fuzzy-match the user-inputted query to some threshold
+    value of pg_trgm trigram similarity.
+    """
+    query = query.strip('/')
+    normalized = query.upper() # TODO: consider preprocessing more -- remove initial 'THE', etc.
+    # parsed = PassyunkParser().parse(query) # Not parsing query output unless/until passyunk's landmarks list is exactly the same as AIS's
+    search_type = "landmark"
+
+    THRESHOLD_VALUE = 0.3 # TODO: finalize this value after testing, or let user set it with optional argument
+
+    tagged_place_names = AddressTag.query \
+        .filter(AddressTag.key == 'place_name') \
+        .filter(func.similarity(AddressTag.value, query) > THRESHOLD_VALUE) \
+        .all()
+
+    street_addresses = tuple(set([x.street_address for x in tagged_place_names]))
+
+    addresses = AddressSummary.query \
+        .filter(AddressSummary.street_address.in_(street_addresses)) \
+        .get_address_geoms(request) 
+
+    paginator = QueryPaginator(addresses) 
+
+    # Ensure that we have results
+    addresses_count = paginator.collection_size
+    if addresses_count == 0:
+        # TODO: consider redirecting to a "Query not recognized" or "Invalid query" for backward compatibility
+        error = json_error(404, "Could not find any named places or landmarks with name similar to query.", {'query': query})
+        return json_response(response=error, status=404)
+
+    # Validate the pagination
+    page_num, error = validate_page_param(request, paginator)
+    if error:
+        return json_response(response=error, status=404)
+    
+    srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
+    crs = {'type': 'link',
+            'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+
+    # Get tag data
+    all_tags = get_tag_data(addresses)
+
+    # Serialize the response
+    addresses_page = paginator.get_page(page_num)
+    serializer = AddressJsonSerializer(
+        metadata={
+            'query': query, 
+            'normalized': normalized, 
+            'search_type': search_type,
+            'search_params': request.args, 
+            'crs': crs
+            },
+        pagination=paginator.get_page_info(page_num),
+        srid=srid,
+        normalized_address=normalized,
+        tag_data=all_tags
+    )
+
+    result = serializer.serialize_many(addresses_page)
+    return json_response(response=result, status=200)
+
 # from flask_sqlalchemy import get_debug_queries
 # @app.after_request
 # def after_request(response):
@@ -1304,6 +1370,7 @@ def search(query):
         'stateplane': reverse_geocode,
         'street': addresses,
         'opal_location_id': opal_location_id,
+        'landmark': landmark,
     }
     try:
         parsed = PassyunkParser().parse(query)
@@ -1321,9 +1388,14 @@ def search(query):
             # call it
             return view(query)
         except:
-            error = json_error(404, 'Invalid query.',
-                               {'query': query, 'normalized': normalized_address,'search_type': search_type})
-            return json_response(response=error, status=404)
+            # unfamiliar text might be an attempt at a landmark name
+            try:
+                view = parser_search_type_map["landmark"]
+                return view(query)
+            except:
+                error = json_error(404, 'Invalid query.',
+                                {'query': query, 'normalized': normalized_address,'search_type': search_type})
+                return json_response(response=error, status=404)
 
     # Handle search type = 'none:
     else:
