@@ -421,6 +421,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('opal_superior_location', ''),
                 ('opal_hierarchy', ''),
                 ('opal_location_usages', ''),
+                ('place_name', ''),
+                ('place_name_source', ''),
             ])),
             ('geometry', geom_data),
         ])

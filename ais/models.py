@@ -1246,6 +1246,10 @@ class AddressSummary(db.Model):
     opal_hierarchy = db.Column(db.Text)
     opal_location_usages = db.Column(db.Text)
 
+    # Place name / Landmark stuff
+    place_name = db.Column(db.Text)
+    place_name_source = db.Column(db.Text)
+
     geocode_type = db.Column(db.Text)
     geocode_x = db.Column(db.Float)
     geocode_y = db.Column(db.Float)
