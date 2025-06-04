@@ -1273,14 +1273,24 @@ def landmark(query):
     # parsed = PassyunkParser().parse(query) # Not parsing query output unless/until passyunk's landmarks list is exactly the same as AIS's
     search_type = "landmark"
 
-    THRESHOLD_VALUE = 0.3 # TODO: finalize this value after testing, or let user set it with optional argument
-
+    # Try an exact search first
     tagged_place_names = AddressTag.query \
         .filter(AddressTag.key == 'place_name') \
-        .filter(func.similarity(AddressTag.value, query) > THRESHOLD_VALUE) \
+        .filter(AddressTag.value == normalized) \
         .all()
-
     street_addresses = tuple(set([x.street_address for x in tagged_place_names]))
+
+    if len(street_addresses) > 0:
+        exact_match = True
+    else:
+        # Try a fuzzy search with pg_trgm similarity score
+        THRESHOLD_VALUE = 0.35 # TODO: finalize this value after testing, or let user set it with optional argument
+        tagged_place_names = AddressTag.query \
+            .filter(AddressTag.key == 'place_name') \
+            .filter(func.similarity(AddressTag.value, normalized) > THRESHOLD_VALUE) \
+            .all()
+        street_addresses = tuple(set([x.street_address for x in tagged_place_names]))
+        exact_match = False
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
@@ -1320,7 +1330,8 @@ def landmark(query):
         pagination=paginator.get_page_info(page_num),
         srid=srid,
         normalized_address=normalized,
-        tag_data=all_tags
+        tag_data=all_tags,
+        match_type="exact placename" if exact_match else None
     )
 
     result = serializer.serialize_many(addresses_page)

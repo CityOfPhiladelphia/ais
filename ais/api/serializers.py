@@ -369,7 +369,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     'mapreg': 'exact_key',
                     'pwd_parcel_id': 'exact_key',
                     'opa_account': 'exact_key',
-                    'opal_location_id': 'exact_key', # TODO: decide if this is what we want
+                    'opal_location_id': 'exact_key',
+                    'landmark': 'exact placename' if self.match_type == 'exact placename' else 'fuzzy placename'
                 }
                 match_type = match_type_key[self.metadata['search_type']]
 
