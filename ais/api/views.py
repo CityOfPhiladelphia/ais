@@ -1303,7 +1303,7 @@ def landmark(query):
     addresses_count = paginator.collection_size
     if addresses_count == 0:
         # TODO: consider redirecting to a "Query not recognized" or "Invalid query" for backward compatibility
-        error = json_error(404, "Could not find any named places or landmarks with name similar to query.", {'query': query})
+        error = json_error(404, "Could not find any place or landmark with name similar to query.", {'query': query})
         return json_response(response=error, status=404)
 
     # Validate the pagination
@@ -1400,24 +1400,24 @@ def search(query):
             # call it
             return view(query)
         except:
-            # unfamiliar text might be an attempt at a landmark name
-            try:
-                view = parser_search_type_map["landmark"]
-                return view(query)
-            except:
-                error = json_error(404, 'Invalid query.',
-                                {'query': query, 'normalized': normalized_address,'search_type': search_type})
-                return json_response(response=error, status=404)
+            error = json_error(404, 'Invalid query.',
+                            {'query': query, 'normalized': normalized_address,'search_type': search_type})
+            return json_response(response=error, status=404)
 
-    # Handle search type = 'none:
+    # Handle search type = 'none':
     else:
         # Handle queries of pwd_parcel ids:
         if query.isdigit() and len(query) < 8:
             return pwd_parcel(query)
         else:
-            error = json_error(404, 'Query not recognized.',
-                               {'query': query})
-            return json_response(response=error, status=404)
+            # unfamiliar text might be an attempt at a landmark name
+            try:
+                view = parser_search_type_map["landmark"]
+                return view(query)
+            except:
+                error = json_error(404, 'Query not recognized.',
+                                {'query': query})
+                return json_response(response=error, status=404)
 
 
 @app.route("/")
