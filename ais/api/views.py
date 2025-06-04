@@ -1288,6 +1288,7 @@ def landmark(query):
         tagged_place_names = AddressTag.query \
             .filter(AddressTag.key == 'place_name') \
             .filter(func.similarity(AddressTag.value, normalized) > THRESHOLD_VALUE) \
+            .order_by(desc(func.similarity(AddressTag.value, normalized))) \
             .all()
         street_addresses = tuple(set([x.street_address for x in tagged_place_names]))
         exact_match = False
