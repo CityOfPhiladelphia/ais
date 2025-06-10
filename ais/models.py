@@ -569,11 +569,6 @@ class AddressTag(db.Model):
     * usps type
     * seg id
     * seg side
-    * opal location name
-    * opal location id
-    * opal superior location
-    * opal hierarchy
-    * opal location usages
     """
     query_class = AddressTagQuery
 
@@ -1238,13 +1233,6 @@ class AddressSummary(db.Model):
     li_parcel_id = db.Column(db.Text)
     zoning_document_ids = db.Column(db.Text)
     voters = db.Column(db.Text)
-
-    # OPAL stuff
-    opal_location_name = db.Column(db.Text)
-    opal_location_id = db.Column(db.Text)
-    opal_superior_location = db.Column(db.Text)
-    opal_hierarchy = db.Column(db.Text)
-    opal_location_usages = db.Column(db.Text)
 
     # Place name / Landmark stuff
     place_name = db.Column(db.Text)
