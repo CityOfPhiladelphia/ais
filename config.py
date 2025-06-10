@@ -294,7 +294,8 @@ def make_opal_location_usages(comps):
             usages.append("business-site")
     if business_asset == 'Y':
         usages.append("business-asset")
-    return usages
+    usage_string = ','.join(usages)
+    return usage_string
 
 ADDRESSES = {
     'parser_tags': {
@@ -527,30 +528,23 @@ ADDRESSES = {
             },
             'preprocessor':         make_opal_address,
             'tag_fields': [
+            ],
+        },
+        {
+            'name': 'landmarks_namedplaces',
+            'table': 'citygeo.ais_landmarks_test_dummy_table',
+            'db':                   'citygeo',
+            'address_fields':       {  
+                'street_address':   'address'
+            },
+            'tag_fields': [
                 {
-                    'key':              'opal_location_name',
-                    'source_fields':     ['location_name'],
+                    'key':              'place_name',
+                    'source_fields':     ['name'],
                 },
                 {
-                    'key':              'opal_location_id',
-                    'source_fields':     ['location_id'],
-                },
-                {
-                    'key':              'opal_superior_location',
-                    'source_fields':     ['superior_location'],
-                },
-                {
-                    'key':              'opal_hierarchy',
-                    'source_fields':     ['hierarchy'],
-                },
-                {
-                    'key':              'opal_location_usages',
-                    'source_fields':     [
-                                            'location_usage_ship_to', 
-                                            'location_usage_business_site',
-                                            'location_usage_business_asset'
-                                         ],
-                    'preprocessor':     make_opal_location_usages,
+                    'key':              'place_name_source',
+                    'source_fields':     ['source_table'],
                 },
             ],
         },
@@ -1761,32 +1755,14 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
         {
-            'name':                 'opal_location_name',
-            'tag_key':              'opal_location_name',
+            'name':                 'place_name',
+            'tag_key':              'place_name',
             'type':                 'text',
             'traverse_links':       'false',
         },
         {
-            'name':                 'opal_location_id',
-            'tag_key':              'opal_location_id',
-            'type':                 'text',
-            'traverse_links':       'false',
-        },
-        {
-            'name':                 'opal_superior_location',
-            'tag_key':              'opal_superior_location',
-            'type':                 'text',
-            'traverse_links':       'false',
-        },
-        {
-            'name':                 'opal_hierarchy',
-            'tag_key':              'opal_hierarchy',
-            'type':                 'text',
-            'traverse_links':       'false',
-        },
-        {
-            'name':                 'opal_location_usages',
-            'tag_key':              'opal_location_usages',
+            'name':                 'place_name_source',
+            'tag_key':              'place_name_source',
             'type':                 'text',
             'traverse_links':       'false',
         },
