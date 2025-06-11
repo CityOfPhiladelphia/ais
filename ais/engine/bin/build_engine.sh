@@ -31,6 +31,7 @@ SCRIPTS=(
   "load_dor_condos"
   "load_pwd_parcels"
   "load_curbs"
+  "load_opal_locations"
   "load_addresses"
   "geocode_addresses"
   "make_linked_tags"

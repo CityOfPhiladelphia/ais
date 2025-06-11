@@ -152,6 +152,23 @@ BASE_DATA_SOURCES = {
             'street_address':           'street_address',
         },
     },
+    'opal_locations': {
+        'db':               'citygeo',
+        'table':            'viewer_opal.cleanup_locations_deduplicated',
+        'field_map': {
+            'location_id':              'location_id',
+            'location_name':            'location_name',
+            'address_line_1':           'address_line_1',
+            'address_line_2':           'address_line_2',
+            'location_type':            'hierarchy',
+            'superior_location':        'superior_location',
+            'is_ship_to':               'location_usage_ship_to',
+            'is_business_site':         'location_usage_business_site',
+            'is_business_asset':        'location_usage_business_asset',
+        },
+        # remove the numeric ones like '04 - 232'
+        'where':            "location_name !~ '^\d{2}\s-\s' and address_line_1 != ''",
+    },
 }
 
 def multi_strip(str_):

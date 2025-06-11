@@ -203,6 +203,19 @@ class OpaProperty(db.Model):
     tencode = db.Column(db.Text)
     owners = db.Column(db.Text)
 
+##################
+# OPAL LOCATIONS #
+##################
+
+class OpalLocation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location_id = db.Column(db.Text)
+    location_name = db.Column(db.Text)
+    superior_location = db.Column(db.Text)
+    location_type = db.Column(db.Text) # TODO: consider making this an Enum
+    location_usage = db.Column(db.Text) # TODO: consider making this an Enum
+    ship_to_location_id = db.Column(db.Text)
+    #TODO: consider putting a constraint enforcing r'L\d{6}' formatting on location_id, superior_location, and ship_to_location_id    
 
 ##################
 # ADDRESS POINTS #
