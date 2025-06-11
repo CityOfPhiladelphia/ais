@@ -14,7 +14,7 @@ from geoalchemy2.functions import ST_Transform
 from sqlalchemy import func, desc
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, DorParcel, PwdParcel, OpaProperty, ENGINE_SRID
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, DorParcel, PwdParcel, OpaProperty, OpalLocation, ENGINE_SRID
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
@@ -1208,11 +1208,10 @@ def opal_location_id(query):
         error = json_error(404, "Not a valid OPAL location ID.", {'query': query})
         return json_response(response=error, status=404)
 
-    tagged_opal_location_ids = AddressTag.query \
-        .filter(AddressTag.key == 'opal_location_id') \
-        .filter(AddressTag.value == normalized).all()
+    opal_location_results = OpalLocation.query \
+        .filter(OpalLocation.location_id == normalized).all()
     
-    street_addresses = tuple(set([x.street_address for x in tagged_opal_location_ids]))
+    street_addresses = tuple(set([x.street_address for x in opal_location_results]))
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \

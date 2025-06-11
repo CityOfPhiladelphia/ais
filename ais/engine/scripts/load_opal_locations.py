@@ -13,7 +13,7 @@ def main():
     source_table = source_db[source_def['table']]
     field_map = source_def['field_map']
     db = datum.connect(config['DATABASES']['engine'])
-    opal_table = db['opal_locations']
+    opal_table = db['opal_location']
 
     Parser = config['PARSER']
     parser = Parser()
@@ -45,9 +45,9 @@ def main():
             elif opal_loc['is_business_site'] == 'Y' and opal_loc['is_business_asset'] == 'Y':
                 opal_loc['location_usage'] = 'both'
             elif opal_loc['is_business_site'] == 'Y':
-                opal_loc['location_usage'] = 'business-site'
+                opal_loc['location_usage'] = 'business site'
             elif opal_loc['is_business_asset'] == 'Y':
-                opal_loc['location_usage'] = 'business_asset'
+                opal_loc['location_usage'] = 'business asset'
             else:
                 raise ValueError("Location does not have a usage!")
 

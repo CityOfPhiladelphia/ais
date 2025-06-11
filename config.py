@@ -280,40 +280,6 @@ def make_eclipse_address(comps):
     else:
         return None
 
-def make_opal_address(comps):
-    """Beta test assuming formatting for authoritative OPAL table roughly resembles 
-    cleanup_locations_deduplicated. Should be removed and rewritten if formatting
-    changes substantially."""
-    base_address = comps['base_address']
-    floor = comps['floor']
-    suite = comps['unit_num'] # has to be named unit_num to pass condition in load_addresses
-    if floor not in (None, ''):
-        if floor[-3:] == ' FL':
-            floor = floor[:-3]
-            ORD_RE = r'(\d)(ST|ND|RD|TH)'
-            floor = 'FL ' + re.sub(ORD_RE, r'\1', floor)
-    return ' '.join([base_address, floor, suite])
-
-def make_opal_location_usages(comps):
-    """Beta test assuming formatting for authoritative OPAL table roughly resembles 
-    cleanup_locations_deduplicated. Should be removed and rewritten if formatting
-    changes substantially."""
-    ship_to = comps['location_usage_ship_to']
-    business_site = comps['location_usage_business_site']
-    business_asset = comps['location_usage_business_asset']
-    usages = []
-    if ship_to == 'Y':
-        usages.append("ship-to")
-    if business_site == 'Y':
-        if "ship-to" in usages:
-            raise ValueError("A Workday location cannot be both a ship-to and a business site!")
-        else:
-            usages.append("business-site")
-    if business_asset == 'Y':
-        usages.append("business-asset")
-    usage_string = ','.join(usages)
-    return usage_string
-
 ADDRESSES = {
     'parser_tags': {
         'usps_zipcode': ['mailing', 'zipcode'],
@@ -388,6 +354,14 @@ ADDRESSES = {
                     'source_fields':     ['parcel_id'],
                 },
             ],
+        },
+        {
+            'name':                 'opal_locations',
+            'table':                'opal_location',
+            'db':                   'engine',
+            'address_fields': {
+                'street_address':       'street_address',
+            },
         },
         {
             'name':                 'info_commercial',
@@ -532,19 +506,6 @@ ADDRESSES = {
                     'key':              'ng911_address_point_placement',
                     'source_fields':     ['placement_type'],
                 },
-            ],
-        },
-        {
-            'name':                 'opal_locations',
-            'table':                'viewer_opal.cleanup_locations_deduplicated',
-            'db':                   'citygeo',
-            'address_fields':       {
-                'base_address':     'address_line_1',
-                'floor':            'floor',
-                'unit_num':         'suite', # has to be named unit_num to pass condition in load_addresses
-            },
-            'preprocessor':         make_opal_address,
-            'tag_fields': [
             ],
         },
         {
