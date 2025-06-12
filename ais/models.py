@@ -207,7 +207,14 @@ class OpaProperty(db.Model):
 # OPAL LOCATIONS #
 ##################
 
+class OpalLocationQuery(BaseQuery):
+    """A query class that knows how to sort by OPAL location_id"""
+    def order_by_address(self):
+        return self.order_by(OpalLocation.location_id)
+
 class OpalLocation(db.Model):
+    query_class = OpalLocationQuery 
+
     id = db.Column(db.Integer, primary_key=True)
     location_id = db.Column(db.Text)
     location_name = db.Column(db.Text)
@@ -217,11 +224,6 @@ class OpalLocation(db.Model):
     location_usage = db.Column(db.Text) # TODO: consider making this an Enum
     ship_to_location_id = db.Column(db.Text)
     #TODO: consider putting a constraint enforcing r'L\d{6}' formatting on location_id, superior_location, and ship_to_location_id    
-
-class OpalLocationQuery(BaseQuery):
-    """A query class that knows how to sort by OPAL location_id"""
-    def order_by_address(self):
-        return self.order_by(OpalLocation.location_id)
 
 ##################
 # ADDRESS POINTS #
