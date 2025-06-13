@@ -1516,6 +1516,55 @@ SERVICE_AREAS = {
             'value_method':                 'yes_or_no',
 
         },
+        # H3 HEX GRIDS
+        {
+            'layer_id':                     'h3_hex_grid_r7',
+            'name':                         'H3 Hex Grid R7',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.h3_hex_grid_r7',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'h3_hex_grid_r8',
+            'name':                         'H3 Hex Grid R8',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.h3_hex_grid_r8',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'h3_hex_grid_r9',
+            'name':                         'H3 Hex Grid R9',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.h3_hex_grid_r9',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'h3_hex_grid_r10',
+            'name':                         'H3 Hex Grid R10',
+            'description': '',
+            'sources': {
+                'polygon': {
+                    'db':                   'citygeo',
+                    'table':                'viewer_citygeo.h3_hex_grid_r10',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
     ],
 }
 
