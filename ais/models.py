@@ -211,6 +211,9 @@ class OpalLocationQuery(BaseQuery):
     """A query class that knows how to sort by OPAL location_id"""
     def order_by_address(self):
         return self.order_by(OpalLocation.location_id)
+    
+    def filter_by_location_id(self, location_id):
+        return self.filter(OpalLocation.location_id == location_id)
 
 class OpalLocation(db.Model):
     query_class = OpalLocationQuery 

@@ -70,6 +70,17 @@ def get_tag_data(addresses):
         all_tags[tag.street_address][tag.key].append(tag)
     return all_tags
 
+def get_opal_data(addresses): # TODO: incorporate flag to reduce down output to just one location_id
+    street_addresses = [address.street_address for address, geocode_type, geom in addresses]
+    opal_locations = OpalLocation.query \
+        .filter(OpalLocation.street_address.in_(street_addresses))
+    all_opal_locations = {} # keys are street addresses, each value is a list of dicts
+    for opal_loc in opal_locations:
+        if not opal_loc.street_address in all_opal_locations:
+            all_opal_locations[opal_loc.street_address] = []
+        all_opal_locations[opal_loc.street_address].append(opal_loc)
+    return all_opal_locations
+        
 
 @app.errorhandler(404)
 @app.errorhandler(500)
@@ -1210,14 +1221,14 @@ def opal_location_id(query):
 
     opal_location_results = OpalLocation.query \
         .filter(OpalLocation.location_id == normalized).all()
-    
+
     street_addresses = tuple(set([x.street_address for x in opal_location_results]))
+    print(street_addresses)
 
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
         .get_address_geoms(request) 
         # TODO: consider modifying to also get suites on floor etc.
-    print(addresses)
 
     paginator = QueryPaginator(addresses) 
 
@@ -1238,6 +1249,9 @@ def opal_location_id(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+
+    # Get OPAL location data
+    all_opal_locations = get_opal_data(addresses)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
