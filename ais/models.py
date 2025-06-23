@@ -215,6 +215,8 @@ class OpalLocationQuery(BaseQuery):
     def filter_by_location_id(self, location_id):
         return self.filter(OpalLocation.location_id == location_id)
 
+OPAL_FIELDS = ["location_id", "location_name", "street_address", "superior_location", "location_type", "location_usage", "ship_to_location_id"]
+
 class OpalLocation(db.Model):
     query_class = OpalLocationQuery 
 
@@ -226,7 +228,13 @@ class OpalLocation(db.Model):
     location_type = db.Column(db.Text) # TODO: consider making this an Enum
     location_usage = db.Column(db.Text) # TODO: consider making this an Enum
     ship_to_location_id = db.Column(db.Text)
-    #TODO: consider putting a constraint enforcing r'L\d{6}' formatting on location_id, superior_location, and ship_to_location_id    
+
+    # TODO: may need an __iter__ method in order to become serializable
+    def __iter__(self):
+        for key in OPAL_FIELDS:
+            yield (key, getattr(self, key))
+
+
 
 ##################
 # ADDRESS POINTS #

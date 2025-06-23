@@ -70,15 +70,21 @@ def get_tag_data(addresses):
         all_tags[tag.street_address][tag.key].append(tag)
     return all_tags
 
-def get_opal_data(addresses): # TODO: incorporate flag to reduce down output to just one location_id
+def get_opal_data(addresses, specific_locationid=None): # TODO: incorporate flag to reduce down output to just one location_id
     street_addresses = [address.street_address for address, geocode_type, geom in addresses]
-    opal_locations = OpalLocation.query \
-        .filter(OpalLocation.street_address.in_(street_addresses))
+    if specific_locationid is not None:
+        opal_locations = OpalLocation.query \
+            .filter(OpalLocation.street_address.in_(street_addresses)) \
+            .filter_by_location_id(specific_locationid)
+    else:
+        opal_locations = OpalLocation.query \
+            .filter(OpalLocation.street_address.in_(street_addresses))        
     all_opal_locations = {} # keys are street addresses, each value is a list of dicts
     for opal_loc in opal_locations:
         if not opal_loc.street_address in all_opal_locations:
             all_opal_locations[opal_loc.street_address] = []
-        all_opal_locations[opal_loc.street_address].append(opal_loc)
+        # must convert OpalLocation objects to dict representation for them to be serializable
+        all_opal_locations[opal_loc.street_address].append(dict(opal_loc))
     return all_opal_locations
         
 
@@ -401,13 +407,16 @@ def addresses(query):
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:
+                print("Invalid query 1")
                 error = json_error(404, 'Invalid query.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                     'search_params': requestargs, })
                 return json_response(response=error, status=404)
         try:
             all_tags = get_tag_data(addresses)
+            all_opals = get_opal_data(addresses)
         except:
+            print("Invalid query 2")
             error = json_error(404, 'Invalid query.',
                                {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                 'search_params': requestargs, })
@@ -431,6 +440,7 @@ def addresses(query):
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:  # Try to cascade to street centerline segment
+                print("Invalid query 3")
                 error = json_error(404, 'Invalid query.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                     'search_params': requestargs, })
@@ -458,6 +468,7 @@ def addresses(query):
             normalized_address=normalized_address,
             base_address=base_address,
             tag_data=all_tags,
+            opal_data=all_opals,
             match_type=match_type,
             ref_addr=normalized_address,
         )
@@ -465,6 +476,7 @@ def addresses(query):
             result = serializer.serialize_many(addresses_page)
             return json_response(response=result, status=200)
         except:
+            print("Invalid query 4")
             error = json_error(404, 'Invalid query.',
                                {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                 'search_params': requestargs})
@@ -617,6 +629,8 @@ def block(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     block_page = paginator.get_page(page_num)
@@ -624,6 +638,7 @@ def block(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_address, 'search_params': request.args},
         pagination=paginator.get_page_info(page_num),
         srid=request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID'], tag_data=all_tags,
+        opal_data=all_opals,
         normalized_address=normalized_address,
     )
     result = serializer.serialize_many(block_page)
@@ -672,6 +687,8 @@ def owner(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     page = paginator.get_page(page_num)
@@ -679,6 +696,7 @@ def owner(query):
         metadata={'search_type': 'owner', 'query': query, 'normalized': owner_parts, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        opal_data=all_opals
     )
     result = serializer.serialize_many(page)
 
@@ -735,6 +753,8 @@ def account(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -742,6 +762,7 @@ def account(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        opal_data=all_opals
     )
     result = serializer.serialize_many(addresses_page)
 
@@ -805,6 +826,8 @@ def pwd_parcel(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -812,6 +835,7 @@ def pwd_parcel(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': query, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        opal_data=all_opals
     )
     result = serializer.serialize_many(addresses_page)
 
@@ -863,6 +887,8 @@ def dor_parcel(query):
 
     #Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -870,6 +896,7 @@ def dor_parcel(query):
         metadata={'search_type': search_type, 'query': query, 'normalized': normalized_id, 'search_params': request.args, 'crs': crs},
         pagination=paginator.get_page_info(page_num),
         srid=srid, tag_data=all_tags,
+        opal_data=all_opals
     )
     result = serializer.serialize_many(addresses_page)
 
@@ -1097,6 +1124,8 @@ def reverse_geocode(query):
 
     #Get tag data
     all_tags=get_tag_data(addresses)
+    #Get OPAL location data
+    all_opals=get_opal_data(addresses)
 
     # Validate the pagination
     page_num, error = validate_page_param(request, paginator)
@@ -1114,6 +1143,7 @@ def reverse_geocode(query):
         normalized_address=normalized_address,
         base_address=base_address,
         match_type=match_type, tag_data=all_tags,
+        opal_data=all_opals
     )
     result = serializer.serialize_many(addresses_page)
 
@@ -1251,7 +1281,8 @@ def opal_location_id(query):
     all_tags = get_tag_data(addresses)
 
     # Get OPAL location data
-    all_opal_locations = get_opal_data(addresses)
+    # TODO: make a flag that sets specific_locationid to None
+    all_opals = get_opal_data(addresses, specific_locationid=normalized)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -1266,7 +1297,8 @@ def opal_location_id(query):
         pagination=paginator.get_page_info(page_num),
         srid=srid,
         normalized_address=normalized,
-        tag_data=all_tags
+        tag_data=all_tags,
+        opal_data=all_opals
     )
 
     result = serializer.serialize_many(addresses_page)
@@ -1277,7 +1309,7 @@ def opal_location_id(query):
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
 def landmark(query):
     """
-    Looks up information about the location with the given ladnmark or place name.
+    Looks up information about the location with the given landmark or place name.
     Returns all addresses that fuzzy-match the user-inputted query to some threshold
     value of pg_trgm trigram similarity.
     """
@@ -1330,6 +1362,8 @@ def landmark(query):
 
     # Get tag data
     all_tags = get_tag_data(addresses)
+    # Get OPAL location data
+    all_opals = get_opal_data(addresses)
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
@@ -1345,6 +1379,7 @@ def landmark(query):
         srid=srid,
         normalized_address=normalized,
         tag_data=all_tags,
+        opal_data=all_opals,
         match_type="exact placename" if exact_match else None
     )
 
@@ -1413,6 +1448,7 @@ def search(query):
             # call it
             return view(query)
         except:
+            print("Invalid query 5")
             error = json_error(404, 'Invalid query.',
                             {'query': query, 'normalized': normalized_address,'search_type': search_type})
             return json_response(response=error, status=404)

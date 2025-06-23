@@ -235,7 +235,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
     # excluded_tags = ('info_resident', 'info_company', 'voter_name', 'bin_parcel_id')
     excluded_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
 
-    def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, **kwargs):
+    def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, opal_data=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
         #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
@@ -252,6 +252,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         self.sa_data = sa_data
         self.match_type = match_type
         self.tag_data = tag_data
+        self.opal_data = opal_data
         self.ref_addr = ref_addr
 
         super().__init__(**kwargs)
@@ -434,6 +435,11 @@ class AddressJsonSerializer (GeoJSONSerializer):
 
         data['properties'].update(sa_data)
         data = self.transform_exceptions(data)
+
+         # attempt to attach OPAL data
+        if self.opal_data is not None:
+            if address.street_address in self.opal_data.keys():
+                data['properties']['opal_locations'] = self.opal_data[address.street_address]
 
         return data
 
