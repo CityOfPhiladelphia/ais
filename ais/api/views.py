@@ -407,7 +407,6 @@ def addresses(query):
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:
-                print("Invalid query 1")
                 error = json_error(404, 'Invalid query.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                     'search_params': requestargs, })
@@ -416,7 +415,6 @@ def addresses(query):
             all_tags = get_tag_data(addresses)
             all_opals = get_opal_data(addresses)
         except:
-            print("Invalid query 2")
             error = json_error(404, 'Invalid query.',
                                {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                 'search_params': requestargs, })
@@ -440,7 +438,6 @@ def addresses(query):
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:  # Try to cascade to street centerline segment
-                print("Invalid query 3")
                 error = json_error(404, 'Invalid query.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                     'search_params': requestargs, })
@@ -476,7 +473,6 @@ def addresses(query):
             result = serializer.serialize_many(addresses_page)
             return json_response(response=result, status=200)
         except:
-            print("Invalid query 4")
             error = json_error(404, 'Invalid query.',
                                {'query': query, 'normalized': normalized_address, 'search_type': search_type,
                                 'search_params': requestargs})
@@ -1448,7 +1444,6 @@ def search(query):
             # call it
             return view(query)
         except:
-            print("Invalid query 5")
             error = json_error(404, 'Invalid query.',
                             {'query': query, 'normalized': normalized_address,'search_type': search_type})
             return json_response(response=error, status=404)
