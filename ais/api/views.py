@@ -8,7 +8,6 @@ from collections import OrderedDict
 from itertools import chain
 from flask import Response, request, redirect, url_for
 from flask_cachecontrol import cache_for, ResponseIsSuccessfulOrRedirect
-# from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
 from sqlalchemy import func, desc
@@ -40,21 +39,6 @@ def validate_page_param(request, paginator):
 
     return page_num, None
 
-# def get_tag_data(addresses):
-#     all_tags = {}
-#     for address, geocode_type, geom in addresses:
-#         tag_map = {}
-#         tags = AddressTag.query \
-#             .filter_tags_by_address(address.street_address)
-#         # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
-#         for tag in tags:
-#             if not tag.key in tag_map:
-#                 tag_map[tag.key] = []
-#             tag_map[tag.key].append(tag)
-#
-#         all_tags[address.street_address] = tag_map
-#
-#     return all_tags
 
 def get_tag_data(addresses):
     street_addresses = [address.street_address for address, geocode_type, geom in addresses]
@@ -384,7 +368,6 @@ def addresses(query):
         
 
         # Get tag data
-        # if not addresses.all():
         # if addresses.all():
         if not addresses.all():
             if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
@@ -533,7 +516,6 @@ def addresses(query):
 
 @app.route('/block/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/block.yml')
 def block(query):
     """
     Looks up information about the 100-range that the given address falls
@@ -623,7 +605,6 @@ def block(query):
 
 @app.route('/owner/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
     owner_parts = query.upper().split()
@@ -677,7 +658,6 @@ def owner(query):
 
 @app.route('/account/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/account.yml')
 def account(query):
     """
     Looks up information about the property with the given OPA account number.
@@ -740,7 +720,6 @@ def account(query):
 
 @app.route('/pwd_parcel/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/pwd_parcel.yml')
 def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
@@ -810,7 +789,6 @@ def pwd_parcel(query):
 
 @app.route('/dor_parcel/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/mapreg.yml')
 def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
@@ -868,7 +846,6 @@ def dor_parcel(query):
 
 @app.route('/intersection/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/intersection.yml')
 def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
@@ -987,7 +964,6 @@ def intersection(query):
 
 @app.route('/reverse_geocode/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/reverse_geocode.yml')
 def reverse_geocode(query):
 
     query = query.strip('/')
@@ -1112,7 +1088,6 @@ def reverse_geocode(query):
 
 @app.route('/service_areas/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/service_areas.yml')
 def service_areas(query):
 
     query = query.strip('/')
@@ -1199,7 +1174,6 @@ def street(query):
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/search.yml')
 def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)

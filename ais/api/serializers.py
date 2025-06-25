@@ -2,9 +2,8 @@ import json
 from collections import OrderedDict
 from collections.abc import Iterable
 from geoalchemy2.shape import to_shape
-from ais import app, util #, app_db as db
+from ais import app, util 
 from ais.models import Address, ENGINE_SRID
-#from itertools import chain
 
 config = app.config
 tag_fields = config['ADDRESS_SUMMARY']['tag_fields']
@@ -236,19 +235,12 @@ class AddressJsonSerializer (GeoJSONSerializer):
     excluded_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
 
     def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, **kwargs):
-        #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
         self.geom_type = geom_type
-        #self.geom_source = kwargs.get('geom_source') if 'geom_source' in kwargs else None
         self.geom_source = geom_source
-        #self.normalized_address = kwargs.get('normalized_address') if 'normalized_address' in kwargs else None
         self.normalized_address = normalized_address
-        #self.base_address = kwargs.get('base_address') if 'base_address' in kwargs else None
         self.base_address = base_address
-        #self.shape = kwargs.get('shape') if 'shape' in kwargs else None
         self.shape = shape
-        #self.estimated = True if 'estimated' in kwargs else False
         self.estimated = estimated
-        #self.sa_data = kwargs.get('sa_data') if 'sa_data' in kwargs else None
         self.sa_data = sa_data
         self.match_type = match_type
         self.tag_data = tag_data
@@ -310,8 +302,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
         """
         Handle specific exceptions in the formatting of data.
         """
-        # Convert the recycling diversion rate to a percentage with fixed
-        # precision.
+        # Convert recycling diversion rate to a percentage with fixed precision.
         try:
             rate = float(data['properties']['recycling_diversion_rate'])
             data['properties']['recycling_diversion_rate'] = round(rate/100, 3)
@@ -520,8 +511,7 @@ class ServiceAreaSerializer ():
         Handle specific exceptions in the formatting of data.
         """
 
-        # Convert the recycling diversion rate to a percentage with fixed
-        # precision.
+        # Convert recycling diversion rate to a percentage with fixed precision.
         try:
             rate = float(data['service_areas']['recycling_diversion_rate'])
             data['service_areas']['recycling_diversion_rate'] = round(rate/100, 3)
@@ -589,27 +579,6 @@ class AddressTagSerializer():
         Handle specific exceptions in the formatting of data.
         """
         data_comps = []
-        #print(tag_data)
-        ## VERSION FOR TAGS GROUPED BY LINKED SOURCE
-        # for rel_address in tag_data:
-        #     render_tag_data = {}
-        #     render_source = OrderedDict([
-        #         ('street_address', ''),
-        #         ('match_type', ''),
-        #         ('properties', '')
-        #     ])
-        #     tags = tag_data[rel_address]
-        #     linked_path = tags[0]
-        #     render_source['street_address'] = rel_address
-        #     render_source['match_type'] = linked_path if linked_path else 'exact'
-        #     render_source['properties'] = []
-        #     keyvals = tags[1]
-        #     for key, val in keyvals.items():
-        #         render_tag_data[key] = val
-        #     render_source['properties'].append(render_tag_data)
-        #     data_comps.append(render_source)
-
-        # VERSION FOR FLAT RESPONSE WITH ADDRESS TAG FIELDS AS DICTS WITH SOURCE ITEM
         render_source = OrderedDict()
         for rel_address in tag_data:
             render_tag_data = {}

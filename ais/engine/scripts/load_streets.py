@@ -1,8 +1,6 @@
-import sys
 import traceback
 from datetime import datetime
 from pprint import pprint
-# from phladdress.parser import Parser
 from ais import app
 from datum import Database
 from ais.models import StreetSegment
@@ -45,7 +43,6 @@ def main():
     street_table.delete(cascade=True)
 
     print(f'Reading streets table {source_table} from source...')
-    source_fields = list(field_map.values())
     source_rows = source_table.read(to_srid=engine_srid)
     print('Rows retrieved.')
 
@@ -61,10 +58,8 @@ def main():
             # Parse street name
             source_street_full_comps = [str(source_row[x]).strip() for x in \
                 source_street_full_fields]
-            # source_street_full_comps = [x for x in source_street_full_comps if x != '']
             source_street_full_comps = [x for x in source_street_full_comps if x not in ('', None, 'None')]
             source_street_full = ' '.join(source_street_full_comps)
-            seg_id = source_row[field_map['seg_id']]
             try:
                 parsed = parser.parse(source_street_full)
                 if parsed['type'] != 'street':

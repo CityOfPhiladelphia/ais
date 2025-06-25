@@ -43,7 +43,8 @@ def main():
     print("Reading parcels...")
     dor_parcel_read_stmt = """
         select parcel_id, street_address, address_low, address_low_suffix, address_low_frac, address_high, street_predir, 
-        street_name, street_suffix, street_postdir, street_full from 'dor_parcel'
+        street_name, street_suffix, street_postdir, street_full 
+        from dor_parcel
         """
     engine_dor_parcel_rows = etl.fromdb(pg_db, dor_parcel_read_stmt)
     if DEV:

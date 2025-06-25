@@ -12,8 +12,6 @@ def main():
 
     config = app.config
     engine_srid = config['ENGINE_SRID']
-    Parser = config['PARSER']
-    parser = Parser()
     db = datum.connect(config['DATABASES']['engine'])
     WRITE_OUT = True
     geocode_table = db['geocode']
@@ -48,7 +46,6 @@ def main():
     for key, value in tag_map.items():
         street_address = key
         tags = value
-    #    geocode_types = []
         try:
             geocode_types = [x['geocode_type'] for x in geocode_map[street_address]]
         except:

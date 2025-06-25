@@ -1576,10 +1576,6 @@ ADDRESS_SUMMARY = {
         'ng911',
         'true_range',
     ],
-    # 'geocode_types_on_curb': [
-    #     'pwd_curb',
-    #     'dor_curb',
-    # ],
     'geocode_types_in_street': [
         'pwd_street',
         'dor_street',

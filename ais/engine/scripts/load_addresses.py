@@ -125,7 +125,7 @@ def main():
                 if not field_name in address_fields and not all(x in address_fields for x in ['base_address', 'unit_num']):
                     raise ValueError(f'Missing required address field: {field_name}')
             if 'preprocessor' not in source:
-                raise ValueError(f'No preprocessor specified for address source `{source_name}`')
+                raise ValueError(f"No preprocessor specified for address source '{source_name}'")
             preprocessor = source['preprocessor']
 
         # Get other params
@@ -790,7 +790,7 @@ def main():
                                 deferred_warnings.append({
                                     'street_address': street_address,
                                     'reason': 'High address out of range',
-                                    'notes': f'Seg {matching_seg['seg_id']}: {check_from} to {check_to}'
+                                    'notes': f"Seg {matching_seg['seg_id']}: {check_from} to {check_to}"
                                 })
 
                         # If only the high address is in range (unlikely)
@@ -800,7 +800,7 @@ def main():
                             deferred_warnings.append({
                                 'street_address': street_address,
                                 'reason': 'Low address out of range',
-                                'notes': f'Seg {matching_seg['seg_id']}: {check_from} to {check_to}'
+                                'notes': f"Seg {matching_seg['seg_id']}: {check_from} to {check_to}"
                             })
 
                 # Store the match

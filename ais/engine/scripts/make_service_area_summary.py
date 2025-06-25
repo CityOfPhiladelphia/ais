@@ -1,11 +1,8 @@
-import sys
 from datetime import datetime
-from shapely.wkt import loads
 from datetime import datetime
 from copy import deepcopy
 import datum
 from ais import app
-from ais.models import Address
 
 # DEV
 import traceback

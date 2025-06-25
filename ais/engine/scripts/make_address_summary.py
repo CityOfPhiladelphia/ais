@@ -1,11 +1,8 @@
-import sys
 from datetime import datetime
-from shapely.wkt import loads
 from datetime import datetime
 from copy import deepcopy
 import datum
 from ais import app
-from ais.models import Address
 # DEV
 import traceback
 from pprint import pprint
@@ -26,13 +23,10 @@ def main():
     non_summary_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
     geocode_table = db['geocode']
     address_table = db['address']
-    max_values = config['ADDRESS_SUMMARY']['max_values']
     geocode_types = config['ADDRESS_SUMMARY']['geocode_types']
     geocode_priority_map = config['ADDRESS_SUMMARY']['geocode_priority']
-    #geocode_types_on_curb = config['ADDRESS_SUMMARY']['geocode_types_on_curb']
     geocode_types_in_street = config['ADDRESS_SUMMARY']['geocode_types_in_street']
 
-    tag_table = db['address_tag']
     link_table = db['address_link']
     address_summary_table = db['address_summary']
 
@@ -151,7 +145,7 @@ def main():
     cur_first_character = None
 
     print('Reading addresses...')
-    for i, street_name in enumerate(street_names):
+    for _, street_name in enumerate(street_names):
         first_character = street_name[0]
         if first_character != cur_first_character:
             #print(street_name)
@@ -180,7 +174,7 @@ def main():
             # tag_map_obj = {tag_row['key']: tag_row['value']}
             tag_map[street_address].append(tag_row)
 
-        for i, address_row in enumerate(address_rows):
+        for _, address_row in enumerate(address_rows):
             street_address = address_row['street_address']
 
             # Skip unit children
@@ -357,8 +351,15 @@ def main():
             (
             select asm.street_address, asmj.street_code 
             from scnulls asm
-            inner join address_summary asmj on asmj.street_code is not null and asmj.address_low = asm.address_low and asmj.address_low_suffix = asm.address_low_suffix and asmj.address_low_frac = asm.address_low_frac
-            and asm.street_predir = asmj.street_predir and asm.street_name = asmj.street_name and asmj.street_suffix = asm.street_suffix and asmj.street_postdir = asm.street_postdir
+            inner join address_summary asmj 
+            on asmj.street_code is not null
+            and asmj.address_low = asm.address_low
+            and asmj.address_low_suffix = asm.address_low_suffix
+            and asmj.address_low_frac = asm.address_low_frac
+            and asm.street_predir = asmj.street_predir
+            and asm.street_name = asmj.street_name
+            and asmj.street_suffix = asm.street_suffix
+            and asmj.street_postdir = asm.street_postdir 
             group by asm.street_address, asmj.street_code
             )final
             where final.street_address = asm.street_address    
@@ -414,8 +415,11 @@ def main():
             address_sources as
             (
                 select street_address, string_agg(source_name,'|') as sources
-                from (select distinct street_address, source_name from source_address where source_name not in ('AIS', 'voters', 'info_commercial', 'info_residents', 'li_eclipse_location_ids', 'li_address_keys') 
-                            order by street_address, source_name) foo
+                from (select distinct street_address, source_name
+                      from source_address 
+                      where source_name not in
+                      ('AIS', 'voters', 'info_commercial', 'info_residents', 'li_eclipse_location_ids', 'li_address_keys')
+                      order by street_address, source_name) foo
                 group by street_address
             )
             ,
