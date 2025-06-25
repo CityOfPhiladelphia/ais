@@ -1,6 +1,3 @@
-import sys
-import os
-import csv
 from datetime import datetime
 import datum
 from ais import app
@@ -58,17 +55,6 @@ def main():
 
 
     """MAIN"""
-
-    # # Set up logging
-    # LOG_COLS = [
-    # 	'parcel_id',
-    # 	'source_address',
-    # 	'error',
-    # ]
-    # parent_dir = os.path.abspath(os.path.join(__file__, os.pardir))
-    # log = open(parent_dir + '/log/load_pwd_parcels.log', 'w', newline='')
-    # log_writer = csv.writer(log)
-    # log_writer.writerow(LOG_COLS)
 
     print('Dropping indexes...')
     parcel_table.drop_index('street_address')
@@ -140,13 +126,11 @@ def main():
 
     print('Writing parcels...')
     parcel_table.write(parcels, chunk_size=50000)
-    # db.save()
 
     print('Creating indexes...')
     parcel_table.create_index('street_address')
 
     #source_db.close()
     db.close()
-    # log.close()
     print(f'Finished in {datetime.now() - start} seconds')
     print(f'Wrote {len(parcels)} parcels')

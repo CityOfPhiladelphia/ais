@@ -46,9 +46,7 @@ def main():
     prop_table.delete()
 
     print('Reading owners from source...')
-    owner_stmt = f"""
-    select account_num, owners from {owner_table_name}
-    """
+    owner_stmt = f"select account_num, owners from {owner_table_name}"
     owner_rows = ais_source_db.execute(owner_stmt)
     owner_map = {x['account_num']: x['owners'] for x in owner_rows}
 
@@ -75,7 +73,7 @@ def main():
                 comps = parsed['components']
             except:
                 raise ValueError('Could not parse')
-            address = Address(parsed)
+
             street_address = comps['output_address']
 
             # Owners
@@ -101,10 +99,6 @@ def main():
                 'street_address': street_address,
             }
             props.append(prop)
-
-        # except ValueError as e:
-        #     # FEEDBACK
-        #     pass
 
         except Exception as e:
             print(f'Unhandled exception on {source_address}')

@@ -1,6 +1,3 @@
-import sys
-import os
-import csv
 from copy import deepcopy
 from datetime import datetime
 import datum
@@ -18,7 +15,6 @@ def main():
     config = app.config
     db = datum.connect(config['DATABASES']['engine'])
     source_db = datum.connect(config['DATABASES']['gis'])
-    # source_table = source_db['usps_zip4s']
     source_table = source_db['vw_usps_zip4s_ais']
     field_map = {
         'usps_id':			'updatekey',

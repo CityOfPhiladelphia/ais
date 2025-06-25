@@ -1,4 +1,3 @@
-import sys
 import traceback
 from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
@@ -32,7 +31,7 @@ def main():
     aliases = []
 
     # Loop over aliases
-    for i, alias_row in enumerate(source_rows):
+    for _, alias_row in enumerate(source_rows):
         try:
             # Get attrs
             predir = alias_row[field_map['street_predir']]
