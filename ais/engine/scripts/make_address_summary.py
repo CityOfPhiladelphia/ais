@@ -162,13 +162,14 @@ def main():
         # Get address tags
         tag_map = {}  # street_address => tag_key => [tag values]
         tag_keys = [x['tag_key'] for x in tag_fields]
-        tag_where = "key in ({})".format(', '.join(["'{}'".format(x) for x in tag_keys]))
-        tag_stmt = '''
+        tag_where_insert = ', '.join([f"'{x}'" for x in tag_keys])
+        tag_where = f"key in ({tag_where_insert})"
+        tag_stmt = f'''
             select street_address, key, value from address_tag
             where street_address in (
-                select street_address from address where street_name = '{}'
+                select street_address from address where street_name = '{street_name}'
             )
-        '''.format(street_name)
+        '''
         tag_rows = db.execute(tag_stmt)
 
         # Make tag map
@@ -249,11 +250,12 @@ def main():
                         value = ''
 
                 summary_row[field_name] = value
-            # print('{} => {}'.format(field_name, value))
+            # print(f'{field_name} => {value}')
 
             # Geocode
             geocode_rows = geocode_map.get(street_address, [])
-            if len(geocode_rows) == 0: geocode_errors += 1
+            if len(geocode_rows) == 0: 
+                geocode_errors += 1
 
             xy_map = {x['geocode_type']: x['geom'] for x in geocode_rows}
             geocode_vals = None
@@ -439,14 +441,11 @@ def main():
 
     # Insert ungeocoded opa addresses into geocode table with null geoms:
     print("Inserting ungeocoded opa addresses into geocode table with null geom...")
-    stmt = '''
-        insert into geocode (street_address, geocode_type) values ('{street_address}', 99)
-    '''
     for street_address in ungeocoded_opa_addresses:
-        db.execute(stmt.format(street_address=street_address))
+        db.execute(f"insert into geocode (street_address, geocode_type) values ('{street_address}', 99)")
     db.save()
     db.close()
 
-    print('{} geocode errors'.format(geocode_errors))
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'{geocode_errors} geocode errors')
+    print(f'Finished in {datetime.now() - start} seconds')
 

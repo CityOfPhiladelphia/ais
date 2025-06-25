@@ -46,12 +46,12 @@ def main():
     # these addresses, use OPA address instead. Case: 421 S 10TH ST appears three
     # times in parcels but should have unit nums according to OPA.
     print('Loading non-unique parcel addresses...')
-    ambig_stmt = '''
+    ambig_stmt = f'''
         select address
-        from {}
+        from {source_table_name}
         group by address
         having address is not null and count(*) > 1
-    '''.format(source_table_name)
+    '''
     source_db._c.execute(ambig_stmt)
     ambig_rows = source_db._c.fetchall()
     ambig_addresses = set([x['address'] for x in ambig_rows])
@@ -110,8 +110,7 @@ def main():
             try:
                 address = Address(source_address)
             except:
-                # raise ValueError('Could not parse')
-                raise ValueError('Could not parse: {}'.format(source_address))
+                raise ValueError(f'Could not parse: {source_address}')
 
             parcel = dict(address)
             # Remove fields not in parcel tables:
@@ -127,15 +126,15 @@ def main():
 
             # FEEDBACK
             # if source_address != parcel.street_address:
-            # 	print('{} => {}'.format(source_address, parcel.street_address))
+            # 	print(f'{source_address} => {parcel.street_address}')
 
         except ValueError as e:
-            #print('Parcel {}: {}'.format(parcel_id, e))
+            #print(f'Parcel {parcel_id}: {e}')
             # log_writer.writerow([parcel_id, source_address, e])
                     pass
 
         except Exception as e:
-            print('{}: Unhandled error'.format(source_parcel))
+            print(f'{source_parcel}: Unhandled error')
             print(traceback.format_exc())
             raise e
 
@@ -149,5 +148,5 @@ def main():
     #source_db.close()
     db.close()
     # log.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
-    print('Wrote {} parcels'.format(len(parcels)))
+    print(f'Finished in {datetime.now() - start} seconds')
+    print(f'Wrote {len(parcels)} parcels')

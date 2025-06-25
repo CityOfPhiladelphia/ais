@@ -43,7 +43,7 @@ def main():
     print('Making parcel-curbs...')
     for agency in config['BASE_DATA_SOURCES']['parcels']:
         print('  - ' + agency)
-        stmt = '''
+        stmt = f'''
             insert into parcel_curb (parcel_source, parcel_row_id, curb_id) (
               select distinct on (p.id)
                 '{agency}',
@@ -54,12 +54,12 @@ def main():
               on ST_Intersects(p.geom, c.geom)
               order by p.id, st_area(st_intersection(p.geom, c.geom)) desc
          )
-        '''.format(agency=agency)
+        '''
         db.execute(stmt)
         db.save()
 
     print('Creating indexes...')
 
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')
     

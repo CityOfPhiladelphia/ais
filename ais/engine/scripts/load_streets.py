@@ -102,7 +102,7 @@ def main():
             error_count += 1
 
         except Exception as e:
-            print('Unhandled error on row: {}'.format(i))
+            print(f'Unhandled error on row: {i}')
             print(traceback.format_exc())
             raise e
 
@@ -116,6 +116,6 @@ def main():
     FINISH
     '''
 
-    print('{} errors'.format(error_count))
+    print(f'{error_count} errors')
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')

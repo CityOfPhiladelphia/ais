@@ -64,9 +64,9 @@ class GeoJSONSerializer (BaseSerializer):
         ref_address = Address(self.ref_addr)
         address = Address(address.street_address)
         ref_base_address = ' '.join([ref_address.address_full, ref_address.street_full])
-        ref_base_address_no_suffix = '{} {}'.format(ref_address.address_full_num, ref_address.street_full)
+        ref_base_address_no_suffix = f'{ref_address.address_full_num} {ref_address.street_full}'
         base_address = ' '.join([address.address_full, address.street_full])
-        base_address_no_suffix = '{} {}'.format(address.address_full_num, address.street_full)
+        base_address_no_suffix = f'{address.address_full_num} {address.street_full}'
         match_type = None
         unit_type_variations = ["APT", "UNIT", "#"]
         street_address_variations = [address.street_address,

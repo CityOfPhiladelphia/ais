@@ -1,3 +1,4 @@
+# TODO: migrate file from Oracle or remove if unnecessary
 import sys
 import cx_Oracle
 from ais import app
@@ -11,15 +12,15 @@ config = app.config
 dsn = config[dsn_map[table_name]]
 conn = cx_Oracle.connect(dsn)
 curs = conn.cursor()
-sql0 = "DROP TABLE t_{}".format(table_name)
-sql1 = "CREATE TABLE t_{table_name} as (select * from {table_name} where 1=0)".format(table_name=table_name)
-sql2 = "GRANT SELECT on t_{} to SDE".format(table_name)
-sql3 = "GRANT SELECT ON t_{} to GIS_SDE_VIEWER".format(table_name)
-sql4 = "GRANT SELECT ON t_{} to GIS_AIS_SOURCES".format(table_name)
+sql0 = f"DROP TABLE t_{table_name}"
+sql1 = f"CREATE TABLE t_{table_name} as (select * from {table_name} where 1=0)"
+sql2 = f"GRANT SELECT on t_{table_name} to SDE"
+sql3 = f"GRANT SELECT ON t_{table_name} to GIS_SDE_VIEWER"
+sql4 = f"GRANT SELECT ON t_{table_name} to GIS_AIS_SOURCES"
 if table_name == 'address_summary':
-    sql5 = "GRANT SELECT on t_{} to GIS_OPA with GRANT OPTION".format(table_name)
+    sql5 = f"GRANT SELECT on t_{table_name} to GIS_OPA with GRANT OPTION"
 elif table_name == 'dor_parcel_address_check':
-    sql5 = "GRANT SELECT ON t_{} to GIS_DOR".format(table_name)
+    sql5 = f"GRANT SELECT ON t_{table_name} to GIS_DOR"
 curs.execute(sql1)
 curs.execute(sql2)
 curs.execute(sql3)

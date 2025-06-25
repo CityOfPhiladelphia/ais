@@ -57,10 +57,9 @@ def main():
         parcel_error_polygon_table.delete()
 
     print('Reading streets...')
-    street_stmt = '''
+    street_stmt = f'''
         select street_full, seg_id, street_code, left_from, left_to, right_from, right_to
-        from {}
-    '''.format(street_table.name)
+        from {street_table.name}'''
     street_rows = db.execute(street_stmt)
 
     street_code_map = {}  # street_full => street_code
@@ -206,7 +205,7 @@ def main():
                 found_street_full = True
                 if street_full not in street_code_map:
                     found_street_full = False
-                    note = 'Unknown street: {}'.format(street_full)
+                    note = f'Unknown street: {street_full}'
                     had_warning('Unknown street', note=note)
 
                 if street_code:
@@ -218,7 +217,7 @@ def main():
                     elif found_street_full and \
                         street_code_map[street_full] != street_code:
                         actual_street = street_full_map[street_code]
-                        note = 'Street code {} => {}'.format(street_code, actual_street)
+                        note = f'Street code {street_code} => {actual_street}'
                         had_warning('Incorrect street code', note=note)
 
             # QC: Check for low address number
@@ -293,7 +292,7 @@ def main():
             # Get unit
             unit_full = None
             if unit_num:
-                unit_full = '# {}'.format(unit_num)
+                unit_full = f'# {unit_num}'
             
             address = None
             
@@ -308,7 +307,7 @@ def main():
                     # QC: check for miscellaneous parcel modifications
                     street_address = address.street_address
                     if should_check_street_full and source_address != street_address:
-                        note = 'Parser changes: {} => {}'.format(source_address, street_address)
+                        note = f'Parser changes: {source_address} => {street_address}'
                         had_warning('Parser changes', note=note)
 
                     # QC: check for duplicate address
@@ -429,7 +428,7 @@ def main():
                 parcel_map[object_id] = parcel
 
         except Exception as e:
-            print('{}: Unhandled error'.format(source_parcel))
+            print(f'{source_parcel}: Unhandled error')
             print(parcel_id)
             print(traceback.format_exc())
             raise e
@@ -443,7 +442,7 @@ def main():
         parcel_id = source_parcel['mapreg']
         count = parcel_id_counts.get(parcel_id, 0)
         if count > 1:
-            note = 'Parcel ID count: {}'.format(count)
+            note = f'Parcel ID count: {count}'
             had_warning('Duplicate parcel ID', note=note)
 
     # Check for duplicate addresses. Use parcels since source parcels don't have
@@ -454,7 +453,7 @@ def main():
         street_address = parcel['street_address']
         count = address_counts.get(street_address, 0)
         if count > 1:
-            note = 'Address count: {}'.format(count)
+            note = f'Address count: {count}'
             had_warning('Duplicate address', note=note)
 
     # Remember how many parcels we went through before we delete them all
@@ -536,7 +535,7 @@ def main():
         target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
         target_pw = target_dsn[target_dsn.index(":",target_dsn.index(target_user)) + 1:target_dsn.index("@")]
         target_name = target_dsn[target_dsn.index("/", target_dsn.index("@")) + 1:]
-        target_conn = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=target_name, db_user=target_user, db_pw=target_pw))
+        target_conn = psycopg2.connect(f'dbname={target_name} user={target_user} password={target_pw} host=localhost')
         target_table_name = 'public.dor_parcel_error_polygon'
         error_polygon_rows = etl.fromdicts(error_polygons)
         error_polygon_rows.topostgis(target_conn, target_table_name)
@@ -549,7 +548,7 @@ def main():
 
     db.close()
 
-    print('Finished in {} seconds'.format(datetime.now() - start))
-    print('Processed {} parcels'.format(parcel_count))
-    print('{} errors'.format(len(error_map)))
-    print('{} warnings'.format(len(warning_map)))
+    print(f'Finished in {datetime.now() - start}')
+    print(f'Processed {parcel_count} parcels')
+    print(f'{len(error_map)} errors')
+    print(f'{len(warning_map)} warnings')

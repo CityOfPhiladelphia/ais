@@ -22,7 +22,7 @@ def parity_for_range(low, high):
 
 # def dbl_quote(text):
 #     """Place double quotes around a string."""
-#     return '"{}"'.format(text)
+#     return f'"{text}"'
 
 def parse_url(url):
     p = urlparse(url)
@@ -39,8 +39,8 @@ def parse_url(url):
 #     def __init__(self, from_srid, to_srid):
 #         self.project = partial(
 #             pyproj.transform,
-#             pyproj.Proj('+init=EPSG:{}'.format(from_srid)),
-#             pyproj.Proj('+init=EPSG:{}'.format(to_srid))
+#             pyproj.Proj('+init=EPSG:{from_srid}'),
+#             pyproj.Proj('+init=EPSG:{to_srid}')
 #         )
 
 #     def transform(self, from_wkt):
@@ -88,9 +88,9 @@ def project_shape(shape, from_srid, to_srid):
         pyproj.transform,
         # source coordinate system; preserve_units so that pyproj does not
         # assume meters
-        pyproj.Proj(init='epsg:{}'.format(from_srid), preserve_units=True),
+        pyproj.Proj(init=f'epsg:{from_srid}', preserve_units=True),
         # destination coordinate system
-        pyproj.Proj(init='epsg:{}'.format(to_srid), preserve_units=True))
+        pyproj.Proj(init=f'epsg:{to_srid}', preserve_units=True))
 
     return transform(project, shape)
 
@@ -153,14 +153,14 @@ def offset(line, point, distance, seg_side):
 
 	# Get angle of seg
 	seg_angle = atan2(norm_y, norm_x)
-	# print('seg angle: {}'.format(degrees(seg_angle)))
+	# print(f'seg angle: {degrees(seg_angle)}')
 
 	# Get angle of offset line
 	if seg_side == 'L':
 		offset_angle = seg_angle + (pi / 2)
 	else:
 		offset_angle = seg_angle - (pi / 2)
-	# print('offset angle: {}'.format(degrees(offset_angle)))
+	# print(f'offset angle: {degrees(offset_angle)}')
 
 	# Get offset point
 	delta_x = cos(offset_angle) * distance

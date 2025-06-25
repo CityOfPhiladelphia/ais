@@ -15,7 +15,7 @@ def main():
     db_user = engine_dsn[engine_dsn.index("//") + 2:engine_dsn.index(":", engine_dsn.index("//"))]
     db_pw = engine_dsn[engine_dsn.index(":",engine_dsn.index(db_user)) + 1:engine_dsn.index("@")]
     db_name = engine_dsn[engine_dsn.index("/", engine_dsn.index("@")) + 1:]
-    pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+    pg_db = psycopg2.connect(f'dbname={db_name} user={db_user} password={db_pw} host=localhost')
 
     # get source table params
     source_def = config['BASE_DATA_SOURCES']['condos']['dor']
@@ -31,20 +31,20 @@ def main():
     # Read DOR CONDO rows from source
     print("Reading condos...")
     # TODO: get fieldnames from source_field_map
-    dor_condo_read_stmt = '''
-        select condounit, objectid, mapref from {dor_condo_table}
+    dor_condo_read_stmt = f'''
+        select condounit, objectid, mapref from {source_table_name}
         where status in (1,3)
-    '''.format(dor_condo_table = source_table_name)
+    '''
     source_dor_condo_rows = etl.fromdb(source_conn, dor_condo_read_stmt).fieldmap(source_field_map)
     if DEV:
         print(etl.look(source_dor_condo_rows))
 
     # Read DOR Parcel rows from engine db
     print("Reading parcels...")
-    dor_parcel_read_stmt = '''
+    dor_parcel_read_stmt = """
         select parcel_id, street_address, address_low, address_low_suffix, address_low_frac, address_high, street_predir, 
-        street_name, street_suffix, street_postdir, street_full from {dor_parcel_table}
-        '''.format(dor_parcel_table='dor_parcel')
+        street_name, street_suffix, street_postdir, street_full from 'dor_parcel'
+        """
     engine_dor_parcel_rows = etl.fromdb(pg_db, dor_parcel_read_stmt)
     if DEV:
         print(etl.look(engine_dor_parcel_rows))

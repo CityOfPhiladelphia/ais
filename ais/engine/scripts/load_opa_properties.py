@@ -46,9 +46,9 @@ def main():
     prop_table.delete()
 
     print('Reading owners from source...')
-    owner_stmt = """
-    select account_num, owners from {}
-    """.format(owner_table_name)
+    owner_stmt = f"""
+    select account_num, owners from {owner_table_name}
+    """
     owner_rows = ais_source_db.execute(owner_stmt)
     owner_map = {x['account_num']: x['owners'] for x in owner_rows}
 
@@ -107,7 +107,7 @@ def main():
         #     pass
 
         except Exception as e:
-            print('Unhandled exception on {}'.format(source_address))
+            print(f'Unhandled exception on {source_address}')
             print(traceback.format_exc())
             raise e
 
@@ -122,4 +122,4 @@ def main():
     '''
 
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start}')

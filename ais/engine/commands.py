@@ -10,7 +10,7 @@ def engine(script):
         # dynamically pull in engine scripts as a module and call their main function
         # The __init__.py in the ais/engine/scripts folder sets all the .py files
         # in that directory to be importable.
-        mod = __import__("ais.engine.scripts.{}".format(script), fromlist=["main"])
+        mod = __import__(f"ais.engine.scripts.{script}", fromlist=["main"])
         mod.main()
     if not script:
         print('Please pass an arg to the --script flag.')

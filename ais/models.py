@@ -71,7 +71,7 @@ class StreetSegment(db.Model):
             # 'high':     max(self.left_to, self.right_to),
             'street':   self.street_full,
         }
-        return 'StreetSegment: {low} {street}'.format(**attrs)
+        return f"StreetSegment: {attrs['low']} {attrs['street']}"
 
 class StreetAlias(db.Model):
     """Alternate name for a street segment."""
@@ -268,7 +268,7 @@ class AddressQuery(BaseQuery):
             .join(OpaProperty, OpaProperty.account_num==AddressProperty.opa_account_num)
 
         for part in owner_parts:
-            query = query.filter(OpaProperty.owners.like('%{}%'.format(part)))
+            query = query.filter(OpaProperty.owners.like(f'%{part}%'))
         return query
 
 
@@ -374,7 +374,7 @@ class Address(db.Model):
         super(Address, self).__init__(**kwargs)
 
     def __str__(self):
-        return 'Address: {}'.format(self.street_address)
+        return f'Address: {self.street_address}'
 
     def __repr__(self):
         return self.__str__()
@@ -466,7 +466,7 @@ class Address(db.Model):
 
     @property
     def base_address_no_suffix(self):
-        return '{} {}'.format(self.address_full_num, self.street_full)
+        return f'{self.address_full_num} {self.street_full}'
 
     @property
     def is_base(self):
@@ -492,7 +492,7 @@ class Address(db.Model):
     @property
     def child_addresses(self):
         """Returns a list of address objects with in-range street addresses"""
-        address_low_re = re.compile('^{}'.format(self.address_low))
+        address_low_re = re.compile(f'^{self.address_low}')
         address_high_re = re.compile('-\d+')
         child_addresses = []
         for child_num in self.child_nums:
@@ -813,7 +813,7 @@ class AddressSummaryQuery(BaseQuery):
 )
 
     def order_by_owner_address(self, query):
-        return self.order_by(desc(func.similarity(AddressSummary.opa_owners, '{}'.format(query))),
+        return self.order_by(desc(func.similarity(AddressSummary.opa_owners, f'{query}')),
                              AddressSummary.street_name,
                              AddressSummary.street_suffix,
                              AddressSummary.street_predir,
@@ -880,20 +880,20 @@ class AddressSummaryQuery(BaseQuery):
         owner_parts = sorted(owner_parts, key = lambda s: len(s), reverse=True)
         # Match to opa_owners by part
         for part in owner_parts:
-            query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
-        # query = query.order_by(desc(func.similarity(AddressSummary.opa_owners, '{}'.format(owner_full))))
+            query = query.filter(AddressSummary.opa_owners.like(f'%{part}%'))
+        # query = query.order_by(desc(func.similarity(AddressSummary.opa_owners, f'{owner_full}')))
         # tot_len = sum(len(s) for s in owner_parts)
         # if tot_len > OWNER_PARTS_THRESHOLD:
         #     for part in owner_parts:
-        #         query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part)))
+        #         query = query.filter(AddressSummary.opa_owners.like(f'%{part}%'))
         # else:
         #     for part in owner_parts:
-        #         query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+        #         query = query.filter(AddressSummary.opa_owners.like(f'%{part}%')).limit(
         #             OWNER_RESPONSE_LIMIT).from_self()
         #     if not query.all():
         #         query = self
         #         for part in reversed(owner_parts):
-        #             query = query.filter(AddressSummary.opa_owners.like('%{}%'.format(part))).limit(
+        #             query = query.filter(AddressSummary.opa_owners.like(f'%{part}%')).limit(
         #                 OWNER_RESPONSE_LIMIT).from_self()
         return query
 
