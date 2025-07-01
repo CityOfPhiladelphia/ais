@@ -298,12 +298,6 @@ class Address(db.Model):
         primaryjoin='foreign(Geocode.street_address) == Address.street_address',
         lazy='joined')
 
-    # zip_info = db.relationship(
-    #     'AddressZip',
-    #     primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
-    #     lazy='joined',
-    #     uselist=False)
-
     pwd_parcel = db.relationship(
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == Address.street_address',
@@ -642,22 +636,6 @@ class AddressProperty(db.Model):
     opa_account_num = db.Column(db.Text) #, db.ForeignKey('opa_property.account_num'))
     match_type = db.Column(db.Text)
 
-class AddressZip(db.Model):
-    '''
-    Stores information about the relationship between addresses and ZIP ranges.
-    '''
-    id = db.Column(db.Integer, primary_key=True)
-    street_address = db.Column(db.Text)
-    usps_id = db.Column(db.Text)
-    match_type = db.Column(db.Text)
-
-    zip_range = db.relationship(
-        'ZipRange',
-        primaryjoin='foreign(ZipRange.usps_id) == AddressZip.usps_id',
-        lazy='joined',
-        uselist=False)
-
-
 
 #############
 # GEOCODING #
@@ -767,30 +745,6 @@ class ServiceAreaDiff(db.Model):
     ulrs_value = db.Column(db.Text)
     distance = db.Column(db.Float)
     geom = db.Column(Geometry(geometry_type='POINT', srid=ENGINE_SRID))
-
-#############
-# ZIP CODES #
-#############
-
-class ZipRange(db.Model):
-    '''
-    This is essentially a direct copy of the USPS ZIP+4 table.
-    '''
-    id = db.Column(db.Integer, primary_key=True)
-    usps_id = db.Column(db.Text)
-    address_low = db.Column(db.Integer)
-    address_high = db.Column(db.Integer)
-    address_oeb = db.Column(db.Text)
-    street_predir = db.Column(db.Text)
-    street_name = db.Column(db.Text)
-    street_suffix = db.Column(db.Text)
-    street_postdir = db.Column(db.Text)
-    unit_type = db.Column(db.Text)
-    unit_low = db.Column(db.Text)
-    unit_high = db.Column(db.Text)
-    unit_oeb = db.Column(db.Text)
-    zip_code = db.Column(db.Text)
-    zip_4 = db.Column(db.Text)
 
 
 ############
@@ -1259,12 +1213,6 @@ class AddressSummary(db.Model):
             lazy='joined',
             uselist=False)
 
-    # zip_info = db.relationship(
-    #     'AddressZip',
-    #     primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
-    #     lazy='select',
-    #     uselist=False)
-
     pwd_parcel = db.relationship(
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == AddressSummary.street_address',
@@ -1373,51 +1321,6 @@ class MultipleSegLine(db.Model):
     seg_id = db.Column(db.Integer)
     parcel_source = db.Column(db.Text)
     geom = db.Column(Geometry(geometry_type='LINESTRING', srid=ENGINE_SRID))
-
-class DorParcelAddressAnalysis(db.Model):
-    '''
-    Table for post-engine-build DOR parcel address analysis report.
-    '''
-    objectid = db.Column(db.Integer, primary_key=True)
-    mapreg = db.Column(db.Text)
-    status = db.Column(db.Integer)
-    stcod = db.Column(db.Integer)
-    house = db.Column(db.Integer)
-    suf = db.Column(db.Text)
-    unit = db.Column(db.Text)
-    stex = db.Column(db.Integer)
-    stdir = db.Column(db.Text)
-    stnam = db.Column(db.Text)
-    stdes = db.Column(db.Text)
-    stdessuf = db.Column(db.Text)
-    concatenated_address = db.Column(db.Text)
-    std_street_address  = db.Column(db.Text)
-    std_address_low = db.Column(db.Integer)
-    std_address_low_suffix = db.Column(db.Text)
-    std_high_num = db.Column(db.Integer)
-    std_street_predir = db.Column(db.Text)
-    std_street_name = db.Column(db.Text)
-    std_street_suffix = db.Column(db.Text)
-    std_address_postdir = db.Column(db.Text)
-    std_unit_type = db.Column(db.Text)
-    std_unit_num = db.Column(db.Text)
-    std_street_code = db.Column(db.Integer)
-    std_seg_id = db.Column(db.Integer)
-    cl_addr_match = db.Column(db.Text)
-    change_stcod = db.Column(db.Integer)
-    change_house = db.Column(db.Integer)
-    change_suf = db.Column(db.Integer)
-    change_unit = db.Column(db.Integer)
-    change_stex = db.Column(db.Integer)
-    change_stdir = db.Column(db.Integer)
-    change_stnam = db.Column(db.Integer)
-    change_stdes = db.Column(db.Integer)
-    change_stdessuf = db.Column(db.Integer)
-    no_address = db.Column(db.Integer)
-    opa_account_nums = db.Column(db.Text)
-    num_parcels_w_mapreg = db.Column(db.Integer)
-    num_parcels_w_address = db.Column(db.Integer)
-    shape = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=ENGINE_SRID))
 
 class DorCondominiumError(db.Model):
     id = db.Column(db.Integer, primary_key=True)
