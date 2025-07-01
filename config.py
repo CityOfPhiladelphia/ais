@@ -157,39 +157,6 @@ BASE_DATA_SOURCES = {
 def multi_strip(str_):
     return str_.strip(' ').lstrip('0')
 
-# Preprocessor for L&I addresses
-# Not using this since Nick is cleaning everything up in the GIS_LNI DB.
-# def make_li_address(comps):
-#     out_comps = []
-#     # Make primary address num.
-#     addr_num = multi_strip(comps['address_low'])
-#     # Handle address suffixes.
-#     suf = comps['address_low_suffix'].strip()
-#     if len(suf) > 0:
-#         if suf.isnumeric():
-#             # Decode fractionals.
-#             if suf == '2':
-#                 out_comps.append('1/2')
-#         elif suf.isalpha():
-#             addr_num += suf
-#         else: raise ValueError('Unhandled L&I postdir: {}'.format(suf))
-#     # Handle address extension.
-#     addr_high = comps['address_high']
-#     addr_high = addr_high.lstrip('0') if isinstance(addr_high, str) else None
-#     addr_num += '-{}'.format(addr_high) if addr_high else ''
-#     out_comps.append(addr_num)
-#     # Add remaining fields
-#     for field_suffix in ['predir', 'name', 'suffix']:
-#         out_comps.append(comps['street_' + field_suffix])
-#     # Unit
-#     unit_num = comps['unit_num']
-#     if unit_num and len(multi_strip(unit_num)) > 0:
-#         out_comps += ['#', comps['unit_num']]
-#     # Filter blanks
-#     out_comps = [x for x in out_comps if x and len(multi_strip(x)) > 0]
-#     addr = ' '.join(out_comps)
-#     return addr
-
 def make_pwd_account_address(comps):
     a = comps['street_address']
     a = re.sub('-R(EAR)?(?= )', 'R', a)
@@ -222,25 +189,6 @@ def make_voter_name(comps):
     last_name = comps['last_name']
     name = (first_name, middle_name, last_name)
     return " ".join(filter(None, name))
-
-def make_rtt_address(comps):
-    low_num = str(comps['address_low']) if comps['address_low'] else None
-    address_low_suffix = comps['address_low_suffix']
-    addr_high = comps['address_high']
-    addr_high = None if addr_high == '-1' else addr_high
-    addr_high = addr_high.lstrip('0') if isinstance(addr_high, str) else None
-    addr_num = '{low_num}-{addr_high}'.format(low_num=low_num, addr_high=addr_high) if low_num and addr_high else low_num
-    addr_num = addr_num + address_low_suffix if addr_num and address_low_suffix else addr_num
-    unit_num = '#' + str(comps['unit_num']) if comps['unit_num'] else None
-    street_predir = comps['street_predir']
-    street_postdir = comps['street_postdir']
-    street_name = comps['street_name']
-    street_type = comps['street_type']
-    out_comps = (addr_num, street_predir, street_name, street_type, street_postdir, unit_num)
-    # Filter blanks
-    out_comps = [x for x in out_comps if x and len(multi_strip(x)) > 0]
-    addr = ' '.join(out_comps)
-    return addr
 
 def make_dor_parcel_id(comps):
     reg_map_id = comps['reg_map_id']
@@ -485,31 +433,6 @@ ADDRESSES = {
                 },
             ],
         },
-        # {
-        #     'name': 'rtt',
-        #     'table': 'gis_dor_rttmapping.cris_properties',
-        #     'db': 'gisp_t',
-        #     'address_fields': {
-        #         'address_low': 'house_number',
-        #         'address_low_suffix': 'house_num_suffix',
-        #         'address_high': 'house_num_range',
-        #         'street_predir': 'street_dir',
-        #         'street_postdir': 'street_dir_suffix',
-        #         'street_name': 'street_name',
-        #         'street_type': 'street_type',
-        #         'unit_num': 'condo_unit',
-        #     },
-        #     'preprocessor': make_rtt_address,
-        #     'tag_fields': [
-        #         {
-        #             'key': 'dor_parcel_id',
-        #             'source_fields': ['reg_map_id'],
-        #             'preprocessor': make_dor_parcel_id,
-        #         },
-        #     ],
-        #     # Query only records with non-null reg_map_id
-        #     'where':            'reg_map_id is not null',
-        # },
     ]
 }
 
