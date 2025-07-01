@@ -436,16 +436,6 @@ ADDRESSES = {
     ]
 }
 
-# ERROR_TABLES = {
-#     'dor_parcels': {
-#         'error_table':      'dor_parcel_error',
-#         'polygon_table':    'dor_parcel_error_polygon',
-#     },
-#     'addresses': {
-#         'error_table':      'address_error',
-#     },
-# }
-
 GEOCODE = {
     'centerline_offset':        5,
     'centerline_end_buffer':    17,
@@ -507,7 +497,7 @@ SERVICE_AREAS = {
                     'db':                   'citygeo',
                     'table':                'viewer_citygeo.phillyrising_boundaries',
                     'value_field':          'site_name',
-                    'object_id_field':      'objectid', # the field that was objectid_12 in oracle is now called just objectid in postgres.
+                    'object_id_field':      'objectid', 
                 },
             },
         },
@@ -766,18 +756,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'neighborhood',
-        #     'name':                 'Neighborhood',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_planning.Neighborhoods',
-        #             'value_field':          'name',
-        # #         },
-        # #     },
-        # # },
         {
             'layer_id':                     'zoning',
             'name':                         'Zoning',
@@ -841,59 +819,6 @@ SERVICE_AREAS = {
             },
             'value_method':                 'yes_or_no',
         },
-
-        # STEEP SLOPE PROTECTION AREAS
-        # {
-        #     'layer_id':             'zoning_steepslopeprotectionarea',
-        #     'name':                 'Zoning_SteepSlopeProtectionArea',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.Zoning_SteepSlopeProtectArea_r',
-        #             'value_field':          'overlay_na',
-        #         },
-        #     },
-        # },
-        # FEMA FLOOD ZONES
-        # {
-        #     'layer_id':             'fema_flood_plain_100',
-        #     'name':                 'Fema_Flood_Plain_100',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.FEMA_100_FLOOD_PLAIN',
-        #             'value_field':          'fld_zone',
-        #         },
-        #     },
-        # },
-        # {
-        #     'layer_id':             'fema_flood_plain_500',
-        #     'name':                 'Fema_Flood_Plain_500',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.FEMA_500_FLOOD_PLAIN',
-        #             'value_field':          'fld_zone',
-        #         },
-        #     },
-        # },
-        # # Land use was slowing the service area summary script down
-        # # considerably.
-        # # {
-        # #   'layer_id':             'land_use',
-        # #   'name':                 'Land Use',
-        # #   'description':          '',
-        # #   'sources': {
-        # #       'polygon':  {
-        # #           'db':                   'gis_sa',
-        # #           'table':                'gis_planning.Land_Use',
-        # #           'value_field':          'c_dig2desc',
-        # #       },
-        # #   },
-        # # },
         # POLICE
         {
             'layer_id':                     'police_division',
@@ -907,18 +832,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'police_sector',
-        #     'name':                 'Police Sector',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_police.Boundaries_Sector',
-        #             'value_field':          'distsec_id',
-        #         },
-        #     },
-        # },
         {
             'layer_id':                     'police_district',
             'name':                         'Police District',
@@ -946,36 +859,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # GIS_RDA
-        #   SHOULD THIS GO IN SOURCES?
-        #     investigate whether 2 addreses are same property
-        # {
-        #     'layer_id':             'rda_landbank_lama_assets',
-        #     'name':                 'RDA_Landbank_Lama_Assets',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_rda.lama_assets_0725',
-        #             'value_field':          'asset_id',
-        #         },
-        #     },
-        # },
-
-        # # GIS_RECYCLE
-        # {
-        #     'layer_id':             'recreation_district',
-        #     'name':                 'Recreation District',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_orphan.Recreation_Districts',
-        #             'value_field':          'dist_num',
-        #         },
-        #     },
-        # },
-
        # STREETS
         {
             'layer_id':                     'rubbish_recycle_day',
@@ -1319,7 +1202,6 @@ SERVICE_AREAS = {
                     'value_field':          'water_plate',
                 },
             },
-            # 'source_account':       'gis',
         },
         {
             'layer_id':                     'pwd_center_city_district',
@@ -1346,19 +1228,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # GIS_GSG
-        # {
-        #     'layer_id':                     'litter_schema_test',
-        #     'name':                         'Litter Schema Test',
-        #     'description':                  '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_gsg.LITTER_SCHEMA_TEST',
-        #             'value_field':          'score',
-        #         },
-        #     },
-        # },
         # OHCD
         {
             'layer_id':                     'neighborhood_advisory_committee',
@@ -1525,8 +1394,6 @@ ADDRESS_SUMMARY = {
     'max_values':           5,
     # TODO: strip out relationship fields from tag fields
     'tag_fields': [
-        # traverse_links was deprecated in favor of dedicated relationship
-        # tables: address-parcel, address-street, and address-property
         {
             'name':                 'zip_code',
             'tag_key':              'usps_zipcode',
