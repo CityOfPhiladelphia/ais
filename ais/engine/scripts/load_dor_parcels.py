@@ -139,7 +139,6 @@ def main():
         if i % 50000 == 0:
             print(i)
         try:
-
             should_add_parcel = True
 
             # Strip whitespace, null out empty strings, zeroes
@@ -191,8 +190,14 @@ def main():
 
             # QC: Check street components
             if street_name is None:
-                should_add_parcel = False
-                had_error('No street name')
+                if street_code is not None:
+                    street_full = street_full_map.get(street_code, None)
+                    # print(203, street_name, street_code)
+                    # print(street_full_map)
+                else:
+                    should_add_parcel = False
+                    had_error('No street name or street code')
+
             if street_code is None:
                 had_warning('No street code')
 

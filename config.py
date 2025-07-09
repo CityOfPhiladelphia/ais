@@ -393,8 +393,8 @@ ADDRESSES = {
         },
         {
             'name':                 'li_address_keys',
-            'table':                'gis_lni.parsed_addr',
-            'db':                   'gislni',
+            'table':                'viewer_li.hansen_address',
+            'db':                   'citygeo',
             'address_fields':       {
                 'street_address':       'addr_concat',
             },
@@ -407,7 +407,7 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'viewer_li.active_retired_parcels',
+            'table':                'citygeo.vw_eclipse_address_ais_source',
             'db':                   'citygeo',
             'address_fields':       {
                 'base_address':       'base_address',
@@ -418,7 +418,7 @@ ADDRESSES = {
             'tag_fields': [
                 {
                     'key':              'eclipse_location_id',
-                    'source_fields':     ['addressobjectid'],
+                    'source_fields':     ['primaryaddressobjectid'],
                 },
             ],
         },
