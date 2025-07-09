@@ -3,7 +3,7 @@ import re
 from flask_sqlalchemy import BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
-from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct
+from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct, select
 from sqlalchemy.orm import aliased
 from sqlalchemy.exc import NoSuchTableError
 from ais import app, app_db as db
@@ -1069,6 +1069,17 @@ class AddressSummaryQuery(BaseQuery):
                 .order_by(AddressSummary.opa_address, desc(AddressSummary.street_address == AddressSummary.opa_address)) \
                 .distinct(AddressSummary.opa_address)
                 # The order_by and distinct functions are for ensuring no duplicate OPA_addresses are returned
+            return query
+        else:
+            return self
+
+    def exclude_non_opal(self, should_exclude=True):
+        """Filter for addresses that have at least one OPAL location."""
+        if should_exclude:
+            # use Core-style syntax to create a join-compatible selectable of just one column
+            opal_addresses_sq = select(OpalLocation.street_address).distinct().alias("opal_addresses_sq")
+            query = self\
+                .join(opal_addresses_sq, opal_addresses_sq.c.street_address == AddressSummary.street_address)
             return query
         else:
             return self

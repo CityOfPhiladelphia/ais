@@ -395,6 +395,7 @@ def addresses(query):
             is_unit=unit_type is not None,
             request=request) \
             .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+            .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
             .get_address_geoms(request) \
             .order_by_address()
         
@@ -404,6 +405,10 @@ def addresses(query):
         if not addresses.all():
             if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
                 error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+                return json_response(response=error, status=404)
+            elif 'opal_only' in request.args and request.args['opal_only'].lower() != 'false':
+                error = json_error(404, 'Could not find any addresses matching the query that have an associated OPAL location.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             else:
@@ -426,11 +431,18 @@ def addresses(query):
         # Ensure that we have results
         addresses_count = paginator.collection_size
 
+        print(f"addresses_count: {addresses_count}")
+
         # Handle unmatched addresses TODO: After deciding todo above, update this section (i.e. delete)
         if addresses_count == 0:
+            print(request.args)
 
             if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
                 error = json_error(404, 'Could not find any opa addresses matching the query.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+                return json_response(response=error, status=404)
+            elif 'opal_only' in request.args and request.args['opal_only'].lower() != 'false':
+                error = json_error(404, 'Could not find any addresses matching the query that have an associated OPAL location.',
                                    {'query': query, 'normalized': normalized_address, 'search_type': search_type})
                 return json_response(response=error, status=404)
             elif 'estimate' in request.args and request.args['estimate'].lower() == 'false':
@@ -541,6 +553,10 @@ def addresses(query):
             error = json_error(404, 'Could not find any opa addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
+        elif 'opal_only' in request.args and request.args['opal_only'].lower() != 'false':
+            error = json_error(404, 'Could not find any addresses matching the query that have an associated OPAL location.',
+                                {'query': query, 'normalized': normalized_address, 'search_type': search_type})
+            return json_response(response=error, status=404)
         elif 'estimate' in request.args and request.args['estimate'].lower() == 'false':
             error = json_error(404, 'Could not find any known addresses matching the query.',
                                     {'query': query, 'normalized': normalized_address, 'search_type': search_type})
@@ -598,6 +614,7 @@ def block(query):
         .filter(AddressSummary.address_low < block_num + 100)\
         .exclude_children()\
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
         .get_address_geoms(request)
 
     addresses = addresses.order_by_address()
@@ -610,6 +627,10 @@ def block(query):
         if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
             error = json_error(404, 'Could not find any opa addresses matching query.',
                                     {'query': query, 'normalized': normalized_address,'search_type': search_type})
+            return json_response(response=error, status=404)
+        elif 'opal_only' in request.args and request.args['opal_only'].lower() != 'false':
+            error = json_error(404, 'Could not find any addresses matching the query that have an associated OPAL location.',
+                                   {'query': query, 'normalized': normalized_address, 'search_type': search_type})
             return json_response(response=error, status=404)
         else:
             error = json_error(404, 'Could not find any address on a block matching query.',
@@ -657,6 +678,7 @@ def owner(query):
     addresses = AddressSummary.query\
         .filter_by_owner(*owner_parts) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by_owner_address(query) \
         .limit(OWNER_RESPONSE_LIMIT)
@@ -712,12 +734,6 @@ def account(query):
     search_type = parsed['type']
     normalized = parsed['components']['output_address']
 
-    # addresses = AddressSummary.query\
-    #     .filter(AddressSummary.opa_account_num==query)\
-    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-    #     .get_address_geoms(request) \
-    #     .sort_by_source_address_from_search_type(search_type)
-
     tagged_opa_account_nums = OpaProperty.query \
         .filter(OpaProperty.account_num == normalized).all()
     street_addresses = tuple(set([x.street_address for x in tagged_opa_account_nums]))
@@ -725,6 +741,7 @@ def account(query):
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
         .get_address_geoms(request) \
         .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
 
@@ -777,11 +794,6 @@ def pwd_parcel(query):
                            {'query': query})
         return json_response(response=error, status=404)
     search_type = 'pwd_parcel_id'
-    # addresses = AddressSummary.query\
-    #     .filter(AddressSummary.pwd_parcel_id==query) \
-    #     .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
-    #     .get_address_geoms(request) \
-    #     .sort_by_source_address_from_search_type(search_type)
 
     tagged_pwd_parcel_ids = PwdParcel.query \
         .filter(PwdParcel.parcel_id==query)
@@ -798,6 +810,7 @@ def pwd_parcel(query):
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
         .get_address_geoms(request)\
         .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
 
@@ -860,6 +873,7 @@ def dor_parcel(query):
     addresses = AddressSummary.query \
         .filter(AddressSummary.street_address.in_(street_addresses)) \
         .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false') \
         .get_address_geoms(request)\
         .order_by(desc(AddressSummary.street_address.in_(street_addresses)))
 
@@ -1104,7 +1118,8 @@ def reverse_geocode(query):
         .outerjoin(Geocode, Geocode.street_address == AddressSummary.street_address)\
         .filter(Geocode.geocode_type == geocode_type) \
         .add_columns(Geocode.geocode_type, ST_Transform(Geocode.geom, srid)) \
-        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false')
+        .exclude_non_opa('opa_only' in request.args and request.args['opa_only'].lower() != 'false') \
+        .exclude_non_opal('opal_only' in request.args and request.args['opal_only'].lower() != 'false')
 
     addresses = addresses.order_by_address()
 
