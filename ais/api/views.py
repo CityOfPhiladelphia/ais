@@ -1291,9 +1291,12 @@ def opal_location_id(query):
     # Get tag data
     all_tags = get_tag_data(addresses)
 
-    # Get OPAL location data
-    # TODO: make a flag that sets specific_locationid to None
-    all_opals = get_opal_data(addresses, specific_locationid=normalized)
+    # Get OPAL location data. Default to just the input opal_location_id unless flagged otherwise
+    if 'just_this_location_id' in request.args and request.args['just_this_location_id'].lower() == 'false':
+        all_opals = get_opal_data(addresses)
+    else:
+        all_opals = get_opal_data(addresses, specific_locationid=normalized)
+
 
     # Serialize the response
     addresses_page = paginator.get_page(page_num)
