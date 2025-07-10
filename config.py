@@ -336,7 +336,7 @@ ADDRESSES = {
             'db':                   'citygeo',
             'address_fields':       {
                 'base_address':       'base_address',
-                'unit_num':           'unit_num',
+                'unit_num':           'unit_number',
                 'unit_type':          'unit_type',
             },
             'preprocessor':         make_eclipse_address,
