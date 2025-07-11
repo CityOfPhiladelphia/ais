@@ -84,12 +84,12 @@ def main():
 
     for layer in layers:
         layer_id = layer['layer_id']
-        print('  - {}'.format(layer_id))
+        print(f'  - {layer_id}')
         sources = layer['sources']
 
         # Check for conflicting source types
         if 'line_single' in sources and 'line_dual' in sources:
-            raise Exception('Too many line sources for {}'.format(layer_id))
+            raise Exception(f'Too many line sources for {layer_id}')
 
         for source_type, source in sources.items():
             # Connect to DB
@@ -97,7 +97,7 @@ def main():
             try:
                 source_db = datum.connect(config['DATABASES'][source_db_name])
             except KeyError:
-                print('Database {} not found'.format(layer_id))
+                print(f'Database {layer_id} not found')
                 continue
 
             source_table_name = source['table']
@@ -259,4 +259,4 @@ def main():
         line_dual_table.create_index('seg_id')
 
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')

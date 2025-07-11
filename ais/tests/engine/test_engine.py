@@ -75,7 +75,11 @@ def test_compare_num_tables(startup):
     # assert len(startup['engine_to_test_cur'].tables) == len(startup['engine_to_compare_cur'].tables)
     engine_to_test_cur = startup['engine_to_test_cur']
     engine_to_compare_cur = startup['engine_to_compare_cur']
-    table_count_stmt = "select count(*) from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE' and table_name not in {}".format(str(startup['ignore_tables']))
+    table_count_stmt = f"""
+        select count(*) from information_schema.tables 
+        where table_schema = 'public' and 
+        table_type = 'BASE TABLE' and 
+        table_name not in {str(startup['ignore_tables'])}"""
     engine_to_test_cur.execute(table_count_stmt)
     new_table_count = engine_to_test_cur.fetchall()
 
@@ -102,7 +106,7 @@ def test_num_rows_bt_db_tables(startup):
 
         # ndb_table = startup['engine_to_test_cur'][ntable]
         # n_rows = ndb_table.count
-        row_count_stmt = "select count(*) as count from {}".format(table_name)
+        row_count_stmt = f"select count(*) as count from {table_name}"
         engine_to_test_cur.execute(row_count_stmt)
         n_rows = engine_to_test_cur.fetchall()
 
@@ -138,7 +142,8 @@ def test_geocode_types(startup):
 
 def test_matching_indexes(startup):
     """Test #4: Check if all indexes are present (compare new an old builds)"""
-    stmt = '''
+    ignore_tables=startup['unused_tables']
+    stmt = f'''
         SELECT n.nspname as "Schema",
           c.relname as "Name",
           CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i'
@@ -155,7 +160,7 @@ def test_matching_indexes(startup):
               AND pg_catalog.pg_table_is_visible(c.oid)
               AND c2.relname NOT IN {ignore_tables}
         ORDER BY 1,2;
-    '''.format(ignore_tables=startup['unused_tables'])
+    '''
     startup['engine_to_test_cur'].execute(stmt)
     engine_to_test_cur_result = startup['engine_to_test_cur'].fetchall()
     startup['engine_to_compare_cur'].execute(stmt)
@@ -174,7 +179,7 @@ def test_matching_indexes(startup):
             unmatched_indexes.append({'name': old_row['Name'], 'table': old_row['Table']})
     assert len(unmatched_indexes) == 0, (unmatched_indexes)
     # assert len(engine_to_test_cur_result) == len(engine_to_compare_cur_result), (
-    # "new db has {} more indexes.".format(len(engine_to_test_cur_result) - len(engine_to_compare_cur_result)))
+    # f"new db has {len(engine_to_test_cur_result) - len(engine_to_compare_cur_result)} more indexes.")
 
 
 def test_num_opa_records(startup):

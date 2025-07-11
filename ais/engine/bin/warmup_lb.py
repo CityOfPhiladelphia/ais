@@ -80,9 +80,9 @@ def main(proxy, dbpass, gatekeeper_key):
 
 
     read_conn = psycopg2.connect(f"dbname=ais_engine host=localhost user=ais_engine password={dbpass}")
-    address_count = etl.fromdb(read_conn, 'select count(*) as N from {}'.format(warmup_address_table_name))
+    address_count = etl.fromdb(read_conn, f'select count(*) as N from {warmup_address_table_name}')
     n = list(address_count.values('n'))[0]
-    warmup_rows = etl.fromdb(read_conn, 'select {address_field} from {table} OFFSET floor(random()*{n}) limit {limit}'.format(address_field=warmup_address_field, table=warmup_address_table_name, n=n, limit=warmup_row_limit))
+    warmup_rows = etl.fromdb(read_conn, f'select {warmup_address_field} from {warmup_address_table_name} OFFSET floor(random()*{n}) limit {warmup_row_limit}')
     # print(etl.look(warmup_rows))
     responses = warmup_rows.addfield('response_status', (lambda a: query_address(a['street_address']))).progress(100)
     #print(etl.look(responses))
