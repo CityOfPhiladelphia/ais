@@ -251,7 +251,12 @@ def make_eclipse_address(comps):
     unit_num = comps['unit_num']
     if base_address:
         if unit_num:
-            return base_address + ' ' + unit_num
+            if unit_type:
+                return base_address + ' ' + unit_type + ' ' + unit_num
+            else:
+                return base_address + ' # ' + unit_num
+        elif unit_type:
+            return base_address + ' ' + unit_type
         else:
             return base_address
     else:
@@ -378,17 +383,18 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'citygeo.vw_eclipse_address_ais_source',
+            'table':                'viewer_li.active_retired_parcels',
             'db':                   'citygeo',
             'address_fields':       {
                 'base_address':       'base_address',
-                'unit_num':           'unit_number',
+                'unit_num':           'unit_num',
+                'unit_type':          'unit_type',
             },
             'preprocessor':         make_eclipse_address,
             'tag_fields': [
                 {
                     'key':              'eclipse_location_id',
-                    'source_fields':     ['primaryaddressobjectid'],
+                    'source_fields':     ['addressobjectid'],
                 },
             ],
         },
