@@ -31,25 +31,30 @@ def main():
     opal_locations = []
     for source_row in source_rows:
         opal_loc = {x: source_row[field_map[x]] for x in field_map}
-        # TODO: passyunk parse 
         full_source_address_raw = ' '.join([opal_loc['address_line_1'], opal_loc['address_line_2']]).strip()
         try:
             parsed = parser.parse(full_source_address_raw)
             parsed_addr = parsed['components']['output_address']
             if parsed['type'] != 'address':
-                raise ValueError('Invalid address')
+                raise ValueError(f'Invalid address')
             opal_loc['street_address'] = parsed_addr
 
+            # compress indicator columns for location usages into one text column
             if opal_loc['is_ship_to'] == 'Y':
                 opal_loc['location_usage'] = 'ship-to'
+            elif opal_loc['is_inventory'] == 'Y' and opal_loc['is_business_asset'] == 'Y':
+                opal_loc['location_usage'] = 'inventory and business asset'
+            elif opal_loc['is_inventory'] == 'Y':
+                opal_loc['location_usage'] = 'inventory'
             elif opal_loc['is_business_site'] == 'Y' and opal_loc['is_business_asset'] == 'Y':
-                opal_loc['location_usage'] = 'both'
+                opal_loc['location_usage'] = 'business site and business asset'
             elif opal_loc['is_business_site'] == 'Y':
                 opal_loc['location_usage'] = 'business site'
             elif opal_loc['is_business_asset'] == 'Y':
                 opal_loc['location_usage'] = 'business asset'
+            
             else:
-                raise ValueError("Location does not have a usage!")
+                raise ValueError(f"Location does not have a usage!")
 
             OPAL_FINAL_COLS = [
                 'id', 'location_id', 'location_name', 'street_address', 

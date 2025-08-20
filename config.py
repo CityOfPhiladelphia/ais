@@ -154,7 +154,7 @@ BASE_DATA_SOURCES = {
     },
     'opal_locations': {
         'db':               'citygeo',
-        'table':            'viewer_opal.cleanup_locations_deduplicated',
+        'table':            'citygeo.cleanup_locations_latest_full',
         'field_map': {
             'location_id':              'location_id',
             'location_name':            'location_name',
@@ -165,9 +165,11 @@ BASE_DATA_SOURCES = {
             'is_ship_to':               'location_usage_ship_to',
             'is_business_site':         'location_usage_business_site',
             'is_business_asset':        'location_usage_business_asset',
+            'is_inventory':             'location_usage_inventory',
+            'ship_to_location_id':      'ship_to_location_id'
         },
         # remove the numeric ones like '04 - 232'
-        'where':            "location_name !~ '^\d{2}\s-\s' and address_line_1 != ''",
+        'where':            "location_name !~ '^\d{2}\s-\s' and address_line_1 != '' and addres_line_1 !~ ' OVER '",
     },
 }
 
