@@ -62,15 +62,15 @@ multi_seg_lines = []
 
 for multi_addr in multi_addrs:
 	# Get child addresses
-	stmt = '''
+	stmt = f'''
 		select adl.address_1 from address_link adl
 		join address a on
 		adl.address_1 = a.street_address
 		where
-			adl.address_2 = '{}' and
+			adl.address_2 = '{multi_addr}' and
 			adl.relationship = 'in range'
 		order by a.address_low
-	'''.format(multi_addr)
+	'''
 	ais_db.c.execute(stmt)
 	child_rows = [x['address_1'] for x in ais_db.c.fetchall()]
 
@@ -78,8 +78,7 @@ for multi_addr in multi_addrs:
 	high_address = child_rows[-1]
 
 	# Get parcel geocode for low address
-	geocode_where = "street_address = '{}' and geocode_type in ('pwd_parcel', \
-		'dor_parcel')".format(multi_addr)
+	geocode_where = f"street_address = '{multi_addr}' and geocode_type in ('pwd_parcel', 'dor_parcel')"
 	geocode_rows = ais_db.read('geocode', ['*'], geom_field='geometry', \
 		where=geocode_where)
 	# Sort by parcel priority
@@ -92,7 +91,7 @@ for multi_addr in multi_addrs:
 		geocode_row = geocode_rows[0]
 		geocode_shp = loads(geocode_row['geometry_wkt'])
 	except IndexError:
-		#print('No parcel XY for {}'.format(multi_addr))
+		#print(f'No parcel XY for {multi_addr}')
 		continue
 
 	# Get seg IDs

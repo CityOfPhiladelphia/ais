@@ -53,11 +53,9 @@ def main():
     WHERE_STREET_ADDRESS_IN = None
     WHERE_SEG_ID_IN = None
     if FILTER_STREET_NAME not in [None, '']:
-        WHERE_STREET_NAME = "street_name = '{}'".format(FILTER_STREET_NAME)
-        WHERE_STREET_ADDRESS_IN = "street_address in (select street_address from \
-            {} where {})".format(address_table.name, WHERE_STREET_NAME)
-        WHERE_SEG_ID_IN = "seg_id in (select seg_id from {} where {})" \
-            .format(seg_table.name, WHERE_STREET_NAME)
+        WHERE_STREET_NAME = f"street_name = '{FILTER_STREET_NAME}'"
+        WHERE_STREET_ADDRESS_IN = f"street_address in (select street_address from {address_table.name} where {WHERE_STREET_NAME})"
+        WHERE_SEG_ID_IN = f"seg_id in (select seg_id from {seg_table.name} where {WHERE_STREET_NAME})"
 
     if WRITE_OUT:
         print('Dropping indexes...')
@@ -99,27 +97,27 @@ def main():
 
     for parcel_layer_name, parcel_layer_def in parcel_layers.items():
         source_table = parcel_layer_name + '_parcel'
-        print('  - {}'.format(parcel_layer_name))
+        print(f'  - {parcel_layer_name}')
 
         # DEV
         parcel_where = ''
         if WHERE_STREET_NAME:
-            parcel_where = '{} and '.format(WHERE_STREET_NAME)
-        parcel_stmt = '''
+            parcel_where = f'{WHERE_STREET_NAME} and '
+        parcel_stmt = f'''
             select
                 id,
                 ST_AsText(geom) as geom,
                 st_astext(st_centroid(geom)) as centroid
             from {source_table}
-            where {where} st_intersects(st_centroid(geom), geom)
+            where {parcel_where} st_intersects(st_centroid(geom), geom)
             union
             select
                 id,
                 ST_AsText(geom) as geom,
                 st_astext(st_pointonsurface(geom)) as centroid
             from {source_table}
-            where {where} not st_intersects(st_centroid(geom), geom)
-        '''.format(where=parcel_where, source_table=source_table)
+            where {parcel_where} not st_intersects(st_centroid(geom), geom)
+        '''
         parcel_rows = db.execute(parcel_stmt)
         parcel_layer_xy_map = {}
         parcel_layer_geom_map = {}
@@ -331,7 +329,7 @@ def main():
                                                   test_offset, seg_side)
                         test_xy_wkt = dumps(test_xy_shp)
 
-                        parcel_match_stmt = '''
+                        parcel_match_stmt = f'''
                             SELECT
                                 id,
                                 CASE
@@ -341,7 +339,7 @@ def main():
                                 END as wkt
                             FROM {source_table}
                             WHERE ST_Intersects(geom, ST_GeomFromText('{test_xy_wkt}', {engine_srid}))
-                        '''.format(source_table=source_table, test_xy_wkt=test_xy_wkt, engine_srid=engine_srid)
+                        '''
                         db.execute(parcel_match_stmt)
                         parcel_match = db._c.fetchone()
 
@@ -439,17 +437,18 @@ def main():
         geocode_table.write(geocode_rows, chunk_size=150000)
         print('Writing address-parcels...')
         addr_parcel_table.write(address_parcels, chunk_size=150000)
-        print('Wrote {} rows'.format(len(geocode_rows) + geocode_count))
+        written_count = len(geocode_rows) + geocode_count
+        print(f'Wrote {written_count} rows')
 
     # Process source address point geocodes in batch:
     # geocodes:
-    geocode_stmt = '''insert into geocode (street_address, geocode_type, geom)
-    select street_address, {geocode_type} as geocode_type, geom
+    geocode_stmt = f'''insert into geocode (street_address, geocode_type, geom)
+    select street_address, {geocode_priority_map['ng911']} as geocode_type, geom
     from ng911_address_point
-    '''.format(geocode_type=geocode_priority_map['ng911'])
+    '''
     db.execute(geocode_stmt)
 
     print('Creating index...')
     geocode_table.create_index('street_address')
     db.close()
-    print('Finished in {}'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start}')

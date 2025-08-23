@@ -21,7 +21,7 @@ def run(script):
     for script in scripts:
         path = path_for_script(root_path, script)
         if not os.path.isfile(path):
-            raise FileNotFoundError('Script not found: {}'.format(script))
+            raise FileNotFoundError(f'Script not found: {script}')
         paths.append(path)
         
     for path in paths:
