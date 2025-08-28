@@ -385,7 +385,7 @@ class AddressJsonSerializer (GeoJSONSerializer):
             ('match_type', match_type if match_type else None),
             ('properties', OrderedDict([
                 ('street_address', address.street_address),
-                ('base_address', address.base_address if address.base_address else self.base_address),
+                ('base_address', address.base_address),
                 ('address_low', address.address_low),
                 ('address_low_suffix', address.address_low_suffix),
                 ('address_low_frac', address.address_low_frac),
