@@ -31,7 +31,10 @@ def main():
     opal_locations = []
     for source_row in source_rows:
         opal_loc = {x: source_row[field_map[x]] for x in field_map}
-        full_source_address_raw = ' '.join([opal_loc['address_line_1'], opal_loc['address_line_2']]).strip()
+        try:
+            full_source_address_raw = ' '.join([opal_loc['address_line_1'], opal_loc['address_line_2']]).strip()
+        except TypeError: # i.e., address_line_2 is None
+            full_source_address_raw = opal_loc['address_line_1']
         try:
             parsed = parser.parse(full_source_address_raw)
             parsed_addr = parsed['components']['output_address']

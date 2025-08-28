@@ -169,7 +169,7 @@ BASE_DATA_SOURCES = {
             'ship_to_location_id':      'ship_to_location_id'
         },
         # remove the numeric ones like '04 - 232'
-        'where':            "location_name !~ '^\d{2}\s-\s' and address_line_1 != '' and addres_line_1 !~ ' OVER '",
+        'where':            "location_name !~ '^\d{2}\s-\s' and address_line_1 is not null and address_line_1 !~ ' OVER '",
     },
 }
 
