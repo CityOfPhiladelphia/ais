@@ -42,7 +42,9 @@ def main():
     # Read DOR Parcel rows from engine db
     print("Reading parcels...")
     dor_parcel_read_stmt = '''
-        select parcel_id, street_address, address_low, address_low_suffix, address_low_frac, address_high, street_predir, 
+        select parcel_id, street_address, 
+        base_address,
+        address_low, address_low_suffix, address_low_frac, address_high, street_predir, 
         street_name, street_suffix, street_postdir, street_full from {dor_parcel_table}
         '''.format(dor_parcel_table='dor_parcel')
     engine_dor_parcel_rows = etl.fromdb(pg_db, dor_parcel_read_stmt)
