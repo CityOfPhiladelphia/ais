@@ -89,6 +89,7 @@ def main():
 				'unit_num': comps['address_unit']['unit_num'] or '',
 				'unit_type': comps['address_unit']['unit_type'] or '',
 				'street_address': street_address,
+				'base_address': comps['base_address'],
 			}
 			address_points.append(address_point)
 
