@@ -59,7 +59,7 @@ export_stmt = '''
 '''
 
 source_cur = source_conn.cursor()
-outputquery = 'COPY ({export_stmt}) TO STDOUT WITH CSV HEADER'.format(export_stmt=export_stmt)
+outputquery = f'COPY ({export_stmt}) TO STDOUT WITH CSV HEADER'
 
 with open(temp_csv, "w") as f:
     with source_conn.cursor() as cursor:
@@ -80,15 +80,15 @@ for i, field in enumerate(header):
     else:
         str_header += field
 
-with open(temp_csv, 'r') as f:
+with open(temp_csv, 'r') as file:
     with target_conn.cursor() as cursor:
-        copy_stmt = '''
+        copy_stmt = f'''
         BEGIN;
         TRUNCATE TABLE {target_table};
         COPY {target_table} ({str_header}) FROM STDIN WITH (FORMAT csv, HEADER true);
         COMMIT;
-        '''.format(target_table=target_table, str_header=str_header)
-        cursor.copy_expert(copy_stmt, f)
+        '''
+        cursor.copy_expert(copy_stmt, file)
 
 target_conn.close()
 
@@ -99,9 +99,9 @@ try:
     r = requests.post(
         airflow_trigger_creds.get('url').format(dag_name=workflow),
         data=json.dumps("{}".format('{}')),
-        auth=("{}".format(airflow_trigger_creds.get('user')), "{}".format(airflow_trigger_creds.get('pw')))
+        auth=(f"{airflow_trigger_creds.get('user')}", f"{airflow_trigger_creds.get('pw')}")
     )
-    print("Downstream process has been triggered, status code: {}".format(r.status_code))
+    print(f"Downstream process has been triggered, status code: {r.status_code}")
 except Exception as e:
     print("Triggering downstream process failed, exiting")
     raise e
