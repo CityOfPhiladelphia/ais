@@ -693,7 +693,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'citygeo',
-                    'table':                'viewer_planning.political_wards',
+                    'table':                'viewer_cco.political_wards',
                     'value_field':          'ward_num',
                 },
             },
@@ -705,7 +705,7 @@ SERVICE_AREAS = {
             'sources': {
                 'polygon':  {
                     'db':                   'citygeo',
-                    'table':                'viewer_planning.political_divisions',
+                    'table':                'viewer_cco.political_divisions',
                     'value_field':          'division_num',
                 },
             },
