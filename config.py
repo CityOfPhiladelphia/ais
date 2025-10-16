@@ -1472,7 +1472,7 @@ SERVICE_AREAS = {
                 'polygon': {
                     'db':                   'citygeo',
                     'table':                'viewer_fire.engine_local',
-                    'value_field':          'engine_num',
+                    'value_field':          'first_in_engine',
                 },
             },
         },
