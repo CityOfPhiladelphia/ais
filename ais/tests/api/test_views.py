@@ -436,6 +436,7 @@ def test_match_type_for_address_not_having_address_link(client):
     match_type = feature['match_type']
     assert match_type == 'exact'
 
+@pytest.mark.skip(reason="address no longer exists in new voter registration - skip until find replacement for test")
 def test_unit_type_siblings_match_exact(client):
     response = client.get('/search/337 s camac st apt 3')
     data = json.loads(response.get_data().decode())
