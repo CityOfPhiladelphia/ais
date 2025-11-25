@@ -398,6 +398,8 @@ ADDRESSES = {
                     'source_fields':     ['addressobjectid'],
                 },
             ],
+            'where':            '''parcel_active = 'Y' ''',
+
         },
         {
             'name':                 'voters',
