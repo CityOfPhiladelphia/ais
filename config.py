@@ -384,7 +384,7 @@ ADDRESSES = {
         },
         {
             'name':                 'li_eclipse_location_ids',
-            'table':                'viewer_li.active_retired_parcels',
+            'table':                'viewer_li.eclipse_address',
             'db':                   'citygeo',
             'address_fields':       {
                 'base_address':       'base_address',
@@ -398,8 +398,6 @@ ADDRESSES = {
                     'source_fields':     ['addressobjectid'],
                 },
             ],
-            'where':            '''parcel_active = 'Y' ''',
-
         },
         {
             'name':                 'voters',
