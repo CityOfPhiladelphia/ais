@@ -460,10 +460,12 @@ restore_db_to_staging() {
 
     # Assert the value is greater than 8000 MB
     db_size=$(echo $db_pretty_size | awk '{print $1}')
-    # Checking if the numeric value is less than 8000
-    if [ "$db_size" -lt 8000 ]; then
+    # Make sure size we got is not less than 8 GB
+    if [ "$db_size" -lt 8 ]; then
         echo "Database size after restore is less than 8 GB!!"
         exit 1
+    else
+        echo "Database size after restore looks good (greater than 8 GB)."
     fi
 
     # After restore, switch back to default RDS parameter group
