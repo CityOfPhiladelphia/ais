@@ -1,0 +1,16 @@
+# A copy of build-test-compose.yml except it has "network_mode: host"
+# so you can connect it to the host's database when testing locally.
+version: '3.8'
+services:
+  ais:
+    network_mode: "host"
+    container_name: ais
+    image: ais
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ENGINE_DB_HOST
+      - ENGINE_DB_PASS
+    ports:
+      - "8080:8080"

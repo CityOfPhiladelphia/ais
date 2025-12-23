@@ -10,7 +10,7 @@ ENV BLUE_ENGINE_CNAME=$BLUE_ENGINE_CNAME
 
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install nginx gcc git build-essential vim dnsutils -y && \
+    apt-get install nginx gcc git build-essential vim dnsutils secure-delete -y && \
     apt-get clean -y && \
     apt-get autoremove -y
 

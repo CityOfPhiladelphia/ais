@@ -53,12 +53,17 @@ declare -a pdata_files=('alias' 'alias_streets' 'apt' 'apt_std' 'apte'
  'centerline' 'centerline_streets' 'directional' 'landmarks' 'name_switch'
  'saint' 'std' 'suffix' )
 
+# Update passyunk pdata files everytime the container starts.
+echo 'Pulling in passyunk package to update pdata files with command "pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master"..'
+pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master &>/dev/null || fail "Failed to update passyunk pdata files!!"
+# Delete private ssh key once pulled and running.
+srm /root/.ssh/passyunk-private.key
+
 echo "Asserting private data is in passyunk site-package folder"
 for i in "${pdata_files[@]}"
 do
   test -f /usr/local/lib/python3.10/site-packages/passyunk/pdata/$i.csv || fail "$i.csv does not exist in venv!"
 done
-
 
 declare -a pdata_files=('election_block' 'usps_alias' 'usps_cityzip' 'usps_zip4s')
 
