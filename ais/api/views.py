@@ -463,6 +463,9 @@ def addresses(query):
 
 
     addresses = query_addresses(filters=filters)
+    # from sqlalchemy.dialects import postgresql 
+    # print(addresses.statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
     if addresses.all():
         match_type = 'exact'
         return process_query(addresses, match_type)
