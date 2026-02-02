@@ -593,23 +593,34 @@ swap_cnames() {
 
     # Swap the production DNS record to the ALB DNS we identified as staging
     json_string=$(printf "$template" "prod" "$prod_color" "$PROD_ENDPOINT" "$staging_lb_uri")
+    echo "Swapping ${prod_color} to the Prod record in hosted zone ${CITYGEOPHILACITY_ZONE_ID}.."
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
+        --profile default \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/nullecho "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
+    echo "Swapping ${prod_color} to the Prod record in hosted zone ${PHILACITY_ZONE_ID}.."
+    aws route53 change-resource-record-sets \
+        --hosted-zone-id $PHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
 
     # Swap the staging DNS record to the ALB DNS we identified as prod
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
+    echo "Swapping ${staging_color} to the Stage record in hosted zone ${CITYGEOPHILACITY_ZONE_ID}.."
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
+    echo "Swapping ${staging_color} to the Stage record in hosted zone ${PHILACITY_ZONE_ID}.."
+    aws route53 change-resource-record-sets \
+        --hosted-zone-id $PHILACITY_ZONE_ID \
+        --profile default \
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
-    echo "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
-    send_teams "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
+    echo "Swapped prod cname to ${staging_color} successfully! Staging is now ${prod_color}."
 }
 
 
