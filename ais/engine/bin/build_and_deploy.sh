@@ -595,30 +595,18 @@ swap_cnames() {
     json_string=$(printf "$template" "prod" "$prod_color" "$PROD_ENDPOINT" "$staging_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
-        --hosted-zone-id $PHILACITY_ZONE_ID \
+        --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-    json_string=$(printf "$template" "prod" "$prod_color" "$PROD_ENDPOINT" "$staging_lb_uri")
-    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
-    aws route53 change-resource-record-sets \
-        --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
-        --profile mulesoft \
-        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
+
 
     # Swap the staging DNS record to the ALB DNS we identified as prod
     json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
-        --hosted-zone-id $PHILACITY_ZONE_ID \
+        --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-    json_string=$(printf "$template" "stage" "$staging_color" "$STAGE_ENDPOINT" "$prod_lb_uri")
-    echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
-    aws route53 change-resource-record-sets \
-        --hosted-zone-id $MULESOFT_PHILACITY_ZONE_ID \
-        --profile mulesoft \
-        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-    rm $WORKING_DIRECTORY/route53-temp-change.json
 
     echo "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
     send_teams "Swapped prod cname to $staging_color successfully! Staging is now ${prod_color}."
