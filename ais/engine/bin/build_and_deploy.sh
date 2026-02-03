@@ -598,7 +598,7 @@ swap_cnames() {
     aws route53 change-resource-record-sets \
         --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
         --profile default \
-        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/nullecho "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
+        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
     echo "Swapping ${prod_color} to the Prod record in hosted zone ${PHILACITY_ZONE_ID}.."
     aws route53 change-resource-record-sets \
         --hosted-zone-id $PHILACITY_ZONE_ID \
