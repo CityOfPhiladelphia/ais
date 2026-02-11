@@ -196,7 +196,7 @@ def main():
         print('Rejected links: ')
         for key, value in rejected_link_map.items():
             value=list(set(value))
-            print('{key}: {value}'.format(key=key, value=value))
+            print(f'{key}: {value}')
 
     # Finally, loop through addresses one last time checking for tags with keys not in tag table, and for each tag lookup
     # tag linked_addresses in address_link table address_2 for street_address having unit type & num matching the current
@@ -243,7 +243,7 @@ def main():
 
     i=0
     rejected_link_map = {}
-    print('Looping through {} addresses...'.format(len(address_rows))) # Remove this
+    print(f'Looping through {len(address_rows)} addresses...') # Remove this
     for address_row in address_rows:
         i+=1
         if i % 10000 == 0:
@@ -361,9 +361,8 @@ def main():
     print('Rejected links: ')
     for key, value in rejected_link_map.items():
         value=list(set(value))
-        print('{key}: {value}'.format(key=key, value=value))
+        print(f'{key}: {value}')
 
     cleanup(address_file)
-    
-    transpired = datetime.now() - start
-    print("Finished in ", transpired, " minutes.")
+
+    print(f"Finished in {datetime.now() - start} minutes.")

@@ -98,11 +98,11 @@ def main():
 			pass
 
 		except Exception as e:
-			print('Unhandled exception on {}'.format(source_address))
+			print(f'Unhandled exception on {source_address}')
 			print(traceback.format_exc())
 			# sys.exit()
 
-	print('Writing {} NG911 address points...'.format(len(address_points)))
+	print(f'Writing {len(address_points)} NG911 address points...')
 	ng911_table.write(address_points)
 
 	print('Creating index...')
@@ -113,4 +113,4 @@ def main():
 	'''
 
 	db.close()
-	print('Finished in {} seconds'.format(datetime.now() - start))
+	print(f'Finished in {datetime.now() - start} seconds')

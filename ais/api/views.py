@@ -8,7 +8,6 @@ from collections import OrderedDict
 from itertools import chain
 from flask import Response, request, redirect, url_for
 from flask_cachecontrol import cache_for, ResponseIsSuccessfulOrRedirect
-# from flasgger.utils import swag_from
 from geoalchemy2.shape import to_shape
 from geoalchemy2.functions import ST_Transform
 from sqlalchemy import func, desc
@@ -40,21 +39,6 @@ def validate_page_param(request, paginator):
 
     return page_num, None
 
-# def get_tag_data(addresses):
-#     all_tags = {}
-#     for address, geocode_type, geom in addresses:
-#         tag_map = {}
-#         tags = AddressTag.query \
-#             .filter_tags_by_address(address.street_address)
-#         # TODO: If no tags, filter on base/in-range/overlapping number addresses. If still none, return 404.
-#         for tag in tags:
-#             if not tag.key in tag_map:
-#                 tag_map[tag.key] = []
-#             tag_map[tag.key].append(tag)
-#
-#         all_tags[address.street_address] = tag_map
-#
-#     return all_tags
 
 def get_tag_data(addresses):
     street_addresses = [address.street_address for address, geocode_type, geom in addresses]
@@ -113,8 +97,7 @@ def unmatched_response(**kwargs):
         return json_response(response=error, status=404)
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-    # crs = {'type': 'name', 'properties': {'name': 'EPSG:{}'.format(srid)}}
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Render the response
     addresses_page = paginator.get_page(page_num)
@@ -182,11 +165,11 @@ def unknown_cascade_view(**kwargs):
     from_num, to_num = (cascadedseg.right_from, cascadedseg.right_to) if seg_side == "R" else (cascadedseg.left_from, cascadedseg.left_to)
 
     # Get geom from true_range view item with same seg_id
-    true_range_stmt = '''
+    true_range_stmt = f'''
                     Select true_left_from, true_left_to, true_right_from, true_right_to
                      from true_range
-                     where seg_id = {seg_id}
-                '''.format(seg_id=cascadedseg.seg_id)
+                     where seg_id = {cascadedseg.seg_id}
+                '''
     true_range_result = db.engine.execute(true_range_stmt).fetchall()
     true_range_result = list(chain(*true_range_result))
     # Get side delta (address number range on seg side - from true_range if exists else from centerline seg)
@@ -212,16 +195,17 @@ def unknown_cascade_view(**kwargs):
     seg_xy = util.offset(shape, seg_xsect_xy, centerline_offset, seg_side)
 
     # GET INTERSECTING SERVICE AREAS
-    sa_stmt = '''
+    shape = seg_xy
+    sa_stmt = f'''
                 with foo as (
                     SELECT layer_id, value
                     from service_area_polygon
-                    where ST_Intersects(geom, ST_GeometryFromText('SRID={srid};{shape}'))
+                    where ST_Intersects(geom, ST_GeometryFromText('SRID={ENGINE_SRID};{shape}'))
                     )
                 SELECT DISTINCT ON (cols.layer_id) cols.layer_id, foo.value
                 from service_area_layer cols
                 left join foo on foo.layer_id = cols.layer_id
-        '''.format(shape=seg_xy, srid=ENGINE_SRID)
+        '''
 
     result = db.engine.execute(sa_stmt)
     for item in result.fetchall():
@@ -236,7 +220,7 @@ def unknown_cascade_view(**kwargs):
         return json_response(response=error, status=404)
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Render the response
     addresses_page = paginator.get_page(page_num)
@@ -323,7 +307,7 @@ def addresses(query):
     unit_type = parsed['components']['address_unit']['unit_type']
     unit_num = parsed['components']['address_unit']['unit_num']
     addr_num = str(low_num) + '-' + str(high_num) if high_num else low_num
-    base_address_no_num_suffix = '{} {}'.format(addr_num, street_full)
+    base_address_no_num_suffix = f'{addr_num} {street_full}'
     search_type = parsed['type']
 
     loose_filters = OrderedDict([
@@ -384,7 +368,6 @@ def addresses(query):
         
 
         # Get tag data
-        # if not addresses.all():
         # if addresses.all():
         if not addresses.all():
             if 'opa_only' in request.args and request.args['opa_only'].lower() != 'false':
@@ -437,7 +420,7 @@ def addresses(query):
         srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
         crs = {'type': 'link',
-               'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+               'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
         # Serialize the response
         addresses_page = paginator.get_page(page_num)
@@ -533,7 +516,6 @@ def addresses(query):
 
 @app.route('/block/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/block.yml')
 def block(query):
     """
     Looks up information about the 100-range that the given address falls
@@ -623,7 +605,6 @@ def block(query):
 
 @app.route('/owner/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/owner.yml')
 def owner(query):
     query = query.strip('/')
     owner_parts = query.upper().split()
@@ -658,7 +639,7 @@ def owner(query):
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Get tag data
     all_tags = get_tag_data(addresses)
@@ -677,7 +658,6 @@ def owner(query):
 
 @app.route('/account/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/account.yml')
 def account(query):
     """
     Looks up information about the property with the given OPA account number.
@@ -721,7 +701,7 @@ def account(query):
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Get tag data
     all_tags = get_tag_data(addresses)
@@ -740,7 +720,6 @@ def account(query):
 
 @app.route('/pwd_parcel/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/pwd_parcel.yml')
 def pwd_parcel(query):
     """
     Looks up information about the property with the given PWD parcel id.
@@ -791,7 +770,7 @@ def pwd_parcel(query):
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Get tag data
     all_tags = get_tag_data(addresses)
@@ -810,7 +789,6 @@ def pwd_parcel(query):
 
 @app.route('/dor_parcel/<query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/mapreg.yml')
 def dor_parcel(query):
     """
     Looks up information about the property with the given DOR parcel id.
@@ -849,7 +827,7 @@ def dor_parcel(query):
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     #Get tag data
     all_tags = get_tag_data(addresses)
@@ -868,7 +846,6 @@ def dor_parcel(query):
 
 @app.route('/intersection/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/intersection.yml')
 def intersection(query):
     '''
     Called by search endpoint if search_type == "intersection_addr"
@@ -969,7 +946,7 @@ def intersection(query):
 
     srid = request.args.get('srid') if 'srid' in request.args else config['DEFAULT_API_SRID']
 
-    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+    crs = {'type': 'link', 'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
 
     # Serialize the response:
     intersections_page = paginator.get_page(page_num)
@@ -987,7 +964,6 @@ def intersection(query):
 
 @app.route('/reverse_geocode/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/reverse_geocode.yml')
 def reverse_geocode(query):
 
     query = query.strip('/')
@@ -1003,23 +979,23 @@ def reverse_geocode(query):
                            {'search_type': search_type, 'query': query, 'normalized': normalized})
         return json_response(response=error, status=404)
     crs = {'type': 'link',
-           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+           'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
     x, y = normalized.split(",", 1)
     search_radius = request.args.get('search_radius') if 'search_radius' in request.args else config['DEFAULT_SEARCH_RADIUS']
     search_radius = min(int(search_radius), config['MAXIMUM_SEARCH_RADIUS'])
     # queries the geocode table by coordinates for the record with the nearest coordinates having \
-    # geocode type = pwd_curb, dor_curb, true_range or centerline
-    reverse_geocode_stmt = '''
+    # geocode type = pwd_curb (7), dor_curb (8), true_range (5) 
+    # (original format-string specified centerline=6, but query doesn't use it. TODO: why not?)
+    reverse_geocode_stmt = f'''
         SELECT street_address, geocode_type
         from geocode
-        where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}), {search_radius})
-          AND geocode_type IN ({pwd_curb}, {dor_curb}, {true_range})
+        where ST_DWITHIN(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{ENGINE_SRID}), {search_radius})
+          AND geocode_type IN (5, 7, 8)
         ORDER BY
-            geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),
+            geom <-> ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{ENGINE_SRID}),
             length(street_address) asc
         LIMIT 1
-        '''.format(x=x, y=y, srid=srid, engine_srid=ENGINE_SRID, pwd_curb=7, dor_curb=8, true_range=5, centerline=6,
-                   search_radius=search_radius)
+        '''
 
     results = db.engine.execute(reverse_geocode_stmt)
     result = None
@@ -1112,7 +1088,6 @@ def reverse_geocode(query):
 
 @app.route('/service_areas/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/service_areas.yml')
 def service_areas(query):
 
     query = query.strip('/')
@@ -1133,13 +1108,13 @@ def service_areas(query):
                            {'query': query, 'search_type': search_type})
         return json_response(response=error, status=404)
     crs = {'type': 'link',
-           'properties': {'type': 'proj4', 'href': 'http://spatialreference.org/ref/epsg/{}/proj4/'.format(srid)}}
+           'properties': {'type': 'proj4', 'href': f'http://spatialreference.org/ref/epsg/{srid}/proj4/'}}
     x, y = normalized.split(",", 1)
     coords = [float(x), float(y)]
     sa_data = OrderedDict()
     search_type_out = 'coordinates'
 
-    sa_stmt = '''
+    sa_stmt = f'''
     with foo as
     (
     SELECT layer_id, 
@@ -1149,7 +1124,7 @@ def service_areas(query):
          else value
          end as value
     from service_area_polygon
-    where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}))
+    where ST_Intersects(geom, ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{ENGINE_SRID}))
      )
     SELECT DISTINCT ON (cols.layer_id) cols.layer_id, foo.value
     from service_area_layer cols
@@ -1158,11 +1133,11 @@ def service_areas(query):
     (
     select 'nearest_seg'::text as layer_id, cast(ss.seg_id as text) as value
     from street_segment ss
-    order by st_distance(ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{engine_srid}),ss.geom) asc
+    order by st_distance(ST_Transform(ST_GeometryFromText('POINT({x} {y})',{srid}),{ENGINE_SRID}),ss.geom) asc
     limit 1
     )
     order by layer_id 
-    '''.format(srid=srid, engine_srid=ENGINE_SRID,x=x, y=y, sa_yes_no_layers_str=sa_yes_no_layers_str)
+    '''
     result = db.engine.execute(sa_stmt)
     for item in result.fetchall():
         sa_data[item[0]] = item[1]
@@ -1199,7 +1174,6 @@ def street(query):
 
 @app.route('/search/<path:query>')
 @cache_for(hours=1, only_if=ResponseIsSuccessfulOrRedirect)
-# @swag_from('docs/search.yml')
 def search(query):
     """
     API Endpoint for various types of geocoding (not solely addresses)
@@ -1296,6 +1270,6 @@ def health():
         result = db.engine.execute(check_geocode_db).fetchall()
         return 'All okay!', 200
     except Exception as e:
-        #return 'DB failure!: {}'.format(str(e)), 504
+        #return f'DB failure!: {str(e)}', 504
         return 'DB failure!', 504
 

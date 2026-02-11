@@ -1,11 +1,8 @@
-import sys
 from datetime import datetime
-from shapely.wkt import loads
 from datetime import datetime
 from copy import deepcopy
 import datum
 from ais import app
-from ais.models import Address
 
 # DEV
 import traceback
@@ -132,7 +129,7 @@ def main():
 
             if sa_rows is None and None not in (x,y):
                 # Get intersecting service areas
-                where = 'ST_Intersects(geom, ST_SetSrid(ST_Point({}, {}), 2272))'.format(x, y)
+                where = f'ST_Intersects(geom, ST_SetSrid(ST_Point({x}, {y}), 2272))'
                 sa_rows = poly_table.read(fields=['layer_id', 'value'], where=where, return_geom=False)
 
                 # Add to map
@@ -177,14 +174,14 @@ def main():
     # 	if 'polygon' in sa_layer_def['sources']:
     # 		method = sa_layer_def['sources']['polygon'].get('method')
     # 		if method == 'yes_or_no':
-    # 			stmt = '''
+    # 			stmt = f'''
     # 					UPDATE service_area_summary sas
     # 					SET {layer_id} = (
     # 					CASE
     # 					WHEN {layer_id} != '' THEN 'yes'
     # 					ELSE 'no'
     # 					END);
-    # 					'''.format(layer_id=layer_id)
+    # 					'''
     # 			db.execute(stmt)
     # 			# print(ais_db.c.rowcount)
     # 			db.save()
@@ -204,8 +201,8 @@ def main():
             layer_id = sa_layer_def['layer_id']
 
             if 'line_single' in sa_layer_def['sources']:
-                print('Updating from {}...'.format(layer_id))
-                stmt = '''
+                print(f'Updating from {layer_id}...')
+                stmt = f'''
                     UPDATE service_area_summary sas
                     SET {layer_id} = sals.value
                     FROM address_summary ads, service_area_line_single sals
@@ -214,14 +211,14 @@ def main():
                         sals.seg_id = ads.seg_id AND
                         sals.layer_id = '{layer_id}' AND
                         sals.value <> ''
-                '''.format(layer_id=layer_id)
+                '''
                 db.execute(stmt)
                 # print(ais_db.c.rowcount)
                 db.save()
 
             elif 'line_dual' in sa_layer_def['sources']:
-                print('Updating from {}...'.format(layer_id))
-                stmt = '''
+                print(f'Updating from {layer_id}...')
+                stmt = f'''
                     UPDATE service_area_summary sas
                     SET {layer_id} = CASE WHEN (ads.seg_side = 'L') THEN sald.left_value ELSE sald.right_value END
                     FROM address_summary ads, service_area_line_dual sald
@@ -229,7 +226,7 @@ def main():
                         sald.seg_id = ads.seg_id AND
                         sald.layer_id = '{layer_id}' AND
                         CASE WHEN (ads.seg_side = 'L') THEN sald.left_value ELSE sald.right_value END <> ''
-                '''.format(layer_id=layer_id)
+                '''
                 db.execute(stmt)
                 # print(ais_db.c.rowcount)
                 db.save()
@@ -247,8 +244,8 @@ def main():
             if 'point' in sa_layer_def['sources']:
                 method = sa_layer_def['sources']['point'].get('method')
                 if method == 'nearest':
-                    print('Updating from {}...'.format(layer_id))
-                    stmt = '''
+                    print(f'Updating from {layer_id}...')
+                    stmt = f'''
                             with sap_layer as
                             (
                                 select sap.*
@@ -269,13 +266,13 @@ def main():
                                 ) as saplv
                                 ) sapf
                             where sas.street_address = sapf.street_address
-                        '''.format(layer_id=layer_id)
+                        '''
                     db.execute(stmt)
                     db.save()
 
                 elif method == 'seg_id':
-                    print('Updating from {}...'.format(layer_id))
-                    stmt = '''
+                    print(f'Updating from {layer_id}...')
+                    stmt = f'''
                             UPDATE service_area_summary sas
                             SET {layer_id} = sap.value
                             FROM address_summary ads, service_area_point sap
@@ -284,7 +281,7 @@ def main():
                                 sap.seg_id = ads.seg_id AND
                                 sap.layer_id = '{layer_id}' AND
                                 sap.value <> ''
-                        '''.format(layer_id=layer_id)
+                        '''
                     db.execute(stmt)
                     db.save()
 
@@ -299,8 +296,8 @@ def main():
                 method = sa_layer_def['sources']['polygon'].get('method')
                 if method != 'nearest_poly':
                     continue
-                print('Updating from {}...'.format(layer_id))
-                stmt = '''
+                print(f'Updating from {layer_id}...')
+                stmt = f'''
                         with sap_layer as
                         (
                             select sap.*
@@ -321,7 +318,7 @@ def main():
                             ) as saplv
                             ) sapf
                         where sas.street_address = sapf.street_address
-                    '''.format(layer_id=layer_id)
+                    '''
                 db.execute(stmt)
                 db.save()
     ################################
@@ -331,14 +328,14 @@ def main():
         layer_id = sa_layer_def['layer_id']
         method = sa_layer_def.get('value_method')
         if method == 'yes_or_no':
-            stmt = '''
+            stmt = f'''
                     UPDATE service_area_summary sas
                     SET {layer_id} = (
                     CASE
                     WHEN {layer_id} != '' THEN 'Yes'
                     ELSE 'No'
                     END);
-                    '''.format(layer_id=layer_id)
+                    '''
             db.execute(stmt)
             db.save()
     #################################
@@ -392,4 +389,4 @@ def main():
     # Clean up:
     db.close()
 
-    print('Finished in {}'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start}')

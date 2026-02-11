@@ -30,34 +30,35 @@ def main():
     target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
     target_pw = target_dsn[target_dsn.index(":",target_dsn.index(target_user)) + 1:target_dsn.index("@")]
     target_name = target_dsn[target_dsn.index("/", target_dsn.index("@")) + 1:]
-    target_conn = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=target_name, db_user=target_user, db_pw=target_pw))
+    target_conn = psycopg2.connect(f'dbname={target_name} user={target_user} password={target_pw} host=localhost')
     target_cur = target_conn.cursor()
     target_table_name = 'public.t_opa_active_accounts'
 
     # Read source table:
-    print("Reading rows from {}".format(source_table))
+    print(f"Reading rows from {source_table}")
     rows = etl.fromoraclesde(source_conn, source_table, fields=source_fields) # Runs in 0:11:48
     # Format fields
     rows = rows.rename({v:k for k,v in source_field_map.items()})
 
-    drop_stmt = '''drop table if exists {}'''.format(target_table_name)
-    create_stmt = '''create table {} (
+    drop_stmt = f"drop table if exists {target_table_name}"
+    create_stmt = f'''create table {target_table_name} (
                    account_num text,
                    source_address text,
                    unit_num text,
                    geom geometry(Point,2272)
-    )'''.format(target_table_name)
+    )'''
     # Create temp target table:
-    print("Dropping temp table '{}' if already exists...".format(target_table_name))
+    print(f"Dropping temp table '{target_table_name}' if already exists...")
     target_cur.execute(drop_stmt)
-    print("Creating temp table '{}'...".format(target_table_name))
+    print(f"Creating temp table '{target_table_name}'...")
     target_cur.execute(create_stmt)
     target_conn.commit()
     # Write rows to target:
-    print("Writing to temp table '{}'".format(target_table_name))
+    print(f"Writing to temp table '{target_table_name}'")
     rows.topostgis(target_conn, target_table_name)
 
-    # Update address_parcel by selecting address from opa_property associated with opa_account_num for opa_active_accounts record where opa_address doesn't have pwd_parcel in table, \
+    # Update address_parcel by selecting address from opa_property associated with opa_account_num
+    # for opa_active_accounts record where opa_address doesn't have pwd_parcel in table,
     # and add row_id of parcel based on associated pwd_parcel_id in opa_active_accounts table:
 
     update_stmt = '''
@@ -90,4 +91,4 @@ def main():
     target_conn.commit()
     # close db connection:
     target_conn.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')

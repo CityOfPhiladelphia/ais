@@ -123,10 +123,9 @@ def main():
             # Check for necessary components
             for field_name in ['address_low', 'street_name']:
                 if not field_name in address_fields and not all(x in address_fields for x in ['base_address', 'unit_num']):
-                    raise ValueError('Missing required address field: {}' \
-                                     .format(field_name))
+                    raise ValueError(f'Missing required address field: {field_name}')
             if 'preprocessor' not in source:
-                raise ValueError('No preprocessor specified for address source `{}`'.format(source_name))
+                raise ValueError(f"No preprocessor specified for address source '{source_name}'")
             preprocessor = source['preprocessor']
 
         # Get other params
@@ -144,18 +143,16 @@ def main():
         source_db_name = source['db']
         source_db = datum.connect(config['DATABASES'][source_db_name])
         source_table = source_db[source['table']]
-        print('Reading from {}...'.format(source_name))
+        print(f'Reading from {source_name}...')
 
         where = source['where'] if 'where' in source else None
 
         # For debugging. (Only fetch a specific address.)
         if DEV:
             if source_type == 'single_field':
-                dev_where = "{} = '{}'" \
-                    .format(address_fields['street_address'], DEV_ADDRESS)
+                dev_where = f"{address_fields['street_address']} = '{DEV_ADDRESS}'"
             elif source_type == 'comps':
-                clauses = ["{} = '{}'".format(address_fields[key], value) \
-                           for key, value in DEV_ADDRESS_COMPS.items()]
+                clauses = [f"{address_fields[key]} = '{value}'" for key, value in DEV_ADDRESS_COMPS.items()]
                 dev_where = ' AND '.join(clauses)
             if where:
                 where += ' AND ' + dev_where
@@ -173,7 +170,7 @@ def main():
 
         if not DEV: 
             if not source_rows or len(source_rows) < 2:
-                raise Exception("Exiting because source table {source_table} is empty.".format(source_table=source_table))
+                raise Exception(f"Exiting because source table {source_table} is empty.")
 
         # Loop over addresses
         for i, source_row in enumerate(source_rows):
@@ -329,23 +326,23 @@ def main():
                 address_errors.append(address_error)
 
         if WRITE_OUT:
-            print('Writing {} address tags...'.format(len(address_tags)))
+            print(f'Writing {len(address_tags)} address tags...')
             address_tag_table.write(address_tags, chunk_size=150000)
             address_tags = []
             address_tag_strings = set()
 
-            print('Writing {} source addresses...'.format(len(source_addresses)))
+            print(f'Writing {len(source_addresses)} source addresses...')
             source_address_table.write(source_addresses, chunk_size=150000)
             source_addresses = []
 
     insert_rows = [dict(x) for x in addresses]
 
     if WRITE_OUT:
-        print('Writing {} addresses...'.format(len(addresses)))
+        print(f'Writing {len(addresses)} addresses...')
         address_table.write(insert_rows, chunk_size=150000)
     del insert_rows
 
-    print('Making {} parser_address_tags...'.format(len(parsed_addresses)))
+    print(f'Making {len(parsed_addresses)} parser_address_tags...')
     for source_address, comps in parsed_addresses.items():
         comps = comps.get('components')
         street_address = comps.get('output_address', '')
@@ -607,16 +604,16 @@ def main():
     if WRITE_OUT:
         print('Writing address links...')
         address_link_table.write(links, chunk_size=150000)
-        print('Created {} address links'.format(len(links)))
+        print(f'Created {len(links)} address links')
 
     del links
 
     insert_rows = [dict(x) for x in new_addresses]
     if WRITE_OUT:
-        print("Writing {} new addresses... ".format(len(new_addresses)))
+        print(f"Writing {len(new_addresses)} new addresses... ")
         address_table.write(insert_rows, chunk_size=150000)
 
-        print('Writing {} base and in-range AIS source addresses...'.format(len(source_addresses)))
+        print(f'Writing {len(source_addresses)} base and in-range AIS source addresses...')
         source_address_table.write(source_addresses, chunk_size=150000)
         source_addresses = []
 
@@ -793,11 +790,7 @@ def main():
                                 deferred_warnings.append({
                                     'street_address': street_address,
                                     'reason': 'High address out of range',
-                                    'notes': 'Seg {}: {} to {}'.format(
-                                        matching_seg['seg_id'],
-                                        check_from,
-                                        check_to
-                                    )
+                                    'notes': f"Seg {matching_seg['seg_id']}: {check_from} to {check_to}"
                                 })
 
                         # If only the high address is in range (unlikely)
@@ -807,11 +800,7 @@ def main():
                             deferred_warnings.append({
                                 'street_address': street_address,
                                 'reason': 'Low address out of range',
-                                'notes': 'Seg {}: {} to {}'.format(
-                                    matching_seg['seg_id'],
-                                    check_from,
-                                    check_to
-                                )
+                                'notes': f"Seg {matching_seg['seg_id']}: {check_from} to {check_to}"
                             })
 
                 # Store the match
@@ -910,10 +899,10 @@ def main():
     for parcel_layer in parcel_layers:
         source_table_name = parcel_layer + '_parcel'
         source_table = db[source_table_name]
-        print('Reading from {}...'.format(parcel_layer))
+        print(f'Reading from {parcel_layer}...')
 
         if DEV:
-            where = "street_name = '{}'".format(DEV_STREET_NAME)
+            where = f"street_name = '{DEV_STREET_NAME}'"
             parcel_rows = source_table.read(fields=['street_address', 'id'], \
                                             where=where)
         else:
@@ -935,7 +924,7 @@ def main():
                 parcel_address = Address(street_address)
             except ValueError:
                 # TODO: this should never happen
-                # print('Could not parse parcel address: {}'.format(street_address))
+                # print(f'Could not parse parcel address: {street_address}')
                 continue
 
             street_full = parcel_address.street_full
@@ -1076,7 +1065,7 @@ def main():
         address_parcel_table.create_index('street_address')
 
     for variant_type, count in match_counts.items():
-        print('{} matched on {}'.format(count, variant_type))
+        print(f'{count} matched on {variant_type}')
 
     del address_parcels
 
@@ -1108,7 +1097,7 @@ def main():
             prop_list = range_map.setdefault(street_full, [])
             prop_list.append(range_row)
         except ValueError:
-            print('Unrecognized format for range address: {}'.format(street_address))
+            print(f'Unrecognized format for range address: {street_address}')
             continue
 
     address_props = []
@@ -1220,4 +1209,4 @@ def main():
 
     db.close()
 
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')

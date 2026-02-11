@@ -157,39 +157,6 @@ BASE_DATA_SOURCES = {
 def multi_strip(str_):
     return str_.strip(' ').lstrip('0')
 
-# Preprocessor for L&I addresses
-# Not using this since Nick is cleaning everything up in the GIS_LNI DB.
-# def make_li_address(comps):
-#     out_comps = []
-#     # Make primary address num.
-#     addr_num = multi_strip(comps['address_low'])
-#     # Handle address suffixes.
-#     suf = comps['address_low_suffix'].strip()
-#     if len(suf) > 0:
-#         if suf.isnumeric():
-#             # Decode fractionals.
-#             if suf == '2':
-#                 out_comps.append('1/2')
-#         elif suf.isalpha():
-#             addr_num += suf
-#         else: raise ValueError('Unhandled L&I postdir: {}'.format(suf))
-#     # Handle address extension.
-#     addr_high = comps['address_high']
-#     addr_high = addr_high.lstrip('0') if isinstance(addr_high, str) else None
-#     addr_num += '-{}'.format(addr_high) if addr_high else ''
-#     out_comps.append(addr_num)
-#     # Add remaining fields
-#     for field_suffix in ['predir', 'name', 'suffix']:
-#         out_comps.append(comps['street_' + field_suffix])
-#     # Unit
-#     unit_num = comps['unit_num']
-#     if unit_num and len(multi_strip(unit_num)) > 0:
-#         out_comps += ['#', comps['unit_num']]
-#     # Filter blanks
-#     out_comps = [x for x in out_comps if x and len(multi_strip(x)) > 0]
-#     addr = ' '.join(out_comps)
-#     return addr
-
 def make_pwd_account_address(comps):
     a = comps['street_address']
     a = re.sub('-R(EAR)?(?= )', 'R', a)
@@ -222,25 +189,6 @@ def make_voter_name(comps):
     last_name = comps['last_name']
     name = (first_name, middle_name, last_name)
     return " ".join(filter(None, name))
-
-def make_rtt_address(comps):
-    low_num = str(comps['address_low']) if comps['address_low'] else None
-    address_low_suffix = comps['address_low_suffix']
-    addr_high = comps['address_high']
-    addr_high = None if addr_high == '-1' else addr_high
-    addr_high = addr_high.lstrip('0') if isinstance(addr_high, str) else None
-    addr_num = '{low_num}-{addr_high}'.format(low_num=low_num, addr_high=addr_high) if low_num and addr_high else low_num
-    addr_num = addr_num + address_low_suffix if addr_num and address_low_suffix else addr_num
-    unit_num = '#' + str(comps['unit_num']) if comps['unit_num'] else None
-    street_predir = comps['street_predir']
-    street_postdir = comps['street_postdir']
-    street_name = comps['street_name']
-    street_type = comps['street_type']
-    out_comps = (addr_num, street_predir, street_name, street_type, street_postdir, unit_num)
-    # Filter blanks
-    out_comps = [x for x in out_comps if x and len(multi_strip(x)) > 0]
-    addr = ' '.join(out_comps)
-    return addr
 
 def make_dor_parcel_id(comps):
     reg_map_id = comps['reg_map_id']
@@ -485,43 +433,8 @@ ADDRESSES = {
                 },
             ],
         },
-        # {
-        #     'name': 'rtt',
-        #     'table': 'gis_dor_rttmapping.cris_properties',
-        #     'db': 'gisp_t',
-        #     'address_fields': {
-        #         'address_low': 'house_number',
-        #         'address_low_suffix': 'house_num_suffix',
-        #         'address_high': 'house_num_range',
-        #         'street_predir': 'street_dir',
-        #         'street_postdir': 'street_dir_suffix',
-        #         'street_name': 'street_name',
-        #         'street_type': 'street_type',
-        #         'unit_num': 'condo_unit',
-        #     },
-        #     'preprocessor': make_rtt_address,
-        #     'tag_fields': [
-        #         {
-        #             'key': 'dor_parcel_id',
-        #             'source_fields': ['reg_map_id'],
-        #             'preprocessor': make_dor_parcel_id,
-        #         },
-        #     ],
-        #     # Query only records with non-null reg_map_id
-        #     'where':            'reg_map_id is not null',
-        # },
     ]
 }
-
-# ERROR_TABLES = {
-#     'dor_parcels': {
-#         'error_table':      'dor_parcel_error',
-#         'polygon_table':    'dor_parcel_error_polygon',
-#     },
-#     'addresses': {
-#         'error_table':      'address_error',
-#     },
-# }
 
 GEOCODE = {
     'centerline_offset':        5,
@@ -584,7 +497,7 @@ SERVICE_AREAS = {
                     'db':                   'citygeo',
                     'table':                'viewer_citygeo.phillyrising_boundaries',
                     'value_field':          'site_name',
-                    'object_id_field':      'objectid', # the field that was objectid_12 in oracle is now called just objectid in postgres.
+                    'object_id_field':      'objectid', 
                 },
             },
         },
@@ -843,18 +756,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'neighborhood',
-        #     'name':                 'Neighborhood',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_planning.Neighborhoods',
-        #             'value_field':          'name',
-        # #         },
-        # #     },
-        # # },
         {
             'layer_id':                     'zoning',
             'name':                         'Zoning',
@@ -918,59 +819,6 @@ SERVICE_AREAS = {
             },
             'value_method':                 'yes_or_no',
         },
-
-        # STEEP SLOPE PROTECTION AREAS
-        # {
-        #     'layer_id':             'zoning_steepslopeprotectionarea',
-        #     'name':                 'Zoning_SteepSlopeProtectionArea',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.Zoning_SteepSlopeProtectArea_r',
-        #             'value_field':          'overlay_na',
-        #         },
-        #     },
-        # },
-        # FEMA FLOOD ZONES
-        # {
-        #     'layer_id':             'fema_flood_plain_100',
-        #     'name':                 'Fema_Flood_Plain_100',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.FEMA_100_FLOOD_PLAIN',
-        #             'value_field':          'fld_zone',
-        #         },
-        #     },
-        # },
-        # {
-        #     'layer_id':             'fema_flood_plain_500',
-        #     'name':                 'Fema_Flood_Plain_500',
-        #     'description':           '',
-        #     'sources': {
-        #         'polygon': {
-        #             'db': '                 gis_sa',
-        #             'table':                'gis_planning.FEMA_500_FLOOD_PLAIN',
-        #             'value_field':          'fld_zone',
-        #         },
-        #     },
-        # },
-        # # Land use was slowing the service area summary script down
-        # # considerably.
-        # # {
-        # #   'layer_id':             'land_use',
-        # #   'name':                 'Land Use',
-        # #   'description':          '',
-        # #   'sources': {
-        # #       'polygon':  {
-        # #           'db':                   'gis_sa',
-        # #           'table':                'gis_planning.Land_Use',
-        # #           'value_field':          'c_dig2desc',
-        # #       },
-        # #   },
-        # # },
         # POLICE
         {
             'layer_id':                     'police_division',
@@ -984,18 +832,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # {
-        #     'layer_id':             'police_sector',
-        #     'name':                 'Police Sector',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_police.Boundaries_Sector',
-        #             'value_field':          'distsec_id',
-        #         },
-        #     },
-        # },
         {
             'layer_id':                     'police_district',
             'name':                         'Police District',
@@ -1023,36 +859,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # GIS_RDA
-        #   SHOULD THIS GO IN SOURCES?
-        #     investigate whether 2 addreses are same property
-        # {
-        #     'layer_id':             'rda_landbank_lama_assets',
-        #     'name':                 'RDA_Landbank_Lama_Assets',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_rda.lama_assets_0725',
-        #             'value_field':          'asset_id',
-        #         },
-        #     },
-        # },
-
-        # # GIS_RECYCLE
-        # {
-        #     'layer_id':             'recreation_district',
-        #     'name':                 'Recreation District',
-        #     'description':          '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_orphan.Recreation_Districts',
-        #             'value_field':          'dist_num',
-        #         },
-        #     },
-        # },
-
        # STREETS
         {
             'layer_id':                     'rubbish_recycle_day',
@@ -1396,7 +1202,6 @@ SERVICE_AREAS = {
                     'value_field':          'water_plate',
                 },
             },
-            # 'source_account':       'gis',
         },
         {
             'layer_id':                     'pwd_center_city_district',
@@ -1423,19 +1228,6 @@ SERVICE_AREAS = {
                 },
             },
         },
-        # GIS_GSG
-        # {
-        #     'layer_id':                     'litter_schema_test',
-        #     'name':                         'Litter Schema Test',
-        #     'description':                  '',
-        #     'sources': {
-        #         'polygon':  {
-        #             'db':                   'gis_sa',
-        #             'table':                'gis_gsg.LITTER_SCHEMA_TEST',
-        #             'value_field':          'score',
-        #         },
-        #     },
-        # },
         # OHCD
         {
             'layer_id':                     'neighborhood_advisory_committee',
@@ -1576,10 +1368,6 @@ ADDRESS_SUMMARY = {
         'ng911',
         'true_range',
     ],
-    # 'geocode_types_on_curb': [
-    #     'pwd_curb',
-    #     'dor_curb',
-    # ],
     'geocode_types_in_street': [
         'pwd_street',
         'dor_street',
@@ -1606,8 +1394,6 @@ ADDRESS_SUMMARY = {
     'max_values':           5,
     # TODO: strip out relationship fields from tag fields
     'tag_fields': [
-        # traverse_links was deprecated in favor of dedicated relationship
-        # tables: address-parcel, address-street, and address-property
         {
             'name':                 'zip_code',
             'tag_key':              'usps_zipcode',

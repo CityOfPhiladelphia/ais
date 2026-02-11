@@ -1,4 +1,3 @@
-import sys
 import traceback
 from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
@@ -32,7 +31,7 @@ def main():
     aliases = []
 
     # Loop over aliases
-    for i, alias_row in enumerate(source_rows):
+    for _, alias_row in enumerate(source_rows):
         try:
             # Get attrs
             predir = alias_row[field_map['street_predir']]
@@ -50,7 +49,7 @@ def main():
             invalid_suffix = (suffix and suffix not in SUFFIXES_STD)
             invalid_postdir = (postdir and not postdir in DIRS_STD)
             if any([invalid_predir, invalid_suffix, invalid_postdir]):
-                raise ValueError('Invalid alias: {}'.format(source_street_full))
+                raise ValueError(f'Invalid alias: {source_street_full}')
 
             # Standardize
             predir = DIRS_STD[predir] if predir else None
@@ -85,4 +84,4 @@ def main():
 
     db.save()
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')

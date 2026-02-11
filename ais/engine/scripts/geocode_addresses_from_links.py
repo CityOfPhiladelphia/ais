@@ -12,8 +12,6 @@ def main():
 
     config = app.config
     engine_srid = config['ENGINE_SRID']
-    Parser = config['PARSER']
-    parser = Parser()
     db = datum.connect(config['DATABASES']['engine'])
     WRITE_OUT = True
     geocode_table = db['geocode']
@@ -48,7 +46,6 @@ def main():
     for key, value in tag_map.items():
         street_address = key
         tags = value
-    #    geocode_types = []
         try:
             geocode_types = [x['geocode_type'] for x in geocode_map[street_address]]
         except:
@@ -83,7 +80,7 @@ def main():
         print('Dropping indexes...')
         geocode_table.drop_index('street_address')
 
-        print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
+        print(f'Writing {len(new_geocode_rows)} new geocode rows...')
         # TODO: Use geopetl/datum instead of raw sql
         i = 0
         values = ''
@@ -91,22 +88,18 @@ def main():
             street_address = new_row['street_address']
             geocode_type = new_row['geocode_type']
             geom = new_row['geom']
-            new_vals = '''('{street_address}', {geocode_type}, ST_GeomFromText('{geom}',{engine_srid}))'''.format(street_address=street_address, geocode_type=geocode_type, geom=geom, engine_srid=engine_srid)
+            new_vals = f'''('{street_address}', {geocode_type}, ST_GeomFromText('{geom}',{engine_srid}))'''
             values = values + ', ' + new_vals if values else new_vals
             i += 1
             if i % 1000 == 0:
                 toi = i + 1000
-                #print("writing rows {i} to {toi}".format(i=i, toi=toi))
-                write_stmt = '''
-                    INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
-                '''.format(values=values)
+                #print(f"writing rows {i} to {toi}")
+                write_stmt = f"INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}"
                 db.execute(write_stmt)
                 db.save()
                 values = ''
         if values: 
-            write_stmt = '''
-                INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
-            '''.format(values=values)
+            write_stmt = f"INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}"
             db.execute(write_stmt)
             db.save()
 
@@ -114,6 +107,6 @@ def main():
         geocode_table.create_index('street_address')
 
     db.close()
-
-    print('Finished in {}'.format(datetime.now() - start))
+    
+    print(f'Finished in {datetime.now() - start}')
 
