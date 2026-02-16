@@ -126,6 +126,7 @@ class PwdParcel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     parcel_id = db.Column(db.Integer, index=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -143,6 +144,7 @@ class DorParcel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     parcel_id = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -167,6 +169,7 @@ class DorCondominium(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     parcel_id = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -188,6 +191,7 @@ class OpaProperty(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     account_num = db.Column(db.Text, index=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -211,6 +215,7 @@ class OpaProperty(db.Model):
 class NG911AddressPoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -233,6 +238,7 @@ class NG911AddressPoint(db.Model):
 #############
 
 ADDRESS_FIELDS = [
+    'base_address',
     'address_low',
     'address_low_suffix',
     'address_low_frac',
@@ -278,6 +284,7 @@ class Address(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
@@ -354,6 +361,7 @@ class Address(db.Model):
             raise ValueError('Invalid range address')
 
         kwargs = {
+            'base_address':         c['base_address'],
             'address_low':          c['address']['low_num'],
             'address_low_suffix':   c['address']['addr_suffix'],           # passyunk change
             'address_low_frac':     c['address']['fractional'],            # passyunk change
@@ -459,10 +467,6 @@ class Address(db.Model):
             else:
                 num += '-' + str(address_high)[-2:]
         return num
-
-    @property
-    def base_address(self):
-        return ' '.join([self.address_full, self.street_full])
 
     @property
     def base_address_no_suffix(self):
@@ -1196,6 +1200,7 @@ class AddressSummary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     street_address = db.Column(db.Text, unique=True)
+    base_address = db.Column(db.Text)
     address_low = db.Column(db.Integer)
     address_low_suffix = db.Column(db.Text)
     address_low_frac = db.Column(db.Text)
