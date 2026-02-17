@@ -5,6 +5,7 @@
 set -e
 # Debug bash output (prints every command run)
 #set -x
+dev_deploy=false
 
 # Accept tests to skip
 while [[ $# -gt 0 ]] && [[ "$1" == "--"* ]] ;
@@ -21,10 +22,21 @@ do
            skip_engine_tests="$1"; shift;;
         "--skip-engine-tests="* )
            skip_engine_tests="${opt#*=}";;
+        "--dev-deploy" )
+            dev_deploy=true;;
         *) echo >&2 "Invalid option: $@"; exit 1;;
    esac
 done
 
+if $dev_deploy; then
+    echo "#############################"
+    echo "Dev deploy selected, will deploy to dev RDS instead of staging and skip ECS deployment steps."
+    echo -e '\n'
+else
+    echo "#############################"
+    echo "Production deploy selected, will deploy to staging RDS and do ECS deployment steps."
+    echo -e '\n'
+fi
 
 # Enable ERR trap inheritance
 set -o errtrace
@@ -280,6 +292,71 @@ dump_local_db() {
     mkdir -p $WORKING_DIRECTORY/ais/engine/backup
     pg_dump -Fcustom -Z0 --create --clean -U ais_engine -h localhost -n public ais_engine > $DB_DUMP_FILE_LOC
     use_exit_status $? "DB dump failed" "DB dump succeeded"
+}
+
+
+deploy_to_dev_rds() {
+    echo -e "\nRunning restore_db_to_staging.."
+    echo "Restoring the engine DB to $staging_db_uri"
+    send_teams "Restoring the engine DB to $staging_db_uri"
+
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
+    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    echo "Database size before restore: $db_pretty_size"
+
+
+    # Wait for instance status to be "available" and not "modifying".
+    check_rds_instance $ENGINE_DEV_IDENTIFIER
+
+    # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
+    # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
+    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
+    # Recreate as ais_engine otherwise things get angry
+    export PGPASSWORD=$RDS_ENGINE_DB_PASS
+    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE SCHEMA public;"
+    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
+    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
+
+    # Extensions can only be re-installed as postgres superuser
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
+    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE EXTENSION postgis WITH SCHEMA public;"
+    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE EXTENSION pg_trgm WITH SCHEMA public;"
+    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON TABLE public.spatial_ref_sys TO ais_engine;"
+
+    # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
+    export PGPASSWORD=$RDS_ENGINE_DB_PASS
+    echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
+    echo "time pg_restore -v -j 6 -h $ENGINE_DEV_DB_HOST -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
+    # Store output so we can determine if errors are actually bad
+    restore_output=$(time pg_restore -v -j 6 -h $ENGINE_DEV_DB_HOST -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
+    #echo $restore_output | grep 'errors ignored on restore'
+    sleep 10
+
+    # Check size after restore
+    export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
+    db_pretty_size=$(psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    echo "Database size after restore: $db_pretty_size"
+    send_teams "Database size after restore: $db_pretty_size"
+
+    # Assert the value is greater than 8000 MB
+    db_size=$(echo $db_pretty_size | awk '{print $1}')
+    # Make sure size we got is not less than 8 GB
+    if [ "$db_size" -lt 8 ]; then
+        echo "Database size after restore is less than 8 GB!!"
+        exit 1
+    else
+        echo "Database size after restore looks good (greater than 8 GB)."
+    fi
+
+    # After restore, switch back to default RDS parameter group
+    #aws rds modify-db-instance --db-instance-identifier $stage_instance_identifier --db-parameter-group-name default.postgres12 --apply-immediately --no-cli-pager
+    sleep 60
+
+    # Wait for instance status to be "available" and not "modifying" or "backing-up". Can be triggered by restores it seems.
+    check_rds_instance $ENGINE_DEV_IDENTIFIER
+
+    sleep 60
 }
 
 
@@ -671,30 +748,38 @@ api_tests
 
 dump_local_db
 
-modify_stage_scaling_out "disable"
+if $dev_deploy; then
+    echo "Dev deploy flag is set to true, skipping production deploys to the blue/green environments."
+    docker_tests
 
-restart_staging_db
+    deploy_to_dev_rds
 
-restore_db_to_staging
+else
+    modify_stage_scaling_out "disable"
 
-engine_tests_for_restored_rds
+    restart_staging_db
 
-modify_stage_scaling_out "enable"
+    restore_db_to_staging
 
-docker_tests
+    engine_tests_for_restored_rds
 
-scale_up_staging
+    modify_stage_scaling_out "enable"
 
-deploy_to_staging_ecs
+    docker_tests
 
-check_target_health
+    scale_up_staging
 
-warmup_lb
+    deploy_to_staging_ecs
 
-swap_cnames
+    check_target_health
 
-reenable_taskin_alarm
+    warmup_lb
 
-make_reports_tables
+    swap_cnames
+
+    reenable_taskin_alarm
+
+    make_reports_tables
+fi
 
 echo "Finished successfully!"
