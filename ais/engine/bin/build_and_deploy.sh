@@ -222,6 +222,10 @@ identify_prod() {
     export prod_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${prod_color} --query "DBInstances[*].Endpoint.Address" --output text)
     export staging_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${staging_color} --query "DBInstances[*].Endpoint.Address" --output text)
     export dev_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-upgrade-dev --query "DBInstances[*].Endpoint.Address" --output text)
+
+    if $dev_deploy; then
+        staging_db_uri=$dev_db_uri
+    fi
 }
 
 
