@@ -221,6 +221,7 @@ identify_prod() {
 
     export prod_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${prod_color} --query "DBInstances[*].Endpoint.Address" --output text)
     export staging_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-${staging_color} --query "DBInstances[*].Endpoint.Address" --output text)
+    export dev_db_uri=$(aws rds describe-db-instances --db-instance-identifier ais-engine-upgrade-dev --query "DBInstances[*].Endpoint.Address" --output text)
 }
 
 
@@ -296,46 +297,45 @@ dump_local_db() {
 
 
 deploy_to_dev_rds() {
-    echo -e "\nRunning restore_db_to_staging.."
-    echo "Restoring the engine DB to $staging_db_uri"
-    send_teams "Restoring the engine DB to $staging_db_uri"
+    echo -e "\nRunning deploy_to_dev_rds.."
+    echo "Restoring the engine DB to $dev_db_uri"
+    send_teams "Restoring the engine DB to $dev_db_uri"
 
     export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
-    db_pretty_size=$(psql -U postgres -h $staging_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    db_pretty_size=$(psql -U postgres -h $dev_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size before restore: $db_pretty_size"
 
-
     # Wait for instance status to be "available" and not "modifying".
-    check_rds_instance $ENGINE_DEV_IDENTIFIER
+    check_rds_instance "ais-engine-upgrade-dev"
 
     # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
     # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
     export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
-    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
+    psql -U postgres -h $dev_db_uri -d ais_engine -c "DROP SCHEMA IF EXISTS public CASCADE;"
     # Recreate as ais_engine otherwise things get angry
     export PGPASSWORD=$RDS_ENGINE_DB_PASS
-    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE SCHEMA public;"
-    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
-    psql -U ais_engine -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
+    psql -U ais_engine -h $dev_db_uri -d ais_engine -c "CREATE SCHEMA public;"
+    psql -U ais_engine -h $dev_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO postgres;"
+    psql -U ais_engine -h $dev_db_uri -d ais_engine -c "GRANT ALL ON SCHEMA public TO public;"
 
     # Extensions can only be re-installed as postgres superuser
     export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
-    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE EXTENSION postgis WITH SCHEMA public;"
-    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "CREATE EXTENSION pg_trgm WITH SCHEMA public;"
-    psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -c "GRANT ALL ON TABLE public.spatial_ref_sys TO ais_engine;"
+    psql -U postgres -h $dev_db_uri -d ais_engine -c "CREATE EXTENSION postgis WITH SCHEMA public;"
+    psql -U postgres -h $dev_db_uri -d ais_engine -c "CREATE EXTENSION pg_trgm WITH SCHEMA public;"
+    psql -U postgres -h $dev_db_uri -d ais_engine -c "GRANT ALL ON TABLE public.spatial_ref_sys TO ais_engine;"
 
     # Will have lots of errors about things not existing during DROP statements because of manual public schema drop & remake but will be okay.
     export PGPASSWORD=$RDS_ENGINE_DB_PASS
     echo "Beginning restore with file $DB_DUMP_FILE_LOC, full command is:"
-    echo "time pg_restore -v -j 6 -h $ENGINE_DEV_DB_HOST -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
+    echo "time pg_restore -v -j 6 -h $dev_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true"
     # Store output so we can determine if errors are actually bad
-    restore_output=$(time pg_restore -v -j 6 -h $ENGINE_DEV_DB_HOST -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
+    restore_output=$(time pg_restore -v -j 6 -h $dev_db_uri -d ais_engine -U ais_engine -c $DB_DUMP_FILE_LOC || true)
     #echo $restore_output | grep 'errors ignored on restore'
     sleep 10
 
     # Check size after restore
     export PGPASSWORD=$RDS_SUPER_ENGINE_DB_PASS
-    db_pretty_size=$(psql -U postgres -h $ENGINE_DEV_DB_HOST -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
+    db_pretty_size=$(psql -U postgres -h $dev_db_uri -d ais_engine -AXqtc "SELECT pg_size_pretty( pg_database_size('ais_engine') );")
     echo "Database size after restore: $db_pretty_size"
     send_teams "Database size after restore: $db_pretty_size"
 
@@ -354,7 +354,7 @@ deploy_to_dev_rds() {
     sleep 60
 
     # Wait for instance status to be "available" and not "modifying" or "backing-up". Can be triggered by restores it seems.
-    check_rds_instance $ENGINE_DEV_IDENTIFIER
+    check_rds_instance "ais-engine-upgrade-dev"
 
     sleep 60
 }
@@ -401,22 +401,30 @@ restart_staging_db() {
 
 # Check to see if the RDS instance is in an "available" state.
 check_rds_instance() {
+
+    # check for passed identifier, otherwise default to identifying by color
+    target_db_identifier=$1
+
     # Initial sleep of 6 minutes because we're seeing the instance be available
     # and then suddenly in a modifying state, so parameter group modification can take longer than we expect.
-    echo 'Checking RDS instance status..'
-    sleep 300
+    echo 'Checking RDS instance status for instance '$target_db_identifier'..'
+    sleep 160
 
-    if [[ "$prod_color" == "blue" ]]; then
-        local stage_instance_identifier="ais-engine-green"
-    else
-        local stage_instance_identifier="ais-engine-blue"
+    # If target_db_identifier is empty, then try to determin the target
+    if [ -z "$target_db_identifier" ]; then
+        if [[ "$prod_color" == "blue" ]]; then
+            local target_db_identifier="ais-engine-green"
+        else
+            local target_db_identifier="ais-engine-blue"
+        fi
     fi
+    echo 'Target RDS instance identifier is '$target_db_identifier
 
     local max_attempts=90
     local attempt=1
     while [ $attempt -le $max_attempts ]; do
         instance_status=$(aws rds describe-db-instances --region "us-east-1" \
-          --db-instance-identifier "$stage_instance_identifier" \
+          --db-instance-identifier "$target_db_identifier" \
           --query "DBInstances[0].DBInstanceStatus" --output text --no-cli-pager)
 
         if [ "$instance_status" = "available" ]; then
