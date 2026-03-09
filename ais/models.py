@@ -203,6 +203,11 @@ class OpaProperty(db.Model):
     tencode = db.Column(db.Text)
     owners = db.Column(db.Text)
 
+class OpaAccountNumChanges(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pin = db.Column(db.Text, index=True)
+    old_opa_account_num = db.Column(db.Text)
+    new_opa_account_num = db.Column(db.Text)
 
 ##################
 # ADDRESS POINTS #
