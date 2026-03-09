@@ -11,22 +11,19 @@ def client():
 
 def assert_status(response, *expected_status_codes):
     assert response.status_code in expected_status_codes, (
-        'Expected status {}; received {}. Full response was {}.').format(
-        expected_status_codes, response.status_code, response.get_data())
+        f"Expected status {expected_status_codes}; received {response.status_code}."  
+        f"Full response was {response.get_data()}.")
 
 def assert_num_results(data, expected_num_results, op=eq):
     actual_num_results = data['total_size']
     assert op(actual_num_results, expected_num_results), (
-        "Expected {} {} results; received {}. Full response "
-        "was {}").format(
-        op.__name__, expected_num_results, actual_num_results,
-        data)
+        f"Expected {op.__name__} {expected_num_results} results; " 
+        f"received {actual_num_results}. Full response was {data}")
 
 def assert_attr(feature, property_name, expected_value):
     actual_address = feature['properties'][property_name]
     assert actual_address == expected_value, (
-        'Expected {} of {}; received {}.').format(
-        property_name, expected_value, actual_address)
+        f'Expected {property_name} of {expected_value}; received {actual_address}.')
 
 def assert_opa_address(feature, expected_address):
     assert_attr(feature, 'opa_address', expected_address)
@@ -107,7 +104,7 @@ def test_geometry_is_lat_lng_by_default(client):
     coords = tuple(feature['geometry']['coordinates'])
     assert (-76, 39) < coords < (-74, 41),\
         ('Coordinates do not appear to be in Philadelphia, or do not represent '
-         'a longitude, latitude: {}').format(coords)
+         f'a longitude, latitude: {coords}')
 
 def test_ranged_address_has_units_with_base_first(client):
     response = client.get('/addresses/1801-23 N 10th St?include_units')
@@ -147,8 +144,8 @@ def test_child_address_has_all_units_in_ranged_address(client):
     ranged_data = json.loads(response.get_data().decode())
 
     assert child_data['total_size'] == ranged_data['total_size'], \
-        ('Child address has {} results, whereas the ranged address has {} '
-         'results.').format(child_data['total_size'], ranged_data['total_size'])
+        (f'Child address has {child_data['total_size']} results,' 
+         f'whereas the ranged address has {ranged_data['total_size']} results.')
 
 @pytest.mark.skip(reason="todo - return OPA source address instead of parsed OPA street_address")
 def test_unit_address_in_db(client):
@@ -180,7 +177,7 @@ def test_unit_address_without_unit_num_in_db(client):
     result = app_db.engine.execute(UNIT_SQL)
     street_address = result.first()[0]
 
-    response = client.get('/addresses/{}?opa_only'.format(street_address))
+    response = client.get(f'/addresses/{street_address}?opa_only')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
@@ -291,7 +288,7 @@ def test_address_query_can_end_in_comma(client):
 def test_opa_query_returns_child_address(client):
     ignore_addresses = ['1501-53 N 24TH ST', '514-32 N CREIGHTON ST', '901-99 MARKET ST', '630-50 W FISHER AVE', '630R-50 W FISHER AVE', '1501-39 MARKET ST', '8842-54 FRANKFORD AVE', '1131-45 VINE ST', '750-86 N 46TH ST', '1000A-52 FRANKFORD AVE', '4215-19 LUDLOW ST', '3118-98 CHESTNUT ST', '1501S-39 MARKET ST', '3423-35 WEYMOUTH ST', '4421R-51 N PHILIP ST', '5911R-27 BELFIELD AVE',  '4130-50 CITY AVE', '3302R-64 N 3RD ST', '430-32 FAIRMOUNT AVE', '5501-35 E WISTER ST', '7326-30 OXFORD AVE', '1214-32 N 26TH ST', '4131-63 WHITAKER AVE', '2104-22 W VENANGO ST', '5112-22 REGENT ST', '1600S-26 JOHN F KENNEDY BLVD']
 
-    CHILD_SQL = '''
+    CHILD_SQL = f'''
         SELECT child.street_address, parent.street_address
         FROM address_summary AS child
           JOIN address_link ON address_1 = child.street_address
@@ -301,15 +298,15 @@ def test_opa_query_returns_child_address(client):
           AND parent.opa_account_num = child.opa_account_num
           AND child.address_low != parent.address_low
           AND child.address_low != parent.address_high
-          AND parent.street_address not in {}
+          AND parent.street_address not in {tuple(ignore_addresses)}
         LIMIT 1
-    '''.format(tuple(ignore_addresses))
+    '''
     # Must use the app import like this to get context so we can run SQL commands
     with app.app_context():
         result = app_db.engine.execute(CHILD_SQL)
     child_address, parent_address = result.first()
 
-    response = client.get('/addresses/{}?opa_only'.format(child_address))
+    response = client.get(f'/addresses/{child_address}?opa_only')
     assert_status(response, 200)
 
     data = json.loads(response.get_data().decode())
@@ -377,7 +374,7 @@ def test_not_found(client):
     try:
         data = json.loads(response_content)
     except ValueError:
-        raise Exception('Response is not JSON: {}'.format(response_content))
+        raise Exception(f'Response is not JSON: {response_content}')
 
 def test_intersection_query(client):
     # TODO: Make functional without street suffix (st)?

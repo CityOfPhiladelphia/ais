@@ -1,3 +1,5 @@
+🚨 **NOTE (7/1/2025): Elastic Beanstalk and Travis are deprecated as deploy tools for AIS. This document is not being actively updated.** 
+
 # Deploying to Elastic Beanstalk
 
 ## Production environments

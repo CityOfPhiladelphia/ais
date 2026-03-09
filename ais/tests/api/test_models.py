@@ -18,8 +18,8 @@ def test_no_unit_sorted_first():
         .order_by_address()
 
     num_addresses = addresses.count()
-    assert num_addresses >= 2, 'Len addresses is {}'.format(num_addresses)
+    assert num_addresses >= 2, f'Len addresses is {num_addresses}'
 
     first_address = addresses[0]
-    assert not first_address.unit_type, 'First has a unit_type: {}'.format(first_address.unit_type)
-    assert not first_address.unit_num, 'First has a unit_num: {}'.format(first_address.unit_num)
+    assert not first_address.unit_type, f'First has a unit_type: {first_address.unit_type}'
+    assert not first_address.unit_num, f'First has a unit_num: {first_address.unit_num}'

@@ -1,4 +1,3 @@
-import sys
 import traceback
 from datetime import datetime
 import petl as etl
@@ -22,7 +21,7 @@ def main():
     db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
     db_pw = dsn[dsn.index(":",dsn.index(db_user)) + 1:dsn.index("@")]
     db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-    pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+    pg_db = psycopg2.connect(f'dbname={db_name} user={db_user} password={db_pw} host=localhost')
 
     # Get table params
     source_def = config['BASE_DATA_SOURCES']['streets']
@@ -149,11 +148,11 @@ def main():
 
         except ValueError as e:
             # FEEDBACK
-            #print('{}: {} ({})'.format(e, source_street_full, seg_id))
+            #print(f'{e}: {source_street_full} ({seg_id})')
             error_count += 1
 
         except Exception as e:
-            print('Unhandled error on row: {}'.format(i))
+            print(f'Unhandled error on row: {i}')
             print(traceback.format_exc())
             raise e
 
@@ -281,4 +280,4 @@ def main():
     '''
 
     db.close()
-    print('Finished in {} seconds'.format(datetime.now() - start))
+    print(f'Finished in {datetime.now() - start} seconds')
