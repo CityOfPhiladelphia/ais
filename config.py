@@ -123,6 +123,15 @@ BASE_DATA_SOURCES = {
             'geom':                 'shape',
         },
     },
+    'opa_account_num_changes': {
+        'db':               'citygeo',
+        'table':            'viewer_opa.pin_account_number_change_map',
+        'field_map': {
+            'pin':                       'pin',
+            'old_opa_account_num':       'old_opa_account_num',
+            'new_opa_account_num':       'new_opa_account_num',
+        },
+    },
     'ng911_address_points': {
         'db':               'citygeo',
         'table':            'viewer_ng911.ng911_siteaddresses',
