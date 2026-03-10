@@ -14,7 +14,7 @@ from geoalchemy2.functions import ST_Transform
 from sqlalchemy import func, desc
 from passyunk.parser import PassyunkParser
 from ais import app, util, app_db as db
-from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, DorParcel, PwdParcel, OpaProperty, ENGINE_SRID
+from ais.models import Address, AddressSummary, StreetIntersection, StreetSegment, Geocode, AddressTag, DorParcel, PwdParcel, OpaProperty, OpaAccountNumChanges, ENGINE_SRID
 from ..util import NotNoneDict
 from .errors import json_error
 from .paginator import QueryPaginator, Paginator
@@ -696,6 +696,17 @@ def account(query):
 
     tagged_opa_account_nums = OpaProperty.query \
         .filter(OpaProperty.account_num == normalized).all()
+
+    # If account number isn't found, look for any addresses that were tagged with that account number in the past. 
+    if not tagged_opa_account_nums:
+        changed_opa_account_nums = OpaAccountNumChanges.query \
+            .filter(OpaAccountNumChanges.old_opa_account_num == normalized).all()
+
+        if changed_opa_account_nums:
+            new_opa_account_nums = tuple(set([x.new_opa_account_num for x in changed_opa_account_nums]))
+            tagged_opa_account_nums = OpaProperty.query \
+                .filter(OpaProperty.account_num.in_(new_opa_account_nums)).all()
+
     street_addresses = tuple(set([x.street_address for x in tagged_opa_account_nums]))
 
     addresses = AddressSummary.query \
