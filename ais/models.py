@@ -210,7 +210,7 @@ class OpaProperty(db.Model):
 class OpaAccountNumChanges(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pin = db.Column(db.Text, index=True)
-    old_opa_account_num = db.Column(db.Text)
+    old_opa_account_num = db.Column(db.Text, index=True)
     new_opa_account_num = db.Column(db.Text)
 
 ##################
