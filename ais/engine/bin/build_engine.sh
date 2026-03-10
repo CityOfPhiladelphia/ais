@@ -26,6 +26,7 @@ SCRIPTS=(
   "load_street_aliases" 
   "make_street_intersections"
   "load_opa_properties"
+  "load_opa_account_changes"
   "load_ng911_address_points"
   "load_dor_parcels"
   "load_dor_condos"

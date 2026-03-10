@@ -371,7 +371,10 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     'pwd_parcel_id': 'exact_key',
                     'opa_account': 'exact_key'
                 }
-                match_type = match_type_key[self.metadata['search_type']]
+                if self.metadata['search_type'] == 'opa_account' and self.metadata['normalized'] != address.opa_account_num:
+                    match_type = 'changed_key'
+                else:
+                    match_type = match_type_key[self.metadata['search_type']]
 
         else:
             match_type = self.estimated
