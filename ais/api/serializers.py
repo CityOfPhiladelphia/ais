@@ -359,6 +359,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                     sa_data[col.name] = getattr(address.service_areas, col.name)
             else:
                 sa_data = self.sa_data
+                sa_data['zip_code'] = address.zip_code if address.zip_code else sa_data['zip_code']
+                sa_data['zip_4'] = address.zip_4 if address.zip_4 else sa_data['zip_4']
             if self.metadata['search_type'] in ('address', 'street'):
                 match_type = self.get_address_response_relationships(address=address, ref_addr=self.ref_addr) if not self.estimated else 'unmatched'
             else:
