@@ -110,7 +110,8 @@ address_summary_mapping = {
     'bin': 'bin',
     'li_parcel_id': 'li_parcel_id',
     'street_code': 'street_code',
-    'shape': 'shape'
+    'shape': 'shape',
+    'base_address': 'base_address'
 }
 
 
