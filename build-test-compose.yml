@@ -3,6 +3,7 @@ services:
   ais:
     container_name: ais
     image: ais
+    network_mode: host
     build: 
       context: .
       dockerfile: Dockerfile
@@ -11,5 +12,3 @@ services:
       - ENGINE_DB_PASS
       - BLUE_ENGINE_CNAME
       - GREEN_ENGINE_CNAME
-    ports:
-      - "8080:8080"

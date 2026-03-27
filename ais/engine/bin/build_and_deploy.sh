@@ -125,7 +125,7 @@ check_for_prior_runs() {
 activate_venv_source_libaries() {
     if [ ! -d $WORKING_DIRECTORY/venv ]; then
         echo -e "\nActivating/creating venv.."
-        python3.10 -m venv $WORKING_DIRECTORY/venv 
+        python3.10 -m venv $WORKING_DIRECTORY/venv
         source $WORKING_DIRECTORY/venv/bin/activate
         # Add the ais folder with our __init__.py so we can import it as a python module
         export PYTHONPATH="${PYTHONPATH}:$WORKING_DIRECTORY/ais"
@@ -147,7 +147,7 @@ ensure_passyunk_updated() {
     echo -e "\nUpdating passyunk_automation specifically.."
     file $WORKING_DIRECTORY/ssh-config
     file $WORKING_DIRECTORY/passyunk-private.key
-    cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config 
+    cp $WORKING_DIRECTORY/ssh-config ~/.ssh/config
     cp $WORKING_DIRECTORY/passyunk-private.key ~/.ssh/passyunk-private.key
     pip install git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git --upgrade
     pip install git+https://github.com/CityOfPhiladelphia/passyunk --upgrade
@@ -178,7 +178,7 @@ setup_log_files() {
 
 # Check for and load credentials
 # This wil be needed for the engine build to pull in data.
-# config-secrets.sh contains AWS 
+# config-secrets.sh contains AWS
 check_load_creds() {
     echo -e "\nLoading credentials and passwords into the environment"
     python3 $WORKING_DIRECTORY/write-secrets-to-env.py
@@ -207,7 +207,7 @@ identify_prod() {
     })
     echo "Production environment is: $prod_color"
     if [[ "$prod_color" == "blue" ]]; then
-        export staging_color="green" 
+        export staging_color="green"
     else
         export staging_color="blue"
     fi
@@ -284,7 +284,7 @@ api_tests() {
     # Set these so it'll use our local build for API tests
     export ENGINE_DB_HOST='localhost'
     export ENGINE_DB_PASS=$LOCAL_ENGINE_DB_PASS
-    pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
+    pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests
     use_exit_status $? "API tests failed" "API tests passed"
 }
 
@@ -611,7 +611,7 @@ scale_up_staging() {
     echo -e "\nCurrent running tasks in prod: $prod_tasks"
     if (( $prod_tasks > 2 ))
     then
-        # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes 
+        # Must temporarily disable the alarm otherwise we'll get scaled back in seconds. We'll re-enable five minutes
         # after switching prod and staging.
         aws cloudwatch disable-alarm-actions --alarm-names ais-${staging_color}-api-taskin
         # throw in a sleep, can take a bit for the disable action to take effect.
@@ -620,7 +620,7 @@ scale_up_staging() {
         # Wait for cluster to be stable, e.g. all the containers are spun up.
         # For changing from 2 to 5 instances (+3) in my experience it tooks about 3 minutes for the service to become stable.
         aws ecs wait services-stable --cluster ais-${staging_color}-cluster \
-        --service ais-${staging_color}-api-service --region us-east-1 
+        --service ais-${staging_color}-api-service --region us-east-1
         # When we re-enable the alarm at the end of this entire script, the scalein alarm should
         # start lowering the task count by 1 slowly based on the alarm 'cooldown' time.
     else
@@ -639,7 +639,7 @@ deploy_to_staging_ecs() {
     1> /dev/null
     echo "running aws ecs services-stable.."
     aws ecs wait services-stable --cluster ais-${staging_color}-cluster \
-    --service ais-${staging_color}-api-service --region us-east-1 
+    --service ais-${staging_color}-api-service --region us-east-1
 }
 
 
@@ -688,11 +688,6 @@ swap_cnames() {
         --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-    echo "Swapping ${prod_color} to the Prod record in hosted zone ${PHILACITY_ZONE_ID}.."
-    aws route53 change-resource-record-sets \
-        --hosted-zone-id $PHILACITY_ZONE_ID \
-        --profile default \
-        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
 
     # Swap the staging DNS record to the ALB DNS we identified as prod
@@ -701,11 +696,6 @@ swap_cnames() {
     echo "$json_string" > $WORKING_DIRECTORY/route53-temp-change.json
     aws route53 change-resource-record-sets \
         --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
-        --profile default \
-        --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
-    echo "Swapping ${staging_color} to the Stage record in hosted zone ${PHILACITY_ZONE_ID}.."
-    aws route53 change-resource-record-sets \
-        --hosted-zone-id $PHILACITY_ZONE_ID \
         --profile default \
         --change-batch file://$WORKING_DIRECTORY/route53-temp-change.json 1> /dev/null
 
@@ -731,7 +721,7 @@ make_reports_tables() {
     send_teams "Making Reports..."
     bash $WORKING_DIRECTORY/ais/engine/bin/make_reports.sh
     send_teams "Reports have completed!"
-    
+
 }
 
 check_for_prior_runs
