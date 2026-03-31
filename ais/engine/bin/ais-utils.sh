@@ -20,11 +20,10 @@ get_prod_env() {
     # and then grepping for either blue or green.
     # The hosted-zone-id is for our citygeo.phila.city hosted zone in AWS.
     prod_lb_color=$(aws route53 list-resource-record-sets \
-                    --hosted-zone-id $PHILACITY_ZONE_ID \
+                    --hosted-zone-id $CITYGEOPHILACITY_ZONE_ID \
                     --query "ResourceRecordSets[?Name == '$PROD_ENDPOINT.']" | grep -o "blue\|green"
     )
 
     # Return either blue or green string
     echo $prod_lb_color
 }
-
