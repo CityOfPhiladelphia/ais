@@ -48,7 +48,7 @@ conn_components = re.split(r'\/|@', write_dsn)
 write_user, write_pw, write_host, _, write_hostname = conn_components
 write_conn = psycopg2.connect(f'user={write_user} password={write_pw} host={write_host} dbname={write_hostname}')
 
-print(f'\nReading from local DB: {read_dsn}')
+print(f'\nReading from local DB..')
 print(f'Writing to: {write_dsn}\n'.replace(write_pw, 'CENSORED'))
 #########################################################################################################################
 ## UTILS
