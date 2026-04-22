@@ -28,7 +28,7 @@ Flask-Migrate==4.0.0
 Flask-SQLAlchemy==3.0.2
 fuzzywuzzy==0.18.0
 GeoAlchemy2==0.12.5
-geopetl==0.0.1
+geopetl @ git+https://github.com/CityOfPhiladelphia/geopetl@e109697e1b1d210e80f38e5a82aa3074fac7be25
 gevent==22.10.2
 greenlet==2.0.1
 gunicorn==20.1.0
