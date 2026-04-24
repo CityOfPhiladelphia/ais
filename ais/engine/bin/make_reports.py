@@ -33,6 +33,7 @@ DOR_CONDO_ERROR_TABLE_NAME = 'citygeo.dor_condominium_error'
 TRUE_RANGE_WRITE_TABLE_NAME = 'citygeo.true_range'
 ADDRESS_ERROR_WRITE_TABLE_NAME = 'citygeo.ais_address_error'
 SOURCE_ADDRESS_WRITE_TABLE_NAME = 'citygeo.source_address'
+INTERSECTION_WRITE_TABLE_NAME = 'citygeo.street_intersections'
 
 
 read_pass = parsed_read_db_string['password']
@@ -174,16 +175,19 @@ def upload_csv_to_postgres(csv_file_path, table_name, conn):
 #############################################
 # Read in files, format and write to tables #
 #############################################
+
 #################
 # ADDRESS ERROR #
 #################
 print(f"Writing address_error table to {ADDRESS_ERROR_WRITE_TABLE_NAME}...")
 etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').topostgis(write_conn, ADDRESS_ERROR_WRITE_TABLE_NAME)
+
 ##################
 # SOURCE ADDRESS #
 ##################
-print(f"Writing source_address table to {SOURCE_ADDRESS_WRITE_TABLE_NAME}...")
+print(f"\nWriting source_address table to {SOURCE_ADDRESS_WRITE_TABLE_NAME}...")
 etl.fromdb(read_conn, 'select * from source_address').topostgis(write_conn, SOURCE_ADDRESS_WRITE_TABLE_NAME)
+
 ##############
 # TRUE RANGE #
 ##############
@@ -191,6 +195,33 @@ print(f"\nWriting true_range table to {TRUE_RANGE_WRITE_TABLE_NAME}...")
 true_range_rows = etl.fromdb(read_conn, 'select * from true_range')
 true_range_rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
 
+#################
+# Intersections #
+#################
+print(f"\nWriting street_intersection table to {INTERSECTION_WRITE_TABLE_NAME}...")
+INTERSECTIONS_CSV_FILENAME = "street_intersections.csv"
+print('Grabbing fields from local database..')
+etl.fromdb(read_conn, '''
+            select node_id
+            ,int_id
+            ,street_1_full
+            ,street_1_name
+            ,street_1_code
+            ,street_1_predir
+            ,street_1_postdir
+            ,street_1_suffix
+            ,street_2_full
+            ,street_2_name
+            ,street_2_code
+            ,street_2_predir
+            ,street_2_postdir
+            ,street_2_suffix 
+            ,public.ST_AsEWKT(geom) as shape
+            from street_intersection;
+            ''') \
+            .tocsv(INTERSECTIONS_CSV_FILENAME)
+                      # need to use AsEWKT and enforce srid explicitly for copy_expert to work from the csv
+upload_csv_to_postgres(INTERSECTIONS_CSV_FILENAME, INTERSECTION_WRITE_TABLE_NAME, write_conn)
 
 ########################
 # SERVICE AREA SUMMARY #
@@ -202,10 +233,9 @@ if 'objectid' in etl.header(service_area_rows):
     service_area_rows = etl.cutout(service_area_rows, 'objectid')
 service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
 
-
-########################
+###################
 # ADDRESS SUMMARY #
-########################
+###################
 print("\nCreating transformed address_summary table...")
 # add address_full and transformed coords, as well as shape as WKT, and only export rows that have been geocoded:
 print('Grabbing fields from local database..')
