@@ -310,7 +310,7 @@ deploy_to_dev_rds() {
     echo "Database size before restore: $db_pretty_size"
 
     # Wait for instance status to be "available" and not "modifying".
-    check_rds_instance "ais-engine-upgrade-dev"
+    check_rds_instance "ais-engine-dev"
 
     # Manually drop and recreate the schema, mostly because extension recreates aren't included in a pg_dump
     # We need to make extensions first to get shape field functionality, otherwise our restore won't work.
@@ -358,7 +358,7 @@ deploy_to_dev_rds() {
     sleep 60
 
     # Wait for instance status to be "available" and not "modifying" or "backing-up". Can be triggered by restores it seems.
-    check_rds_instance "ais-engine-upgrade-dev"
+    check_rds_instance "ais-engine-dev"
 
     sleep 60
 }
