@@ -217,7 +217,7 @@ def make_voter_address(comps):
         return street_address
     unit_tokens = unit_num.split()
     if len(unit_tokens) == 1:
-        return street_address + ' # ' + unit_num 
+        return street_address + ' # ' + unit_num
     elif len(unit_tokens) >= 2 and unit_tokens[0] in ['APT', 'APT.', 'APART', 'REAR', 'RM', 'ROOM', 'SIDE', 'UNIT']:
         # ['FL', 'FLR', 'FLOOR', 'STE'] will have # sign automatically stripped by passyunk,
         # so they don't need to be explicitly handled.
@@ -694,7 +694,7 @@ SERVICE_AREAS = {
                     'value_field':          'district',
                 },
             },
-        },       
+        },
         {
             'layer_id':                     'political_ward',
             'name':                         'Ward',

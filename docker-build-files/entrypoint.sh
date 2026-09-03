@@ -11,15 +11,15 @@ fi
 
 if [ -z "${ENGINE_DB_HOST}" ]; then
     echo "Did not receive ENGINE_DB_HOST var, attempting to set manually.."
-    prod_color=$(dig ais-prod.phila.city +short | grep -o "blue\|green")
-    if [[ "$PROD_COLOR" -eq "blue" ]]; then
+    PROD_COLOR=$(dig ais-prod.phila.city +short | grep -o "blue\|green")
+    if [[ "$PROD_COLOR" == "blue" ]]; then
 	if [ -z "${BLUE_ENGINE_CNAME}" ]; then
 	    echo 'BLUE_ENGINE_CNAME var not set!'
 	    exit 1
 	fi
         export ENGINE_DB_HOST=$BLUE_ENGINE_CNAME
     fi
-    if [[ "$PROD_COLOR" -eq "green" ]]; then
+    if [[ "$PROD_COLOR" == "green" ]]; then
 	if [ -z "${GREEN_ENGINE_CNAME}" ]; then
 	    echo 'GREEN_ENGINE_CNAME var not set!'
 	    exit 1
@@ -37,9 +37,9 @@ fi
 #python application.py runserver -h 0.0.0.0 -p 80
 
 # Create the configuration file that points ais at it's ais_engine database.
-echo "SQLALCHEMY_DATABASE_URI = \
-    'postgresql://ais_engine:$ENGINE_DB_PASS@$ENGINE_DB_HOST:5432/ais_engine'" >> /ais/instance/config.py
+echo "SQLALCHEMY_DATABASE_URI = 'postgresql://ais_engine:$ENGINE_DB_PASS@$ENGINE_DB_HOST:5432/ais_engine'" >> /ais/instance/config.py
 
+(echo > /dev/tcp/$ENGINE_DB_HOST/5432) >/dev/null 2>&1 && echo "Database $ENGINE_DB_HOST is reachable!"
 
 #ls /ais/venv/lib/python3.10/site-packages/passyunk/pdata
 #ls /ais/venv/lib/python3.10/site-packages/passyunk_automation/pdata
@@ -55,7 +55,7 @@ declare -a pdata_files=('alias' 'alias_streets' 'apt' 'apt_std' 'apte'
 
 # Update passyunk pdata files everytime the container starts.
 echo 'Pulling in passyunk package to update pdata files with command "pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master"..'
-pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master &>/dev/null || fail "Failed to update passyunk pdata files!!"
+pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master || fail "Failed to update passyunk pdata files!!"
 # Delete private ssh key once pulled and running.
 srm /root/.ssh/passyunk-private.key
 
@@ -74,14 +74,9 @@ do
 done
 echo 'All private data exists.'
 
-# Run nginx as proxy server to gunicorn
-# running like this will start in the background
-nginx
-
-# Gunicorn will be behind nginx, run on socket. Gunicorn must be run in the /ais folder.
-#gunicorn application --bind unix:/tmp/gunicorn.sock --worker-class=gevent --access-logfile '-' --log-level 'debug'
-#gunicorn application --bind unix:/tmp/gunicorn.sock --workers 4 --worker-class=gevent --access-logfile '-' --log-level 'notice'
-#gunicorn application --bind 0.0.0.0:8080 --workers 5 --threads 2 --worker-class gevent --access-logfile '-' --log-level 'notice'
-#gunicorn application --bind 0.0.0.0:8080 --worker-connections 512 --workers 2 --worker-class gevent --access-logfile '-' --log-level 'notice'
-# Nginx will proxy to the socket
-gunicorn application --bind unix:/tmp/gunicorn.sock --workers 4 --worker-class gevent --access-logfile '-' --log-level 'notice'
+exec gunicorn application \
+  --bind 0.0.0.0:8080 \
+  --workers 1 \
+  --threads 2 \
+  --worker-class gthread \
+  --keep-alive 65
