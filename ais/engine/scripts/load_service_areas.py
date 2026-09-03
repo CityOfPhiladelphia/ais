@@ -242,6 +242,9 @@ def main():
 
 
     if WRITE_OUT:
+        for i, poly in enumerate(polys):
+            if i < 100:
+                print(poly)
         print('Writing service area polygons...')
         poly_table.write(polys)
 

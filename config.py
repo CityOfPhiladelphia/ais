@@ -582,6 +582,50 @@ SERVICE_AREAS = {
                 },
             },
         },
+        # PPR
+        {
+            'layer_id':                     'ppr_ops_districts',
+            'name':                         'PPR Ops districts',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'citygeo',
+                    'table':                'viewer_ppr.ppr_ops_districts',
+                    'value_field':          'ppr_ops_district',
+                    'object_id_field':      'objectid',
+
+                },
+            },
+        },
+        {
+            'layer_id':                     'ppr_streettree_districts',
+            'name':                         'PPR Street Tree districts',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'citygeo',
+                    'table':                'viewer_ppr.ppr_streettree_districts',
+                    'value_field':          'ppr_st_tree_district',
+                    'object_id_field':      'objectid',
+
+                },
+            },
+        },
+        {
+            'layer_id':                     'ppr_parktree_districts',
+            'name':                         'PPR Park Tree districts',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'citygeo',
+                    'table':                'viewer_ppr.ppr_parktree_districts',
+                    'value_field':          'ppr_pk_tree_district_id',
+                    'object_id_field':      'objectid',
+
+                },
+            },
+        },
+
 
         # PHILLYRISING - TODO: decide whether to keep this, since it's unclear if program still exists.
         {
