@@ -14,22 +14,22 @@ RUN apt-get update -y && \
     apt-get clean -y && \
     apt-get autoremove -y
 
-# Automated key for accessing private git repo
 RUN mkdir /root/.ssh && chmod 600 /root/.ssh
 # Add github to the list of known hosts so our SSH pip installs work later
 RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+# config so we can hit private repos via ssh
 COPY ssh-config /root/.ssh/config
-COPY passyunk-private.key /root/.ssh/passyunk-private.key
-RUN chmod 600 /root/.ssh/config; chmod 600 /root/.ssh/passyunk-private.key
 
-# Make the AIS cloned into the root, /ais
 # Note: Install python reqs at the system level, no need for venv in a docker container
 # also caused some issues for me.
+# Install them first so code changes are less likely to re-trigger a full requirements reinstall
 RUN mkdir -p /ais
-COPY . /ais
+COPY requirements.txt /ais/requirements.txt
 RUN pip install --upgrade pip && \
     pip install -r /ais/requirements.txt
 
+# Make the AIS cloned into the root, /ais
+COPY . /ais
 # Copy our secrets into the flask speciic secret path
 COPY ./instance/config.py /ais/instance/config.py
 

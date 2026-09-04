@@ -56,10 +56,16 @@ declare -a pdata_files=('alias' 'alias_streets' 'apt' 'apt_std' 'apte'
  'saint' 'std' 'suffix' )
 
 # Update passyunk pdata files everytime the container starts.
-echo 'Pulling in passyunk package to update pdata files with command "pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master"..'
-pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master || fail "Failed to update passyunk pdata files!!"
-# Delete private ssh key once pulled and running.
-srm /root/.ssh/passyunk-private.key
+# requires key to be mounted to /root/.ssh/passyunk-gh-private.key
+# which the flux/helm deployment is handling for us.
+if [ -f "/root/.ssh/passyunk-gh-private.key" ]; then
+  echo 'Pulling in passyunk and passyunk_automation package to update pdata files with command "pip install --force-reinstall git+ssh://git@private-git/CityOfPhiladelphia/passyunk.git@master"..'
+  pip install --force-reinstall git+ssh://git@private-git/cityofphiladelphia/passyunk.git@master || fail "failed to update passyunk pdata files!!"
+  pip install --force-reinstall git+ssh://git@private-git/cityofphiladelphia/passyunk_automation.git@main || fail "failed to update passyunk pdata files!!"
+else
+  echo 'No private key exists to pull in passyunk data!'
+  exit 1
+fi
 
 echo "Asserting private data is in passyunk site-package folder"
 for i in "${pdata_files[@]}"

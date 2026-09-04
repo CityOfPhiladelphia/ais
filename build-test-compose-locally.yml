@@ -3,10 +3,13 @@
 version: '3.8'
 services:
   ais:
+    # special key for pulling in private repos
+    volumes:
+      - ./passyunk-gh-private.key:/root/.ssh/passyunk-gh-private.key:ro
     network_mode: "host"
     container_name: ais
     image: ais
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     environment:

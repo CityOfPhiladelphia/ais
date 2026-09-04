@@ -1,8 +1,9 @@
 git+https://github.com/CityOfPhiladelphia/ais.git#egg=ais
 git+https://github.com/CityOfPhiladelphia/datum.git#egg=datum
 git+https://github.com/CityOfPhiladelphia/geopetl.git#egg=geopetl
-git+https://github.com/CityOfPhiladelphia/passyunk
-git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
+# now pulled at runtime
+#git+https://github.com/CityOfPhiladelphia/passyunk
+#git+ssh://git@private-git/CityOfPhiladelphia/passyunk_automation.git
 alembic==1.8.1
 asttokens==2.2.1
 attrs==22.1.0

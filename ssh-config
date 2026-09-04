@@ -3,7 +3,7 @@ Host private-git
   User Auto-CityGeo
   Hostname github.com
   PreferredAuthentications publickey
-  IdentityFile ~/.ssh/passyunk-private.key
+  IdentityFile ~/.ssh/passyunk-gh-private.key
 
 # James' key for quality assurance work
 Host github.com-ais_qa
@@ -18,4 +18,3 @@ Host github.com github-ais
   Hostname github.com
   IdentityFile ~/.ssh/ais
   IdentitiesOnly true
-
