@@ -1,5 +1,5 @@
 # from functools import partial
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 # import pyproj
 # from shapely.wkt import loads as shp_loads, dumps as shp_dumps
 # from shapely.ops import transform as shp_transform

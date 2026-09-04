@@ -70,7 +70,7 @@ fi
 echo "Asserting private data is in passyunk site-package folder"
 for i in "${pdata_files[@]}"
 do
-  test -f /usr/local/lib/python3.10/site-packages/passyunk/pdata/$i.csv || fail "$i.csv does not exist in venv!"
+  test -f /usr/local/lib/python3.14/site-packages/passyunk/pdata/$i.csv || fail "$i.csv does not exist in venv!"
 done
 
 declare -a pdata_files=('election_block' 'usps_alias' 'usps_cityzip' 'usps_zip4s')
@@ -78,7 +78,7 @@ declare -a pdata_files=('election_block' 'usps_alias' 'usps_cityzip' 'usps_zip4s
 echo "Asserting private data is in passyunk_automation site-package folder"
 for i in "${pdata_files[@]}"
 do
-  test -f /usr/local/lib/python3.10/site-packages/passyunk_automation/pdata/$i.csv || fail "$i.csv does not exist in venv!"
+  test -f /usr/local/lib/python3.14/site-packages/passyunk_automation/pdata/$i.csv || fail "$i.csv does not exist in venv!"
 done
 echo 'All private data exists.'
 

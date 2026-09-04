@@ -1,6 +1,6 @@
 #import copy
 import re
-from flask_sqlalchemy import BaseQuery
+from sqlalchemy.orm import Query as BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
 from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct
@@ -308,7 +308,7 @@ class Address(db.Model):
     geocodes = db.relationship(
         'Geocode',
         primaryjoin='foreign(Geocode.street_address) == Address.street_address',
-        lazy='joined')
+        lazy='joined', viewonly=True)
 
     # zip_info = db.relationship(
     #     'AddressZip',
@@ -320,17 +320,20 @@ class Address(db.Model):
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     dor_parcel = db.relationship(
         'DorParcel',
         primaryjoin='foreign(DorParcel.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     opa_property = db.relationship(
         'OpaProperty',
         primaryjoin='foreign(OpaProperty.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
 
     def __init__(self, *args, **kwargs):
 
@@ -501,8 +504,8 @@ class Address(db.Model):
     @property
     def child_addresses(self):
         """Returns a list of address objects with in-range street addresses"""
-        address_low_re = re.compile('^{}'.format(self.address_low))
-        address_high_re = re.compile('-\d+')
+        address_low_re = re.compile(r'^{}'.format(self.address_low))
+        address_high_re = re.compile(r'-\d+')
         child_addresses = []
         for child_num in self.child_nums:
             child_num = str(child_num)
@@ -725,6 +728,7 @@ class ServiceAreaPolygon(db.Model):
         primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPolygon.layer_id',
         lazy='joined',
         uselist=False,
+        viewonly=True
     )
 
 class ServiceAreaLineSingle(db.Model):
@@ -1192,9 +1196,11 @@ class AddressSummaryQuery(BaseQuery):
 try:
     class ServiceAreaSummary(db.Model):
         with app.app_context():
-            __table__ = db.Table('service_area_summary',
-                                 db.MetaData(bind=db.engine),
-                                 autoload=True)
+            __table__ = db.Table(
+                'service_area_summary',
+                db.metadata,
+                autoload_with=db.engine
+            )
 except NoSuchTableError:
     ServiceAreaSummary = None
     # if table hasn't been created yet, suppress error

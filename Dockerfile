@@ -1,4 +1,4 @@
-FROM python:3.10.8-slim-bullseye
+FROM python:3.14.7-slim-trixie
 MAINTAINER CityGeo
 
 # note, have these declared in your .env file and then use docker-compose to build
@@ -14,7 +14,6 @@ RUN apt-get update -y && \
     apt-get clean -y && \
     apt-get autoremove -y
 
-RUN mkdir /root/.ssh && chmod 600 /root/.ssh
 # Add github to the list of known hosts so our SSH pip installs work later
 RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 # config so we can hit private repos via ssh
