@@ -1076,6 +1076,30 @@ SERVICE_AREAS = {
                 },
             },
         },
+        {
+            'layer_id':                     'police_abandoned_vehicle_police_district_grid',
+            'name':                         'Police Abandoned Vehicle Police District Grid',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'citygeo',
+                    'table':                'viewer_police.abandoned_vehicle_police_district_grids',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
+        {
+            'layer_id':                     'police_abandoned_vehicle_sanitation_grid',
+            'name':                         'Police Abandoned Vehicle Sanitation Grid',
+            'description':                  '',
+            'sources': {
+                'polygon':  {
+                    'db':                   'citygeo',
+                    'table':                'viewer_police.abandoned_vehicle_sanitation_grids',
+                    'value_field':          'grid_id',
+                },
+            },
+        },
         # GIS_RDA
         #   SHOULD THIS GO IN SOURCES?
         #     investigate whether 2 addreses are same property
