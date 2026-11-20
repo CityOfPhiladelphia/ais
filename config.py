@@ -272,6 +272,10 @@ def make_eclipse_address(comps):
     else:
         return None
 
+def make_legacy_certificate_of_occupancy_permit_address(comps):
+    out_comps = (comps['address_low'], comps['street_predir'], comps['street_name'], comps['street_suffix'])
+    out_comps = [x for x in out_comps if x and len(multi_strip(x)) > 0]
+    return ' '.join(out_comps)
 
 ADDRESSES = {
     'parser_tags': {
@@ -455,6 +459,42 @@ ADDRESSES = {
                     'key': 'zoning_document_id',
                     # 'source_field': 'water1_acc_no',
                     'source_fields': ['doc_id'],
+                },
+            ],
+        },
+        {
+            'name': 'legacy_certificate_of_occupancy_permits',
+            'table': 'viewer_citygeo.imaging_archive_deptli_cos',
+            'db': 'citygeo',
+            'address_fields': {
+                'address_low': 'st_no',
+                'street_predir': 'st_dir',
+                'street_name': 'st_name',
+                'street_suffix': 'st_suffix'
+            },
+            'preprocessor':         make_legacy_certificate_of_occupancy_permit_address,
+            'tag_fields': [
+                {
+                    'key': 'legacy_certificate_of_occupancy_permit_nums',
+                    'source_fields': ['permit_num'],
+                },
+            ],
+        },
+        {
+            'name': 'legacy_certificate_of_use_and_occupancy_permits',
+            'table': 'viewer_citygeo.imaging_archive_deptli_permit_tracking_cos',
+            'db': 'citygeo',
+            'address_fields': {
+                'address_low': 'st_no',
+                'street_predir': 'st_dir',
+                'street_name': 'st_name',
+                'street_suffix': 'st_suffix'
+            },
+            'preprocessor':         make_legacy_certificate_of_occupancy_permit_address,
+            'tag_fields': [
+                {
+                    'key': 'legacy_certificate_of_use_and_occupancy_permit_nums',
+                    'source_fields': ['permit_num'],
                 },
             ],
         },
@@ -1814,6 +1854,18 @@ ADDRESS_SUMMARY = {
         {
             'name':                 'bin_parcel_id',
             'tag_key':              'bin_parcel_id',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'legacy_certificate_of_occupancy_permit_nums',
+            'tag_key':              'legacy_certificate_of_occupancy_permit_nums',
+            'type':                 'text',
+            'traverse_links':       'false',
+        },
+        {
+            'name':                 'legacy_certificate_of_use_and_occupancy_permit_nums',
+            'tag_key':              'legacy_certificate_of_use_and_occupancy_permit_nums',
             'type':                 'text',
             'traverse_links':       'false',
         },
