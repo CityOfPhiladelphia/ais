@@ -11,7 +11,7 @@ fi
 
 if [ -z "${ENGINE_DB_HOST}" ]; then
     echo "Did not receive ENGINE_DB_HOST var, attempting to set manually.."
-    prod_color=$(dig ais-prod.phila.city +short | grep -o "blue\|green")
+    prod_color=$(dig ais-prod.citygeo.phila.city +short | grep -o "blue\|green")
     if [[ "$PROD_COLOR" -eq "blue" ]]; then
 	if [ -z "${BLUE_ENGINE_CNAME}" ]; then
 	    echo 'BLUE_ENGINE_CNAME var not set!'
