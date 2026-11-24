@@ -421,6 +421,8 @@ class AddressJsonSerializer (GeoJSONSerializer):
                 ('opa_account_num', ''),
                 ('opa_owners', ''),
                 ('opa_address', ''),
+                ('legacy_certificate_of_occupancy_permit_nums', ''),
+                ('legacy_certificate_of_use_and_occupancy_permit_nums', ''),
             ])),
             ('geometry', geom_data),
         ])
@@ -667,6 +669,8 @@ class AddressTagSerializer():
                 ('opa_account_num', {'source': '', 'value': ''}),
                 ('opa_owners', {'source': '', 'value': ''}),
                 ('opa_address', {'source': '', 'value': ''}),
+                ('legacy_certificate_of_occupancy_permit_nums', {'source': '', 'value': ''}),
+                ('legacy_certificate_of_use_and_occupancy_permit_nums', {'source': '', 'value': ''})
             ])),
             ('geometry', {}),
         ])

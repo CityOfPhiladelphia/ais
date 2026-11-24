@@ -1870,7 +1870,7 @@ ADDRESS_SUMMARY = {
             'traverse_links':       'false',
         },
     ],
-    'non_summary_tags': ['bin_parcel_id', 'info_resident', 'info_company', 'voter_name', 'ng911_guid', 'ng911_address_point_placement'],
+    'non_summary_tags': ['bin_parcel_id', 'info_resident', 'info_company', 'voter_name', 'ng911_guid', 'ng911_address_point_placement', 'legacy_certificate_of_occupancy_permit_nums', 'legacy_certificate_of_use_and_occupancy_permit_nums'],
 }
 
 SWAGGER = {
