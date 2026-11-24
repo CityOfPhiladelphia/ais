@@ -233,7 +233,7 @@ class GeoJSONSerializer (BaseSerializer):
 
 class AddressJsonSerializer (GeoJSONSerializer):
     # excluded_tags = ('info_resident', 'info_company', 'voter_name', 'bin_parcel_id')
-    excluded_tags = config['ADDRESS_SUMMARY']['non_summary_tags']
+    excluded_tags = config['ADDRESS_SUMMARY']['non_summary_and_api_tags']
 
     def __init__(self, ref_addr=None, tag_data=None, geom_type=None, geom_source=None, normalized_address=None, base_address=None, shape=None, sa_data=None, estimated=None, match_type=None, **kwargs):
         #self.geom_type = kwargs.get('geom_type') if 'geom_type' in kwargs else None
