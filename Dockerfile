@@ -1,4 +1,4 @@
-FROM python:3.10.8-slim-bullseye
+FROM python:3.11-slim-bookworm
 MAINTAINER CityGeo
 
 # note, have these declared in your .env file and then use docker-compose to build
@@ -26,9 +26,11 @@ RUN chmod 600 /root/.ssh/config; chmod 600 /root/.ssh/passyunk-private.key
 # Note: Install python reqs at the system level, no need for venv in a docker container
 # also caused some issues for me.
 RUN mkdir -p /ais
-RUN git clone https://github.com/CityOfPhiladelphia/ais --branch master /ais
+RUN git clone https://github.com/CityOfPhiladelphia/ais --branch dev /ais
 RUN pip install --upgrade pip && \
-    pip install -r /ais/requirements.txt
+    printf "setuptools<81\n" > /tmp/build-constraints.txt && \
+    pip install --build-constraint /tmp/build-constraints.txt -r /ais/requirements.txt && \
+    rm -f /tmp/build-constraints.txt
 
 # Copy our secrets into the flask speciic secret path
 COPY ./instance/config.py /ais/instance/config.py
