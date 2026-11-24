@@ -227,10 +227,12 @@ upload_csv_to_postgres(INTERSECTIONS_CSV_FILENAME, INTERSECTION_WRITE_TABLE_NAME
 # SERVICE AREA SUMMARY #
 ########################
 print(f"\nWriting service_area_summary table to {SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME}...")
+ommitted_service_areas = ['police_abandoned_vehicle_police_district_grid', 'police_abandoned_vehicle_sanitation_grid']
 service_area_rows = etl.fromdb(read_conn, 'select * from service_area_summary')
 service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_committee': 'neighborhood_advisory_committe'}, )
 if 'objectid' in etl.header(service_area_rows):
     service_area_rows = etl.cutout(service_area_rows, 'objectid')
+service_area_rows = etl.cutout(service_area_rows, *ommitted_service_areas)
 service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
 
 ###################
