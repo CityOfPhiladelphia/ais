@@ -42,7 +42,7 @@ jobs:
         notification-color: 17a2b8
         timezone: America/New_York
 
-    
+
     # https://github.com/aws-actions/amazon-ecr-login
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -60,9 +60,9 @@ jobs:
       run: |
           # Note: a simple dig doesn't work from in office.
           # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
-          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
-          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
-           
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEOPHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEOPHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+
     - name: Set engine hostname based on prod color
       env:
         PROD_ENDPOINT: ${{ secrets.PROD_ENDPOINT }}
@@ -138,7 +138,7 @@ jobs:
     # needs prior job of 'build' to not fail.
     needs: build
     runs-on: ubuntu-latest
-         
+
 
     steps:
 
@@ -161,9 +161,9 @@ jobs:
       run: |
           # Note: a simple dig doesn't work from in office.
           # Run the command manually first so we're sure it works, otherwise the var assignment hides errors.
-          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
-          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.PHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
-      
+          aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEOPHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green"
+          echo "PROD_COLOR=$(aws route53 list-resource-record-sets --hosted-zone-id ${{ secrets.CITYGEOPHILACITY_ZONE_ID }} --query "ResourceRecordSets[?Name == '${{ secrets.PROD_ENDPOINT }}.']" | grep -o "blue\|green")" >> $GITHUB_ENV
+
     - name: Force deploy to ECS cluster
       run: |
           echo "Deploying to $PROD_COLOR"
