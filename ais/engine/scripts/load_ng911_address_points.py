@@ -1,7 +1,7 @@
 import sys
 import re
 from datetime import datetime
-import datum
+from ais.engine.db import connect
 from ais import app
 from ais.models import Address
 # DEV
@@ -17,13 +17,13 @@ def main():
 
 	config = app.config
 	source_def = config['BASE_DATA_SOURCES']['ng911_address_points']
-	source_db = datum.connect(config['DATABASES'][source_def['db']])
+	source_db = connect(config['DATABASES'][source_def['db']])
 	source_table = source_db[source_def['table']]
 
 	field_map = source_def['field_map']
 	source_where = source_def['where']
 
-	db = datum.connect(config['DATABASES']['engine'])
+	db = connect(config['DATABASES']['engine'])
 	ng911_table = db['ng911_address_point']
 
 	Parser = config['PARSER']

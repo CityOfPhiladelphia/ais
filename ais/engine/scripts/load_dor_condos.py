@@ -11,20 +11,27 @@ def main():
     """SET UP"""
     DEV = False
     config = app.config
-    engine_dsn = config['DATABASES']['engine']
-    db_user = engine_dsn[engine_dsn.index("//") + 2:engine_dsn.index(":", engine_dsn.index("//"))]
-    db_pw = engine_dsn[engine_dsn.index(":",engine_dsn.index(db_user)) + 1:engine_dsn.index("@")]
-    db_name = engine_dsn[engine_dsn.index("/", engine_dsn.index("@")) + 1:]
-    pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
+    from ais.util import parse_url
+    eng = parse_url(config['DATABASES']['engine'])
+    pg_db = psycopg2.connect(
+        dbname=eng['db_name'],
+        user=eng['user'],
+        password=eng['password'],
+        host=eng['host'] or 'localhost',
+        port=eng['port'] or 5432,
+    )
 
     # get source table params
     source_def = config['BASE_DATA_SOURCES']['condos']['dor']
     source_db_name = source_def['db']
-    source_db_url = config['DATABASES'][source_db_name]
-    dsn = source_db_url.split('//')[1].replace(':','/')
-    conn_components = re.split(r'\/|@', dsn)
-    source_user, source_pw, source_host, _, source_hostname = conn_components
-    source_conn = psycopg2.connect(f'user={source_user} password={source_pw} host={source_host} dbname={source_hostname}')
+    src = parse_url(config['DATABASES'][source_db_name])
+    source_conn = psycopg2.connect(
+        dbname=src['db_name'],
+        user=src['user'],
+        password=src['password'],
+        host=src['host'] or 'localhost',
+        port=src['port'] or 5432,
+    )
     source_table_name = source_def['table']
     source_field_map = source_def['field_map']
 

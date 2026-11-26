@@ -1,0 +1,13 @@
+.git
+.github
+.env
+instance/
+venv/
+__pycache__/
+*.py[cod]
+ais/engine/log/
+ais/engine/backup/
+*.dump
+*.csv
+docs/
+README.md

@@ -1,8 +1,7 @@
 import sys
 import re
 from datetime import datetime
-from tracemalloc import start
-import datum
+from ais.engine.db import connect
 from ais import app
 from ais.models import Address
 # DEV
@@ -18,11 +17,11 @@ def main():
 
 	config = app.config
 	source_def = config['BASE_DATA_SOURCES']['opa_account_num_changes']
-	source_db = datum.connect(config['DATABASES'][source_def['db']])
+	source_db = connect(config['DATABASES'][source_def['db']])
 	source_table = source_db[source_def['table']]
 	field_map = source_def['field_map']
 
-	db = datum.connect(config['DATABASES']['engine'])
+	db = connect(config['DATABASES']['engine'])
 	opa_account_num_changes_table = db['opa_account_num_changes']
 
 	"""MAIN"""

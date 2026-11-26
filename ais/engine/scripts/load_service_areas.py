@@ -1,15 +1,13 @@
 import sys
 from datetime import datetime
 from shapely.wkt import loads
-import datum
-import petl as etl
-import geopetl
 from ais import app
+from ais.engine.db import connect
 
 """
 TRANSFORMS
 
-Define functions here that can be referenced in config.py for mutating
+Define functions here that can be referenced in ais/config/service_areas.py for mutating
 service area rows. Eventually, these could probably go in their own file
 and be used by any script that iterates over rows dictionaries.
 
@@ -36,7 +34,7 @@ def main():
     """SET UP"""
 
     config = app.config
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
     poly_table = db['service_area_polygon']
     line_single_table = db['service_area_line_single']
     line_dual_table = db['service_area_line_dual']
@@ -81,6 +79,7 @@ def main():
     empty_geometry_fail = False
 
     print('Reading service areas...')
+    source_dbs = {}
 
     for layer in layers:
         layer_id = layer['layer_id']
@@ -92,13 +91,15 @@ def main():
             raise Exception('Too many line sources for {}'.format(layer_id))
 
         for source_type, source in sources.items():
-            # Connect to DB
+            # Reuse cached connection per DB
             source_db_name = source['db']
-            try:
-                source_db = datum.connect(config['DATABASES'][source_db_name])
-            except KeyError:
-                print('Database {} not found'.format(layer_id))
-                continue
+            if source_db_name not in source_dbs:
+                try:
+                    source_dbs[source_db_name] = connect(config['DATABASES'][source_db_name])
+                except KeyError:
+                    print('Database {} not found'.format(layer_id))
+                    continue
+            source_db = source_dbs[source_db_name]
 
             source_table_name = source['table']
             source_table = source_db[source_table_name]
@@ -242,24 +243,23 @@ def main():
 
 
     if WRITE_OUT:
-        for i, poly in enumerate(polys):
-            if i < 100:
-                print(poly)
-        print('Writing service area polygons...')
-        poly_table.write(polys)
+        print(f'Writing {len(polys)} service area polygons...')
+        poly_table.write(polys, chunk_size=50000)
 
-        print('Writing service area single-value lines...')
-        line_single_table.write(line_singles)
+        print(f'Writing {len(line_singles)} service area single-value lines...')
+        line_single_table.write(line_singles, chunk_size=50000)
 
-        print('Writing service area line dual-value lines...')
-        line_dual_table.write(line_duals)
+        print(f'Writing {len(line_duals)} service area line dual-value lines...')
+        line_dual_table.write(line_duals, chunk_size=50000)
 
-        print('Writing service area points...')
-        point_table.write(points)
+        print(f'Writing {len(points)} service area points...')
+        point_table.write(points, chunk_size=50000)
 
         print('Creating indexes...')
         line_single_table.create_index('seg_id')
         line_dual_table.create_index('seg_id')
 
+    for sdb in source_dbs.values():
+        sdb.close()
     db.close()
     print('Finished in {} seconds'.format(datetime.now() - start))

@@ -1,5 +1,5 @@
 from datetime import datetime
-import datum
+from ais.engine.db import connect
 from ais import app
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
@@ -17,7 +17,7 @@ def main():
 
     parser_tags = config['ADDRESSES']['parser_tags']
     sources = config['ADDRESSES']['sources']
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
     address_table = db['address']
     address_tag_table = db['address_tag']
     source_address_table = db['source_address']
@@ -142,7 +142,7 @@ def main():
         # Make source_fields unique:
         source_fields = list(set(source_fields))
         source_db_name = source['db']
-        source_db = datum.connect(config['DATABASES'][source_db_name])
+        source_db = connect(config['DATABASES'][source_db_name])
         source_table = source_db[source['table']]
         print('Reading from {}...'.format(source_name))
 
@@ -381,6 +381,13 @@ def main():
     address_tag_strings = set()
 
     # spatial parcel id tags from address points:
+    print("Ensuring spatial indexes on dor_parcel and pwd_parcel...")
+    db.execute("""
+        CREATE INDEX IF NOT EXISTS dor_parcel_geom_gix ON dor_parcel USING GIST (geom);
+        CREATE INDEX IF NOT EXISTS pwd_parcel_geom_gix ON pwd_parcel USING GIST (geom);
+    """)
+    db.save()
+
     print("Adding dor_parcel_id tags for address points via spatial join...")
     dor_parcel_id_tag_stmt = '''
     insert into address_tag (street_address, key, value)
@@ -1177,7 +1184,7 @@ def main():
             address_props.append(address_prop)
 
     if WRITE_OUT:
-        address_property_table.write(address_props)
+        address_property_table.write(address_props, chunk_size=150000)
         print('Indexing address-properties...')
         address_property_table.create_index('street_address')
     del address_props

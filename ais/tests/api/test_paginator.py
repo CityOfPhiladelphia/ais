@@ -67,3 +67,11 @@ def test_page_ends_in_split(page_request, full_paginator):
 
 def test_page_starts_in_split(page_request, full_paginator):
     assert list(full_paginator.get_page(2)) == [4, 5, 6]
+
+
+def test_exact_multiple_last_page_size():
+    """When collection_size is an exact multiple of max_page_size, last page size equals max_page_size."""
+    p = Paginator([1, 2, 3, 4, 5, 6], max_page_size=3)
+    assert p.page_count == 2
+    assert p.get_page_size(2) == 3
+    assert Paginator([], max_page_size=3).get_page_size(1) == 0

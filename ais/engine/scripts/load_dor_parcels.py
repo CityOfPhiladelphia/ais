@@ -2,15 +2,11 @@ import sys
 import re
 from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
-import datum
+from ais.engine.db import connect
 from ais.models import Address
 from ais.util import parity_for_num, parity_for_range
 from ais import app
-# DEV
 import traceback
-import psycopg2
-import petl as etl
-import geopetl
 
 def main():
     start = datetime.now()
@@ -19,14 +15,13 @@ def main():
     """SET UP"""
 
     config = app.config
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
 
     VALID_ADDRESS_LOW_SUFFIXES = config['VALID_ADDRESS_LOW_SUFFIXES']
 
     source_def = config['BASE_DATA_SOURCES']['parcels']['dor']
     source_db_name = source_def['db']
-    source_db_url = config['DATABASES'][source_db_name]
-    source_db = datum.connect(source_db_url)
+    source_db = connect(config['DATABASES'][source_db_name])
     source_table_name = source_def['table']
     source_table = source_db[source_table_name]
     source_geom_field = source_table.geom_field
@@ -40,8 +35,8 @@ def main():
     WRITE_OUT = True
 
     # Regex
-    unit_num_re = re.compile('^[A-Z0-9\-]+$')
-    parcel_id_re = re.compile('^\d{3}(N|S)\d{6}$')
+    unit_num_re = re.compile(r'^[A-Z0-9\-]+$')
+    parcel_id_re = re.compile(r'^\d{3}(N|S)\d{6}$')
     geometry_re = re.compile('^(MULTI)?POLYGON')
 
     """MAIN"""
@@ -100,7 +95,7 @@ def main():
     # source_where += " AND rownum <= 20000"
 
     source_fields = list(field_map.values())
-    print(f'Reading parcels from {source_table_name} at db {source_db_url}...')
+    print(f'Reading parcels from {source_table_name} ({source_db.safe_url})...')
     source_parcels = source_table.read(where=source_where)
     print(f'Read in {len(source_parcels)} rows.')
     source_parcel_map = {x['objectid']: x for x in source_parcels}
@@ -537,15 +532,7 @@ def main():
                 })
                 error_polygons.append(error_polygon)
 
-        target_dsn = config['DATABASES']['engine']
-        target_user = target_dsn[target_dsn.index("//") + 2:target_dsn.index(":", target_dsn.index("//"))]
-        target_pw = target_dsn[target_dsn.index(":",target_dsn.index(target_user)) + 1:target_dsn.index("@")]
-        target_name = target_dsn[target_dsn.index("/", target_dsn.index("@")) + 1:]
-        target_conn = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=target_name, db_user=target_user, db_pw=target_pw))
-        target_table_name = 'public.dor_parcel_error_polygon'
-        error_polygon_rows = etl.fromdicts(error_polygons)
-        error_polygon_rows.topostgis(target_conn, target_table_name)
-
+        parcel_error_polygon_table.write(error_polygons, chunk_size=50000)
         del error_polygons
 
         print('Creating indexes...')

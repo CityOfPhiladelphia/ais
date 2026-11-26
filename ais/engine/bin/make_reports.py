@@ -1,11 +1,7 @@
-import subprocess
-from collections import OrderedDict
-from functools import partial
 import petl as etl
-import geopetl
 import psycopg2
-import re
 from ais import app
+from ais.engine.db import copy_rows_to_table
 from ais.util import parse_url
 
 
@@ -44,13 +40,24 @@ read_dsn = f"dbname={read_db} host={read_host} user={read_user} password={read_p
 read_conn = psycopg2.connect(read_dsn)
 
 
-write_dsn = write_db_string.split('//')[1].replace(':','/')
-conn_components = re.split(r'\/|@', write_dsn)
-write_user, write_pw, write_host, _, write_hostname = conn_components
-write_conn = psycopg2.connect(f'user={write_user} password={write_pw} host={write_host} dbname={write_hostname}')
+write_conn = psycopg2.connect(
+    user=parsed_write_db_string['user'],
+    password=parsed_write_db_string['password'],
+    host=parsed_write_db_string['host'],
+    port=parsed_write_db_string['port'] or 5432,
+    dbname=parsed_write_db_string['db_name'],
+)
 
-print(f'\nReading from local DB..')
-print(f'Writing to: {write_dsn}\n'.replace(write_pw, 'CENSORED'))
+print('\nReading from local DB..')
+print(f"Writing to: {parsed_write_db_string['host']}/{parsed_write_db_string['db_name']}\n")
+
+
+def write_petl_table(table, target_table_name, conn):
+    """Stream a petl table into PostgreSQL via COPY FROM STDIN (replaces geopetl.topostgis)."""
+    header = list(etl.header(table))
+    rows = etl.data(table)
+    count = copy_rows_to_table(conn, target_table_name, header, rows, truncate=True)
+    print(f"Wrote {count} rows to {target_table_name}.")
 #########################################################################################################################
 ## UTILS
 #########################################################################################################################
@@ -180,20 +187,28 @@ def upload_csv_to_postgres(csv_file_path, table_name, conn):
 # ADDRESS ERROR #
 #################
 print(f"Writing address_error table to {ADDRESS_ERROR_WRITE_TABLE_NAME}...")
-etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning').topostgis(write_conn, ADDRESS_ERROR_WRITE_TABLE_NAME)
+write_petl_table(
+    etl.fromdb(read_conn, 'select * from address_error').rename('level', 'error_or_warning'),
+    ADDRESS_ERROR_WRITE_TABLE_NAME,
+    write_conn,
+)
 
 ##################
 # SOURCE ADDRESS #
 ##################
 print(f"\nWriting source_address table to {SOURCE_ADDRESS_WRITE_TABLE_NAME}...")
-etl.fromdb(read_conn, 'select * from source_address').topostgis(write_conn, SOURCE_ADDRESS_WRITE_TABLE_NAME)
+write_petl_table(
+    etl.fromdb(read_conn, 'select * from source_address'),
+    SOURCE_ADDRESS_WRITE_TABLE_NAME,
+    write_conn,
+)
 
 ##############
 # TRUE RANGE #
 ##############
 print(f"\nWriting true_range table to {TRUE_RANGE_WRITE_TABLE_NAME}...")
 true_range_rows = etl.fromdb(read_conn, 'select * from true_range')
-true_range_rows.topostgis(write_conn, TRUE_RANGE_WRITE_TABLE_NAME)
+write_petl_table(true_range_rows, TRUE_RANGE_WRITE_TABLE_NAME, write_conn)
 
 #################
 # Intersections #
@@ -233,7 +248,7 @@ service_area_rows = etl.rename(service_area_rows, {'neighborhood_advisory_commit
 if 'objectid' in etl.header(service_area_rows):
     service_area_rows = etl.cutout(service_area_rows, 'objectid')
 service_area_rows = etl.cutout(service_area_rows, *ommitted_service_areas)
-service_area_rows.topostgis(write_conn, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME)
+write_petl_table(service_area_rows, SERVICE_AREA_SUMMARY_WRITE_TABLE_NAME, write_conn)
 
 ###################
 # ADDRESS SUMMARY #
@@ -282,7 +297,7 @@ dor_condominium_error_rows = etl.fromdb(read_conn, 'select * from dor_condominiu
 dor_condominium_error_rows = etl.rename(dor_condominium_error_rows, {'parcel_id': 'mapref', 'unit_num': 'condounit',})
 if 'objectid' in etl.header(dor_condominium_error_rows):
     dor_condominium_error_rows = etl.cutout(dor_condominium_error_rows, 'objectid')
-dor_condominium_error_rows.topostgis(write_conn, DOR_CONDO_ERROR_TABLE_NAME)
+write_petl_table(dor_condominium_error_rows, DOR_CONDO_ERROR_TABLE_NAME, write_conn)
 
 read_conn.close()
 

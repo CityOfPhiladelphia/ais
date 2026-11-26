@@ -2,7 +2,7 @@ import sys
 import traceback
 from datetime import datetime
 from passyunk.data import DIRS_STD, SUFFIXES_STD
-import datum
+from ais.engine.db import connect
 from ais import app
 
 def main():
@@ -13,10 +13,10 @@ def main():
 
     config = app.config
     source_def = config['BASE_DATA_SOURCES']['street_aliases']
-    source_db = datum.connect(config['DATABASES'][source_def['db']])
+    source_db = connect(config['DATABASES'][source_def['db']])
     source_table = source_db[source_def['table']]
     field_map = source_def['field_map']
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
     alias_table = db['street_alias']
 
     """MAIN"""

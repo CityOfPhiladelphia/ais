@@ -1,7 +1,7 @@
 import sys
 import re
 from datetime import datetime
-import datum
+from ais.engine.db import connect
 from ais import app
 from ais.models import Address
 # DEV
@@ -17,15 +17,15 @@ def main():
 
     config = app.config
     source_def = config['BASE_DATA_SOURCES']['properties']
-    source_db = datum.connect(config['DATABASES'][source_def['db']])
-    ais_source_db = datum.connect(config['DATABASES']['citygeo'])
+    source_db = connect(config['DATABASES'][source_def['db']])
+    ais_source_db = connect(config['DATABASES']['citygeo'])
     source_table = source_db[source_def['table']]
     field_map = source_def['field_map']
 
     owner_source_def = config['BASE_DATA_SOURCES']['opa_owners']
     owner_table_name = owner_source_def['table']
 
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
     prop_table = db['opa_property']
 
     Parser = config['PARSER']

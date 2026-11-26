@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master, main]
+  push:
+    branches: [master, main]
+
+jobs:
+  lint-and-test:
+    name: Python 3.14 Syntax & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Compile-check all Python files
+        run: python3 -W error::SyntaxWarning -m compileall -q ais scripts gunicorn.conf.py
+
+      - name: Install core test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest flask flask-cors flask-sqlalchemy sqlalchemy geoalchemy2 shapely pyproj pydantic-settings python-dotenv click boto3 requests psycopg2-binary petl git+https://github.com/CityOfPhiladelphia/passyunk.git@master
+
+      - name: Run offline unit tests
+        env:
+          ENGINE_DB_HOST: localhost
+          ENGINE_DB_PASS: test
+        run: pytest ais/tests/unit ais/tests/api/test_paginator.py ais/tests/api/test_models.py -v

@@ -1,92 +1,112 @@
 # Address Information System (AIS)
 
-AIS provides a unified view of City data for an address.
+AIS provides address verification, standardization, geocoding, and City data integration for Philadelphia.
 
-[API usage documentation](https://github.com/CityOfPhiladelphia/ais/blob/master/docs/APIUSAGE.md)
+See [docs/APIUSAGE.md](docs/APIUSAGE.md) for API endpoint documentation.
 
-## Goals
+## Requirements
 
-- Simplify relationships between land records, real estate properties, streets, and addresses
-- Provide a way of standardizing addresses citywide
-- Support applications that require geocoding and address-based data lookups
-- Provide a feedback mechanism for continually improving parity between department datasets
-- Deprecate legacy systems for geocoding and address standardizing
+- **Python 3.14+**
+- **PostgreSQL + PostGIS** (`postgis` and `pg_trgm` extensions)
+- Access to the private `passyunk_automation` repository (`passyunk-private.key` + `ssh-config`) for building the container or installing locally
 
-## Components
+## Configuration
 
-- geocoder
-- address standardizer (see [passyunk](https://github.com/cityofphiladelphia/passyunk))
-- integration environment for address-centric data
-- API
+All secrets and database connection settings are unified under environment variables (auto-loaded from `.env` if present). See [.env.example](.env.example) for all available variables.
 
-## Production Processes
-This AIS repository is used in 2 distinct ways.
-1. Built into a docker container and pushed to AWS ECR where it will run in ECS. This is done using the 'build-test-compose.yml' docker-compose file, and should be programmatically done in the Github Actions file [build_and_deploy.yml](.github/workflows/build_and_deploy.yml)
-If the action fails, you can troubleshoot manually by simply following the steps laid out in build_and_deploy.yml on our production AIS build server.
+## Running the API (Docker / EKS)
 
-2. Installed and run directly on our production AIS build server, where we run various build engine scripts to create database tables from various sources. These tables are then pushed up to our AWS RDS PostgreSQL instances for use by our ECS cluster.
-
-## Development
-
-To develop locally:
-
-1. `git clone https://github.com/CityOfPhiladelphia/ais`
-2. `cd ais`
-3. Create and activate a [virtualenv](https://virtualenv.pypa.io/en/stable/).
-4. `pip install -r requirements.txt`. You may have to work through installing some dependencies by hand, especially on Windows.
-5. Copy [Passyunk](https://github.com/cityofphiladelphia/passyunk) data files. See README for more instructions.
-6. Create an empty file at `/ais/instance/config.py`. To run engine scripts, you'll need to add dictionary to this called `DATABASE` mapping database names to connection strings. (TODO: commit sample instance config)
-7. Rename `.env.sample` in the root directory to `.env` and add real environment settings. (TODO: commit `.env.sample`)
-8. `honcho start`. This will start start serving over port 5000. Note that this is blocked on CityNet, so you'll have to be on a public network to access `http://0.0.0.0:5000`.
-
-## Docker Container Dev
-
-For building the docker container, you'll need some environment/build arg variables first. Copy the example .env file used with docker-compose and populate it:
-
-1. `cp env.example .env && chmod +x .env` 
-2. populate it, set the $ENGINE_DB_HOST var to your database CNAME or IP. Note that in our build deploy process at citygeo this is done automatically and is not needed.
-
-Check to make sure docker-compose is populating your args:
-
-1. docker-compose -f build-test-compose.yml config
-
-Note that you may need to set ENGINE_DB_HOST to a direct IP instead of a CNAME to get it working in-office.
-Now run the 'pull-private-passyunkdata.sh' script to download CSVs needed in the DockerFile.
-
-2. `chmod +x pull-private-passyunkdata.sh; ./pull-private-passyunkdata.sh` 
-
-Then build and start the container.
-
-3. Via docker-compose: `docker-compose -f build-test-compose.yml up --build -d` 
-    1. Directly:
-```
-docker build -t ais:latest .
-docker run -itd --name ais -p 8080:8080 -e ENGINE_DB_HOST=$ENGINE_DB_HOST -e ENGINE_DB_PASS= $ENGINE_DB_PASS ais:latest` 
-```
-
-If the container could successfully contact the DB then it should stay up and running. You may now run tests to confirm functionality.
-
-4. `docker exec ais bash -c 'cd /ais && . ./env/bin/activate && pytest /ais/ais/api/tests/'`
-
-## Testing
-The API and the Engine can be tested separately using pytest after sourcing the virtual environment `venv`.
-**Important Note** If you want to run pytests against a locally running database, you can either set your ENGINE_DB_HOST and ENGINE_DB_PASS parameters to the local instance and password, OR you can export DEV_TEST='true' to have this automatically use the local creds, as specified in your .env file. 
+Build the multi-stage Python 3.14 image (the private SSH key is used only in the builder stage and is never present in the runtime image):
 
 ```bash
-export DEV_TEST='true'
-pytest $WORKING_DIRECTORY/ais/tests/engine -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_engine_tests 
-
-pytest $WORKING_DIRECTORY/ais/tests/api -vvv -ra --showlocals --tb=native --disable-warnings --skip=$skip_api_tests 
+docker build -t ais:latest .
 ```
 
-To make direct queries using AIS, you can run the following on the dev box:
+Run against an RDS (or local) engine database:
 
+```bash
+export ENGINE_DB_HOST='ais-engine-dev.cfuoybzycpox.us-east-1.rds.amazonaws.com'
+export ENGINE_DB_PASS='<password>'
+
+docker run -itd --network host --name ais -p 8080:8080 \
+  -e ENGINE_DB_HOST="$ENGINE_DB_HOST" \
+  -e ENGINE_DB_PASS="$ENGINE_DB_PASS" \
+  ais:latest
+
+curl "http://localhost:8080/search/1234%20market"
 ```
-source ~/.env/bin/activate
-export DEV_TEST='true'
-gunicorn application --bind 0.0.0.0:8080 --workers 4 --worker-class gevent --access-logfile '-' --log-level 'notice'
-curl localhost:8080/search/1234%20Market%20Street | jq .
 
+Or using Docker Compose:
+
+```bash
+docker compose up --build -d
 ```
 
-For reasons currently unknown, the `tests/api/test_views.py` cannot be tested on their own -- almost all the tests will fail with a 404 Response Error -- so all `api` tests must be run simultaneously.
+## Local Development
+
+```bash
+python3.14 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-engine.txt
+pip install -e .
+cp .env.example .env  # fill in your values
+
+gunicorn -c gunicorn.conf.py ais.api:app
+```
+
+## Building the Engine Database
+
+The engine build pipeline is managed via the `ais engine` CLI:
+
+```bash
+# List all pipeline stages and steps
+ais engine list
+
+# Run the full build into local PostgreSQL
+ais engine build
+
+# Resume from a specific step or run a single stage/step
+ais engine build --from make_address_summary
+ais engine build --stage summaries
+ais engine build --only make_service_area_summary
+```
+
+To run the full build, test, dump, and restore to the inactive RDS instance (or `dev` RDS) on the build server:
+
+```bash
+# Restore to dev RDS
+./scripts/build_and_restore_rds.sh --dev
+
+# Restore to inactive blue/green RDS (without swapping)
+./scripts/build_and_restore_rds.sh
+```
+
+## RDS Blue-Green Swap
+
+Swapping the active RDS instance (`blue` <-> `green`) is decoupled from the build script and does not touch ECS or ALB DNS. It validates RDS availability and row counts, then updates AWS SSM Parameter Store (and optionally a Route53 DB CNAME):
+
+```bash
+# Check active/inactive RDS status
+python3 scripts/rds_blue_green.py status
+
+# Dry-run swap
+python3 scripts/rds_blue_green.py swap --dry-run
+
+# Execute swap
+python3 scripts/rds_blue_green.py swap
+```
+
+You can also trigger the swap manually via the **RDS Blue-Green Swap** GitHub Actions workflow (`.github/workflows/rds-blue-green-swap.yml`).
+
+## Testing
+
+```bash
+# Unit tests (no DB required)
+pytest ais/tests/api/test_paginator.py -v
+
+# API integration tests (requires ENGINE_DB_HOST and ENGINE_DB_PASS)
+pytest ais/tests/api -v
+
+# Engine comparison tests (compares ENGINE_TO_TEST against ENGINE_TO_COMPARE)
+ENGINE_TO_TEST=localhost ENGINE_TO_COMPARE=$BLUE_RDS_HOST pytest ais/tests/engine -v
+```

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ais"
+version = "2.0.0"
+description = "City of Philadelphia Address Information System (AIS) — address verification, standardization, and geocoding."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.14"
+authors = [{ name = "City of Philadelphia CityGeo", email = "maps@phila.gov" }]
+
+dependencies = [
+    "click>=8.1",
+    "Flask>=3.1",
+    "Flask-Cors>=5.0",
+    "Flask-SQLAlchemy>=3.1",
+    "GeoAlchemy2>=0.15",
+    "gunicorn>=23.0",
+    "psycopg2-binary>=2.9.10",
+    "pydantic-settings>=2.7",
+    "pyproj>=3.7",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+    "Shapely>=2.0",
+    "SQLAlchemy>=2.0",
+]
+
+[project.optional-dependencies]
+engine = [
+    "boto3>=1.35",
+    "petl>=1.7",
+    "rapidfuzz>=3.10",
+    "requests>=2.32",
+]
+dev = [
+    "pytest>=8.3",
+]
+
+[project.scripts]
+ais = "ais.commands:cli"
+
+[tool.setuptools.packages.find]
+include = ["ais*"]
+
+[tool.pytest.ini_options]
+testpaths = ["ais/tests"]
