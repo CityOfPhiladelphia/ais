@@ -1,11 +1,8 @@
 import sys
 import traceback
 from datetime import datetime
-import petl as etl
-import geopetl
-import psycopg2
 from ais import app
-from datum import Database
+from ais.engine.db import Database, copy_rows_to_table
 from ais.models import StreetIntersection
 
 def main():
@@ -18,11 +15,6 @@ def main():
     engine_srid = config['ENGINE_SRID']
     Parser = config['PARSER']
     db = Database(config['DATABASES']['engine'])
-    dsn = config['DATABASES']['engine']
-    db_user = dsn[dsn.index("//") + 2:dsn.index(":", dsn.index("//"))]
-    db_pw = dsn[dsn.index(":",dsn.index(db_user)) + 1:dsn.index("@")]
-    db_name = dsn[dsn.index("/", dsn.index("@")) + 1:]
-    pg_db = psycopg2.connect('dbname={db_name} user={db_user} password={db_pw} host=localhost'.format(db_name=db_name, db_user=db_user, db_pw=db_pw))
 
     # Get table params
     source_def = config['BASE_DATA_SOURCES']['streets']
@@ -165,17 +157,32 @@ def main():
     WRITE
     '''
     print(f'Copying temporary street_nodes table "{str(nodes_table_name)}"...')
-    nodes_rows = etl.frompostgis(source_db_url, nodes_table_name)
-    # Rename to match our street_nodes table shape field, which is geom.
-    # print(etl.header(nodes_rows))
-    nodes_rows = nodes_rows.rename({'shape': 'geom'})
-    nodes_rows = etl.cut(nodes_rows, 'objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti', 'geom')
-    # print(etl.header(nodes_rows))
-    # Write to our local db
-    nodes_rows.topostgis(pg_db, 'street_nodes')
+    node_cols = ['objectid', 'streetcl_', 'node_id', 'int_id', 'intersecti', 'geom']
+    source_nodes = source_db.execute(f"""
+        SELECT objectid, streetcl_, node_id, int_id, intersecti,
+               ST_AsEWKT(ST_Transform(shape, {int(engine_srid)})) AS geom
+        FROM {nodes_table_name}
+    """)
+    copy_rows_to_table(
+        db.conn,
+        'street_nodes',
+        node_cols,
+        ((r['objectid'], r['streetcl_'], r['node_id'], r['int_id'], r['intersecti'], r['geom']) for r in source_nodes),
+        truncate=False,
+    )
+    source_db.close()
 
     print("Writing temporary centerline table...")
     centerline_table.write(centerlines, chunk_size=50000)
+
+    print("Indexing temporary tables for fast intersection join...")
+    db.execute("""
+        CREATE INDEX IF NOT EXISTS tmp_sc_fnode_idx ON street_centerlines (fnode);
+        CREATE INDEX IF NOT EXISTS tmp_sc_tnode_idx ON street_centerlines (tnode);
+        CREATE INDEX IF NOT EXISTS tmp_sc_stcode_idx ON street_centerlines (street_code);
+        CREATE INDEX IF NOT EXISTS tmp_sn_node_idx ON street_nodes (node_id);
+    """)
+    db.save()
 
     intersections = []
     error_count = 0

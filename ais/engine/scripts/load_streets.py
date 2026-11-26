@@ -4,7 +4,7 @@ from datetime import datetime
 from pprint import pprint
 # from phladdress.parser import Parser
 from ais import app
-from datum import Database
+from ais.engine.db import Database
 from ais.models import StreetSegment
 
 def main():

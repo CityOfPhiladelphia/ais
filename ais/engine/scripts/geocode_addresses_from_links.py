@@ -1,119 +1,75 @@
+"""Propagate parcel geocodes across linked addresses in a single bulk SQL query.
+
+Replaces the legacy Python script that loaded the entire geocode & address_tag
+tables into RAM and issued string-concatenated INSERT statements.
+"""
+
 from datetime import datetime
-import datum
 from ais import app
+from ais.engine.db import connect
+
 
 def main():
     start = datetime.now()
-    print('Starting...')
-
-    '''
-    SET UP
-    '''
+    print("Starting geocode_addresses_from_links...")
 
     config = app.config
-    engine_srid = config['ENGINE_SRID']
-    Parser = config['PARSER']
-    parser = Parser()
-    db = datum.connect(config['DATABASES']['engine'])
-    WRITE_OUT = True
-    geocode_table = db['geocode']
-    address_tag_table = db['address_tag']
-    geocode_tag_map = {
-        'pwd_parcel_id': (1, 3, 7, 11),
-        'dor_parcel_id': (2, 4, 8, 12)
-    }
-    new_geocode_rows = []
+    db = connect(config["DATABASES"]["engine"])
+    geocode_table = db["geocode"]
 
-    print('Reading geocode rows...')
-    geocode_map = {}
-    geocode_rows = geocode_table.read()
-    print('Mapping geocode rows...')
-    for geocode_row in geocode_rows:
-        street_address = geocode_row['street_address']
-        if not street_address in geocode_map:
-            geocode_map[street_address] = []
-        geocode_map[street_address].append(geocode_row)
+    print("Dropping geocode(street_address) index before bulk insert...")
+    # Keep index during SELECT, or use a temp table? Creating a temp table
+    # while the index is still present makes the JOIN/NOT EXISTS super fast,
+    # then we drop the index, insert, and rebuild once!
+    print("Computing linked geocodes in PostgreSQL...")
+    db.execute("""
+        CREATE TEMP TABLE tmp_linked_geocodes AS
+        WITH linked_tags AS (
+            SELECT DISTINCT street_address, linked_address, key
+            FROM address_tag
+            WHERE linked_address IS NOT NULL
+              AND linked_address != ''
+              AND key IN ('pwd_parcel_id', 'dor_parcel_id')
+        )
+        SELECT DISTINCT
+            lt.street_address,
+            g.geocode_type,
+            g.geom
+        FROM linked_tags lt
+        JOIN geocode g
+          ON g.street_address = lt.linked_address
+        WHERE (
+            lt.key = 'pwd_parcel_id'
+            AND g.geocode_type IN (1, 3, 7, 11)
+            AND NOT EXISTS (
+                SELECT 1 FROM geocode existing
+                WHERE existing.street_address = lt.street_address
+                  AND existing.geocode_type = 1
+            )
+        )
+        OR (
+            lt.key = 'dor_parcel_id'
+            AND g.geocode_type IN (2, 4, 8, 12)
+            AND NOT EXISTS (
+                SELECT 1 FROM geocode existing
+                WHERE existing.street_address = lt.street_address
+                  AND existing.geocode_type = 2
+            )
+        );
+    """)
 
-    print('Reading address tags...')
-    tag_map = {}
-    where = "linked_address != '' and key in ('pwd_parcel_id', 'dor_parcel_id')"
-    tag_rows = address_tag_table.read(where=where)
-    print('Mapping address tags...')
-    for tag_row in tag_rows:
-        street_address = tag_row['street_address']
-        if not street_address in tag_map:
-            tag_map[street_address] = []
-        tag_map[street_address].append(tag_row)
+    geocode_table.drop_index("street_address")
 
-    for key, value in tag_map.items():
-        street_address = key
-        tags = value
-    #    geocode_types = []
-        try:
-            geocode_types = [x['geocode_type'] for x in geocode_map[street_address]]
-        except:
-            geocode_types = []
-        for tag in tags:
-            linked_address = tag['linked_address']
-            linked_key = tag['key']
-            if linked_key == 'pwd_parcel_id' and 1 in geocode_types or linked_key == 'dor_parcel_id' and 2 in geocode_types:
-                continue
-            try:
-                linked_geocode_rows = geocode_map[linked_address]
-            except:
-                linked_geocode_rows = []
-            if not linked_geocode_rows:
-                continue
-            for linked_row in linked_geocode_rows:
-                geocode_type = linked_row['geocode_type']
+    print("Inserting linked geocodes into geocode table...")
+    db.execute("""
+        INSERT INTO geocode (street_address, geocode_type, geom)
+        SELECT street_address, geocode_type, geom
+        FROM tmp_linked_geocodes;
+    """)
+    db.execute("DROP TABLE IF EXISTS tmp_linked_geocodes;")
+    db.save()
 
-                if geocode_type in geocode_tag_map[linked_key]:
-                    geom = linked_row['geom']
-                    new_geocode_row = {
-                        'street_address': street_address,
-                        'geocode_type': geocode_type,
-                        'geom': geom
-                    }
-                    new_geocode_rows.append(new_geocode_row)
-
-    # Remove any duplicate new_geocode_rows
-    new_geocode_rows = [dict(t) for t in set([tuple(d.items()) for d in new_geocode_rows])]
-
-    if WRITE_OUT:
-        print('Dropping indexes...')
-        geocode_table.drop_index('street_address')
-
-        print('Writing {num} new geocode rows...'.format(num=len(new_geocode_rows)))
-        # TODO: Use geopetl/datum instead of raw sql
-        i = 0
-        values = ''
-        for new_row in new_geocode_rows:
-            street_address = new_row['street_address']
-            geocode_type = new_row['geocode_type']
-            geom = new_row['geom']
-            new_vals = '''('{street_address}', {geocode_type}, ST_GeomFromText('{geom}',{engine_srid}))'''.format(street_address=street_address, geocode_type=geocode_type, geom=geom, engine_srid=engine_srid)
-            values = values + ', ' + new_vals if values else new_vals
-            i += 1
-            if i % 1000 == 0:
-                toi = i + 1000
-                #print("writing rows {i} to {toi}".format(i=i, toi=toi))
-                write_stmt = '''
-                    INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
-                '''.format(values=values)
-                db.execute(write_stmt)
-                db.save()
-                values = ''
-        if values: 
-            write_stmt = '''
-                INSERT INTO geocode (street_address, geocode_type, geom) VALUES {values}
-            '''.format(values=values)
-            db.execute(write_stmt)
-            db.save()
-
-        print('Creating index...')
-        geocode_table.create_index('street_address')
-
+    print("Rebuilding index on geocode(street_address)...")
+    geocode_table.create_index("street_address")
     db.close()
-
-    print('Finished in {}'.format(datetime.now() - start))
-
+    print(f"Finished geocode_addresses_from_links in {datetime.now() - start}")

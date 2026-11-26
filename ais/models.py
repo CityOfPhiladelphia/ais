@@ -1,14 +1,12 @@
-#import copy
 import re
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query as BaseQuery
 from geoalchemy2.types import Geometry
 from geoalchemy2.functions import ST_Transform, ST_X, ST_Y
 from sqlalchemy import func, and_, or_, cast, String, Integer, desc, distinct
 from sqlalchemy.orm import aliased
-from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.exc import NoSuchTableError, OperationalError
 from ais import app, app_db as db
-from ais.util import *
-#from pprint import pprint
+from ais.util import parity_for_num, parity_for_range
 
 Parser = app.config['PARSER']
 parser = Parser()
@@ -308,29 +306,27 @@ class Address(db.Model):
     geocodes = db.relationship(
         'Geocode',
         primaryjoin='foreign(Geocode.street_address) == Address.street_address',
-        lazy='joined')
-
-    # zip_info = db.relationship(
-    #     'AddressZip',
-    #     primaryjoin='foreign(AddressZip.street_address) == Address.street_address',
-    #     lazy='joined',
-    #     uselist=False)
+        lazy='joined',
+        viewonly=True)
 
     pwd_parcel = db.relationship(
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     dor_parcel = db.relationship(
         'DorParcel',
         primaryjoin='foreign(DorParcel.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     opa_property = db.relationship(
         'OpaProperty',
         primaryjoin='foreign(OpaProperty.street_address) == Address.street_address',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
 
     def __init__(self, *args, **kwargs):
 
@@ -501,8 +497,8 @@ class Address(db.Model):
     @property
     def child_addresses(self):
         """Returns a list of address objects with in-range street addresses"""
-        address_low_re = re.compile('^{}'.format(self.address_low))
-        address_high_re = re.compile('-\d+')
+        address_low_re = re.compile(r'^{}'.format(self.address_low))
+        address_high_re = re.compile(r'-\d+')
         child_addresses = []
         for child_num in self.child_nums:
             child_num = str(child_num)
@@ -597,7 +593,7 @@ class SourceAddress(db.Model):
 class AddressLinkQuery(BaseQuery):
     """A query class that knows how to query address links"""
     def filter_links_by_address(self, street_address):
-        return AddressLinkQuery.filter(or_(AddressLink.address_1 == street_address, AddressLink.address_2 == street_address))
+        return self.filter(or_(AddressLink.address_1 == street_address, AddressLink.address_2 == street_address))
 
 class AddressLink(db.Model):
     """
@@ -664,7 +660,8 @@ class AddressZip(db.Model):
         'ZipRange',
         primaryjoin='foreign(ZipRange.usps_id) == AddressZip.usps_id',
         lazy='joined',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
 
 
 
@@ -725,6 +722,7 @@ class ServiceAreaPolygon(db.Model):
         primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPolygon.layer_id',
         lazy='joined',
         uselist=False,
+        viewonly=True,
     )
 
 class ServiceAreaLineSingle(db.Model):
@@ -762,6 +760,7 @@ class ServiceAreaPoint(db.Model):
         primaryjoin='foreign(ServiceAreaLayer.layer_id) == ServiceAreaPoint.layer_id',
         lazy='joined',
         uselist=False,
+        viewonly=True,
     )
 
 class ServiceAreaDiff(db.Model):
@@ -945,7 +944,7 @@ class AddressSummaryQuery(BaseQuery):
             # get in-range children of query address
             range_child_addresses = AddressLink.query\
                 .filter(AddressLink.relationship == 'in range')\
-                .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))\
+                .filter(AddressLink.address_2.in_(range_parent_addresses.statement))\
                 .with_entities(AddressLink.address_1)
 
             # For the parent addresses, find all the child addresses within the
@@ -953,7 +952,7 @@ class AddressSummaryQuery(BaseQuery):
             range_child_units = AddressSummary.query \
                 .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
                 .filter(AddressLink.relationship == 'has base') \
-                .filter(AddressLink.address_2.in_(range_child_addresses.subquery()))
+                .filter(AddressLink.address_2.in_(range_child_addresses.statement))
 
             # range_parent_units = None
         # If the query is not for ranged addresses, handle the case where more
@@ -969,7 +968,7 @@ class AddressSummaryQuery(BaseQuery):
 
             non_child_addresses = self\
                 .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
-                .filter(or_(AddressLink.relationship == None, AddressLink.relationship == 'in range', AddressLink.relationship == 'has base' and AddressLink.address_1 == AddressLink.address_2))\
+                .filter(or_(AddressLink.relationship == None, AddressLink.relationship == 'in range', and_(AddressLink.relationship == 'has base', AddressLink.address_1 == AddressLink.address_2)))\
                 .with_entities(AddressSummary.street_address)
 
             range_child_units = None
@@ -979,15 +978,14 @@ class AddressSummaryQuery(BaseQuery):
         range_parent_units = AddressSummary.query \
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address) \
             .filter(AddressLink.relationship == 'has base') \
-            .filter(AddressLink.address_2.in_(range_parent_addresses.subquery()))
-        # print(range_parent_units.all())
+            .filter(AddressLink.address_2.in_(range_parent_addresses.statement))
         # For both the range-child and non-child address sets, get all the units
         # and union them on to the original set of addresses.
 
         non_child_units = AddressSummary.query\
             .join(AddressLink, AddressLink.address_1 == AddressSummary.street_address)\
             .filter(AddressLink.relationship == 'has base')\
-            .filter(AddressLink.address_2.in_(non_child_addresses.subquery()))
+            .filter(AddressLink.address_2.in_(non_child_addresses.statement))
         # print(non_child_units.all())
         #
         ## Logic to include ranged_parent addresses in response:
@@ -1031,11 +1029,12 @@ class AddressSummaryQuery(BaseQuery):
             # equal to its base address.
 
             BaseAddressSummary = aliased(AddressSummary)
+            BaseAddressLink = aliased(AddressLink)
 
             query = self\
                 .filter(AddressSummary.opa_account_num != '') \
-                .outerjoin(AddressLink, AddressLink.address_1 == AddressSummary.street_address, aliased=True)\
-                .outerjoin(BaseAddressSummary, AddressLink.address_2 == BaseAddressSummary.street_address, from_joinpoint=True)\
+                .outerjoin(BaseAddressLink, BaseAddressLink.address_1 == AddressSummary.street_address)\
+                .outerjoin(BaseAddressSummary, BaseAddressLink.address_2 == BaseAddressSummary.street_address)\
                 .filter(~(
                     # Get rid of anything where the OPA account number matches
                     # it's base's OPA account number. In the case where the
@@ -1192,13 +1191,13 @@ class AddressSummaryQuery(BaseQuery):
 try:
     class ServiceAreaSummary(db.Model):
         with app.app_context():
-            __table__ = db.Table('service_area_summary',
-                                 db.MetaData(bind=db.engine),
-                                 autoload=True)
-except NoSuchTableError:
+            __table__ = db.Table(
+                'service_area_summary',
+                db.metadata,
+                autoload_with=db.engine,
+            )
+except (NoSuchTableError, OperationalError):
     ServiceAreaSummary = None
-    # if table hasn't been created yet, suppress error
-    pass
 
 class AddressSummary(db.Model):
     query_class = AddressSummaryQuery
@@ -1255,41 +1254,41 @@ class AddressSummary(db.Model):
     geocodes = db.relationship(
         'Geocode',
         primaryjoin='foreign(Geocode.street_address) == AddressSummary.street_address',
-        lazy='select')
+        lazy='select',
+        viewonly=True)
 
     tags = db.relationship(
         'AddressTag',
         primaryjoin='foreign(AddressTag.street_address) == AddressSummary.street_address',
-        lazy='select')
+        lazy='select',
+        viewonly=True)
 
     if ServiceAreaSummary:
         service_areas = db.relationship(
             'ServiceAreaSummary',
             primaryjoin='foreign(ServiceAreaSummary.street_address) == AddressSummary.street_address',
             lazy='joined',
-            uselist=False)
-
-    # zip_info = db.relationship(
-    #     'AddressZip',
-    #     primaryjoin='foreign(AddressZip.street_address) == AddressSummary.street_address',
-    #     lazy='select',
-    #     uselist=False)
+            uselist=False,
+            viewonly=True)
 
     pwd_parcel = db.relationship(
         'PwdParcel',
         primaryjoin='foreign(PwdParcel.street_address) == AddressSummary.street_address',
         lazy='select',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     dor_parcel = db.relationship(
         'DorParcel',
         primaryjoin='foreign(DorParcel.street_address) == AddressSummary.street_address',
         lazy='select',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
     opa_property = db.relationship(
         'OpaProperty',
         primaryjoin='foreign(OpaProperty.street_address) == AddressSummary.street_address',
         lazy='select',
-        uselist=False)
+        uselist=False,
+        viewonly=True)
 
     __table_args__ = (
         #db.Index('address_summary_opa_account_num_idx', 'opa_account_num', postgresql_using='btree'),

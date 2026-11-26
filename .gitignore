@@ -96,6 +96,8 @@ target/
 # pyenv
 .python-version
 venv
+.venv/
+.pytest_cache/
 
 # dotenv
 .env

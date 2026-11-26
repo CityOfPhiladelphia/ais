@@ -1,9 +1,12 @@
 import json
 import pytest
+from sqlalchemy import text
 from ... import app, app_db
+import ais.api.views  # noqa: F401 - ensure routes are registered
 from operator import eq, gt
 
-# TODO: Why do these tests all fail with 404 Response Error when run on their own?
+# API integration tests against a populated AIS engine database.
+# Set ENGINE_DB_HOST and ENGINE_DB_PASS to run this suite.
 @pytest.fixture(scope='module')
 def client():
     app.testing = True
@@ -150,80 +153,12 @@ def test_child_address_has_all_units_in_ranged_address(client):
         ('Child address has {} results, whereas the ranged address has {} '
          'results.').format(child_data['total_size'], ranged_data['total_size'])
 
-@pytest.mark.skip(reason="todo - return OPA source address instead of parsed OPA street_address")
-def test_unit_address_in_db(client):
-    response = client.get('/addresses/826-28 N 3rd St # 1')
+def test_health_check(client):
+    """Health check verifies database connectivity and returns HTTP 200."""
+    response = client.get('/api/health-check')
     assert_status(response, 200)
+    assert response.get_data(as_text=True) == 'All okay!'
 
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
-
-@pytest.mark.skip(reason="todo - return OPA full address")
-def test_unit_address_without_unit_num_in_db(client):
-    UNIT_SQL = '''
-        SELECT unit.street_address
-          FROM address_summary AS unit
-          JOIN address_link ON address_1 = unit.street_address
-          JOIN address_summary AS base ON address_2 = base.street_address
-
-        WHERE relationship = 'has base'
-          AND unit.opa_account_num IS NOT NULL
-          AND unit.opa_account_num != ''
-          AND unit.opa_account_num != base.opa_account_num
-          AND unit.unit_num IN ('', NULL)
-
-        LIMIT 1
-    '''
-    result = app_db.engine.execute(UNIT_SQL)
-    street_address = result.first()[0]
-
-    response = client.get('/addresses/{}?opa_only'.format(street_address))
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, street_address)
-
-def test_unit_address_not_in_db(client):
-    response = client.get('/addresses/826-28 N 3rd St # 11')
-    # assert_status(response, 404)
-
-@pytest.mark.skip(reason="todo - return OPA full address")
-def test_synonymous_unit_types_found(client):
-    # APT
-    response = client.get('/addresses/826-28 N 3rd St Apartment 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
-
-    # UNIT
-    response = client.get('/addresses/826-28 N 3rd St Unit 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
-
-    # STE
-    response = client.get('/addresses/826-28 N 3rd St Ste 1')
-    assert_status(response, 200)
-
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, 1)
-
-    feature = data['features'][0]
-    assert_opa_address(feature, '826-28 N 3RD ST # 1')
 
 def test_nonsynonymous_unit_types_not_used(client):
     # Revised to expect cascade and estimated address from true range
@@ -243,23 +178,6 @@ def test_filter_for_only_opa_addresses(client):
 
     data = json.loads(response.get_data().decode())
     assert_num_results(data, 1)
-
-@pytest.mark.skip(reason="batch queries no longer supported")
-def test_multiple_addresses_have_all_units(client):
-    response = client.get('/addresses/1801 N 10th St?include_units')
-    assert_status(response, 200)
-    data = json.loads(response.get_data().decode())
-    num_results_1 = data['total_size']
-
-    response = client.get('/addresses/600 S 48th St?include_units')
-    assert_status(response, 200)
-    data = json.loads(response.get_data().decode())
-    num_results_2 = data['total_size']
-
-    response = client.get('/addresses/1801 N 10th St;600 S 48th St?include_units')
-    assert_status(response, 200)
-    data = json.loads(response.get_data().decode())
-    assert_num_results(data, num_results_1 + num_results_2)
 
 def test_fractional_addresses_are_ok(client):
     response = client.get('/addresses/13 1/2 Manheim St')
@@ -304,10 +222,9 @@ def test_opa_query_returns_child_address(client):
           AND parent.street_address not in {}
         LIMIT 1
     '''.format(tuple(ignore_addresses))
-    # Must use the app import like this to get context so we can run SQL commands
     with app.app_context():
-        result = app_db.engine.execute(CHILD_SQL)
-    child_address, parent_address = result.first()
+        result = app_db.session.execute(text(CHILD_SQL))
+        child_address, parent_address = result.first()
     response = client.get('/addresses/{}?opa_only'.format(child_address))
     assert_status(response, 200)
 
@@ -340,10 +257,9 @@ def test_block_can_exclude_non_opa(client):
             AND (base_address_summary.opa_account_num != address_summary.opa_account_num OR base_address_summary.opa_account_num IS NULL)
           ) AS block_addresses
     '''
-    # Must use the app import like this to get context so we can run SQL commands
     with app.app_context():
-        result = app_db.engine.execute(BLOCK_COUNT_SQL)
-    block_count = result.first()[0]
+        result = app_db.session.execute(text(BLOCK_COUNT_SQL))
+        block_count = result.first()[0]
 
     # Ensure that no join collisions happen
     response = client.get('/block/1800 N 11th St?opa_only')
@@ -434,15 +350,6 @@ def test_match_type_for_address_not_having_address_link(client):
     feature = data['features'][0]
     match_type = feature['match_type']
     assert match_type == 'exact'
-
-@pytest.mark.skip(reason="address no longer exists in new voter registration - skip until find replacement for test")
-def test_unit_type_siblings_match_exact(client):
-    response = client.get('/search/337 s camac st apt 3')
-    data = json.loads(response.get_data().decode())
-    assert_status(response, 200)
-    feature = data['features'][0]
-    match_type = feature['match_type']
-    assert match_type == 'generic_unit_sibling'
 
 def test_addresses_without_pwd_dor_id_return_true_or_full_range_or_ng911_geocode(client):
     response = client.get('/search/1298 MARKET ST')
@@ -581,7 +488,7 @@ def test_api_response_signature(client):
     assert isinstance(feature['properties']['address_low'], int)
     assert isinstance(feature['properties']['address_low_suffix'], str)
     assert isinstance(feature['properties']['address_low_frac'], str)
-    assert isinstance(feature['properties']['address_high'], (int)) if feature['properties']['address_high'] else None == None
+    assert feature['properties']['address_high'] is None or isinstance(feature['properties']['address_high'], int)
     assert isinstance(feature['properties']['street_predir'], str)
     assert isinstance(feature['properties']['street_name'], str)
     assert isinstance(feature['properties']['street_suffix'], str)
@@ -700,15 +607,12 @@ def test_nearest_seg_in_service_areas_response(client):
     assert data['service_areas']['nearest_seg'] == 521774
 
 def test_distinct_opa_addresses_in_opa_only_query(client):
+    """Ensure opa_only responses never return duplicate opa_address values."""
     response = client.get('/search/1737-39 Chestnut Street?include_units&opa_only')
+    assert_status(response, 200)
     data = json.loads(response.get_data().decode())
-    opa_address_count = {}
-    for feature in data['features']:
-        if feature['properties']['opa_address'] not in opa_address_count:
-            opa_address_count['opa_address'] = 0
-        opa_address_count['opa_address'] += 1
-    for opa_address in opa_address_count:
-        assert opa_address_count[opa_address] == 1
+    opa_addresses = [f['properties']['opa_address'] for f in data['features']]
+    assert len(opa_addresses) == len(set(opa_addresses))
 
 # @pytest.mark.skip(reason="hold off until alias branch is merged")
 def test_opa_alias_address(client):

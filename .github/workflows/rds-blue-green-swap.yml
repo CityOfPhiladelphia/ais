@@ -1,0 +1,83 @@
+name: RDS Blue-Green Swap
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        type: choice
+        required: true
+        default: status
+        options:
+          - status
+          - swap
+      target:
+        description: "Target RDS color (leave blank to swap to inactive color)"
+        type: choice
+        required: false
+        default: ""
+        options:
+          - ""
+          - blue
+          - green
+      dry_run:
+        description: "Dry run (do not modify SSM or Route53)"
+        type: boolean
+        required: true
+        default: true
+      skip_health_check:
+        description: "Skip PostgreSQL row-count sanity check (use if runner lacks VPC access to RDS)"
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  rds-blue-green:
+    name: RDS Blue-Green (${{ inputs.action }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install swap dependencies
+        run: pip install boto3 python-dotenv psycopg2-binary
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Run RDS Blue-Green action
+        env:
+          RDS_ENGINE_DB_PASS: ${{ secrets.RDS_ENGINE_DB_PASS }}
+          RDS_ACTIVE_COLOR_SSM_PARAM: ${{ vars.RDS_ACTIVE_COLOR_SSM_PARAM || '/ais/prod/active_rds_color' }}
+          RDS_ACTIVE_HOST_SSM_PARAM: ${{ vars.RDS_ACTIVE_HOST_SSM_PARAM || '/ais/prod/active_rds_host' }}
+          RDS_ROUTE53_ZONE_ID: ${{ vars.RDS_ROUTE53_ZONE_ID }}
+          RDS_ACTIVE_CNAME: ${{ vars.RDS_ACTIVE_CNAME }}
+          RDS_STAGING_CNAME: ${{ vars.RDS_STAGING_CNAME }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [[ "${{ inputs.action }}" == "status" ]]; then
+            python3 scripts/rds_blue_green.py status
+          else
+            ARGS=()
+            if [[ -n "${{ inputs.target }}" ]]; then
+              ARGS+=(--target "${{ inputs.target }}")
+            fi
+            if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+              ARGS+=(--dry-run)
+            fi
+            if [[ "${{ inputs.skip_health_check }}" == "true" ]]; then
+              ARGS+=(--skip-health-check)
+            fi
+            python3 scripts/rds_blue_green.py swap "${ARGS[@]}"
+          fi

@@ -3,7 +3,7 @@ import json
 import psycopg2
 import petl as etl
 from ais import app
-from ais.util import parse_url
+from ais.util import parse_url, unwrap_secret
 
 ############################
 # This script extracts NG911 geometry (proxy for the front door) for each address point and writes
@@ -98,8 +98,8 @@ print(f"Triggering downstream DAG {workflow}...")
 try:
     r = requests.post(
         airflow_trigger_creds.get('url').format(dag_name=workflow),
-        data=json.dumps("{}".format('{}')),
-        auth=("{}".format(airflow_trigger_creds.get('user')), "{}".format(airflow_trigger_creds.get('pw')))
+        data=json.dumps("{}"),
+        auth=(airflow_trigger_creds.get('user'), unwrap_secret(airflow_trigger_creds.get('pw'))),
     )
     print("Downstream process has been triggered, status code: {}".format(r.status_code))
 except Exception as e:

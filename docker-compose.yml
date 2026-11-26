@@ -1,0 +1,16 @@
+services:
+  ais:
+    container_name: ais
+    image: ais:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ENGINE_DB_HOST: ${ENGINE_DB_HOST:-ais-engine-dev.cfuoybzycpox.us-east-1.rds.amazonaws.com}
+      ENGINE_DB_PASS: ${ENGINE_DB_PASS:?ENGINE_DB_PASS must be set}
+      ENGINE_DB_USER: ${ENGINE_DB_USER:-ais_engine}
+      ENGINE_DB_NAME: ${ENGINE_DB_NAME:-ais_engine}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}

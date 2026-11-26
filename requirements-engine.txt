@@ -1,0 +1,8 @@
+# Engine build, report generation, and RDS Blue-Green deployment dependencies
+-r requirements.txt
+
+boto3>=1.35
+petl>=1.7
+pytest>=8.3
+rapidfuzz>=3.10
+requests>=2.32

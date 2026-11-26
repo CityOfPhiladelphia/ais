@@ -2,11 +2,9 @@ import sys
 import os
 import csv
 from datetime import datetime
-import datum
+from ais.engine.db import connect
 from ais import app
 from ais.models import Address
-# DEV
-from pprint import pprint
 import traceback
 
 def main():
@@ -17,7 +15,7 @@ def main():
     """SET UP"""
 
     config = app.config
-    db = datum.connect(config['DATABASES']['engine'])
+    db = connect(config['DATABASES']['engine'])
     parcel_table = db['pwd_parcel']
     parcel_geom_field = parcel_table.geom_field
 
@@ -25,7 +23,7 @@ def main():
     source_def = config['BASE_DATA_SOURCES']['parcels']['pwd']
     source_db_name = source_def['db']
     source_db_url = config['DATABASES'][source_db_name]
-    source_db = datum.connect(source_db_url)
+    source_db = connect(source_db_url)
     source_field_map = source_def['field_map']
     source_table_name = source_def['table']
     source_table = source_db[source_table_name]
@@ -33,9 +31,6 @@ def main():
 
     # Read in OPA account nums and addresses
     opa_source_def = config['BASE_DATA_SOURCES']['opa_owners']
-    opa_source_db_name = opa_source_def['db']
-    opa_source_db_url = config['DATABASES'][opa_source_db_name]
-    opa_source_db = datum.connect(opa_source_db_url)
     opa_source_table = opa_source_def['table']
     opa_field_map = opa_source_def['field_map']
     opa_rows = source_db[opa_source_table].read()
