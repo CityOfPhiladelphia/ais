@@ -6,6 +6,9 @@ on:
   push:
     branches: [master, main]
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     name: Python 3.14 Syntax & Unit Tests
