@@ -1,5 +1,8 @@
 name: RDS Blue-Green Swap
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
